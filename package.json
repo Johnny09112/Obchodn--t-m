@@ -1,0 +1,27 @@
+{
+  "name": "cantinero",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cantinero — agentní obchodní systém. Fáze 1: Čmuchal (sběr a kvalifikace firem).",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "cli": "tsx src/cli.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.114.0",
+    "@electric-sql/pglite": "^0.5.4",
+    "postgres": "^3.4.9",
+    "zod": "^4.4.3"
+  }
+}

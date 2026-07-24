@@ -17,8 +17,8 @@ const subjektOdpoved = {
 };
 
 function mockFetch(handler: (url: string, init?: RequestInit) => unknown) {
-  return vi.fn(async (url: string, init?: RequestInit) => {
-    const body = handler(url, init);
+  return vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+    const body = handler(String(url), init);
     if (body === null) {
       return new Response("not found", { status: 404 });
     }

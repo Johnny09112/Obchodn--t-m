@@ -17,6 +17,7 @@ create table jidelny (
   adresa text not null,
   lat numeric not null,
   lng numeric not null,
+  kod_obce int,                                            -- RÚIAN kód obce pro hledání firem v ARES
   kapacita_volna int not null default 0 check (kapacita_volna >= 0),
   zona_metru int not null default 3000 check (zona_metru > 0),
   smlouva_od date,

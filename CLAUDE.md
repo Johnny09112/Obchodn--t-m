@@ -1,7 +1,15 @@
 # Cantinero — pravidla práce na projektu
 
-> DRAFT k revizi (fáze 0, session S0.1). Projektová pravidla pro Claude Code.
+> Projektová pravidla pro Claude Code (fáze 0, session S0.1).
 > Zdroj pravdy pro zadání je SPEC.md — při rozporu platí SPEC.md.
+
+## Start každé session (povinné, v tomto pořadí)
+
+1. Přečti `memory/MEMORY.md` a `memory/stav.md` — kde jsme a co je další krok.
+2. Podle tématu práce přečti `memory/rozhodnuti.md` / `memory/poznatky.md`
+   a příslušný dokument v `docs/` (fáze 0: `docs/FAZE-0.md`).
+3. Nezačínej práci, která je v rozporu se zapsaným rozhodnutím — pokud
+   nesouhlasíš, navrhni změnu rozhodnutí, nerozhoduj mlčky jinak.
 
 ## Co je tento projekt
 
@@ -23,6 +31,51 @@ fáze 0 viz docs/FAZE-0.md.
 - Tvrdá pravidla se vynucují v kódu/DB. Instrukce v promptu není záruka —
   nikdy neobcházej repository vrstvu přímými INSERTy do companies/evidence.
 
+## Paměť a dokumentace (kdy a kam zapisovat)
+
+Zápis je **event-triggered** — „konec session" nepoznáš, proto zapisuj hned:
+
+- Dokončený milník / commit → aktualizuj `memory/stav.md` (stav + další krok).
+- Jakékoli rozhodnutí (moje i majitelovo) → ihned řádek do
+  `memory/rozhodnuti.md` (datum · kdo · co · proč).
+- Technický či procesní poznatek/gotcha → ihned do `memory/poznatky.md`.
+- Větší návrhy a plány → dokument do `docs/` (plány `docs/superpowers/plans/`,
+  architektura `docs/adr/`), do paměti jen odkaz.
+- Playbook Čmuchala (`playbook-cmuchal.md`) si agent doplňuje sám po bězích.
+- Routing: týmové/projektové → `memory/` v gitu; osobní preference majitele
+  napříč projekty → osobní vault (mimo git). Tajemství nikam mimo `.env`.
+- Neudržuj totéž na dvou místech — paměť odkazuje, neopisuje.
+
+## Komunikace s majitelem
+
+Majitel **není programátor**. Z toho plyne:
+
+- Shrnutí a vysvětlení piš lidsky, bez žargonu; technické detaily (názvy
+  funkcí, SQL…) jen na vyžádání nebo v odkazovaném dokumentu.
+- Vždy začni výsledkem („co se stalo / co jsem zjistil"), pak teprve detail.
+- Po větším celku práce napiš krátké shrnutí: co se změnilo, co to znamená,
+  co potřebuji od tebe (max pár odrážek).
+- U velkých či nejednoznačných zadání nejdřív parafrázuj, jak jsem zadání
+  pochopil, a teprve po potvrzení (nebo u jasných věcí rovnou) pracuj.
+- Nepředstírej jistotu: co je hotové a ověřené, řekni napřímo; co je odhad
+  nebo riziko, označ jako odhad nebo riziko.
+
+## Pravidla doptávání (kdy se ptát, kdy rozhodnout sám)
+
+**Vždy se zeptej (rozhoduje majitel):**
+- peníze a placené služby (založení projektů, API rozpočty, domény),
+- cokoli směřující ven z firmy (odeslání, publikování, kontakt s partnery),
+- právní věci, tvrzení o produktu (`claims`), šablony zpráv,
+- změna rozsahu nebo pořadí fází, mazání dat, změna tvrdých pravidel (ta se
+  ve skutečnosti nemění vůbec — jen SPEC je může změnit).
+
+**Rozhodni sám a zapiš do `memory/rozhodnuti.md`:**
+- technická, vratná rozhodnutí (knihovny, struktura kódu, pojmenování,
+  pořadí prací uvnitř schválené session).
+
+**Jak se ptát:** otázky dávkuj (ne po jedné), každá s doporučením a krátkým
+zdůvodněním; pokud se dá pokračovat na jiné části práce, neblokuj se čekáním.
+
 ## Konvence
 
 - Jazyk: čeština v kódu-komentářích, názvech domén (repo vrstva), dokumentech
@@ -42,8 +95,9 @@ fáze 0 viz docs/FAZE-0.md.
 - `src/` — jádro (deterministická logika + repository + enrichment)
 - `supabase/migrations/` — schéma; `test/` — testovací sada
 - `playbook-cmuchal.md` — playbook agenta (smí si ho měnit sám)
-- `memory/` — projektová paměť týmu (vznikne v S0.1; osobní věci patří do
-  osobního vaultu, ne sem)
+- `memory/` — projektová paměť týmu (index `memory/MEMORY.md`; osobní věci
+  patří do osobního vaultu, ne sem)
+- `docs/JAK-TO-FUNGUJE.md` — lidský popis systému pro majitele
 
 ## Příkazy
 

@@ -17,7 +17,7 @@ export interface MapaJidelna {
   lat: number;
   lng: number;
   zona_metru: number;
-  kapacita_volna: number;
+  kapacita_volna: number | null;
   aktivni: boolean;
 }
 
@@ -80,7 +80,7 @@ export function sestavHtml(
 
   const kapacita = jidelny
     .filter((j) => j.aktivni)
-    .reduce((s, j) => s + j.kapacita_volna, 0);
+    .reduce((s, j) => s + (j.kapacita_volna ?? 0), 0);
 
   return `<!doctype html>
 <html lang="cs">
@@ -178,7 +178,7 @@ DATA.jidelny.forEach(function (j) {
 
   L.marker([j.lat, j.lng]).addTo(vrstvaZon).bindPopup(
     "<b>" + j.nazev + "</b><br />" + j.adresa +
-    "<dl><dt>volná kapacita</dt><dd>" + j.kapacita_volna + " obědů/den</dd>" +
+    "<dl><dt>volná kapacita</dt><dd>" + (j.kapacita_volna === null ? "neuvedeno" : j.kapacita_volna + " obědů/den") + "</dd>" +
     "<dt>zóna</dt><dd>" + (j.zona_metru / 1000).toFixed(1) + " km</dd>" +
     "<dt>stav</dt><dd>" + (j.aktivni ? "aktivní" : "neaktivní") + "</dd></dl>"
   );

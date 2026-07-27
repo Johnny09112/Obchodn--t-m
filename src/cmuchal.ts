@@ -79,7 +79,7 @@ interface Jidelna {
   lng: number;
   kod_obce: number | null;
   zona_metru: number;
-  kapacita_volna: number;
+  kapacita_volna: number | null;
   aktivni: boolean;
 }
 
@@ -103,12 +103,19 @@ export async function spustCmuchala(
      from jidelny where id = $1`,
     [jidelnaId],
   );
+  let souhrnPoznamka: string | null = null;
   const jidelna = jidelny[0];
   if (!jidelna) throw new Error(`Jídelna ${jidelnaId} neexistuje`);
-  if (!jidelna.aktivni || jidelna.kapacita_volna <= 0) {
-    throw new Error(
-      `Jídelna ${jidelna.nazev} není aktivní nebo nemá volnou kapacitu — kapacita je strop obchodu (SPEC kap. 2)`,
-    );
+  if (!jidelna.aktivni) {
+    throw new Error(`Jídelna ${jidelna.nazev} není aktivní`);
+  }
+  // Kapacita se tu záměrně NEkontroluje: sbírat data se smí i bez ní, protože
+  // na výsledek hledání nemá vliv. Strop obchodu (SPEC kap. 2) se uplatní až
+  // u fronty na oslovení — tam bez známé kapacity neodejde nic.
+  if (jidelna.kapacita_volna === null) {
+    souhrnPoznamka = `kapacita jídelny ${jidelna.nazev} není známá — pro sběr nevadí, před oslovením ji bude potřeba doplnit`;
+  } else if (jidelna.kapacita_volna <= 0) {
+    souhrnPoznamka = `jídelna ${jidelna.nazev} nemá volnou kapacitu — firmy se posbírají, ale oslovovat nelze`;
   }
 
   const behId = await zacniBeh(db, "cmuchal", {
@@ -135,6 +142,7 @@ export async function spustCmuchala(
     nakladyUsd: 0,
     poznamkyProPlaybook: [],
   };
+  if (souhrnPoznamka) souhrn.poznamkyProPlaybook.push(souhrnPoznamka);
 
   try {
     const kandidati = await sesbirejKandidaty(deps, jidelna, souhrn, opts);

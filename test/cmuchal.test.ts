@@ -168,15 +168,6 @@ describe("spustCmuchala — obrácené hledání", () => {
     expect(s.chyby.some((c) => c.kdo === "zdroj OSM")).toBe(true);
   });
 
-  it("odmítne jídelnu bez volné kapacity", async () => {
-    const r = await db.query<{ id: string }>(
-      `insert into jidelny (nazev, adresa, lat, lng, kod_obce, kapacita_volna)
-       values ('Plná', 'x', 50, 14, 1, 0) returning id`,
-    );
-    await expect(
-      spustCmuchala({ db, ares, res, geokoder }, r[0]!.id),
-    ).rejects.toThrow(/kapacit/i);
-  });
 
   it("zaznamená běh do agent_runs (TP-13)", async () => {
     await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
@@ -298,5 +289,39 @@ describe("deník vyřazení (kalibrace pravidel)", () => {
       [s.behId],
     );
     expect(Number(v[0]!.pocet)).toBeGreaterThan(0);
+  });
+});
+
+describe("kapacita jídelny není podmínkou sběru", () => {
+  it("běh projde i když kapacita není známá", async () => {
+    const r = await db.query<{ id: string }>(
+      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, kapacita_volna)
+       values ('Bez kapacity','x','Bezdružice',$1,$2,560740,null) returning id`,
+      [JIDELNA.lat, JIDELNA.lng],
+    );
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv }, r[0]!.id);
+    expect(s.kvalifikovano).toBeGreaterThan(0);
+    expect(s.poznamkyProPlaybook.join(" ")).toMatch(/kapacita.*není známá/i);
+  });
+
+  it("nulová kapacita sběr nezastaví, jen upozorní", async () => {
+    const r = await db.query<{ id: string }>(
+      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, kapacita_volna)
+       values ('Plná','x','Bezdružice',$1,$2,560740,0) returning id`,
+      [JIDELNA.lat, JIDELNA.lng],
+    );
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv }, r[0]!.id);
+    expect(s.kvalifikovano).toBeGreaterThan(0);
+    expect(s.poznamkyProPlaybook.join(" ")).toMatch(/nemá volnou kapacitu/i);
+  });
+
+  it("neaktivní jídelnu pořád odmítne", async () => {
+    const r = await db.query<{ id: string }>(
+      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, aktivni)
+       values ('Zrušená','x','Bezdružice',50,14,560740,false) returning id`,
+    );
+    await expect(
+      spustCmuchala({ db, ares, res, geokoder }, r[0]!.id),
+    ).rejects.toThrow(/není aktivní/i);
   });
 });

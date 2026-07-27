@@ -9,7 +9,7 @@ import type { Db } from "./db.js";
 
 export interface KartotekaData {
   jidelny: Array<{
-    nazev: string; obec: string | null; kapacita_volna: number;
+    nazev: string; obec: string | null; kapacita_volna: number | null;
     zona_metru: number; aktivni: boolean;
   }>;
   firmy: Array<{
@@ -104,7 +104,11 @@ const DUVODY: Record<string, string> = {
 };
 
 export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string {
-  const kapacita = d.jidelny.filter((j) => j.aktivni).reduce((s, j) => s + j.kapacita_volna, 0);
+  const aktivni = d.jidelny.filter((j) => j.aktivni);
+  const znameKapacity = aktivni.filter((j) => j.kapacita_volna !== null);
+  const kapacita = znameKapacity.length === 0
+    ? null
+    : znameKapacity.reduce((s, j) => s + (j.kapacita_volna ?? 0), 0);
   const seZdrojem = d.evidence.length;
 
   // Seskupení podle oblasti (obce jídelny) — jinak je to jen jeden dlouhý
@@ -172,7 +176,7 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
     <div class="oblast-cisla">
       <span><b>${firmy.length}</b> firem</span>
       <span><b>${velke}</b> nad 25 zaměstnanců</span>
-      ${jidelna ? `<span><b>${jidelna.kapacita_volna}</b> obědů/den volných</span>` : ""}
+      ${jidelna ? `<span><b>${jidelna.kapacita_volna ?? "?"}</b> obědů/den volných</span>` : ""}
       <span><b>${vyrazene.length}</b> vyřazeno</span>
     </div>
   </div>
@@ -330,7 +334,7 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
     <div><b>${d.kontakty.length}</b>kontaktů</div>
     <div><b>${seZdrojem}</b>doložených údajů</div>
     <div><b>${d.jidelny.length}</b>jídelen</div>
-    <div><b>${kapacita}</b>obědů/den volných</div>
+    <div><b>${kapacita ?? "?"}</b>obědů/den volných</div>
     <div><b>${d.behy.length}</b>běhů agenta</div>
   </div>
 </div></header>
@@ -343,7 +347,7 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
     <thead><tr><th>Název</th><th>Obec</th><th class="num">Volná kapacita</th><th class="num">Zóna</th><th>Stav</th></tr></thead>
     <tbody>${d.jidelny.map((j) => `<tr>
       <td>${esc(j.nazev)}</td><td>${esc(j.obec ?? "—")}</td>
-      <td class="num mono">${j.kapacita_volna}</td>
+      <td class="num mono">${j.kapacita_volna ?? "neuvedeno"}</td>
       <td class="num mono">${(j.zona_metru / 1000).toFixed(1)} km</td>
       <td class="tiny">${j.aktivni ? "aktivní" : "neaktivní"}</td></tr>`).join("")}</tbody>
   </table>

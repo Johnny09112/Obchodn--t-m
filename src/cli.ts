@@ -60,7 +60,9 @@ async function cmdSeedJidelna(argv: string[]): Promise<void> {
       zona: { type: "string", default: "3000" },
     },
   });
-  const povinne = ["nazev", "adresa", "lat", "lng", "kod-obce", "obec", "kapacita"] as const;
+  // Kapacita je nepovinná — na sběr dat nemá vliv a vymýšlet ji je horší než
+  // ji neznat. Bude potřeba až před oslovováním (fáze 3).
+  const povinne = ["nazev", "adresa", "lat", "lng", "kod-obce", "obec"] as const;
   for (const p of povinne) {
     if (!values[p]) {
       console.error(`Chybí --${p}`);
@@ -79,7 +81,7 @@ async function cmdSeedJidelna(argv: string[]): Promise<void> {
         Number(values.lat),
         Number(values.lng),
         Number(values["kod-obce"]),
-        Number(values.kapacita),
+        values.kapacita ? Number(values.kapacita) : null,
         Number(values.zona),
       ],
     );
@@ -168,12 +170,25 @@ async function cmdStav(): Promise<void> {
     for (const [stav, pocet] of Object.entries(p.firmyDleStavu)) {
       console.log(`  ${stav}: ${pocet}`);
     }
-    console.log(`Aktivních jídelen: ${p.aktivnichJidelen}, volná kapacita: ${p.kapacitaAktivnichJidelen} obědů/den`);
     const kvalifikovanych = p.firmyDleStavu["kvalifikovany"] ?? 0;
-    if (p.kapacitaAktivnichJidelen === 0) {
-      console.log("⚠ Kapacita jídelen je 0 — prioritou je získávání jídelen, ne firem (SPEC kap. 2).");
+    console.log(`Aktivních jídelen: ${p.aktivnichJidelen}`);
+    if (p.kapacitaAktivnichJidelen === null) {
+      console.log("Volná kapacita: neznámá u všech jídelen — pro sběr dat nevadí.");
     } else {
-      console.log(`Poměr kvalifikovaných firem ke kapacitě: ${kvalifikovanych} firem / ${p.kapacitaAktivnichJidelen} obědů`);
+      console.log(
+        `Volná kapacita: ${p.kapacitaAktivnichJidelen} obědů/den` +
+          (p.jidelenBezKapacity > 0
+            ? ` (u ${p.jidelenBezKapacity} jídelen neznámá, takže je to spodní odhad)`
+            : ""),
+      );
+      if (p.kapacitaAktivnichJidelen === 0) {
+        console.log("⚠ Kapacita je 0 — prioritou je získávání jídelen, ne firem (SPEC kap. 2).");
+      } else {
+        console.log(`Poměr kvalifikovaných firem ke kapacitě: ${kvalifikovanych} firem / ${p.kapacitaAktivnichJidelen} obědů`);
+      }
+    }
+    if (p.kapacitaAktivnichJidelen !== null && p.jidelenBezKapacity > 0) {
+      console.log("Kapacita bude potřeba až před oslovováním (fáze 3).");
     }
   } finally {
     await db.close();
@@ -296,7 +311,7 @@ switch (prikaz) {
   default:
     console.log(`Cantinero — fáze 1 (Čmuchal). Příkazy:
   migrate                          založí/aktualizuje schéma (lokálně, nebo na DATABASE_URL)
-  seed-jidelna --nazev … --adresa … --obec … --lat … --lng … --kod-obce … --kapacita … [--zona 3000]
+  seed-jidelna --nazev … --adresa … --obec … --lat … --lng … --kod-obce … [--kapacita N] [--zona 3000]
   run --jidelna <id> [--limit N] [--min-zamestnancu 10]
                                    spustí Čmuchala pro jídelnu
   stav                             počty firem a kapacita jídelen

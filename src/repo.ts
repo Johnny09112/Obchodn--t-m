@@ -183,7 +183,8 @@ export type DuvodVyrazeni =
   | "bez_zamestnancu"
   | "neuvedena_velikost"
   | "poloha_neznama"
-  | "mimo_zonu";
+  | "mimo_zonu"
+  | "partnerska_jidelna";
 
 export interface VyrazeniVstup {
   behId: string;

@@ -57,6 +57,8 @@ async function cmdSeedJidelna(argv: string[]): Promise<void> {
       "kod-obce": { type: "string" },
       obec: { type: "string" },
       kapacita: { type: "string" },
+      // IČO provozovatele — brání tomu, aby se partner objevil mezi kandidáty.
+      ico: { type: "string" },
       zona: { type: "string", default: "3000" },
     },
   });
@@ -72,8 +74,8 @@ async function cmdSeedJidelna(argv: string[]): Promise<void> {
   const db = await pripojDb();
   try {
     const rows = await db.query<{ id: string }>(
-      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, kapacita_volna, zona_metru)
-       values ($1,$2,$3,$4,$5,$6,$7,$8) returning id`,
+      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, kapacita_volna, zona_metru, ico)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id`,
       [
         values.nazev,
         values.adresa,
@@ -83,6 +85,7 @@ async function cmdSeedJidelna(argv: string[]): Promise<void> {
         Number(values["kod-obce"]),
         values.kapacita ? Number(values.kapacita) : null,
         Number(values.zona),
+        values.ico ?? null,
       ],
     );
     console.log(`Jídelna založena: ${rows[0]!.id}`);

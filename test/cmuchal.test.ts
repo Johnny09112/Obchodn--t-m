@@ -292,6 +292,70 @@ describe("deník vyřazení (kalibrace pravidel)", () => {
   });
 });
 
+describe("partnerská jídelna se nesmí objevit mezi firmami", () => {
+  // Naši partneři (školy, které pro nás vaří) vyjdou ze sweepu rejstříku jako
+  // běžní zaměstnavatelé. Nabízet obědy vlastní jídelně nedává smysl.
+  const skola: AresZaznam = {
+    ico: "69974012", nazev: "Základní škola s mateřskou školou Bezdružice",
+    adresa: "Školní 183", obec: "Bezdružice", czNace: ["85200"],
+    velikostKategorie: null, kodObce: 560740,
+  };
+  const aresSeSkolou: AresKlient = {
+    overFirmu: async (i) => (i === skola.ico ? skola : null),
+    najdiFirmyVObci: async () => [skola],
+    najdiPodleJmena: async () => null,
+  };
+  const resSkola: ResKlient = {
+    nactiUdaje: async (ico) => ({
+      ico, kategorieKod: "230", kategoriePopis: "25–49", segment: "stredni",
+      bezZamestnancu: false, zdrojUrl: `https://ares.gov.cz/res/${ico}`,
+    }),
+  };
+
+  it("firmu s IČO partnerské jídelny nezaloží a zapíše důvod", async () => {
+    await db.query("update jidelny set ico = $1 where id = $2", [skola.ico, jidelnaId]);
+
+    const s = await spustCmuchala(
+      { db, ares: aresSeSkolou, res: resSkola, geokoder }, jidelnaId,
+    );
+
+    expect(s.kvalifikovano).toBe(0);
+    expect(s.partnerskychJidelen).toBe(1);
+    expect(await db.query("select 1 from companies where ico = '69974012'")).toHaveLength(0);
+
+    const v = await db.query<{ duvod: string; detail: string }>(
+      "select duvod, detail from vyrazeni where ico = '69974012'",
+    );
+    expect(v[0]!.duvod).toBe("partnerska_jidelna");
+    expect(v[0]!.detail).toContain("jídelna");
+  });
+
+  it("vyřazuje i jídelnu z jiné obce — partner je partner všude", async () => {
+    // Škola v Tlučné se objeví i při běhu na Zbůchu (sousední obec v zóně).
+    const jina = await db.query<{ id: string }>(
+      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, ico)
+       values ('ZŠ jinde','x','Tlučná',$1,$2,559491,$3) returning id`,
+      [JIDELNA.lat, JIDELNA.lng, skola.ico],
+    );
+    expect(jina).toHaveLength(1);
+
+    const s = await spustCmuchala(
+      { db, ares: aresSeSkolou, res: resSkola, geokoder }, jidelnaId,
+    );
+    expect(s.partnerskychJidelen).toBe(1);
+    expect(await db.query("select 1 from companies where ico = '69974012'")).toHaveLength(0);
+  });
+
+  it("běžnou firmu bez vazby na jídelnu nechá projít", async () => {
+    await db.query("update jidelny set ico = '25242407' where id = $1", [jidelnaId]);
+    const s = await spustCmuchala(
+      { db, ares: aresSeSkolou, res: resSkola, geokoder }, jidelnaId,
+    );
+    expect(s.partnerskychJidelen).toBe(0);
+    expect(s.kvalifikovano).toBe(1);
+  });
+});
+
 describe("kapacita jídelny není podmínkou sběru", () => {
   it("běh projde i když kapacita není známá", async () => {
     const r = await db.query<{ id: string }>(

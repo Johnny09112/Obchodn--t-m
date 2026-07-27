@@ -62,6 +62,8 @@ export interface CmuchalSouhrn {
   bezZamestnancu: number;
   podLimitem: number;
   agentur: number;
+  /** Kandidátů vyřazených proto, že jsou to naše vlastní partnerské jídelny. */
+  partnerskychJidelen: number;
   vyloucenyObor: number;
   nesparovano: number;
   zahozeno: number;
@@ -134,6 +136,7 @@ export async function spustCmuchala(
     bezZamestnancu: 0,
     podLimitem: 0,
     agentur: 0,
+    partnerskychJidelen: 0,
     vyloucenyObor: 0,
     nesparovano: 0,
     zahozeno: 0,
@@ -144,13 +147,23 @@ export async function spustCmuchala(
   };
   if (souhrnPoznamka) souhrn.poznamkyProPlaybook.push(souhrnPoznamka);
 
+  // Naši partneři nejsou zákazníci. Bereme IČO všech jídelen, ne jen té
+  // aktuální — škola z Tlučné se objeví i při běhu na sousedním Zbůchu.
+  const partnerskaIca = new Set(
+    (await db.query<{ ico: string }>("select ico from jidelny where ico is not null"))
+      .map((j) => j.ico),
+  );
+
   try {
     const kandidati = await sesbirejKandidaty(deps, jidelna, souhrn, opts);
     souhrn.kandidatu = kandidati.length;
 
     for (const kandidat of kandidati.slice(0, opts.limit ?? kandidati.length)) {
       try {
-        await zpracujKandidata(deps, jidelna, kandidat, souhrn, opts.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU);
+        await zpracujKandidata(deps, jidelna, kandidat, souhrn, {
+          minZamestnancu: opts.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU,
+          partnerskaIca,
+        });
       } catch (e) {
         souhrn.chyby.push({
           kdo: kandidat.ico ?? kandidat.nazev,
@@ -280,9 +293,10 @@ async function zpracujKandidata(
   jidelna: Jidelna,
   kandidat: Kandidat,
   souhrn: CmuchalSouhrn,
-  minZamestnancu: number,
+  pravidla: { minZamestnancu: number; partnerskaIca: Set<string> },
 ): Promise<void> {
   const { db } = deps;
+  const { minZamestnancu, partnerskaIca } = pravidla;
 
   /** Vyřazení kandidáta — vždy i se záznamem do deníku, ať se dá kalibrovat. */
   const vyrad = async (duvod: DuvodVyrazeni, detail?: string, ico?: string) => {
@@ -312,6 +326,15 @@ async function zpracujKandidata(
   if (!jeValidniIco(ico)) {
     souhrn.zahozeno++;
     await vyrad("neplatne_ico", `IČO ${ico} neprošlo kontrolním součtem`, ico);
+    return;
+  }
+
+  // Partnerská jídelna se ze sweepu rejstříku tváří jako běžný zaměstnavatel.
+  // Nabízet obědy tomu, kdo je pro nás vaří, nedává smysl.
+  if (partnerskaIca.has(ico)) {
+    souhrn.partnerskychJidelen++;
+    souhrn.poznamkyProPlaybook.push(`vlastní jídelna mezi kandidáty: ${kandidat.nazev}`);
+    await vyrad("partnerska_jidelna", "je to naše partnerská jídelna, ne zákazník", ico);
     return;
   }
 

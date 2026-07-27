@@ -2,6 +2,19 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-27 · majitel · **Cílem je postupně projít celou ČR**, ne jen okolní
+  obce. Velká města (Praha, Brno, Ostrava, K. Vary) musí fungovat stejně jako
+  vesnice. → vynutilo si přechod na kompletní registr ČSÚ (viz níž).
+- 2026-07-27 · Claude · **Zdrojem seznamu firem je kompletní registr ČSÚ**
+  (otevřená data `res_data.csv`), ne dotazy do vyhledávacího API ARES.
+  Důvod: API vydá nejvýš 1 000 výsledků na dotaz, registr obsahuje všechny
+  subjekty najednou a navíc nese velikost firmy, takže se malé firmy
+  odfiltrují dřív, než se na ně sáhne. **TP-1 se nemění** — registr dává jen
+  seznam kandidátů, firma pořád vzniká až po ověření IČO v ARES.
+  Sweep ARES zůstal jako záloha. Otevřené: licence dat (viz `stav.md`).
+- 2026-07-27 · majitel · **Kapacity: Zbůch 20, Tlučná 20 obědů/den.**
+  Bezdružice 10 (beze změny), Hrádek zatím neznámý.
+
 - 2026-07-27 · Claude · **Sweep rejstříku je nástroj pro obce, ne pro města.**
   Dotaz se zužuje na právní formy zaměstnavatelů (`FORMY_ZAMESTNAVATELU`),
   což vyřeší vše do velikosti Stříbra (1 580 → 285). Velká města se sweepem

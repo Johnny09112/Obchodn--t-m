@@ -17,7 +17,12 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **143 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **157 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **Zdrojem seznamu firem je kompletní registr ČSÚ** (`src/registr.ts`,
+  otevřená data, 541 MB v `data/cache/`). Limit 1 000 výsledků tím přestal
+  platit — funguje stejně na vesnici i v Praze. Adresovatelný trh celé ČR:
+  **35 138 firem nad 25 zaměstnanců** (Praha 9 337, Brno 2 091, Plzeň 719).
+  Detaily a pasti v `poznatky.md`.
 - Bytové domy (SVJ, bytová družstva) se nezařazují; živnostníci mají vlastní
   část kartotéky. Rozlišuje právní forma z rejstříku (`companies.pravni_forma`,
   migrace 0008), ne název. Data: 208 → **110 firem + 57 živnostníků**,
@@ -52,16 +57,20 @@ Kapacita známá jen u Bezdružic (10 obědů/den). Všech 20 firem nad
 
 ## Další krok (v tomto pořadí)
 
-1. **Rozhodnout, jestli se jde do Stříbra** — technicky je odblokované
-   (285 subjektů projde), ale jídelna ve Stříbře není mezi odsouhlasenými
-   pěti. Rozhoduje majitel.
-2. **Plzeň přes MPSV + OpenStreetMap**, ne přes sweep rejstříku. 342
-   zaměstnavatelů z otevřených dat MPSV je hotový seznam; sweep je tam
-   špatný nástroj (viz rozhodnutí 2026-07-27). Potřebná je jídelna
-   34. ZŠ Plzeň v DB.
-3. **Projít vzorek z 1 288 subjektů „velikost neuvedena"** — můžou se tam
-   schovávat skuteční zaměstnavatelé, dnes je pouštíme jen ze slabšího zdroje.
+1. **Doplnit jídelny, kde chceme sbírat.** Sběr je technicky odblokovaný
+   všude v ČR, ale běh potřebuje jídelnu s IČO a souřadnicemi. Chybí
+   34. ZŠ Plzeň (odsouhlasená) a jakákoli jídelna pro Stříbro (neodsouhlasená
+   — majitel chce Stříbro pustit, ale partner tam zatím není).
+2. **Ostrý běh na Plzni** — 719 firem nad 25 zam. v 10 obvodech. První
+   zkouška velkého města; pozor na počet dotazů na geokódování (1 req/s).
+3. **Projít vzorek subjektů „velikost neuvedena"** — celostátně jich je
+   480 498, takže číslo 35 138 cílů je spodní odhad. Můžou se tam schovávat
+   skuteční zaměstnavatelé.
 4. Zbytek fáze 0 (tvrzení, šablony, doména, právník — viz `docs/FAZE-0.md`).
+
+**Otevřené k dořešení:** licence otevřených dat ČSÚ není na stránkách
+produktu výslovně uvedená (kontakt: michal.cigas@csu.gov.cz). Před ostrým
+komerčním provozem to chce potvrdit — právní věc, rozhoduje majitel.
 
 **Otevřené k dořešení:** skóre se po rešerši nepřepočítává — firma s doloženou
 vlastní jídelnou si drží původní skóre z doby sběru. Před frontou na oslovení

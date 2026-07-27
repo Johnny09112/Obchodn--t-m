@@ -1,5 +1,48 @@
 # Poznatky a gotchas
 
+## Kompletní registr ČSÚ — konec limitu 1 000 (2026-07-27)
+
+`https://opendata.csu.gov.cz/soubory/od/od_org03/res_data.csv` — **celý
+registr ekonomických subjektů ČR v jednom souboru.** 541 MB, 3,5 mil. řádků,
+aktualizace 2× měsíčně (k 15. a ke konci měsíce), UTF-8 bez BOM.
+
+Sloupce, na kterých stojíme: `ICO`, `FIRMA`, `FORMA` (právní forma),
+**`KATPO` (kategorie počtu pracovníků = velikost)**, `NACE`/`NACE2025`,
+`ICZUJ` (RÚIAN kód základní územní jednotky), `DDATZAN` (datum zániku),
+`OKRESLAU`, `OBEC_TEXT`, `PSC`, `ULICE_TEXT`, `CDOM`.
+
+**Proč to mění architekturu:** `KATPO` je v souboru zadarmo. Dřív se velikost
+zjišťovala jedním HTTP dotazem na každou firmu, takže **nešlo filtrovat dřív,
+než se firma stáhla**. Teď práh velikosti odpadne u zdroje.
+
+Čísla ověřená naostro (živé subjekty, formy zaměstnavatelů, 25+ zaměstnanců):
+
+| území | subjektů | z toho cílů |
+|---|---|---|
+| Bezdružice | 216 | 4 |
+| Stříbro | 1 585 | 22 |
+| Plzeň | 50 661 | **719** (10 obvodů) |
+| Praha | 747 076 | **9 337** (57 obvodů) |
+| Brno | 157 612 | 2 091 |
+| Ostrava | 77 875 | 1 109 |
+| **celá ČR** | 3 518 303 | **35 138** |
+
+Adresovatelný trh ČR leží v 3 275 územních jednotkách; medián jednotky
+jsou 2 firmy, jen 2 jednotky mají přes 1 000.
+
+### Pasti
+
+- **„Hrádek" je v ČR ŠESTKRÁT.** Filtrovat podle `OBEC_TEXT` by natáhlo firmy
+  z cizích obcí přímo do zóny jídelny. **Rozhoduje `ICZUJ`**, a obvody města
+  se dohledávají přes dvojici obec + okres, ne přes samotný název.
+- **U statutárních měst `ICZUJ` ≠ kód obce** — je to městský obvod (Plzeň 10,
+  Praha 57). U běžné obce se obojí rovná (ověřeno na 4 obcích).
+- **480 498 zaměstnavatelů má velikost neuvedenou.** Číslo 35 138 je proto
+  spodní odhad trhu, ne přesný počet.
+- Index se z toho souboru **záměrně nestaví** — čte se proudově (~15 s).
+  Odvozený index by potřeboval verzování a na tom už jednou tiše selhal
+  filtr agentur (viz níž).
+
 ## Limit 1 000 v ARES: co filtruje a co se jen tváří (2026-07-27)
 
 Ověřeno reálnými dotazy na `/ekonomicke-subjekty/vyhledat`. **Jediné dva

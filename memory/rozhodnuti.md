@@ -9,6 +9,15 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 - 2026-07-26 · majitel · **E-mail se bude posílat z Outlooku** (Microsoft 365).
   Ověřit způsob autentizace — Microsoft ruší Basic auth pro SMTP, půjde
   nejspíš přes Graph API. Detail do S0.7.
+- 2026-07-27 · Claude · **Mapa vyřešena jako generovaný statický soubor**
+  (`npm run cli -- mapa` → `docs/vizualizace/mapa.html`, Leaflet + dlaždice
+  OpenStreetMap). Funguje pro oba scénáře spolupráce: při sdílené DB si každý
+  vygeneruje mapu ze stejných dat, soubor jde i poslat. Přepnutí lokální ↔
+  sdílená DB je jen `DATABASE_URL` — kód se nemění.
+- 2026-07-27 · majitel · **Model spolupráce s kolegou:** sdílená databáze
+  (Supabase), ale **každý používá své vlastní předplatné Claude** a spouští
+  agenta u sebe. Nevyžaduje API tokeny ani server. Otevřeno, jestli to bude
+  potřeba vůbec (možná zůstane jednouživatelské).
 - 2026-07-26 · majitel · **Mapa má být na reálném mapovém podkladu**, aby byly
   vidět i malé obce. Pozor: publikované artifacty mají zakázané externí
   požadavky → dlaždice fungují jen v lokální verzi stránky.

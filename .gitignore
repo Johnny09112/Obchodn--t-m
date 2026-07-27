@@ -6,3 +6,6 @@ dist/
 # Lokální databáze (obsahuje data o firmách — do gitu nepatří).
 # Záloha = zkopírovat celý adresář data/ jinam.
 data/
+
+# Vygenerovaná mapa (vzniká z dat, nepatří do gitu)
+docs/vizualizace/mapa.html

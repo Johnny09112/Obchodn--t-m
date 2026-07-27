@@ -7,6 +7,7 @@ import { vytvorGeokoder } from "./geocode.js";
 import { vytvorEnricher, type Enricher } from "./enrich.js";
 import { spustCmuchala } from "./cmuchal.js";
 import { metrikyFaze1, prehledStavu } from "./metriky.js";
+import { vygenerujMapu } from "./mapa.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -162,6 +163,22 @@ async function cmdStav(): Promise<void> {
   }
 }
 
+async function cmdMapa(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: { vystup: { type: "string", default: "docs/vizualizace/mapa.html" } },
+  });
+  const db = await pripojDb();
+  try {
+    const v = await vygenerujMapu(db, values.vystup!);
+    console.log(`Mapa vygenerována: ${v.cesta}`);
+    console.log(`  jídelen: ${v.jidelen}, firem se souřadnicemi: ${v.firem}`);
+    console.log("  Otevři dvojklikem v prohlížeči (mapový podklad se stahuje z internetu).");
+  } finally {
+    await db.close();
+  }
+}
+
 async function cmdMetriky(): Promise<void> {
   const db = await pripojDb();
   try {
@@ -191,6 +208,9 @@ switch (prikaz) {
   case "stav":
     await cmdStav();
     break;
+  case "mapa":
+    await cmdMapa(zbytek);
+    break;
   case "metriky":
     await cmdMetriky();
     break;
@@ -200,6 +220,7 @@ switch (prikaz) {
   seed-jidelna --nazev … --adresa … --lat … --lng … --kod-obce … --kapacita … [--zona 3000]
   run --jidelna <id> [--limit N]   spustí Čmuchala pro jídelnu
   stav                             počty firem a kapacita jídelen
+  mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
     process.exit(prikaz ? 1 : 0);
 }

@@ -1,29 +1,66 @@
 # Stav projektu
 
-_Aktualizováno: 2026-07-26_
+_Aktualizováno: 2026-07-27_
 
 ## Kde jsme
 
-- Běží **fáze 0 (přípravná)** — orchestrace v `docs/FAZE-0.md` (S0.1–S0.10).
-- **Režim provozu rozhodnut:** předplatné Claude Max 5×, ne API tokeny.
-  Cantinero není samostatná appka — je to sada nástrojů (kód) + agent
-  v Claude Code. Cílový objem 20–50 firem denně.
-- **Databáze běží lokálně** v `data/pgdata` (PGlite), migrace idempotentní,
-  `data/` mimo git. Supabase projekty majitele nedotčené, nic pozastaveno.
-- Kód fáze 1 (Čmuchal) hotový, 53 testů zelených, ostře **neběží** — čeká na
-  jídelny (S0.4) a go/no-go (S0.9).
+Fáze 0 (přípravná) běží, ale **Čmuchal už sbírá naostro** — kalibrujeme ho
+na reálných datech dřív, než se pustí zbytek fáze 0.
 
-## Rozpracováno / hotovo v S0.1 a S0.6
+**Hotovo a ověřené ostrým během:**
+- Čmuchal v2 — obrácené hledání „kde se pracuje", ne „kdo je kde zapsaný".
+  Tři zdroje: otevřená data MPSV (pracoviště), OpenStreetMap (fyzická místa),
+  sweep rejstříku podle obce (nejúplnější, ale nutný filtr na zaměstnance).
+- Filtry: bez zaměstnanců, agentury práce, nevhodné obory (CZ-NACE 56 a 78),
+  práh velikosti (výchozí 10 zaměstnanců — jen značí, nevyhazuje).
+- Deník vyřazení (`vyrazeni`) — u každého kandidáta důvod i detail.
+- Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
+  definice agenta v `.claude/agents/cmuchal.md`.
+- Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
+- **121 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
 
-- CLAUDE.md doplněn o start session, paměť, komunikaci, doptávání.
-- Projektová paměť založena (`memory/`).
-- `docs/JAK-TO-FUNGUJE.md` — lidský popis; čeká na potvrzení majitele.
-- Lokální DB + idempotentní migrace hotové a ověřené přes CLI.
+**Data (v `data/pgdata-v5`):** 209 firem ve 4 oblastech, integrita ověřená.
+Zbůch 55 firem (10 nad 25 zam.) · Tlučná 65 (5) · Bezdružice 24 (4) ·
+Hrádek 65 (2). Kapacita známá jen u Bezdružic (10 obědů/den).
 
-## Další krok
+## Další krok (v tomto pořadí)
 
-1. **Majitel: seznam jídelen (S0.4)** — bez nich není území; blokuje fázi 1.
-2. Přepsat `src/enrich.ts` z API cesty na nástroj pro agenta (dořešení S0.2)
-   + sepsat ADR `docs/adr/0001-technologie.md`.
-3. S0.3 — definice agentů a skillů.
-4. Analýzu produktizace (S0.10) otevřít až po vyhodnocení fáze 1.
+1. **Vyřadit vlastní jídelnu ze seznamu firem** — v Tlučné je mezi kandidáty
+   ZŠ, která je zároveň náš partner. Sama sobě obědy prodávat nebude.
+2. **Projít vzorek z 1 288 subjektů „velikost neuvedena"** — můžou se tam
+   schovávat skuteční zaměstnavatelé, dnes je pouštíme jen ze slabšího zdroje.
+3. **Vyřešit limit 1 000 výsledků ARES** — blokuje Stříbro i Plzeň
+   (Plzeň = 342 zaměstnavatelů jen v datech MPSV). Zúžit dotaz podle
+   městské části nebo oboru.
+4. Pak rešerše kontaktů na nejlepší kandidáty a zbytek fáze 0
+   (tvrzení, šablony, doména, právník — viz `docs/FAZE-0.md`).
+
+## Co čeká na majitele
+
+- Skutečné kapacity Zbůchu, Tlučné a Hrádku (potřeba až před fází 3).
+- Projít vyřazené kandidáty a říct, co tam nepatří → brousíme pravidla.
+- Rozhodnutí o sdílené databázi, až bude systém používat i kolega.
+
+## Kde co hledat
+
+| Co | Kde |
+|---|---|
+| Závazné zadání | `SPEC.md` |
+| Orchestrace fáze 0 | `docs/FAZE-0.md` |
+| Lidský popis systému | `docs/JAK-TO-FUNGUJE.md` |
+| Rozhodnutí (co, kdo, proč) | `memory/rozhodnuti.md` |
+| Technické poznatky a pasti | `memory/poznatky.md` |
+| Postřehy z rešerší | `playbook-cmuchal.md` |
+| Vizuální výstupy | `docs/vizualizace/` (mapa a kartotéka se generují) |
+
+## Příkazy
+
+```bash
+npm test
+CANTINERO_DATA_DIR=data/pgdata-v5 npm run cli -- stav
+CANTINERO_DATA_DIR=data/pgdata-v5 npm run cli -- kartoteka
+CANTINERO_DATA_DIR=data/pgdata-v5 NOMINATIM_CONTACT=… npm run cli -- run --jidelna <id>
+```
+
+**Pozor:** aktivní data jsou v `data/pgdata-v5`, ne ve výchozím `data/pgdata`
+(starší běhy). Databázi smí otevřít jen jeden proces naráz — hlídá to zámek.

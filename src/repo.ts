@@ -174,6 +174,39 @@ export async function nastavStav(db: Db, ico: string, novyStav: StavFaze1): Prom
   });
 }
 
+export type DuvodVyrazeni =
+  | "neplatne_ico"
+  | "neni_v_ares"
+  | "nesparovano"
+  | "agentura"
+  | "vylouceny_obor"
+  | "bez_zamestnancu"
+  | "neuvedena_velikost"
+  | "poloha_neznama"
+  | "mimo_zonu";
+
+export interface VyrazeniVstup {
+  behId: string;
+  jidelnaId: string;
+  zdroj: "mpsv" | "osm" | "ares";
+  nazev: string;
+  ico?: string;
+  duvod: DuvodVyrazeni;
+  detail?: string;
+}
+
+/**
+ * Zapíše, proč kandidát nepostoupil dál. Slouží ke kalibraci pravidel —
+ * bez toho nejde poznat, jestli filtr nevyhazuje i to, co má projít.
+ */
+export async function zaznamVyrazeni(db: Db, v: VyrazeniVstup): Promise<void> {
+  await db.query(
+    `insert into vyrazeni (beh_id, jidelna_id, ico, nazev, zdroj, duvod, detail)
+     values ($1,$2,$3,$4,$5,$6,$7)`,
+    [v.behId, v.jidelnaId, v.ico ?? null, v.nazev, v.zdroj, v.duvod, v.detail ?? null],
+  );
+}
+
 /** TP-13: auditovatelnost — každý běh agenta do agent_runs. */
 export async function zacniBeh(db: Db, agent: string, vstup: unknown): Promise<string> {
   const rows = await db.query<{ id: string }>(

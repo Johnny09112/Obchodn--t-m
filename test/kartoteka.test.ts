@@ -54,9 +54,34 @@ describe("sestavKartoteku", () => {
 
   it("prázdná kartotéka se pozná", () => {
     const html = sestavKartoteku(
-      { jidelny: [], firmy: [], kontakty: [], evidence: [], behy: [] },
+      { jidelny: [], firmy: [], kontakty: [], evidence: [], vyrazeni: [], behy: [] },
       "1. 1. 2026",
     );
     expect(html).toContain("Kartotéka je zatím prázdná");
+  });
+});
+
+describe("členění podle oblastí a deník vyřazení", () => {
+  it("seskupí firmy podle obce jídelny a vypíše počty", async () => {
+    const html = sestavKartoteku(await nactiKartoteku(db), "1. 1. 2026");
+    expect(html).toContain("Bezdružice");
+    expect(html).toContain("obědů/den volných");
+    expect(html).toContain("nad 25 zaměstnanců");
+  });
+
+  it("vypíše vyřazené kandidáty i s důvodem", async () => {
+    const d = await nactiKartoteku(db);
+    d.vyrazeni = [
+      { nazev: "Prázdná schránka s.r.o.", ico: "05499861", zdroj: "ares",
+        duvod: "bez_zamestnancu", detail: "statistický registr: bez zaměstnanců",
+        oblast: "Bezdružice" },
+      { nazev: "Agentura X s.r.o.", ico: "21033137", zdroj: "mpsv",
+        duvod: "agentura", detail: "nabírá pro SIGNUM", oblast: "Bezdružice" },
+    ];
+    const html = sestavKartoteku(d, "1. 1. 2026");
+    expect(html).toContain("Vyřazení kandidáti (2)");
+    expect(html).toContain("bez zaměstnanců");
+    expect(html).toContain("agentura práce");
+    expect(html).toContain("nabírá pro SIGNUM");
   });
 });

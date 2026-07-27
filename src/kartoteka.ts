@@ -16,6 +16,7 @@ export interface KartotekaData {
     ico: string; nazev: string; obec: string | null; stav: string;
     skore: number | null; vzdalenost_m: number | null; v_zone: boolean | null;
     velikost_kategorie: string | null; ma_vlastni_jidelnu: boolean | null;
+    jidelna: string | null; oblast: string | null;
     zpusob_stravovani: string | null; cz_nace: string[];
     obohaceno_at: string | null;
   }>;
@@ -27,6 +28,10 @@ export interface KartotekaData {
   evidence: Array<{
     ico: string | null; atribut: string; hodnota: string;
     zdroj_url: string; citace: string | null; ziskano_at: string;
+  }>;
+  vyrazeni: Array<{
+    nazev: string; ico: string | null; zdroj: string; duvod: string;
+    detail: string | null; oblast: string | null;
   }>;
   behy: Array<{
     agent: string; zacatek: string; konec: string | null;
@@ -40,9 +45,14 @@ export async function nactiKartoteku(db: Db): Promise<KartotekaData> {
       `select nazev, obec, kapacita_volna, zona_metru, aktivni from jidelny order by nazev`,
     ),
     firmy: await db.query(
-      `select ico, nazev, obec, stav, skore, vzdalenost_m, v_zone, velikost_kategorie,
-              ma_vlastni_jidelnu, zpusob_stravovani, cz_nace, obohaceno_at
-       from companies order by skore desc nulls last`,
+      `select c.ico, c.nazev, c.obec, c.stav, c.skore, c.vzdalenost_m, c.v_zone,
+              c.velikost_kategorie, c.ma_vlastni_jidelnu, c.zpusob_stravovani,
+              c.cz_nace, c.obohaceno_at,
+              j.nazev as jidelna,
+              coalesce(j.obec, 'bez oblasti') as oblast
+       from companies c
+       left join jidelny j on j.id = c.nejblizsi_jidelna_id
+       order by coalesce(j.obec, 'zzz'), c.skore desc nulls last`,
     ),
     kontakty: await db.query(
       `select ico, jmeno, prijmeni, pozice, email, telefon, uroven_adresy, zdroj_url
@@ -51,6 +61,13 @@ export async function nactiKartoteku(db: Db): Promise<KartotekaData> {
     evidence: await db.query(
       `select ico, atribut, hodnota, zdroj_url, citace, ziskano_at
        from evidence order by ico, atribut`,
+    ),
+    vyrazeni: await db.query(
+      `select v.nazev, v.ico, v.zdroj, v.duvod, v.detail,
+              coalesce(j.obec, 'bez oblasti') as oblast
+       from vyrazeni v
+       left join jidelny j on j.id = v.jidelna_id
+       order by coalesce(j.obec, 'zzz'), v.duvod, v.nazev`,
     ),
     behy: await db.query(
       `select agent, zacatek, konec, vystup, naklady_usd
@@ -73,12 +90,28 @@ const UROVNE: Record<number, string> = {
   1: "poptávková", 2: "obecná", 3: "jmenná",
 };
 
+/** Lidské popisy důvodů vyřazení — podklad pro ladění pravidel. */
+const DUVODY: Record<string, string> = {
+  neplatne_ico: "neplatné IČO",
+  neni_v_ares: "není v rejstříku",
+  nesparovano: "název nespárován",
+  agentura: "agentura práce",
+  vylouceny_obor: "nevhodný obor",
+  bez_zamestnancu: "bez zaměstnanců",
+  neuvedena_velikost: "velikost neuvedena",
+  poloha_neznama: "adresu nelze zaměřit",
+  mimo_zonu: "mimo zónu",
+};
+
 export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string {
   const kapacita = d.jidelny.filter((j) => j.aktivni).reduce((s, j) => s + j.kapacita_volna, 0);
   const seZdrojem = d.evidence.length;
 
-  const firmyHtml = d.firmy
-    .map((f) => {
+  // Seskupení podle oblasti (obce jídelny) — jinak je to jen jeden dlouhý
+  // seznam, ve kterém nejde poznat Zbůch od Bezdružic.
+  const oblasti = [...new Set(d.firmy.map((f) => f.oblast ?? "bez oblasti"))];
+
+  const firmaHtml = (f: KartotekaData["firmy"][number]) => {
       const ev = d.evidence.filter((e) => e.ico === f.ico);
       const ko = d.kontakty.filter((k) => k.ico === f.ico);
       return `
@@ -118,6 +151,58 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
       </li>`).join("")}</ul>`}
   </div>
 </details>`;
+  };
+
+  const oblastiHtml = oblasti
+    .map((o) => {
+      const firmy = d.firmy.filter((f) => (f.oblast ?? "bez oblasti") === o);
+      const vyrazene = d.vyrazeni.filter((v) => (v.oblast ?? "bez oblasti") === o);
+      const jidelna = d.jidelny.find((j) => j.obec === o);
+      const velke = firmy.filter((f) => f.velikost_kategorie !== "mikro").length;
+
+      const podleDuvodu = vyrazene.reduce<Record<string, number>>((a, v) => {
+        a[v.duvod] = (a[v.duvod] ?? 0) + 1;
+        return a;
+      }, {});
+
+      return `
+<section class="oblast">
+  <div class="oblast-hlava">
+    <h2>${esc(o)}</h2>
+    <div class="oblast-cisla">
+      <span><b>${firmy.length}</b> firem</span>
+      <span><b>${velke}</b> nad 25 zaměstnanců</span>
+      ${jidelna ? `<span><b>${jidelna.kapacita_volna}</b> obědů/den volných</span>` : ""}
+      <span><b>${vyrazene.length}</b> vyřazeno</span>
+    </div>
+  </div>
+  ${firmy.map(firmaHtml).join("")}
+
+  ${vyrazene.length === 0 ? "" : `
+  <details class="vyrazene">
+    <summary>Vyřazení kandidáti (${vyrazene.length}) — proč neprošli</summary>
+    <div class="detail">
+      <p class="tiny muted">
+        ${Object.entries(podleDuvodu)
+          .sort((a, b) => b[1] - a[1])
+          .map(([duvod, n]) => `${esc(DUVODY[duvod] ?? duvod)}: <b>${n}</b>`)
+          .join(" · ")}
+      </p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Firma</th><th>Zdroj</th><th>Důvod</th><th>Detail</th></tr></thead>
+          <tbody>${vyrazene
+            .map((v) => `<tr>
+              <td>${esc(v.nazev)}${v.ico ? ` <span class="tiny mono">${esc(v.ico)}</span>` : ""}</td>
+              <td class="mono tiny">${esc(v.zdroj)}</td>
+              <td><span class="duvod">${esc(DUVODY[v.duvod] ?? v.duvod)}</span></td>
+              <td class="tiny">${esc(v.detail ?? "—")}</td>
+            </tr>`).join("")}</tbody>
+        </table>
+      </div>
+    </div>
+  </details>`}
+</section>`;
     })
     .join("");
 
@@ -213,6 +298,24 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
     border-bottom:1px solid var(--line); background:var(--surface-2); }
   td { padding:9px 12px; border-bottom:1px solid var(--line-soft); }
   tr:last-child td { border-bottom:none; }
+  section.oblast { margin-bottom:40px; }
+  .oblast-hlava { border-bottom:2px solid var(--accent); padding-bottom:8px;
+    margin:36px 0 14px; display:flex; flex-wrap:wrap; gap:8px 20px; align-items:baseline; }
+  .oblast-hlava h2 { margin:0; font-size:1.35rem; font-weight:800; letter-spacing:-0.02em; }
+  .oblast-cisla { display:flex; flex-wrap:wrap; gap:14px; font-family:var(--mono);
+    font-size:.72rem; color:var(--ink-faint); }
+  .oblast-cisla b { color:var(--ink); font-size:.95rem; }
+  details.vyrazene { background:var(--surface-2); border:1px solid var(--line);
+    margin-top:12px; }
+  details.vyrazene summary { padding:10px 16px; cursor:pointer; font-family:var(--mono);
+    font-size:.78rem; color:var(--ink-soft); }
+  details.vyrazene summary::-webkit-details-marker { display:none; }
+  .duvod { font-family:var(--mono); font-size:.68rem; text-transform:uppercase;
+    letter-spacing:.04em; padding:2px 7px; border-radius:2px;
+    background:var(--warn-soft); color:var(--warn); white-space:nowrap; }
+  .table-scroll { overflow-x:auto; }
+  .table-scroll table { min-width:640px; }
+  .muted { color:var(--ink-soft); }
   .prazdno { background:var(--surface); border:1px dashed var(--line); padding:24px;
     text-align:center; font-family:var(--mono); font-size:.82rem; color:var(--ink-faint); }
   footer { margin:40px 0 60px; color:var(--ink-faint); font-size:.8rem; }
@@ -233,8 +336,7 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
 </div></header>
 
 <div class="wrap">
-  <h2>Firmy</h2>
-  ${d.firmy.length === 0 ? '<p class="prazdno">Kartotéka je zatím prázdná.</p>' : firmyHtml}
+  ${d.firmy.length === 0 ? '<p class="prazdno">Kartotéka je zatím prázdná.</p>' : oblastiHtml}
 
   <h2>Jídelny</h2>
   <table>

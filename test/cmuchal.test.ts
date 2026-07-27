@@ -241,13 +241,18 @@ describe("práh velikosti firmy", () => {
     }),
   });
 
-  it("firmu pod prahem vyřadí a spočítá", async () => {
+  it("mikrofirmu ULOŽÍ, jen ji označí jako podlimitní", async () => {
+    // Majitel na mikropodniky cílí jinou formou reklamy, takže se nesmí
+    // zahodit — musí zůstat v kartotéce, jen mimo frontu na e-mailové oslovení.
     const s = await spustCmuchala(
       { db, ares: aresMaly, res: resSKodem("120"), geokoder }, // 1–5 zaměstnanců
       jidelnaId, { minZamestnancu: 10 },
     );
     expect(s.podLimitem).toBe(1);
-    expect(s.kvalifikovano).toBe(0);
+    expect(s.kvalifikovano).toBe(1);
+
+    const f = await db.query("select 1 from companies where ico = '48362956'");
+    expect(f).toHaveLength(1);
   });
 
   it("firmu nad prahem pustí dál", async () => {
@@ -265,5 +270,33 @@ describe("práh velikosti firmy", () => {
       jidelnaId, { minZamestnancu: 0 },
     );
     expect(s.kvalifikovano).toBe(1);
+  });
+});
+
+describe("deník vyřazení (kalibrace pravidel)", () => {
+  it("u každého vyřazení zapíše důvod i detail", async () => {
+    await spustCmuchala({ db, ares, res, geokoder, mpsv, osm }, jidelnaId, {
+      aresSweep: true,
+    });
+    const v = await db.query<{ nazev: string; duvod: string; detail: string; zdroj: string }>(
+      "select nazev, duvod, detail, zdroj from vyrazeni order by duvod",
+    );
+    expect(v.length).toBeGreaterThan(0);
+    // Prázdná schránka musí být zapsaná i s důvodem.
+    const schranka = v.find((x) => x.duvod === "bez_zamestnancu");
+    expect(schranka).toBeTruthy();
+    expect(schranka!.detail).toContain("bez zaměstnanců");
+    expect(["mpsv", "osm", "ares"]).toContain(schranka!.zdroj);
+  });
+
+  it("vyřazení je navázané na běh, takže jde dohledat kdy vzniklo", async () => {
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv, osm }, jidelnaId, {
+      aresSweep: true,
+    });
+    const v = await db.query<{ pocet: string }>(
+      "select count(*)::text as pocet from vyrazeni where beh_id = $1",
+      [s.behId],
+    );
+    expect(Number(v[0]!.pocet)).toBeGreaterThan(0);
   });
 });

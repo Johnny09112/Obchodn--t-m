@@ -18,6 +18,8 @@ import {
   zalozFirmu,
   zapisAtribut,
   zapisKontakt,
+  zaznamVyrazeni,
+  type DuvodVyrazeni,
 } from "./repo.js";
 
 export interface CmuchalDeps {
@@ -174,6 +176,11 @@ async function sesbirejKandidaty(
         // ti lidé fyzicky pracují. Pokud ji inzerát prozradí, přidáme rovnou ji.
         if (z.jeAgentura) {
           souhrn.agentur++;
+          await zaznamVyrazeni(deps.db, {
+            behId: souhrn.behId, jidelnaId: jidelna.id, zdroj: "mpsv",
+            nazev: z.nazev, ico: z.ico, duvod: "agentura",
+            detail: z.proKoho ? `nabírá pro ${z.proKoho}` : "označeno jako agentura práce",
+          });
           souhrn.poznamkyProPlaybook.push(
             `agentura práce vyřazena: ${z.nazev}${z.proKoho ? ` (nabírala pro ${z.proKoho})` : ""}`,
           );
@@ -269,6 +276,19 @@ async function zpracujKandidata(
 ): Promise<void> {
   const { db } = deps;
 
+  /** Vyřazení kandidáta — vždy i se záznamem do deníku, ať se dá kalibrovat. */
+  const vyrad = async (duvod: DuvodVyrazeni, detail?: string, ico?: string) => {
+    await zaznamVyrazeni(db, {
+      behId: souhrn.behId,
+      jidelnaId: jidelna.id,
+      zdroj: kandidat.zdroj,
+      nazev: kandidat.nazev,
+      ico,
+      duvod,
+      detail,
+    });
+  };
+
   // Krok 1 — přiřazení právního subjektu. TP-1: bez ARES firma nevznikne.
   let ico = kandidat.ico;
   if (!ico) {
@@ -276,12 +296,14 @@ async function zpracujKandidata(
     if (!shoda) {
       souhrn.nesparovano++;
       souhrn.poznamkyProPlaybook.push(`nespárováno s rejstříkem: ${kandidat.nazev}`);
+      await vyrad("nesparovano", "název z mapy nemá jednoznačnou shodu v rejstříku");
       return;
     }
     ico = shoda.ico;
   }
   if (!jeValidniIco(ico)) {
     souhrn.zahozeno++;
+    await vyrad("neplatne_ico", `IČO ${ico} neprošlo kontrolním součtem`, ico);
     return;
   }
 
@@ -294,6 +316,7 @@ async function zpracujKandidata(
   const ares = await deps.ares.overFirmu(ico);
   if (!ares) {
     souhrn.zahozeno++;
+    await vyrad("neni_v_ares", "rejstřík subjekt nezná", ico);
     return;
   }
 
@@ -301,26 +324,27 @@ async function zpracujKandidata(
   // oslovovat vůbec, ať už mají zaměstnanců kolik chtějí.
   if (jeVyloucenyObor(ares.czNace)) {
     souhrn.vyloucenyObor++;
+    await vyrad("vylouceny_obor", `CZ-NACE ${ares.czNace.join(", ")}`, ico);
     return;
   }
 
   const resUdaje = await deps.res.nactiUdaje(ico);
   if (resUdaje?.bezZamestnancu) {
     souhrn.bezZamestnancu++;
+    await vyrad("bez_zamestnancu", "statistický registr: bez zaměstnanců", ico);
     return;
   }
   // Sweep rejstříku je hodně zašuměný — z něj bereme jen doložené zaměstnavatele.
   if (kandidat.zdroj === "ares" && resUdaje?.segment === null) {
     souhrn.bezZamestnancu++;
+    await vyrad("neuvedena_velikost", "velikost neuvedena a jediným zdrojem je sweep rejstříku", ico);
     return;
   }
-  // Práh velikosti: u mikrofirem je práce s oslovením stejná jako u velkých,
-  // ale výnos zlomkový. Neznámou velikost prahem neposuzujeme — přišla-li
-  // firma ze silnějšího zdroje (pracoviště, mapa), necháme ji projít.
-  if (splnujeMinimum(resUdaje?.kategorieKod ?? null, minZamestnancu) === false) {
-    souhrn.podLimitem++;
-    return;
-  }
+  // Mikropodniky se UKLÁDAJÍ — cílí se na ně jinou formou reklamy než e-mailem.
+  // Práh proto neřídí, co se uloží, ale co se zařadí do fronty na oslovení.
+  const podLimitem =
+    splnujeMinimum(resUdaje?.kategorieKod ?? null, minZamestnancu) === false;
+  if (podLimitem) souhrn.podLimitem++;
 
   // Krok 3 — poloha pracoviště.
   // Pořadí důležitosti: přesná poloha z mapy → adresa sídla, leží-li ve stejné
@@ -362,6 +386,7 @@ async function zpracujKandidata(
   if (!poloha) {
     souhrn.zahozeno++;
     souhrn.poznamkyProPlaybook.push(`polohu se nepodařilo určit: ${ares.nazev}`);
+    await vyrad("poloha_neznama", `adresa „${ares.adresa ?? "?"}" se nedá zaměřit`, ico);
     return;
   }
 
@@ -369,6 +394,7 @@ async function zpracujKandidata(
   const zona = klasifikujZonu(vzdalenost, jidelna.zona_metru);
   if (zona === "mimo" && vzdalenost > 2 * jidelna.zona_metru) {
     souhrn.zahozeno++;
+    await vyrad("mimo_zonu", `${vzdalenost} m od jídelny (zóna ${jidelna.zona_metru} m)`, ico);
     return;
   }
 

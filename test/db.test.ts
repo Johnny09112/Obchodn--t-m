@@ -102,3 +102,20 @@ describe("segmenty velikosti (migrace 0003)", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("zámek lokální databáze", () => {
+  it("druhý proces databázi neotevře", async () => {
+    const { mkdtemp } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = join(await mkdtemp(join(tmpdir(), "cantinero-")), "pgdata");
+
+    const prvni = await pripojPglite(dir);
+    await expect(pripojPglite(dir)).rejects.toThrow(/otevřená jiným procesem/i);
+
+    // Po zavření musí jít otevřít znovu.
+    await prvni.close();
+    const druhy = await pripojPglite(dir);
+    await druhy.close();
+  });
+});

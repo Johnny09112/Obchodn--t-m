@@ -209,3 +209,22 @@ Majitel: mikrofirmy jsou málo zajímavé — práce s oslovením stejná, odbě
 zlomkový. Zaveden `--min-zamestnancu`, výchozí **10**. Neuvedená velikost se
 prahem neposuzuje (firma ze silnějšího zdroje projde). Zbůch: 36 firem
 vyřazeno pod limitem, zůstalo 21 s reálnou velikostí.
+
+## PGlite: dva procesy = tichá ztráta integrity (2026-07-27)
+
+**Co se stalo:** běh na Tlučné jsem nechal doběhnout na pozadí, zatímco
+předchozí (zabitý timeoutem) proces ještě držel stejný datový adresář.
+Výsledek: **6 duplicitních IČO v `companies` navzdory primárnímu klíči**
+(209 řádků, 203 unikátních). Index se porušil, PK přestal platit.
+
+**Poučení:** PGlite je jednoprocesová databáze. Otevřít stejný datový adresář
+ze dvou procesů = poškození, které se neprojeví chybou, ale tichým rozbitím
+omezení. To je nebezpečnější než pád.
+
+**Zavedeno:** soubor `.zamek` v datovém adresáři. Druhý proces dostane
+srozumitelnou chybu místo toho, aby data rozbil. Zámek se uklidí i při
+Ctrl+C a SIGTERM.
+
+**Důsledek pro provoz:** až se přejde na sdílenou databázi pro víc lidí,
+tenhle problém zmizí (Postgres je víceprocesový). Do té doby platí: **jeden
+běh v jednu chvíli.**

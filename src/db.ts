@@ -1,4 +1,5 @@
-import { mkdir, readFile, readdir } from "node:fs/promises";
+import { mkdir, open, readFile, readdir, rm } from "node:fs/promises";
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { PGlite, type Transaction } from "@electric-sql/pglite";
 import postgresJs from "postgres";
@@ -49,7 +50,42 @@ export async function pripojPglite(dataDir?: string): Promise<Db> {
   if (!dataDir) return obalPglite(new PGlite());
   // PGlite si vnořený adresář nevytvoří samo.
   await mkdir(dataDir, { recursive: true });
-  return obalPglite(new PGlite(dataDir));
+
+  // PGlite NENÍ bezpečné otevřít ze dvou procesů naráz — vede to k tichému
+  // porušení integrity (viděli jsme duplicitní IČO navzdory primárnímu klíči).
+  // Zámek je proto tvrdá podmínka, ne doporučení.
+  const zamek = join(dataDir, ".zamek");
+  try {
+    const fd = await open(zamek, "wx");
+    await fd.write(String(process.pid));
+    await fd.close();
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "EEXIST") {
+      const kdo = await readFile(zamek, "utf8").catch(() => "?");
+      throw new Error(
+        `Databáze ${dataDir} je otevřená jiným procesem (PID ${kdo}). ` +
+          `Počkej, až doběhne. Zůstal-li zámek po pádu, smaž soubor ${zamek}.`,
+      );
+    }
+    throw e;
+  }
+
+  const pg = new PGlite(dataDir);
+  const db = obalPglite(pg);
+  const puvodniClose = db.close.bind(db);
+  db.close = async () => {
+    await puvodniClose();
+    await rm(zamek, { force: true });
+  };
+  // Pojistka pro Ctrl+C a pády — jinak by zámek zůstal viset.
+  const uklid = () => {
+    try { rmSync(zamek, { force: true }); } catch { /* nic */ }
+  };
+  process.once("exit", uklid);
+  process.once("SIGINT", () => { uklid(); process.exit(130); });
+  process.once("SIGTERM", () => { uklid(); process.exit(143); });
+
+  return db;
 }
 
 /** Připojení na skutečný Postgres (Supabase) přes DATABASE_URL. */

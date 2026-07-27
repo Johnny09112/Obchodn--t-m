@@ -188,3 +188,48 @@ neovlivňuje nic navenek. Zapisují se sem strategie vyhledávání a jejich
 - nespárováno s rejstříkem: Kavárna
 - nespárováno s rejstříkem: Základní škola
 - polohu se nepodařilo určit: DOM Plzeň, s.r.o.
+
+## Běh 2026-07-27 (aa9baeb2-0d87-467a-9e3d-a234e54f8223)
+- nespárováno s rejstříkem: Restaurace a penzion Hamrovka
+- nespárováno s rejstříkem: František Babický
+- nespárováno s rejstříkem: Hrádek u Rokycan
+- nespárováno s rejstříkem: COOP TIP
+- nespárováno s rejstříkem: Městská knihovna Hrádek
+- nespárováno s rejstříkem: Na Statku
+- nespárováno s rejstříkem: Pneuservis Lavička
+- nespárováno s rejstříkem: Hospůdka U Kozlerů
+- nespárováno s rejstříkem: Dobřív
+- nespárováno s rejstříkem: František Pejsar
+- nespárováno s rejstříkem: Můj obchod
+- nespárováno s rejstříkem: Pavel Kreisinger
+- nespárováno s rejstříkem: Sádky VLS v Mirošově u Rokycan
+- nespárováno s rejstříkem: Na Svobodě
+- nespárováno s rejstříkem: Pneuservis Brynda
+- nespárováno s rejstříkem: Městský úřad Hrádek
+- nespárováno s rejstříkem: Obecní úřad Kamenný Újezd
+- nespárováno s rejstříkem: Pod Jasanem
+- nespárováno s rejstříkem: Opravy karoserií Kunc
+- nespárováno s rejstříkem: Stavebniny
+- nespárováno s rejstříkem: Modell
+- nespárováno s rejstříkem: Mirošov 1
+- nespárováno s rejstříkem: Městská knihovna Mirošov
+- nespárováno s rejstříkem: Autobaterie Mechanol
+- nespárováno s rejstříkem: B.A.F.
+- nespárováno s rejstříkem: COOP
+- nespárováno s rejstříkem: Huong Le Minh
+- nespárováno s rejstříkem: Květiny
+- nespárováno s rejstříkem: Bac Bui Van
+- nespárováno s rejstříkem: Jaromír Jelínek
+- nespárováno s rejstříkem: Pivovar LOUŽEK
+- nespárováno s rejstříkem: Základní škola Hrádek
+- nespárováno s rejstříkem: Městský úřad Mirošov
+- nespárováno s rejstříkem: Zdavotní středisko Mirošov
+- nespárováno s rejstříkem: Obecní úřad Dobřív
+- nespárováno s rejstříkem: ČS Kamenný Újezd
+- nespárováno s rejstříkem: Léčebna TRN Janov
+- nespárováno s rejstříkem: halda dolu Antonín
+- nespárováno s rejstříkem: Vojenské lesy a statky
+- nespárováno s rejstříkem: ČOV
+- nespárováno s rejstříkem: Perfekt kámen
+- nespárováno s rejstříkem: Mateřská školka respirační
+- nespárováno s rejstříkem: Mateřská školka Hrádek

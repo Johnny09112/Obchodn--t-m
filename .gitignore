@@ -11,3 +11,6 @@ data/
 docs/vizualizace/mapa.html
 
 docs/vizualizace/kartoteka.html
+
+# Jednorázové průzkumné skripty
+src/tmp-*.ts

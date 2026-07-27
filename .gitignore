@@ -9,3 +9,5 @@ data/
 
 # Vygenerovaná mapa (vzniká z dat, nepatří do gitu)
 docs/vizualizace/mapa.html
+
+docs/vizualizace/kartoteka.html

@@ -12,6 +12,7 @@ import { vytvorResKlienta } from "./res.js";
 import { vytvorMpsvKlienta } from "./mpsv.js";
 import { vytvorOsmKlienta } from "./osm.js";
 import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
+import { vygenerujKartoteku } from "./kartoteka.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -176,6 +177,18 @@ async function cmdStav(): Promise<void> {
   }
 }
 
+async function cmdKartoteka(argv: string[]): Promise<void> {
+  const { values } = parseArgs({ args: argv, options: { vystup: { type: "string", default: "docs/vizualizace/kartoteka.html" } } });
+  const db = await pripojDb();
+  try {
+    const v = await vygenerujKartoteku(db, values.vystup!);
+    console.log(`Kartotéka vygenerována: ${v.cesta}`);
+    console.log(`  firem: ${v.firem}, doložených údajů: ${v.evidenci}`);
+  } finally {
+    await db.close();
+  }
+}
+
 async function cmdKObohaceni(argv: string[]): Promise<void> {
   const { values } = parseArgs({
     args: argv,
@@ -265,6 +278,9 @@ switch (prikaz) {
   case "mapa":
     await cmdMapa(zbytek);
     break;
+  case "kartoteka":
+    await cmdKartoteka(zbytek);
+    break;
   case "k-obohaceni":
     await cmdKObohaceni(zbytek);
     break;
@@ -281,6 +297,7 @@ switch (prikaz) {
   run --jidelna <id> [--limit N]   spustí Čmuchala pro jídelnu
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
+  kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
   k-obohaceni [--limit N]          vypíše firmy čekající na rešerši (pro agenta)
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);

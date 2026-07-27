@@ -57,9 +57,8 @@ mezi nimi ani jednou** — potvrzuje, že hledání podle sídla je slepá cesta
   → Provozovny se musí hledat jinudy: fyzicky podle místa.
 - **Počet zaměstnanců JE dostupný** — ale v sub-registru RES
   (`/ekonomicke-subjekty-res/{ico}` → `zaznamy[0].statistickeUdaje.kategoriePoctuPracovniku`),
-  ne v základním detailu ani ve výsledku hledání. **Kód „000" = bez zaměstnanců.**
-  Všechny tři testované s.r.o. v Bezdružicích mají „000" → nejsou to odběratelé.
-  **Tohle je hledaný filtr na OSVČ a prázdné schránky.**
+  ne v základním detailu ani ve výsledku hledání. **Pozor: kód „000" je
+  „neuvedeno", bez zaměstnanců je až „110" — viz sekce o číselníku výš.**
 - **OpenStreetMap (Overpass API) funguje a najde reálná pracoviště**, která
   ARES minul: Léčebný Hotel Prusík, Lázeňský hotel Jirásek, KAPIC software,
   COOP, zdravotní středisko, restaurace. Zdarma, legální, bez klíče.

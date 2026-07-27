@@ -1,0 +1,485 @@
+<title>Cantinero — agenti, modely a orchestrace</title>
+
+<style>
+  :root {
+    --ink: #131c1f;
+    --ink-soft: #46585a;
+    --ink-faint: #7c8e8e;
+    --ground: #ecefec;
+    --surface: #f8faf8;
+    --surface-2: #e3e8e4;
+    --line: #c9d2cc;
+    --line-soft: #dbe2dc;
+    --accent: #1f6570;
+    --accent-soft: #d6e6e7;
+    --good: #3d7a36;
+    --good-soft: #dbe9d6;
+    --warn: #8f6110;
+    --warn-soft: #f0e5c8;
+    --crit: #94352d;
+    --crit-soft: #f2dcd8;
+
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, monospace;
+    --wrap: 1120px;
+    --prose: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e2e9e6; --ink-soft: #9fb0ae; --ink-faint: #71827f;
+      --ground: #0f1516; --surface: #171f20; --surface-2: #1e2829;
+      --line: #2c3839; --line-soft: #232e2f;
+      --accent: #64b6c0; --accent-soft: #16333a;
+      --good: #82bd76; --good-soft: #1b2e1c;
+      --warn: #d3a444; --warn-soft: #302614;
+      --crit: #d9776c; --crit-soft: #331d1a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e9e6; --ink-soft: #9fb0ae; --ink-faint: #71827f;
+    --ground: #0f1516; --surface: #171f20; --surface-2: #1e2829;
+    --line: #2c3839; --line-soft: #232e2f;
+    --accent: #64b6c0; --accent-soft: #16333a;
+    --good: #82bd76; --good-soft: #1b2e1c;
+    --warn: #d3a444; --warn-soft: #302614;
+    --crit: #d9776c; --crit-soft: #331d1a;
+  }
+  :root[data-theme="light"] {
+    --ink: #131c1f; --ink-soft: #46585a; --ink-faint: #7c8e8e;
+    --ground: #ecefec; --surface: #f8faf8; --surface-2: #e3e8e4;
+    --line: #c9d2cc; --line-soft: #dbe2dc;
+    --accent: #1f6570; --accent-soft: #d6e6e7;
+    --good: #3d7a36; --good-soft: #dbe9d6;
+    --warn: #8f6110; --warn-soft: #f0e5c8;
+    --crit: #94352d; --crit-soft: #f2dcd8;
+  }
+
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 24px; }
+
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.1rem, 5vw, 3.3rem); font-weight: 800; letter-spacing: -0.032em; line-height: 1.05; }
+  h2 { font-size: clamp(1.35rem, 2.6vw, 1.8rem); font-weight: 750; letter-spacing: -0.02em; line-height: 1.15; }
+  h3 { font-size: 1.0rem; font-weight: 700; letter-spacing: -0.008em; }
+  p { margin: 0; max-width: var(--prose); }
+
+  .lede { font-size: 1.13rem; color: var(--ink-soft); max-width: 62ch; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
+  }
+  .muted { color: var(--ink-soft); }
+  .tiny { font-size: 0.855rem; line-height: 1.5; }
+  code, .mono { font-family: var(--mono); font-size: 0.86em; }
+
+  section { padding: 58px 0; border-top: 1px solid var(--line-soft); }
+  .sec-head { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+
+  header.hero { padding: 60px 0 48px; background: var(--surface); border-bottom: 1px solid var(--line); }
+
+  /* ---------- schéma orchestrace ---------- */
+  .orch {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1.5fr);
+    gap: 0 18px; align-items: center;
+  }
+  @media (max-width: 860px) { .orch { grid-template-columns: 1fr; gap: 14px; } .orch .spoj { display: none; } }
+
+  .box {
+    background: var(--surface); border: 1px solid var(--line);
+    padding: 18px 20px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .box.dirig { border-left: 4px solid var(--accent); }
+  .box.pracant { border-left: 4px solid var(--good); }
+
+  .spoj {
+    text-align: center; font-family: var(--mono); font-size: 0.7rem;
+    color: var(--ink-faint); line-height: 1.3;
+  }
+
+  .subagenti { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 4px; }
+  .pill {
+    font-family: var(--mono); font-size: 0.74rem; font-weight: 600;
+    border: 1px solid var(--line); background: var(--surface-2);
+    padding: 7px 10px; text-align: center; border-radius: 2px;
+  }
+  .pill.aktivni { border-color: var(--good); color: var(--good); background: var(--good-soft); }
+
+  /* ---------- tabulka ---------- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 860px; }
+  thead th {
+    text-align: left; font-family: var(--mono); font-size: 0.66rem;
+    letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-faint);
+    font-weight: 600; padding: 12px 14px; border-bottom: 1px solid var(--line);
+    background: var(--surface-2); white-space: nowrap;
+  }
+  tbody td { padding: 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.zapnuty td { background: color-mix(in srgb, var(--good-soft) 34%, transparent); }
+
+  .role { font-weight: 700; white-space: nowrap; }
+  .role small { display: block; font-weight: 400; font-size: 0.78rem; color: var(--ink-faint); }
+
+  .model {
+    font-family: var(--mono); font-size: 0.78rem; font-weight: 600;
+    white-space: nowrap; color: var(--accent);
+  }
+  .model small { display: block; font-weight: 400; color: var(--ink-faint); letter-spacing: 0; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 2px; white-space: nowrap;
+  }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .chip.ok { color: var(--good); background: var(--good-soft); }
+  .chip.spi { color: var(--ink-faint); background: var(--surface-2); }
+  .chip.plan { color: var(--accent); background: var(--accent-soft); }
+
+  /* ---------- časová osa ---------- */
+  .osa { display: flex; flex-direction: column; gap: 0; }
+  .faze {
+    display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 260px);
+    gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--line-soft); align-items: start;
+  }
+  .faze-tag {
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint);
+  }
+  .faze.tady .faze-tag { color: var(--accent); }
+  .faze.tady { background: color-mix(in srgb, var(--accent-soft) 40%, transparent); }
+  .kdo { display: flex; flex-wrap: wrap; gap: 5px; }
+  .kdo span {
+    font-family: var(--mono); font-size: 0.7rem; padding: 2px 7px;
+    border: 1px solid var(--line); border-radius: 2px; color: var(--ink-soft);
+  }
+  @media (max-width: 760px) { .faze { grid-template-columns: 1fr; gap: 8px; } }
+
+  /* ---------- karty ---------- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    padding: 18px; display: flex; flex-direction: column; gap: 9px;
+  }
+  .card ul { margin: 0; padding-left: 17px; display: flex; flex-direction: column; gap: 4px; }
+  .card li { font-size: 0.865rem; line-height: 1.5; }
+
+  .note {
+    border: 1px solid var(--line); border-left: 4px solid var(--warn);
+    background: var(--surface); padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .note.info { border-left-color: var(--accent); }
+  .note.stop { border-left-color: var(--crit); }
+  .note h3 { font-size: 0.95rem; }
+
+  footer { padding: 38px 0 60px; border-top: 1px solid var(--line-soft); color: var(--ink-faint); font-size: 0.85rem; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header class="hero">
+  <div class="wrap stack">
+    <span class="eyebrow">Cantinero · fáze 0 · session S0.3 · návrh</span>
+    <h1>Kdo je v týmu, jaký má mozek a kdy ho budíme</h1>
+    <p class="lede">
+      Šest rolí ze zadání, model přiřazený podle náročnosti úkolu, a pravidlo,
+      kdy se která role vůbec spustí. Zapnutý je zatím jeden.
+    </p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Orchestrace</span>
+      <h2>Kdo to řídí</h2>
+      <p class="muted">
+        Není tu žádný „hlavní agent", který by si sám vymýšlel práci. Řídím to
+        já v hlavní konverzaci s tebou: dostanu zadání, rozdělím ho a pošlu
+        každý kus specializovanému agentovi. Agenti spolu nemluví — všechno,
+        co si předávají, jde přes kartotéku.
+      </p>
+    </div>
+
+    <div class="orch">
+      <div class="box dirig">
+        <span class="eyebrow">Dirigent</span>
+        <h3>Hlavní konverzace</h3>
+        <p class="tiny muted">
+          Tady jsi ty a já. Přijmu zadání, rozhodnu, kdo ho udělá, výsledky
+          zkontroluju a shrnu ti je. Nic se nespustí bez zadání odsud.
+        </p>
+      </div>
+
+      <div class="spoj">──▶<br />pošle úkol</div>
+
+      <div class="box pracant">
+        <span class="eyebrow">Specialisté</span>
+        <h3>Agenti, každý s vlastním zadáním a mozkem</h3>
+        <p class="tiny muted">
+          Každý dostane čistý stůl: jen svůj úkol, svoje nástroje a svoje
+          pravidla. Nevidí do ostatních konverzací, takže se nemůže „nakazit"
+          cizím kontextem.
+        </p>
+        <div class="subagenti">
+          <span class="pill aktivni">Čmuchal</span>
+          <span class="pill">Obchodník</span>
+          <span class="pill">Spojka</span>
+          <span class="pill">Statistik</span>
+          <span class="pill">Marketér</span>
+          <span class="pill">Ředitel</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note info" style="margin-top: 22px;">
+      <h3>Proč zvlášť, a ne jeden agent na všechno</h3>
+      <p class="tiny">
+        Kdyby jeden agent uměl sbírat data i psát a odesílat zprávy, stačila by
+        jedna chyba v úsudku a odejde něco, co nemělo. Rozdělení rolí znamená,
+        že Čmuchal <b>fyzicky nemá nástroj</b> na odeslání zprávy — i kdyby se
+        rozhodl špatně, nemá čím to provést. Totéž platí obráceně: Obchodník
+        neumí zapisovat nové firmy.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Tým</span>
+      <h2>Šest rolí, tři různé modely</h2>
+      <p class="muted">
+        Model se volí podle toho, co role dělá: objem versus úsudek. Všechno
+        jede z předplatného, takže „dražší" model znamená rychlejší vyčerpání
+        limitu, ne fakturu.
+      </p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Model</th>
+            <th>Proč zrovna tenhle</th>
+            <th>Kdy se spouští</th>
+            <th>Stav</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="zapnuty">
+            <td class="role">Čmuchal<small>sběr a kvalifikace</small></td>
+            <td class="model">Sonnet 5<small>claude-sonnet-5</small></td>
+            <td class="tiny">
+              Dělá největší objem — desítky firem denně, u každé čte weby a
+              vytahuje citace. Sonnet 5 je na tuhle práci prakticky stejně
+              dobrý jako Opus, ale spotřebuje výrazně míň limitu. U nejasných
+              případů si vyžádá Opus.
+            </td>
+            <td class="tiny">Na tvůj pokyn („projeď 40 firem u Bezdružic“). Později volitelně ráno automaticky.</td>
+            <td><span class="chip ok">Zapnutý</span></td>
+          </tr>
+          <tr>
+            <td class="role">Obchodník<small>individuální oslovení</small></td>
+            <td class="model">Opus 4.8<small>claude-opus-4-8</small></td>
+            <td class="tiny">
+              Nejvyšší sázka v systému — text jde ven a podepisuje ho člověk.
+              Malý objem (10 zpráv denně), zato tvrdá pravidla stylu a zákaz
+              vymýšlet si tvrzení. Tady se šetřit nevyplácí.
+            </td>
+            <td class="tiny">Fáze 3. Jedna dávka denně, max 10 zpráv. Prvních 50 schvaluješ po jedné.</td>
+            <td><span class="chip spi">Spí</span></td>
+          </tr>
+          <tr>
+            <td class="role">Spojka<small>partnerství</small></td>
+            <td class="model">Opus 4.8<small>claude-opus-4-8</small></td>
+            <td class="tiny">
+              Rešerše obcí, zřizovatelů a komor plus příprava podkladů pro
+              vztahovou komunikaci. Nízký objem, vysoký nárok na takt a přesnost.
+            </td>
+            <td class="tiny">Fáze 2. Na vyžádání, po jednotlivých partnerech.</td>
+            <td><span class="chip spi">Spí</span></td>
+          </tr>
+          <tr>
+            <td class="role">Statistik<small>měření</small></td>
+            <td class="model">Sonnet 5<small>claude-sonnet-5</small></td>
+            <td class="tiny">
+              Samotná čísla počítá kód, ne model — ten je jen komentuje a hlídá
+              odchylky. Nepotřebuje nejsilnější mozek, ale musí spolehlivě
+              poznat, kdy se překročil práh a má se zastavit odesílání.
+            </td>
+            <td class="tiny">Fáze 4. Denně po dávce Obchodníka + týdenní souhrn. Prahy hlídá i mimo běh.</td>
+            <td><span class="chip spi">Spí</span></td>
+          </tr>
+          <tr>
+            <td class="role">Marketér<small>optimalizace</small></td>
+            <td class="model">Opus 4.8<small>claude-opus-4-8</small></td>
+            <td class="tiny">
+              Vymýšlí varianty textů a větných struktur. Tvůrčí práce, kde
+              slabší model plodí generickou vatu — přesně to, čemu se má
+              systém vyhnout.
+            </td>
+            <td class="tiny">Fáze 4. Týdně, po analýze Statistika.</td>
+            <td><span class="chip spi">Spí</span></td>
+          </tr>
+          <tr>
+            <td class="role">Ředitel<small>dohled</small></td>
+            <td class="model">Opus 4.8<small>claude-opus-4-8</small></td>
+            <td class="tiny">
+              Kontroluje práci ostatních a píše ti týdenní hlášení. Potřebuje
+              úsudek, ne rychlost — má poznat, že něco nesedí, i když to nikdo
+              neoznačil jako chybu.
+            </td>
+            <td class="tiny">Fáze 5. Týdně (pondělí) + okamžitě při incidentu.</td>
+            <td><span class="chip spi">Spí</span></td>
+          </tr>
+          <tr>
+            <td class="role">Kontrola vzorku<small>není role, ale úkol</small></td>
+            <td class="model">Opus 4.8<small>claude-opus-4-8</small></td>
+            <td class="tiny">
+              Fáze 1 vyžaduje ruční kontrolu 30 firem. Pouštím na to Opus se
+              zadáním „hledej chyby, ne potvrzení" — a výsledek pak procházíš ty.
+            </td>
+            <td class="tiny">Jednorázově na konci fáze 1, pak namátkově.</td>
+            <td><span class="chip plan">Připraveno</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note" style="margin-top: 22px;">
+      <h3>Poznámka k volbě modelů</h3>
+      <p class="tiny">
+        Tohle je návrh, ne dogma. Po prvním ostrém běhu uvidíme, jak rychle
+        Čmuchal ujídá z limitu Maxu a jak kvalitní citace vytahuje — pokud bude
+        Sonnet chybovat, přepnu ho na Opus; pokud poběží hladce, zkusím u
+        jednodušších kroků Haiku. Změna modelu je jeden řádek v konfiguraci.
+        Nejsilnější model Fable 5 zatím nepotřebujeme — je dražší a na tuhle
+        práci by byl kanón na vrabce.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Časová osa</span>
+      <h2>Kdo se kdy probouzí</h2>
+      <p class="muted">
+        Role se nezapínají podle kalendáře, ale podle splněného cíle předchozí
+        fáze. Přeskakovat se nesmí.
+      </p>
+    </div>
+
+    <div class="osa">
+      <div class="faze tady">
+        <div class="faze-tag">Fáze 0 · teď</div>
+        <div>
+          <h3>Příprava</h3>
+          <p class="tiny muted">Prostředí, definice agentů, jídelny, tvrzení, doména, právník.</p>
+        </div>
+        <div class="kdo"><span>nikdo — připravujeme</span></div>
+      </div>
+      <div class="faze">
+        <div class="faze-tag">Fáze 1</div>
+        <div>
+          <h3>Sběr</h3>
+          <p class="tiny muted">Cíl: 200 ověřených firem v zónách. Pak ruční kontrola vzorku 30.</p>
+        </div>
+        <div class="kdo"><span>Čmuchal</span><span>Kontrola vzorku</span></div>
+      </div>
+      <div class="faze">
+        <div class="faze-tag">Fáze 2</div>
+        <div>
+          <h3>Partnerství a inbound</h3>
+          <p class="tiny muted">Cíl: první partnerství a 100 souhlasů. Pořád nic studeného ven.</p>
+        </div>
+        <div class="kdo"><span>Spojka</span><span>Čmuchal</span></div>
+      </div>
+      <div class="faze">
+        <div class="faze-tag">Fáze 3</div>
+        <div>
+          <h3>Oslovení</h3>
+          <p class="tiny muted">10 zpráv denně. Prvních 50 schvaluješ jednotlivě. Předtím právník.</p>
+        </div>
+        <div class="kdo"><span>Obchodník</span><span>Statistik</span><span>Čmuchal</span><span>Spojka</span></div>
+      </div>
+      <div class="faze">
+        <div class="faze-tag">Fáze 4</div>
+        <div>
+          <h3>Měření a testy</h3>
+          <p class="tiny muted">Vyhodnocení variant, návrhy zlepšení ke schválení.</p>
+        </div>
+        <div class="kdo"><span>Marketér</span><span>Statistik</span><span>+ předchozí</span></div>
+      </div>
+      <div class="faze">
+        <div class="faze-tag">Fáze 5</div>
+        <div>
+          <h3>Dohled</h3>
+          <p class="tiny muted">Týdenní hlášení, namátkové kontroly, návrhy nových postupů.</p>
+        </div>
+        <div class="kdo"><span>Ředitel</span><span>+ celý tým</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Zámky</span>
+      <h2>Co žádný model nepřebije</h2>
+      <p class="muted">
+        Tyhle věci nejsou v zadání agenta — jsou v kódu a v databázi. Model si
+        je nemůže odmyslet, protože nedostane nástroj, kterým by je porušil.
+      </p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Čmuchal nemá jak odeslat</h3>
+        <p class="tiny muted">V jeho sadě nástrojů žádné odesílání není. Ve fázích 0–2 neexistuje v celém systému.</p>
+      </div>
+      <div class="card">
+        <h3>Bez zdroje se nezapisuje</h3>
+        <p class="tiny muted">Zápis údaje bez odkazu a doslovné citace databáze odmítne. Platí pro každého agenta.</p>
+      </div>
+      <div class="card">
+        <h3>Vypínač zapíná jen člověk</h3>
+        <p class="tiny muted">Statistik i Ředitel smí odesílání zastavit. Zpět ho zapneš jedině ty.</p>
+      </div>
+      <div class="card">
+        <h3>Jedna firma, jedno oslovení</h3>
+        <p class="tiny muted">Druhý pokus databáze nepustí. Ani na jinou osobu ve stejné firmě.</p>
+      </div>
+      <div class="card">
+        <h3>Každý běh v deníku</h3>
+        <p class="tiny muted">Kdo, kdy, s jakým zadáním, co z toho vzešlo a co selhalo. Bez výjimky.</p>
+      </div>
+      <div class="card">
+        <h3>Nový agent jen s tvým souhlasem</h3>
+        <p class="tiny muted">Ředitel smí nového agenta navrhnout, ne spustit. Rozhoduješ ty.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Cantinero · návrh pro session S0.3 · 26. 7. 2026 ·
+    závazné vymezení rolí je v <code>SPEC.md</code> kap. 10
+  </div>
+</footer>

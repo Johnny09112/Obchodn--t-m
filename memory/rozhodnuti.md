@@ -2,6 +2,20 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-26 · majitel · **Prvních 5 jídelen** (Bezdružice, 34. ZŠ Plzeň,
+  Zbůch, Tlučná, Hrádek u Rokycan). **Začínáme Bezdružicemi**, zbytek až po
+  testu. Jídelna Bezdružice založena v DB (kodObce 560740, 49.90624/12.97442),
+  kapacita zatím 0 — čeká na číslo od majitele.
+- 2026-07-26 · majitel · **E-mail se bude posílat z Outlooku** (Microsoft 365).
+  Ověřit způsob autentizace — Microsoft ruší Basic auth pro SMTP, půjde
+  nejspíš přes Graph API. Detail do S0.7.
+- 2026-07-26 · majitel · **Mapa má být na reálném mapovém podkladu**, aby byly
+  vidět i malé obce. Pozor: publikované artifacty mají zakázané externí
+  požadavky → dlaždice fungují jen v lokální verzi stránky.
+- 2026-07-26 · majitel · **Frontend bude potřeba dřív — systém mají používat
+  i kolegové.** ⚠ Mění architekturu: víc uživatelů = sdílená databáze
+  (lokální nestačí) a agent běžící mimo majitelův Claude Code. Nutno
+  rozhodnout rozsah (jen sledování vs. plné ovládání) — otevřeno v S0.2.
 - 2026-07-26 · majitel · **Ke každému většímu výstupu vždy HTML vizualizace**
   (do `docs/vizualizace/`, publikovat jako artifact). Majitel si stav
   prohlíží vizuálně, ne v textu. → zapsáno do CLAUDE.md.

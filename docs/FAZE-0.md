@@ -135,6 +135,13 @@ Skilly do `.claude/skills/`: `overeni-firmy` (ARES+evidence postup),
 **Od tebe:** nic, jen review.
 **Výstup:** commitnuté definice agentů a skillů.
 
+### S0.3b — Oprava: ARES limit 1 000 výsledků *(nutné před během na Plzni)*
+**Cíl:** `najdiFirmyVObci` spadne na obcích nad 1 000 subjektů — Plzeň jich má
+49 831. Navrhnout a implementovat zúžení dotazu (městská část / CZ-NACE /
+ulice), aby každý dílčí dotaz zůstal pod limitem, a doplnit test.
+**Poznámka:** malé obce (Bezdružice 212, Hrádek 450, Zbůch 556, Tlučná 745)
+projdou bez úprav — proto se dá začít Bezdružicemi hned.
+
 ### S0.4 — Jídelny a zóny *(potřebuje tvoje data; blokuje smysluplnost celé fáze 1)*
 **Cíl:** zmapovat partnerské jídelny: název, adresa, souřadnice, kód obce,
 volná kapacita, zóna, stav smlouvy → nasypat do `jidelny` (seed skript už je).

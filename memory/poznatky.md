@@ -1,5 +1,28 @@
 # Poznatky a gotchas
 
+## První ostrý běh (Bezdružice, 40 kandidátů, 2026-07-27) — co selhalo
+
+Mechanika prošla (0 chyb, 39 kvalifikováno), ale **kvalita dat je slabá**.
+Čtyři konkrétní vady k opravě před dalším během:
+
+1. **Neodfiltrované OSVČ.** Většina nálezů jsou fyzické osoby („Alena
+   Voříšková", „Zbyněk Rak"). Živnostník není odběratel firemních obědů.
+   → Filtrovat podle právní formy, nebo aspoň bodově potlačit.
+2. **`velikost_kategorie` je NULL u všech 40.** Vyhledávací endpoint ARES
+   nevrací `statistickeUdaje.kategoriePoctuPracovniku` — vrací ho až detail
+   subjektu. `cmuchal.ts` detail nevolá (spoléhá na výsledek hledání), takže
+   25 z 100 bodů skóre je mrtvých. → Volat `overFirmu()` pro každého kandidáta.
+3. **CZ-NACE se míchají úrovně.** Přicházejí jak sekce (`G`), tak dvoumístné
+   (`55`, `00`) i pětimístné (`43120`) kódy. Náš test `slice(0,2)` je proto
+   nespolehlivý — `55` (ubytování/stravování) projde jako „kancelářský obor".
+   → Normalizovat na oddíl a ošetřit sekce.
+4. **Geocoding u vesnic kolabuje na střed obce.** 40 firem → jen 30 různých
+   bodů, spousta přesně na 307 m. Vzdálenost je tak orientační.
+   → U malých obcí brát vzdálenost jako přibližnou, nespoléhat na ni v bodování.
+
+Důsledek: skóre se pohybovalo v úzkém pásmu 52–56 b, tedy **nerozlišuje**.
+Než se pojede Plzeň, je potřeba tyhle čtyři věci opravit.
+
 ## ARES — ověřeno reálnými dotazy 2026-07-26
 
 - **Limit 1 000 výsledků** na `/ekonomicke-subjekty/vyhledat`. Nad limit vrací

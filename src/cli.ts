@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { appendFile } from "node:fs/promises";
+import { appendFile, readFile } from "node:fs/promises";
 import Anthropic from "@anthropic-ai/sdk";
 import { pripojPglite, pripojPostgres, spustMigrace, type Db } from "./db.js";
 import { vytvorAresKlienta } from "./ares.js";
@@ -11,6 +11,7 @@ import { vygenerujMapu } from "./mapa.js";
 import { vytvorResKlienta } from "./res.js";
 import { vytvorMpsvKlienta } from "./mpsv.js";
 import { vytvorOsmKlienta } from "./osm.js";
+import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -175,6 +176,47 @@ async function cmdStav(): Promise<void> {
   }
 }
 
+async function cmdKObohaceni(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: { limit: { type: "string" }, jidelna: { type: "string" } },
+  });
+  const db = await pripojDb();
+  try {
+    const firmy = await firmyKObohaceni(db, {
+      limit: values.limit ? Number(values.limit) : undefined,
+      jidelnaId: values.jidelna,
+    });
+    // Strojově čitelný výstup — čte ho agent, ne člověk.
+    console.log(JSON.stringify(firmy, null, 2));
+  } finally {
+    await db.close();
+  }
+}
+
+async function cmdZapisNalezy(argv: string[]): Promise<void> {
+  const { values } = parseArgs({ args: argv, options: { soubor: { type: "string" } } });
+  if (!values.soubor) {
+    console.error("Chybí --soubor <cesta.json> s nálezy od agenta");
+    process.exit(1);
+  }
+  const davka = JSON.parse(await readFile(values.soubor, "utf8"));
+  const db = await pripojDb();
+  try {
+    const v = await zapisDavku(db, davka);
+    console.log(`Běh ${v.behId}:`);
+    console.log(`  zapsáno nálezů: ${v.zapsanoNalezu}`);
+    console.log(`  zapsáno kontaktů: ${v.zapsanoKontaktu}`);
+    console.log(`  označeno bez nálezu: ${v.oznacenoBezNalezu}`);
+    if (v.odmitnuto.length > 0) {
+      console.log(`  ODMÍTNUTO: ${v.odmitnuto.length}`);
+      for (const o of v.odmitnuto) console.log(`    - ${o.duvod}`);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
 async function cmdMapa(argv: string[]): Promise<void> {
   const { values } = parseArgs({
     args: argv,
@@ -223,6 +265,12 @@ switch (prikaz) {
   case "mapa":
     await cmdMapa(zbytek);
     break;
+  case "k-obohaceni":
+    await cmdKObohaceni(zbytek);
+    break;
+  case "zapis-nalezy":
+    await cmdZapisNalezy(zbytek);
+    break;
   case "metriky":
     await cmdMetriky();
     break;
@@ -233,6 +281,8 @@ switch (prikaz) {
   run --jidelna <id> [--limit N]   spustí Čmuchala pro jídelnu
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
+  k-obohaceni [--limit N]          vypíše firmy čekající na rešerši (pro agenta)
+  zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
     process.exit(prikaz ? 1 : 0);
 }

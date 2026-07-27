@@ -75,3 +75,14 @@ neovlivňuje nic navenek. Zapisují se sem strategie vyhledávání a jejich
 - nespárováno s rejstříkem: Kavárna a cukrárna Bellissima
 - nespárováno s rejstříkem: Zdravotní středisko
 - nespárováno s rejstříkem: Prášková lakovna
+
+## Rešerše 2026-07-27 — první běh přes agenta (ne API)
+
+- **SIGNUM spol. s r.o. = žárová zinkovna v Bezdružicích** (Úterská 291,
+  provoz od 2021). Firma sídlí v Hustopečích — provozovnu odhalila až
+  otevřená data MPSV. Hledání podle sídla ji najít nemohlo.
+- **Firmy s více provozovnami mívají podstránku na provozovnu**
+  (`/zinkovna/<obec>/`) a právě tam jsou místní kontakty i jména vedoucích.
+  Obecná stránka Kontakty vede jen na centrálu — hledat tu konkrétní.
+- Stravování nebývá na webu doložené ani u firem s kariérní stránkou.
+  Nechávat prázdné, netipovat.

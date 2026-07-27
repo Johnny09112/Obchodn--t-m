@@ -2,6 +2,14 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-26 · majitel · **Ke každému většímu výstupu vždy HTML vizualizace**
+  (do `docs/vizualizace/`, publikovat jako artifact). Majitel si stav
+  prohlíží vizuálně, ne v textu. → zapsáno do CLAUDE.md.
+- 2026-07-26 · majitel · **Interaktivní mapa ČR** jako průběžný cíl: postupně
+  se plní analyzovanými oblastmi (zóny jídelen, vyhodnocené firmy).
+- 2026-07-26 · majitel · **Spouštění: nejdřív konverzačně, později
+  s možností plánování.** Frontend (mapa, přehledy) slouží ke sledování
+  a schvalování, ne jako hlavní ovládání.
 - 2026-07-26 · majitel · **Provoz na předplatném, ne na API tokenech.** Majitel
   má Claude Max 5×; API se bude řešit až u případného externího klienta.
   Důsledek: Cantinero není samostatná bezobslužná aplikace — je to sada

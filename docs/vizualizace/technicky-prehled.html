@@ -1,0 +1,1121 @@
+<title>Cantinero — technický přehled</title>
+
+<style>
+  :root {
+    --ink: #131c1f;
+    --ink-soft: #46585a;
+    --ink-faint: #7c8e8e;
+    --ground: #ecefec;
+    --surface: #f8faf8;
+    --surface-2: #e3e8e4;
+    --line: #c9d2cc;
+    --line-soft: #dbe2dc;
+    --accent: #1f6570;
+    --accent-soft: #d6e6e7;
+    --good: #3d7a36;
+    --good-soft: #dbe9d6;
+    --warn: #8f6110;
+    --warn-soft: #f0e5c8;
+    --crit: #94352d;
+    --crit-soft: #f2dcd8;
+
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, monospace;
+
+    --wrap: 1120px;
+    --prose: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e2e9e6;
+      --ink-soft: #9fb0ae;
+      --ink-faint: #71827f;
+      --ground: #0f1516;
+      --surface: #171f20;
+      --surface-2: #1e2829;
+      --line: #2c3839;
+      --line-soft: #232e2f;
+      --accent: #64b6c0;
+      --accent-soft: #16333a;
+      --good: #82bd76;
+      --good-soft: #1b2e1c;
+      --warn: #d3a444;
+      --warn-soft: #302614;
+      --crit: #d9776c;
+      --crit-soft: #331d1a;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #e2e9e6;
+    --ink-soft: #9fb0ae;
+    --ink-faint: #71827f;
+    --ground: #0f1516;
+    --surface: #171f20;
+    --surface-2: #1e2829;
+    --line: #2c3839;
+    --line-soft: #232e2f;
+    --accent: #64b6c0;
+    --accent-soft: #16333a;
+    --good: #82bd76;
+    --good-soft: #1b2e1c;
+    --warn: #d3a444;
+    --warn-soft: #302614;
+    --crit: #d9776c;
+    --crit-soft: #331d1a;
+  }
+
+  :root[data-theme="light"] {
+    --ink: #131c1f;
+    --ink-soft: #46585a;
+    --ink-faint: #7c8e8e;
+    --ground: #ecefec;
+    --surface: #f8faf8;
+    --surface-2: #e3e8e4;
+    --line: #c9d2cc;
+    --line-soft: #dbe2dc;
+    --accent: #1f6570;
+    --accent-soft: #d6e6e7;
+    --good: #3d7a36;
+    --good-soft: #dbe9d6;
+    --warn: #8f6110;
+    --warn-soft: #f0e5c8;
+    --crit: #94352d;
+    --crit-soft: #f2dcd8;
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- typografie ---------- */
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+  h1 {
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -0.032em;
+    line-height: 1.04;
+  }
+
+  h2 {
+    font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: -0.008em;
+  }
+
+  p { margin: 0; max-width: var(--prose); }
+
+  .lede {
+    font-size: 1.14rem;
+    color: var(--ink-soft);
+    max-width: 60ch;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .muted { color: var(--ink-soft); }
+  .tiny { font-size: 0.855rem; line-height: 1.5; }
+
+  code, .mono { font-family: var(--mono); font-size: 0.86em; }
+
+  /* ---------- struktura sekcí ---------- */
+  section {
+    padding: 60px 0;
+    border-top: 1px solid var(--line-soft);
+  }
+  section:first-of-type { border-top: none; }
+
+  .sec-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ---------- hlavička ---------- */
+  header.hero {
+    padding: 64px 0 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: end;
+  }
+
+  @media (max-width: 820px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 32px; align-items: start; }
+  }
+
+  .ledger {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .ledger div {
+    background: var(--surface);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .ledger dt {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .ledger dd {
+    margin: 0;
+    font-size: 1.32rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- vrstvy ---------- */
+  .layers { display: flex; flex-direction: column; gap: 0; }
+
+  .layer {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 24px;
+    padding: 22px 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-bottom: none;
+  }
+  .layer:last-child { border-bottom: 1px solid var(--line); }
+
+  .layer-tag {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-top: 4px;
+  }
+
+  .layer-body { display: flex; flex-direction: column; gap: 6px; }
+
+  .layer.is-agent { border-left: 4px solid var(--accent); }
+  .layer.is-tools { border-left: 4px solid var(--good); }
+  .layer.is-data  { border-left: 4px solid var(--warn); }
+
+  .arrow {
+    text-align: center;
+    font-family: var(--mono);
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    padding: 6px 0;
+    background: var(--ground);
+  }
+
+  @media (max-width: 640px) {
+    .layer { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ---------- štítky stavu ---------- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .chip::before {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .chip.ok   { color: var(--good); background: var(--good-soft); }
+  .chip.todo { color: var(--warn); background: var(--warn-soft); }
+  .chip.no   { color: var(--crit); background: var(--crit-soft); }
+  .chip.plan { color: var(--accent); background: var(--accent-soft); }
+
+  /* ---------- tabulka nástrojů ---------- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+
+  table { border-collapse: collapse; width: 100%; min-width: 720px; }
+
+  thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  .tool-name {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+  tr.row-todo td { background: color-mix(in srgb, var(--warn-soft) 40%, transparent); }
+  tr.row-no td   { background: color-mix(in srgb, var(--crit-soft) 40%, transparent); }
+
+  /* ---------- kroky běhu ---------- */
+  ol.run { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; counter-reset: krok; }
+
+  ol.run li {
+    counter-increment: krok;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) minmax(0, 280px);
+    gap: 20px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line-soft);
+    align-items: start;
+  }
+
+  ol.run li::before {
+    content: counter(krok, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+
+  .guard {
+    font-size: 0.83rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--line);
+    padding-left: 14px;
+  }
+
+  .guard b { color: var(--ink); font-weight: 650; }
+
+  @media (max-width: 760px) {
+    ol.run li { grid-template-columns: 34px minmax(0, 1fr); }
+    .guard { grid-column: 2; }
+  }
+
+  /* ---------- karty ---------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .card.pick { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+
+  .card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+  .card li { font-size: 0.885rem; line-height: 1.5; }
+
+  /* ---------- mapa ---------- */
+  .map-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .map-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  button.toggle {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--surface);
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+
+  button.toggle[aria-pressed="true"] {
+    background: transparent;
+    color: var(--accent);
+  }
+
+  button.toggle:focus-visible,
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .map-stage { position: relative; }
+
+  svg.mapa { display: block; width: 100%; height: auto; }
+
+  .cr-outline {
+    fill: var(--surface-2);
+    stroke: var(--line);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+  }
+
+  .grid-line { stroke: var(--line-soft); stroke-width: 1; }
+
+  .mesto { fill: var(--ink-faint); }
+  .mesto-label {
+    font-family: var(--mono);
+    font-size: 15px;
+    fill: var(--ink-faint);
+  }
+
+  .zona-ring {
+    fill: color-mix(in srgb, var(--accent) 16%, transparent);
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 6 5;
+    cursor: pointer;
+    transition: fill 140ms ease;
+  }
+  .zona:hover .zona-ring,
+  .zona:focus-visible .zona-ring { fill: color-mix(in srgb, var(--accent) 34%, transparent); }
+
+  .zona-jadro { fill: var(--accent); }
+
+  .zona-label {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    fill: var(--accent);
+  }
+
+  .prazdny-stav {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .prazdny-stav span {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    padding: 10px 16px;
+    border: 1px dashed var(--line);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 0.83rem;
+    color: var(--ink-soft);
+    align-items: center;
+  }
+
+  .legend i {
+    display: inline-block;
+    width: 13px; height: 13px;
+    margin-right: 7px;
+    vertical-align: -2px;
+    border-radius: 50%;
+  }
+
+  .sw-zona { background: color-mix(in srgb, var(--accent) 30%, transparent); border: 1.5px dashed var(--accent); }
+  .sw-jadro { background: var(--accent); }
+  .sw-mesto { background: var(--ink-faint); }
+
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--ink);
+    color: var(--ground);
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    line-height: 1.55;
+    padding: 9px 11px;
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+    max-width: 230px;
+    z-index: 5;
+  }
+  .tooltip.on { opacity: 1; }
+
+  /* ---------- poznámka / varování ---------- */
+  .note {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--warn);
+    background: var(--surface);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .note.stop { border-left-color: var(--crit); }
+  .note.info { border-left-color: var(--accent); }
+
+  .note h3 { font-size: 0.95rem; }
+
+  /* ---------- otázky ---------- */
+  ol.otazky { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 12px; }
+  ol.otazky li { padding-left: 4px; }
+  ol.otazky strong { font-weight: 700; }
+
+  footer {
+    padding: 40px 0 64px;
+    border-top: 1px solid var(--line-soft);
+    color: var(--ink-faint);
+    font-size: 0.85rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  /* Až úplně na konci, aby přebilo display ostatních tříd.
+     Pozor: atribut `hidden` na SVG prvcích nefunguje — skrýváme třídou. */
+  .skryto { display: none; }
+</style>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="stack">
+      <span class="eyebrow">Cantinero · technický přehled · 26. 7. 2026</span>
+      <h1>Co je hotové, co se předělá a co ještě neexistuje</h1>
+      <p class="lede">
+        Přehled všech dílů systému, jejich stavu a toho, jak do sebe zapadají.
+        Účel: ověřit, že se shodneme na tom, co stavíme — dřív než začneme
+        stavět dál.
+      </p>
+    </div>
+    <dl class="ledger">
+      <div><dt>Nástrojů hotových</dt><dd>10 z 12</dd></div>
+      <div><dt>Automatických testů</dt><dd>53 ✓</dd></div>
+      <div><dt>Databáze</dt><dd>Lokálně</dd></div>
+      <div><dt>Náklady provozu</dt><dd>0 Kč</dd></div>
+    </dl>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Architektura</span>
+      <h2>Tři vrstvy, jedna z nich jsem já</h2>
+      <p class="muted">
+        Systém není program, který běží na serveru. Je to <b>sada nástrojů</b>,
+        které používá <b>agent</b> a které zapisují do <b>kartotéky</b> u tebe
+        na disku.
+      </p>
+    </div>
+
+    <div class="layers">
+      <div class="layer is-agent">
+        <div class="layer-tag">Vrstva 1<br />Agent</div>
+        <div class="layer-body">
+          <h3>Claude Code na tvém předplatném</h3>
+          <p class="tiny muted">
+            Rozhoduje, co se bude hledat, dohledává na webu údaje, které kód
+            neumí zjistit (stravování, kontakty, účel adresy), a výsledky
+            předává nástrojům. Mezní náklad běhu: nula — jede z Maxu, který
+            už platíš.
+          </p>
+        </div>
+      </div>
+
+      <div class="arrow">↓ &nbsp;volá nástroje&nbsp; ↓</div>
+
+      <div class="layer is-tools">
+        <div class="layer-tag">Vrstva 2<br />Nástroje</div>
+        <div class="layer-body">
+          <h3>Hotový kód, který běží u tebe zadarmo</h3>
+          <p class="tiny muted">
+            Ověření firmy v rejstříku ARES, převod adresy na souřadnice,
+            výpočet vzdálenosti a zóny, bodování vhodnosti, zápis do kartotéky
+            s pojistkami, přehledy a metriky. Deterministické — na stejný vstup
+            dá vždy stejný výsledek, a je to pokryté testy.
+          </p>
+        </div>
+      </div>
+
+      <div class="arrow">↓ &nbsp;zapisují data&nbsp; ↓</div>
+
+      <div class="layer is-data">
+        <div class="layer-tag">Vrstva 3<br />Kartotéka</div>
+        <div class="layer-body">
+          <h3>Databáze ve složce <code>data/</code> na tvém počítači</h3>
+          <p class="tiny muted">
+            Plnohodnotný Postgres běžící uvnitř projektu. Žádný cloud, žádná
+            registrace, žádný měsíční poplatek. Záloha = zkopírovat složku.
+            Tvoje projekty na Supabase se tohohle vůbec netýkají.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Inventář</span>
+      <h2>Který nástroj co dělá</h2>
+      <p class="muted">
+        Sloupec „testy" říká, kolik automatických kontrol daný díl hlídá.
+        Testy běží bez internetu, takže je můžu pustit kdykoli a hned vím,
+        jestli se něco nerozbilo.
+      </p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Nástroj</th>
+            <th>Co dělá — lidsky</th>
+            <th>Stav</th>
+            <th class="num">Testy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="tool-name">ico</td>
+            <td>Ověří, že IČO je vůbec platné číslo (kontrolní součet), než se ptáme rejstříku.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">5</td>
+          </tr>
+          <tr>
+            <td class="tool-name">ares</td>
+            <td>Mluví se státním rejstříkem ARES: vyjmenuje firmy v obci a ověří konkrétní firmu. Drží slušné tempo dotazů.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">6</td>
+          </tr>
+          <tr>
+            <td class="tool-name">geocode</td>
+            <td>Převede adresu na souřadnice přes mapy OpenStreetMap. Když adresu nenajde, řekne „nevím" — nikdy netipuje.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">4</td>
+          </tr>
+          <tr>
+            <td class="tool-name">geo</td>
+            <td>Spočítá vzdálenost firmy k jídelně a zařadí ji: pěšky (do 800 m), dojezd (do 3 km), nebo mimo zónu.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">7</td>
+          </tr>
+          <tr>
+            <td class="tool-name">score</td>
+            <td>Oboduje firmu 0–100: blízkost, velikost, nemá vlastní jídelnu, kancelářský obor, má poptávkový e-mail.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">5</td>
+          </tr>
+          <tr>
+            <td class="tool-name">repo</td>
+            <td>Jediná povolená cesta k zápisu do kartotéky. Tady jsou zabudované pojistky — bez ověření a bez zdroje neprojde nic.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">11</td>
+          </tr>
+          <tr>
+            <td class="tool-name">db + schéma</td>
+            <td>Samotná kartotéka: 15 tabulek, lokální úložiště, bezpečné opakované spouštění aktualizací.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">8</td>
+          </tr>
+          <tr>
+            <td class="tool-name">cmuchal</td>
+            <td>Řídí celý běh: vezme jídelnu, projde kandidáty, roztřídí je a všechno zapíše do deníku běhů.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">2</td>
+          </tr>
+          <tr>
+            <td class="tool-name">metriky</td>
+            <td>Spočítá přehledy: firmy podle stavu, kapacita jídelen, kvalita dat (kolik údajů má doložený zdroj).</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">2</td>
+          </tr>
+          <tr>
+            <td class="tool-name">cli</td>
+            <td>Příkazy pro rutinu: založ schéma, přidej jídelnu, spusť běh, ukaž stav, ukaž metriky.</td>
+            <td><span class="chip ok">Hotovo</span></td>
+            <td class="num">ručně</td>
+          </tr>
+          <tr class="row-todo">
+            <td class="tool-name">enrich</td>
+            <td>Dohledávání na webu (stravování, kontakty). Je napsané pro placené API — <b>předělám ho na nástroj pro agenta</b>, aby jelo z předplatného. Práce na hodiny.</td>
+            <td><span class="chip todo">Předělat</span></td>
+            <td class="num">3</td>
+          </tr>
+          <tr class="row-todo">
+            <td class="tool-name">mapa + přehledy</td>
+            <td>Interaktivní mapa ČR, která se plní analyzovanými oblastmi, a vizuální přehledy stavu. Náhled máš níž.</td>
+            <td><span class="chip plan">Navrženo</span></td>
+            <td class="num">—</td>
+          </tr>
+          <tr class="row-no">
+            <td class="tool-name">odesílání</td>
+            <td>Odesílání e-mailů. <b>Záměrně neexistuje</b> a do fáze 3 existovat nesmí — v kódu není žádná cesta, jak zprávu odeslat.</td>
+            <td><span class="chip no">Nesmí být</span></td>
+            <td class="num">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Průběh</span>
+      <h2>Co se stane, když řekneš „projeď padesát firem"</h2>
+      <p class="muted">
+        Pravý sloupec ukazuje pojistku, která na daném kroku hlídá kvalitu.
+        Nejsou to prosby v zadání — jsou to zámky v kódu a v databázi.
+      </p>
+    </div>
+
+    <ol class="run">
+      <li>
+        <div>
+          <h3>Vyber jídelnu</h3>
+          <p class="tiny muted">Musí být aktivní a mít volnou kapacitu. Když kapacita došla, běh se vůbec nespustí.</p>
+        </div>
+        <p class="guard"><b>Kapacita je strop.</b> Nemá smysl hledat firmy pro jídelnu, která už nemá co vařit.</p>
+      </li>
+      <li>
+        <div>
+          <h3>Vyjmenuj firmy v obci</h3>
+          <p class="tiny muted">Ze státního rejstříku ARES, po dávkách a slušným tempem.</p>
+        </div>
+        <p class="guard">Dotazy s prodlevou, aby cizí server nedostal zabrat.</p>
+      </li>
+      <li>
+        <div>
+          <h3>Ověř každou firmu</h3>
+          <p class="tiny muted">Neplatné a nedohledatelné se rovnou zahodí, do kartotéky se nedostanou.</p>
+        </div>
+        <p class="guard"><b>Bez ARES není firma.</b> Do kartotéky vede jediná cesta a ta ověření vyžaduje.</p>
+      </li>
+      <li>
+        <div>
+          <h3>Změř vzdálenost k jídelně</h3>
+          <p class="tiny muted">Adresa → souřadnice → metry. Do 800 m pěšky, do 3 km dojezd, dál mimo.</p>
+        </div>
+        <p class="guard">Když se adresa nenajde, firma se zahodí. <b>Nikdy se netipuje.</b></p>
+      </li>
+      <li>
+        <div>
+          <h3>Roztřiď podle zóny</h3>
+          <p class="tiny muted">V zóně → pokračuje dál. Kousek za zónou → uloží se jako „čeká na bližší jídelnu". Daleko → zahodí se.</p>
+        </div>
+        <p class="guard">Firma mimo zónu se nikdy nedostane do fronty na oslovení, ani kdyby měla sto bodů.</p>
+      </li>
+      <li>
+        <div>
+          <h3>Dohledej údaje na webu</h3>
+          <p class="tiny muted">Mají vlastní jídelnu? Jak řeší obědy? Jaký e-mail zveřejňují a k čemu? Max 2 kontaktní osoby.</p>
+        </div>
+        <p class="guard"><b>Ke každému údaji doslovná citace a odkaz.</b> Co nejde doložit, zůstane prázdné. Zakázané zdroje (sociální sítě, finance, recenze) se neotvírají.</p>
+      </li>
+      <li>
+        <div>
+          <h3>Oboduj a kvalifikuj</h3>
+          <p class="tiny muted">Skóre 0–100 a označení „kvalifikovaná" — tedy připravená pro pozdější oslovení.</p>
+        </div>
+        <p class="guard">Čmuchal se nedostane dál než ke kvalifikaci. Oslovit ji neumí.</p>
+      </li>
+      <li>
+        <div>
+          <h3>Zapiš do deníku</h3>
+          <p class="tiny muted">Kolik firem, co se povedlo, co selhalo, kolik to stálo. Postřehy jdou do playbooku.</p>
+        </div>
+        <p class="guard"><b>Každý běh dohledatelný.</b> Nic se neděje potichu.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Mapa — náhled</span>
+      <h2>Kde jsme už hledali</h2>
+      <p class="muted">
+        Takhle bude vypadat průběžný přehled území. Zóny se budou přidávat, jak
+        budeme zpracovávat jídelny. Zatím žádnou jídelnu nemáme, takže mapa je
+        prázdná — tlačítkem si můžeš pustit ukázku, jak bude vypadat naplněná.
+      </p>
+    </div>
+
+    <div class="map-panel">
+      <div class="map-bar">
+        <div class="legend">
+          <span><i class="sw-zona"></i>Zóna jídelny</span>
+          <span><i class="sw-jadro"></i>Jídelna</span>
+          <span><i class="sw-mesto"></i>Město (orientace)</span>
+        </div>
+        <button class="toggle" id="prepinac" type="button" aria-pressed="false">
+          Ukázat s ukázkovými daty
+        </button>
+      </div>
+
+      <div class="map-stage" id="stage">
+        <svg class="mapa" viewBox="0 0 1000 520" role="img"
+             aria-label="Orientační mapa České republiky se zónami jídelen">
+          <g id="mrizka"></g>
+          <path class="cr-outline" d="M14,156 L78.6,140 L135.7,124 L292.9,50 L350,10 L407,46
+            L432.9,20 L478.6,64 L535.7,70 L621.4,90 L600,136 L692.9,140 L763.6,164 L821.4,160
+            L864.3,186 L907.1,234 L950,260 L979.4,316 L935,340 L878.6,370 L835.7,430 L735.7,470
+            L700,496 L578.6,496 L535.7,450 L450,430 L421.4,466 L350,504 L264.3,466 L214.3,430
+            L150,360 L92.9,290 L57.1,270 L78.6,210 L28.6,200 Z" />
+          <g id="mesta"></g>
+          <g id="zony" class="skryto"></g>
+        </svg>
+
+        <div class="prazdny-stav" id="prazdny">
+          <span>Zatím žádná jídelna — mapa se naplní prvním během</span>
+        </div>
+
+        <div class="tooltip" id="tip" role="status"></div>
+      </div>
+
+      <p class="tiny muted">
+        Obrys státu je orientační; polohy měst odpovídají skutečným
+        souřadnicím. Zóny v ukázce jsou vymyšlené a slouží jen k předvedení
+        vzhledu — jakmile budou reálná data, ukázkový režim zmizí.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Ovládání</span>
+      <h2>Spouští se to v chatu, nebo v aplikaci?</h2>
+    </div>
+
+    <div class="cards">
+      <div class="card pick">
+        <span class="chip plan">Teď</span>
+        <h3>Ovládání v chatu</h3>
+        <p class="tiny muted">
+          Řekneš „projeď padesát firem kolem Komenského" a dostaneš lidské
+          shrnutí. Já mezitím volám nástroje. Výhoda: vidíš, co se děje, a
+          můžeš kdykoli zasáhnout nebo změnit zadání.
+        </p>
+      </div>
+      <div class="card">
+        <span class="chip plan">Průběžně</span>
+        <h3>Stránky ke sledování</h3>
+        <p class="tiny muted">
+          Mapa a přehledy jako tenhle dokument — otevřeš v prohlížeči, uvidíš
+          stav. Slouží ke <b>koukání a schvalování</b>, ne k ovládání. Právě
+          proto ti je budu připravovat ke každému většímu výstupu.
+        </p>
+      </div>
+      <div class="card">
+        <span class="chip todo">Až budeš chtít</span>
+        <h3>Plánované běhy</h3>
+        <p class="tiny muted">
+          „Každé ráno projeď dvacet firem." Přidáme, až budeme mít odladěnou
+          kvalitu — dřív by to jen rychleji vyrábělo chyby.
+        </p>
+      </div>
+    </div>
+
+    <div class="note info" style="margin-top: 24px;">
+      <h3>Krátká odpověď</h3>
+      <p class="tiny">
+        Ovládání zůstává konverzační. Samostatný frontend nebudeme stavět jako
+        hlavní vstup — vyrábět celou aplikaci s přihlašováním by byla práce
+        navíc, kterou zatím nikdo nepotřebuje. Vizuální stránky ano, ale jako
+        <b>výstup ke čtení</b>, ne jako ovládací panel. Až přijde fáze 3 a
+        schvalování jednotlivých zpráv, přehodnotíme to.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Otevřená otázka</span>
+      <h2>Přes co se budou posílat e-maily</h2>
+      <p class="muted">
+        Tohle je rozhodnutí pro fázi 3, ale příprava domény trvá týdny, takže
+        se hodí rozhodnout brzy. Objem je malý — 10 zpráv denně, prostý text,
+        podepsaný skutečným člověkem.
+      </p>
+    </div>
+
+    <div class="cards">
+      <div class="card pick">
+        <span class="chip plan">Doporučuji</span>
+        <h3>Z běžné firemní schránky</h3>
+        <p class="tiny muted">
+          Zprávy odcházejí ze skutečné schránky podepsané osoby (Microsoft 365
+          nebo Google Workspace).
+        </p>
+        <ul>
+          <li>Je to opravdu osobní e-mail od člověka, ne rozesílka — nejlepší doručitelnost</li>
+          <li>Odpovědi chodí rovnou tomu, kdo je má číst</li>
+          <li>Žádný další nástroj a poplatek navíc</li>
+          <li>Nevýhoda: stížnost dopadá na hlavní firemní doménu</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <span class="chip plan">Alternativa</span>
+        <h3>Přes odesílací službu</h3>
+        <p class="tiny muted">
+          Specializovaná služba (Postmark, Resend a podobné) s vlastní
+          poddoménou, např. <code>info.tvojefirma.cz</code>.
+        </p>
+        <ul>
+          <li>Hlavní doména zůstane chráněná</li>
+          <li>Lepší přehled o doručení a odmítnutích</li>
+          <li>Nevýhoda: poplatek, nastavování a několikatýdenní zahřívání</li>
+          <li>Nevýhoda: vypadá to víc jako rozesílka</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top: 24px;">
+      <h3>Co platí u obou variant</h3>
+      <p class="tiny">
+        Zprávy jsou prostý text bez obrázků a bez sledovacích pixelů. Povinně
+        obsahují označení obchodního sdělení, identifikaci firmy včetně IČO a
+        sídla, funkční možnost odmítnout další komunikaci a technickou hlavičku
+        pro odhlášení. Doména potřebuje nastavené SPF, DKIM a DMARC — to je
+        technika, kterou udělám já, ale potřebuju přístup k doméně.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Další krok</span>
+      <h2>Na co čekám a co rozhodneš</h2>
+    </div>
+
+    <ol class="otazky">
+      <li>
+        <strong>Seznam jídelen.</strong> Jediná věc, která blokuje ostrý start.
+        Stačí hrubě: název, adresa, přibližná volná kapacita — zbytek dohledám.
+      </li>
+      <li>
+        <strong>Sedí tenhle přehled?</strong> Jestli něco chápu jinak, než jsi
+        myslel, teď je nejlevnější chvíle to srovnat.
+      </li>
+      <li>
+        <strong>E-mail:</strong> firemní schránka, nebo odesílací služba? Není
+        to na dnes, ale doména potřebuje čas.
+      </li>
+      <li>
+        <strong>Mapa:</strong> stačí ti obrysová mapa s body a zónami, nebo
+        chceš vidět i hranice okresů a krajů? To druhé jde, jen je to víc práce.
+      </li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Cantinero · fáze 0 (přípravná) · stav ke dni 26. 7. 2026 ·
+    zdroj pravdy pro zadání je <code>SPEC.md</code>, orchestrace fáze 0 je
+    v <code>docs/FAZE-0.md</code>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    // Projekce zeměpisných souřadnic do plátna mapy.
+    const X0 = 12.0, X1 = 19.0, Y0 = 51.10, Y1 = 48.50, W = 1000, H = 520;
+    const px = (lng) => (lng - X0) * (W / (X1 - X0));
+    const py = (lat) => (Y0 - lat) * (H / (Y0 - Y1));
+
+    const mesta = [
+      { n: "Praha", lat: 50.075, lng: 14.437 },
+      { n: "Brno", lat: 49.195, lng: 16.608 },
+      { n: "Ostrava", lat: 49.834, lng: 18.282 },
+      { n: "Plzeň", lat: 49.747, lng: 13.377 },
+      { n: "Liberec", lat: 50.767, lng: 15.056 },
+      { n: "Olomouc", lat: 49.593, lng: 17.250 },
+      { n: "Č. Budějovice", lat: 48.974, lng: 14.474 },
+      { n: "Hradec Král.", lat: 50.209, lng: 15.832 },
+      { n: "Ústí n. L.", lat: 50.661, lng: 14.032 },
+      { n: "Zlín", lat: 49.226, lng: 17.666 },
+      { n: "Jihlava", lat: 49.395, lng: 15.591 },
+      { n: "Karlovy Vary", lat: 50.231, lng: 12.871 }
+    ];
+
+    // UKÁZKOVÁ data — slouží jen k předvedení vzhledu mapy.
+    const ukazkoveZony = [
+      { n: "ZŠ Komenského", lat: 50.088, lng: 14.421, r: 34, firem: 62, kvalif: 41, kapacita: 150 },
+      { n: "ZŠ Na Vyhlídce", lat: 50.041, lng: 14.512, r: 26, firem: 38, kvalif: 22, kapacita: 90 },
+      { n: "SŠ Veveří", lat: 49.204, lng: 16.594, r: 30, firem: 47, kvalif: 29, kapacita: 120 }
+    ];
+
+    const ns = "http://www.w3.org/2000/svg";
+    const el = (t, attrs) => {
+      const e = document.createElementNS(ns, t);
+      for (const k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    };
+
+    // Jemná souřadnicová mřížka pro pocit mapy.
+    const mrizka = document.getElementById("mrizka");
+    for (let lng = 13; lng <= 18; lng++) {
+      mrizka.appendChild(el("line", {
+        class: "grid-line", x1: px(lng), y1: 0, x2: px(lng), y2: H
+      }));
+    }
+    for (let lat = 49; lat <= 51; lat++) {
+      mrizka.appendChild(el("line", {
+        class: "grid-line", x1: 0, y1: py(lat), x2: W, y2: py(lat)
+      }));
+    }
+
+    const gMesta = document.getElementById("mesta");
+    mesta.forEach((m) => {
+      const x = px(m.lng), y = py(m.lat);
+      gMesta.appendChild(el("circle", { class: "mesto", cx: x, cy: y, r: 3.5 }));
+      const t = el("text", { class: "mesto-label", x: x + 8, y: y + 5 });
+      t.textContent = m.n;
+      gMesta.appendChild(t);
+    });
+
+    const tip = document.getElementById("tip");
+    const stage = document.getElementById("stage");
+
+    function ukazTip(e, zona) {
+      const r = stage.getBoundingClientRect();
+      tip.innerHTML =
+        "<b>" + zona.n + "</b><br />ukázková data<br />" +
+        "firem nalezeno: " + zona.firem + "<br />" +
+        "kvalifikováno: " + zona.kvalif + "<br />" +
+        "volná kapacita: " + zona.kapacita;
+      tip.classList.add("on");
+      const x = Math.min(e.clientX - r.left + 14, r.width - 240);
+      tip.style.left = Math.max(0, x) + "px";
+      tip.style.top = Math.max(0, e.clientY - r.top + 14) + "px";
+    }
+
+    function skryjTip() { tip.classList.remove("on"); }
+
+    const gZony = document.getElementById("zony");
+    ukazkoveZony.forEach((z) => {
+      const x = px(z.lng), y = py(z.lat);
+      const g = el("g", { class: "zona", tabindex: "0", role: "img" });
+      g.setAttribute("aria-label",
+        z.n + ", ukázková data: nalezeno " + z.firem + " firem, kvalifikováno " + z.kvalif);
+      g.appendChild(el("circle", { class: "zona-ring", cx: x, cy: y, r: z.r }));
+      g.appendChild(el("circle", { class: "zona-jadro", cx: x, cy: y, r: 5 }));
+      const t = el("text", { class: "zona-label", x: x + z.r + 6, y: y - z.r + 6 });
+      t.textContent = z.n;
+      g.appendChild(t);
+
+      g.addEventListener("mousemove", (e) => ukazTip(e, z));
+      g.addEventListener("mouseleave", skryjTip);
+      g.addEventListener("focus", (e) => {
+        const b = g.getBoundingClientRect();
+        ukazTip({ clientX: b.left + b.width / 2, clientY: b.top }, z);
+      });
+      g.addEventListener("blur", skryjTip);
+      gZony.appendChild(g);
+    });
+
+    const tlacitko = document.getElementById("prepinac");
+    const prazdny = document.getElementById("prazdny");
+    let zapnuto = false;
+
+    tlacitko.addEventListener("click", () => {
+      zapnuto = !zapnuto;
+      gZony.classList.toggle("skryto", !zapnuto);
+      prazdny.classList.toggle("skryto", zapnuto);
+      tlacitko.setAttribute("aria-pressed", String(zapnuto));
+      tlacitko.textContent = zapnuto
+        ? "Skrýt ukázková data"
+        : "Ukázat s ukázkovými daty";
+      if (!zapnuto) skryjTip();
+    });
+  })();
+</script>

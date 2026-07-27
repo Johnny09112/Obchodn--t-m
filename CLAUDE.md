@@ -60,6 +60,21 @@ Majitel **není programátor**. Z toho plyne:
 - Nepředstírej jistotu: co je hotové a ověřené, řekni napřímo; co je odhad
   nebo riziko, označ jako odhad nebo riziko.
 
+## Vizualizace stavu v HTML (povinné)
+
+Ke každému většímu výstupu — stav projektu, výsledek běhu, přehled, návrh
+architektury, metriky — **vždy připrav HTML stránku s vizualizací**, ne jen
+text v chatu. Majitel si výstupy prohlíží vizuálně.
+
+- Soubory ukládej do `docs/vizualizace/` (verzované v gitu) a publikuj je
+  jako artifact, aby šly otevřít v prohlížeči.
+- Stav vždy kóduj i tvarem (barevný štítek, pruh, ikona), ne jen číslem —
+  ať je na první pohled vidět, co je hotové, co čeká a co je problém.
+- **Ukázková data označ jako ukázková.** Nikdy neprezentuj vymyšlená čísla
+  jako reálná; prázdný stav je legitimní stav a takhle se má i zobrazit.
+- Průběžný cíl: interaktivní mapa ČR, která se postupně plní analyzovanými
+  oblastmi (zóny jídelen, oslovené a vyhodnocené firmy).
+
 ## Pravidla doptávání (kdy se ptát, kdy rozhodnout sám)
 
 **Vždy se zeptej (rozhoduje majitel):**

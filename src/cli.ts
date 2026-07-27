@@ -8,6 +8,9 @@ import { vytvorEnricher, type Enricher } from "./enrich.js";
 import { spustCmuchala } from "./cmuchal.js";
 import { metrikyFaze1, prehledStavu } from "./metriky.js";
 import { vygenerujMapu } from "./mapa.js";
+import { vytvorResKlienta } from "./res.js";
+import { vytvorMpsvKlienta } from "./mpsv.js";
+import { vytvorOsmKlienta } from "./osm.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -50,11 +53,12 @@ async function cmdSeedJidelna(argv: string[]): Promise<void> {
       lat: { type: "string" },
       lng: { type: "string" },
       "kod-obce": { type: "string" },
+      obec: { type: "string" },
       kapacita: { type: "string" },
       zona: { type: "string", default: "3000" },
     },
   });
-  const povinne = ["nazev", "adresa", "lat", "lng", "kod-obce", "kapacita"] as const;
+  const povinne = ["nazev", "adresa", "lat", "lng", "kod-obce", "obec", "kapacita"] as const;
   for (const p of povinne) {
     if (!values[p]) {
       console.error(`Chybí --${p}`);
@@ -64,11 +68,12 @@ async function cmdSeedJidelna(argv: string[]): Promise<void> {
   const db = await pripojDb();
   try {
     const rows = await db.query<{ id: string }>(
-      `insert into jidelny (nazev, adresa, lat, lng, kod_obce, kapacita_volna, zona_metru)
-       values ($1,$2,$3,$4,$5,$6,$7) returning id`,
+      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, kapacita_volna, zona_metru)
+       values ($1,$2,$3,$4,$5,$6,$7,$8) returning id`,
       [
         values.nazev,
         values.adresa,
+        values.obec,
         Number(values.lat),
         Number(values.lng),
         Number(values["kod-obce"]),
@@ -88,6 +93,7 @@ async function cmdRun(argv: string[]): Promise<void> {
     options: {
       jidelna: { type: "string" },
       limit: { type: "string" },
+      "ares-sweep": { type: "boolean", default: false },
     },
   });
   if (!values.jidelna) {
@@ -116,11 +122,17 @@ async function cmdRun(argv: string[]): Promise<void> {
       {
         db,
         ares: vytvorAresKlienta(),
+        res: vytvorResKlienta(),
         geokoder: vytvorGeokoder({ kontakt }),
+        mpsv: vytvorMpsvKlienta(),
+        osm: vytvorOsmKlienta({ kontakt }),
         enricher,
       },
       values.jidelna,
-      { limit: values.limit ? Number(values.limit) : undefined },
+      {
+        limit: values.limit ? Number(values.limit) : undefined,
+        aresSweep: values["ares-sweep"] === true,
+      },
     );
 
     console.log(`Běh ${souhrn.behId} dokončen:`);
@@ -217,7 +229,7 @@ switch (prikaz) {
   default:
     console.log(`Cantinero — fáze 1 (Čmuchal). Příkazy:
   migrate                          založí/aktualizuje schéma (lokálně, nebo na DATABASE_URL)
-  seed-jidelna --nazev … --adresa … --lat … --lng … --kod-obce … --kapacita … [--zona 3000]
+  seed-jidelna --nazev … --adresa … --obec … --lat … --lng … --kod-obce … --kapacita … [--zona 3000]
   run --jidelna <id> [--limit N]   spustí Čmuchala pro jídelnu
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat

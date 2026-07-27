@@ -1,159 +1,187 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { spustCmuchala } from "../src/cmuchal.js";
 import type { AresKlient, AresZaznam } from "../src/ares.js";
 import type { Geokoder } from "../src/geocode.js";
-import type { Enricher } from "../src/enrich.js";
+import type { MpsvKlient } from "../src/mpsv.js";
+import type { OsmKlient } from "../src/osm.js";
+import type { ResKlient, ResUdaje } from "../src/res.js";
 
 let db: Db;
 let jidelnaId: string;
 
-// Jídelna na Staroměstském náměstí, zóna 3 km.
-const JIDELNA = { lat: 50.0875, lng: 14.4213 };
+const JIDELNA = { lat: 49.90624, lng: 12.97442 }; // Bezdružice
 
-const kandidati: AresZaznam[] = [
-  {
-    ico: "25596641",
-    nazev: "Blízká s.r.o.",
-    adresa: "Celetná 1, Praha",
-    obec: "Praha",
-    czNace: ["62010"],
-    velikostKategorie: "stredni",
-    kodObce: 554782,
-  },
-  {
-    ico: "00006947",
-    nazev: "Vzdálená a.s.",
-    adresa: "Průhonice 100",
-    obec: "Průhonice",
-    czNace: ["10110"],
-    velikostKategorie: "mala",
-    kodObce: 554782,
-  },
-  {
-    ico: "12345678", // nevalidní checksum → musí být zahozena (TP-1)
-    nazev: "Fiktivní s.r.o.",
-    adresa: "Nikde 1",
-    obec: "Praha",
-    czNace: [],
-    velikostKategorie: null,
-    kodObce: 554782,
-  },
-];
-
-const mockAres: AresKlient = {
-  overFirmu: async (ico) => kandidati.find((k) => k.ico === ico) ?? null,
-  najdiFirmyVObci: async () => kandidati,
+/** Zaměstnavatel s náborem, sídlí v obci. */
+const agrofarmy: AresZaznam = {
+  ico: "25242407", nazev: "AGROFARMY BEZDRUŽICE s.r.o.", adresa: "Náves 1",
+  obec: "Bezdružice", czNace: ["01500"], velikostKategorie: null, kodObce: 560740,
+};
+/** Provozovna v obci, ale sídlo jinde — přesně ten případ „zinkovna". */
+const zinkovna: AresZaznam = {
+  ico: "25489631", nazev: "Zinkovna Bezdružice a.s.", adresa: "Průmyslová 1, Bílina",
+  obec: "Bílina", czNace: ["25610"], velikostKategorie: null, kodObce: 567256,
+};
+/** Prázdná schránka bez zaměstnanců. */
+const skorapka: AresZaznam = {
+  ico: "05499861", nazev: "LK demolice s.r.o.", adresa: "Revolučních gard 199",
+  obec: "Bezdružice", czNace: ["43120"], velikostKategorie: null, kodObce: 560740,
 };
 
-const mockGeokoder: Geokoder = {
-  geokoduj: async (adresa) => {
-    if (adresa.startsWith("Celetná")) return { lat: 50.0877, lng: 14.4255 }; // ~300 m
-    if (adresa.startsWith("Průhonice")) return { lat: 50.0537, lng: 14.4816 }; // ~5,7 km
+const vsechny = [agrofarmy, zinkovna, skorapka];
+
+const ares: AresKlient = {
+  overFirmu: async (ico) => vsechny.find((f) => f.ico === ico) ?? null,
+  najdiFirmyVObci: async () => [agrofarmy, skorapka],
+  najdiPodleJmena: async (n) =>
+    vsechny.find((f) => f.nazev.toLowerCase().includes(n.toLowerCase().slice(0, 8))) ?? null,
+};
+
+const resData: Record<string, Partial<ResUdaje>> = {
+  "25242407": { segment: "mikro", kategoriePopis: "6–9", bezZamestnancu: false },
+  "25489631": { segment: "stredni", kategoriePopis: "50–99", bezZamestnancu: false },
+  "05499861": { segment: null, kategoriePopis: "bez zaměstnanců", bezZamestnancu: true },
+};
+
+const res: ResKlient = {
+  nactiUdaje: async (ico) => ({
+    ico, kategorieKod: "x", kategoriePopis: null, segment: null,
+    bezZamestnancu: false, zdrojUrl: `https://ares.gov.cz/res/${ico}`,
+    ...resData[ico],
+  }),
+};
+
+const geokoder: Geokoder = {
+  geokoduj: async (a) => {
+    if (a === "Bezdružice") return { lat: 49.9062, lng: 12.9744 }; // střed obce
+    if (a.includes("Bílina")) return { lat: 50.5486, lng: 13.7742 }; // sídlo 130 km daleko
+    if (a.includes("Bezdružice")) return { lat: 49.907, lng: 12.976 };
     return null;
   },
 };
 
-const mockEnricher: Enricher = {
-  obohat: async (firma) => ({
-    nalezy:
-      firma.ico === "25596641"
-        ? [
-            {
-              atribut: "ma_vlastni_jidelnu",
-              hodnota: "false",
-              zdrojUrl: "https://blizka.cz/kariera",
-              citace: "Vlastní jídelnu nemáme, obědy řešíme stravenkami.",
-            },
-          ]
-        : [],
-    kontakty:
-      firma.ico === "25596641"
-        ? [
-            {
-              email: "poptavky@blizka.cz",
-              urovenAdresy: 1 as const,
-              zdrojUrl: "https://blizka.cz/kontakt",
-              citace: "Poptávky: poptavky@blizka.cz",
-            },
-          ]
-        : [],
-    nakladyUsd: 0.05,
-    poznamkaProPlaybook: "kariérní stránka fungovala",
-  }),
+const mpsv: MpsvKlient = {
+  zamestnavateleVObci: async () => [
+    { ico: "25242407", nazev: agrofarmy.nazev, mist: 8, inzeratu: 2, kodObce: 560740,
+      zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
+    { ico: "25489631", nazev: zinkovna.nazev, mist: 12, inzeratu: 3, kodObce: 560740,
+      zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
+  ],
 };
 
-beforeAll(async () => {
+const osm: OsmKlient = {
+  najdiPracoviste: async () => [
+    { nazev: "Zinkovna Bezdružice", druh: "works", lat: 49.9095, lng: 12.9781,
+      zdrojUrl: "https://www.openstreetmap.org/way/123" },
+  ],
+};
+
+beforeEach(async () => {
   db = await pripojPglite();
   await spustMigrace(db);
-  const rows = await db.query<{ id: string }>(
-    `insert into jidelny (nazev, adresa, lat, lng, kod_obce, kapacita_volna, zona_metru)
-     values ('ZŠ Staroměstská', 'Staroměstské nám., Praha', $1, $2, 554782, 150, 3000)
-     returning id`,
+  const r = await db.query<{ id: string }>(
+    `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, kapacita_volna, zona_metru)
+     values ('ZŠ Bezdružice', 'Školní 183', 'Bezdružice', $1, $2, 560740, 10, 3000) returning id`,
     [JIDELNA.lat, JIDELNA.lng],
   );
-  jidelnaId = rows[0]!.id;
+  jidelnaId = r[0]!.id;
 });
 
-describe("spustCmuchala", () => {
-  it("projde kandidáty a správně je roztřídí", async () => {
-    const souhrn = await spustCmuchala(
-      { db, ares: mockAres, geokoder: mockGeokoder, enricher: mockEnricher },
-      jidelnaId,
+describe("spustCmuchala — obrácené hledání", () => {
+  it("najde zaměstnavatele z obou zdrojů a odfiltruje firmu bez zaměstnanců", async () => {
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv, osm }, jidelnaId, {
+      aresSweep: true,
+    });
+
+    expect(s.dleZdroje.mpsv).toBe(2);
+    expect(s.dleZdroje.osm).toBe(1);
+    expect(s.dleZdroje.ares).toBe(2);
+    expect(s.bezZamestnancu).toBe(1); // schránka z ARES sweepu vypadla
+    expect(s.preskoceno).toBe(1); // zinkovna z mapy je už zapsaná z MPSV
+    expect(s.kvalifikovano).toBe(2);
+
+    const firmy = await db.query<{ ico: string; stav: string }>(
+      "select ico, stav from companies order by ico",
     );
-
-    // Blízká: kvalifikovaná, v zóně, se skóre, evidencí a kontaktem úrovně 1.
-    const blizka = await db.query<{
-      stav: string;
-      v_zone: boolean;
-      skore: number;
-      ma_vlastni_jidelnu: boolean;
-    }>("select stav, v_zone, skore, ma_vlastni_jidelnu from companies where ico = '25596641'");
-    expect(blizka[0]!.stav).toBe("kvalifikovany");
-    expect(blizka[0]!.v_zone).toBe(true);
-    expect(blizka[0]!.ma_vlastni_jidelnu).toBe(false);
-    expect(blizka[0]!.skore).toBeGreaterThan(70);
-
-    const evidence = await db.query(
-      "select 1 from evidence where ico = '25596641' and atribut = 'ma_vlastni_jidelnu'",
-    );
-    expect(evidence.length).toBeGreaterThan(0);
-    const kontakt = await db.query<{ uroven_adresy: number }>(
-      "select uroven_adresy from contacts where ico = '25596641'",
-    );
-    expect(kontakt[0]!.uroven_adresy).toBe(1);
-
-    // Vzdálená: mimo zónu, ale do 2× zóny → čeká na jídelnu.
-    const vzdalena = await db.query<{ stav: string; v_zone: boolean }>(
-      "select stav, v_zone from companies where ico = '00006947'",
-    );
-    expect(vzdalena[0]!.stav).toBe("cekajici_na_jidelnu");
-    expect(vzdalena[0]!.v_zone).toBe(false);
-
-    // Fiktivní: neprošla validací IČO → v DB nesmí být.
-    const fiktivni = await db.query("select 1 from companies where ico = '12345678'");
-    expect(fiktivni).toHaveLength(0);
-
-    // TP-13: běh je zaznamenaný a ukončený.
-    const behy = await db.query<{ konec: string | null }>(
-      "select konec from agent_runs where agent = 'cmuchal'",
-    );
-    expect(behy).toHaveLength(1);
-    expect(behy[0]!.konec).not.toBeNull();
-
-    expect(souhrn.kvalifikovano).toBe(1);
-    expect(souhrn.cekajicich).toBe(1);
-    expect(souhrn.zahozeno).toBe(1);
-    expect(souhrn.poznamkyProPlaybook).toContain("kariérní stránka fungovala");
+    expect(firmy.map((f) => f.ico)).toEqual(["25242407", "25489631"]);
+    expect(firmy.every((f) => f.stav === "kvalifikovany")).toBe(true);
   });
 
-  it("odmítne neaktivní jídelnu nebo jídelnu bez kapacity", async () => {
-    const rows = await db.query<{ id: string }>(
-      `insert into jidelny (nazev, adresa, lat, lng, kod_obce, kapacita_volna, aktivni)
-       values ('Plná', 'x', 50, 14, 1, 0, true) returning id`,
+  it("provozovnu ze zóny zařadí i když firma sídlí jinde", async () => {
+    await spustCmuchala({ db, ares, res, geokoder, osm }, jidelnaId);
+    const z = await db.query<{ v_zone: boolean; vzdalenost_m: number; obec: string }>(
+      "select v_zone, vzdalenost_m, obec from companies where ico = '25489631'",
+    );
+    expect(z[0]!.v_zone).toBe(true);
+    expect(z[0]!.vzdalenost_m).toBeLessThan(1000); // podle polohy provozovny, ne sídla v Bílině
+    expect(z[0]!.obec).toBe("Bílina"); // sídlo zůstává, jak ho vede rejstřík
+  });
+
+  it("firmu z MPSV nevyřadí kvůli vzdálenému sídlu — použije střed obce pracoviště", async () => {
+    // Zinkovna sídlí v Bílině (130 km), ale MPSV hlásí pracoviště v Bezdružicích.
+    // Bez opravy by ji počítání vzdálenosti od sídla zahodilo.
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
+    expect(s.kvalifikovano).toBe(2);
+
+    const z = await db.query<{ v_zone: boolean; vzdalenost_m: number }>(
+      "select v_zone, vzdalenost_m from companies where ico = '25489631'",
+    );
+    expect(z[0]!.v_zone).toBe(true);
+    expect(z[0]!.vzdalenost_m).toBeLessThan(500);
+
+    // Přibližnost polohy musí být v evidenci přiznaná.
+    const ev = await db.query<{ citace: string }>(
+      "select citace from evidence where ico = '25489631' and atribut = 'adresa'",
+    );
+    expect(ev[0]!.citace).toContain("střed obce");
+    expect(ev[0]!.citace).toContain("MPSV");
+  });
+
+  it("nábor z MPSV se propíše do skóre i do evidence", async () => {
+    await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
+    const f = await db.query<{ skore: number }>(
+      "select skore from companies where ico = '25242407'",
+    );
+    expect(f[0]!.skore).toBeGreaterThan(50);
+    const ev = await db.query<{ citace: string }>(
+      "select citace from evidence where ico = '25242407' and atribut = 'obor'",
+    );
+    expect(ev[0]!.citace).toContain("MPSV");
+  });
+
+  it("každý zapsaný údaj má zdroj (TP-2)", async () => {
+    await spustCmuchala({ db, ares, res, geokoder, mpsv, osm }, jidelnaId);
+    const bezZdroje = await db.query(
+      "select 1 from evidence where zdroj_url is null or zdroj_url = ''",
+    );
+    expect(bezZdroje).toHaveLength(0);
+  });
+
+  it("výpadek jednoho zdroje běh nepoloží", async () => {
+    const rozbityOsm: OsmKlient = {
+      najdiPracoviste: async () => { throw new Error("Overpass nedostupný"); },
+    };
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv, osm: rozbityOsm }, jidelnaId);
+    expect(s.kvalifikovano).toBe(2); // MPSV dodal svoje, i když mapa selhala
+    expect(s.chyby.some((c) => c.kdo === "zdroj OSM")).toBe(true);
+  });
+
+  it("odmítne jídelnu bez volné kapacity", async () => {
+    const r = await db.query<{ id: string }>(
+      `insert into jidelny (nazev, adresa, lat, lng, kod_obce, kapacita_volna)
+       values ('Plná', 'x', 50, 14, 1, 0) returning id`,
     );
     await expect(
-      spustCmuchala({ db, ares: mockAres, geokoder: mockGeokoder }, rows[0]!.id),
+      spustCmuchala({ db, ares, res, geokoder }, r[0]!.id),
     ).rejects.toThrow(/kapacit/i);
+  });
+
+  it("zaznamená běh do agent_runs (TP-13)", async () => {
+    await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
+    const b = await db.query<{ konec: string | null; vystup: unknown }>(
+      "select konec, vystup from agent_runs where agent = 'cmuchal'",
+    );
+    expect(b).toHaveLength(1);
+    expect(b[0]!.konec).not.toBeNull();
   });
 });

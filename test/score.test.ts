@@ -1,70 +1,97 @@
 import { describe, expect, it } from "vitest";
-import { spocitejSkore } from "../src/score.js";
+import { jeKancelarskyObor, oddilNace, spocitejSkore } from "../src/score.js";
+
+describe("oddilNace", () => {
+  it("normalizuje kódy různých délek na oddíl", () => {
+    expect(oddilNace("62010")).toBe("62");
+    expect(oddilNace("55")).toBe("55");
+    expect(oddilNace("00")).toBe("00");
+  });
+
+  it("zahodí sekce zapsané písmenem", () => {
+    expect(oddilNace("G")).toBeNull();
+    expect(oddilNace("")).toBeNull();
+    expect(oddilNace("A1")).toBeNull();
+  });
+});
+
+describe("jeKancelarskyObor", () => {
+  it("pozná kancelářské oddíly bez ohledu na délku kódu", () => {
+    expect(jeKancelarskyObor(["62010"])).toBe(true); // programování
+    expect(jeKancelarskyObor(["69"])).toBe(true); // právo a účetnictví
+    expect(jeKancelarskyObor(["82100", "00"])).toBe(true); // administrativa
+  });
+
+  it("nenechá se zmást ubytováním ani sekcí", () => {
+    expect(jeKancelarskyObor(["55"])).toBe(false); // ubytování
+    expect(jeKancelarskyObor(["10110"])).toBe(false); // výroba masa
+    expect(jeKancelarskyObor(["G"])).toBe(false); // sekce, ne oddíl
+    expect(jeKancelarskyObor([])).toBe(false);
+  });
+});
 
 describe("spocitejSkore", () => {
-  it("ideální firma má skóre 100", () => {
+  it("ideální firma dosáhne 100", () => {
     expect(
       spocitejSkore({
         vzdalenostM: 0,
-        velikostKategorie: "stredni",
+        segment: "stredni",
         maVlastniJidelnu: false,
         czNace: ["62010"],
         urovenAdresy: 1,
+        nabizenychMist: 8,
       }),
     ).toBe(100);
   });
 
-  it("firma bez dat dostane jen body za vzdálenost a NULL bonusy", () => {
+  it("neuvedená velikost nedostane body za velikost", () => {
     const s = spocitejSkore({
       vzdalenostM: 0,
-      velikostKategorie: null,
+      segment: null,
       maVlastniJidelnu: null,
       czNace: [],
       urovenAdresy: null,
     });
-    // 35 (vzdálenost) + 0 + 7 (jídelna NULL) + 0 + 0
-    expect(s).toBe(42);
+    expect(s).toBe(37); // 30 vzdálenost + 7 za nejistotu u jídelny
+  });
+
+  it("živý nábor přidá body podle počtu míst", () => {
+    const zaklad = {
+      vzdalenostM: 3000,
+      segment: null,
+      maVlastniJidelnu: true,
+      czNace: [],
+      urovenAdresy: null,
+    };
+    expect(spocitejSkore({ ...zaklad })).toBe(0);
+    expect(spocitejSkore({ ...zaklad, nabizenychMist: 1 })).toBe(4);
+    expect(spocitejSkore({ ...zaklad, nabizenychMist: 3 })).toBe(7);
+    expect(spocitejSkore({ ...zaklad, nabizenychMist: 8 })).toBe(10);
+  });
+
+  it("střední podnik boduje výš než mikropodnik i korporát", () => {
+    const z = {
+      vzdalenostM: 500,
+      maVlastniJidelnu: false,
+      czNace: ["62010"],
+      urovenAdresy: 1 as const,
+    };
+    const mikro = spocitejSkore({ ...z, segment: "mikro" });
+    const stredni = spocitejSkore({ ...z, segment: "stredni" });
+    const korporat = spocitejSkore({ ...z, segment: "korporat" });
+    expect(stredni).toBeGreaterThan(korporat);
+    expect(korporat).toBeGreaterThan(mikro);
   });
 
   it("skóre klesá se vzdáleností", () => {
-    const zaklad = {
-      velikostKategorie: "stredni" as const,
+    const z = {
+      segment: "stredni" as const,
       maVlastniJidelnu: false,
       czNace: ["69200"],
       urovenAdresy: 1 as const,
     };
-    const blizko = spocitejSkore({ ...zaklad, vzdalenostM: 200 });
-    const daleko = spocitejSkore({ ...zaklad, vzdalenostM: 2500 });
-    expect(blizko).toBeGreaterThan(daleko);
-  });
-
-  it("za 3000 m a víc je za vzdálenost 0 bodů", () => {
-    const s = spocitejSkore({
-      vzdalenostM: 3000,
-      velikostKategorie: null,
-      maVlastniJidelnu: null,
-      czNace: [],
-      urovenAdresy: null,
-    });
-    expect(s).toBe(7);
-  });
-
-  it("kancelářský NACE se pozná podle prefixu oddílu", () => {
-    const bez = spocitejSkore({
-      vzdalenostM: 3000,
-      velikostKategorie: null,
-      maVlastniJidelnu: true,
-      czNace: ["10110"], // výroba masa — ne kancelář
-      urovenAdresy: null,
-    });
-    const s = spocitejSkore({
-      vzdalenostM: 3000,
-      velikostKategorie: null,
-      maVlastniJidelnu: true,
-      czNace: ["62010"], // programování
-      urovenAdresy: null,
-    });
-    expect(bez).toBe(0);
-    expect(s).toBe(15);
+    expect(spocitejSkore({ ...z, vzdalenostM: 200 })).toBeGreaterThan(
+      spocitejSkore({ ...z, vzdalenostM: 2500 }),
+    );
   });
 });

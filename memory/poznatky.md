@@ -102,3 +102,33 @@ mezi nimi ani jednou** — potvrzuje, že hledání podle sídla je slepá cesta
 - **PGlite na disku**: `new PGlite(cesta)` si **nevytvoří vnořený adresář** —
   je potřeba `mkdir -p` předem (řeší `pripojPglite`). Datový adresář má i
   prázdný ~39 MB (běžná režie Postgresu), záloha = zkopírovat `data/`.
+
+## Čmuchal v2 — výsledky přepisu (2026-07-27)
+
+Porovnání na stejné jídelně (Bezdružice, kapacita 10):
+
+| | v1 (podle sídla) | v2 (podle pracoviště) |
+|---|---|---|
+| kandidátů | 40 (z 212 v obci) | 5–31 podle dostupnosti OSM |
+| kvalifikováno | 39 | 5–6 |
+| z toho se zaměstnanci | 3 (a jedním bylo město) | všechny |
+| rozpětí skóre | 52–56 (nerozlišovalo) | 36–71 |
+| firmy sídlící jinde | 0 | 3 z 5 |
+
+**Tři z pěti nalezených zaměstnavatelů sídlí mimo obec** (Hustopeče, 2× Praha) —
+přesně ty, které hledání podle sídla nikdy nenajde.
+
+### Gotchy z přepisu
+
+- **Overpass je nespolehlivý.** Ze tří ostrých běhů uspěl jednou (28 pracovišť),
+  dvakrát vrátil 502/504 na obou serverech. Nutné brát jako doplňkový zdroj —
+  běh na něm nesmí stát. Řešeno: chyba zdroje se zapíše a běh pokračuje.
+- **Párování názvů z mapy na rejstřík je slabé místo:** z 28 nalezených
+  pracovišť se podařilo spárovat 4. Názvy v mapě jsou provozní („Prášková
+  lakovna", „Léčebný Hotel Prusík", „COOP Potraviny"), ne obchodní firmy.
+  → Tohle je úkol pro enrichment krok (dohledat IČO na webu), ne pro čistý kód.
+- **Past při přechodu na MPSV:** kandidát z MPSV má známou obec pracoviště, ale
+  adresu jen u sídla. Počítat vzdálenost od sídla ho vyřadí (firma sídlí v Praze,
+  pracoviště je za rohem). Řešeno: nesouhlasí-li obec sídla s obcí pracoviště,
+  bere se střed obce pracoviště a přibližnost se přizná v evidenci.
+- Segmenty velikosti sjednoceny se SPEC (mikro/stredni/korporat), migrace 0003.

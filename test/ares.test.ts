@@ -38,7 +38,7 @@ describe("overFirmu", () => {
       ico: "25596641",
       nazev: "Seznam.cz, a.s.",
       obec: "Praha",
-      velikostKategorie: "velka",
+      velikostKategorie: "korporat",
       kodObce: 554782,
     });
     expect(z!.czNace).toContain("62010");
@@ -57,12 +57,16 @@ describe("overFirmu", () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
-  it("mapuje kategorie počtu pracovníků", async () => {
+  it("mapuje kategorie počtu pracovníků na segmenty dle SPEC", async () => {
+    // Kódy podle oficiálního číselníku ARES „KategoriePoctuPracovniku".
     const pripady: Array<[string, string | null]> = [
-      ["130", "mikro"],   // 10–19
-      ["220", "mala"],    // 25–49
+      ["000", null], // neuvedeno — nevíme, neodhadujeme
+      ["110", null], // bez zaměstnanců — není segment, je to vyřazení
+      ["130", "mikro"], // 6–9
+      ["220", "mikro"], // 20–24
+      ["230", "stredni"], // 25–49
       ["320", "stredni"], // 200–249
-      ["330", "velka"],   // 250–499
+      ["330", "korporat"], // 250–499
     ];
     for (const [kod, ocekavano] of pripady) {
       const fetchFn = mockFetch(() => ({

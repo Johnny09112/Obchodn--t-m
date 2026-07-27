@@ -20,7 +20,7 @@ const seznam: AresZaznam = {
   adresa: "Radlická 3294/10, 15000 Praha 5",
   obec: "Praha",
   czNace: ["62010", "73110"],
-  velikostKategorie: "velka",
+  velikostKategorie: "korporat",
   kodObce: 554782,
 };
 
@@ -37,7 +37,7 @@ describe("zalozFirmu (TP-1)", () => {
       [seznam.ico],
     );
     expect(rows[0]!.stav).toBe("novy");
-    expect(rows[0]!.velikost_kategorie).toBe("velka");
+    expect(rows[0]!.velikost_kategorie).toBe("korporat");
   });
 
   it("je idempotentní (druhé volání nespadne, neduplikuje)", async () => {

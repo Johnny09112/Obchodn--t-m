@@ -1,4 +1,5 @@
 import { jeValidniIco } from "./ico.js";
+import { segmentPodleKategorie, type Segment } from "./res.js";
 
 /** Ověřený záznam firmy z ARES — jediný vstup pro založení company (TP-1). */
 export interface AresZaznam {
@@ -10,7 +11,7 @@ export interface AresZaznam {
   kraj?: string | null;
   psc?: string | null;
   czNace: string[];
-  velikostKategorie: "mikro" | "mala" | "stredni" | "velka" | null;
+  velikostKategorie: Segment | null;
   kodObce?: number | null;
 }
 
@@ -19,22 +20,26 @@ export interface AresKlient {
   overFirmu(ico: string): Promise<AresZaznam | null>;
   /** POST /ekonomicke-subjekty/vyhledat dle kódu obce, se stránkováním. */
   najdiFirmyVObci(kodObce: number, opts?: { max?: number }): Promise<AresZaznam[]>;
+  /**
+   * Párování názvu pracoviště (např. z mapy) na subjekt v rejstříku.
+   * Vrací shodu jen tehdy, je-li jednoznačná — u víc kandidátů raději nic,
+   * abychom si nevymýšleli (TP-2).
+   */
+  najdiPodleJmena(nazev: string): Promise<AresZaznam | null>;
 }
 
 const ZAKLAD = "https://ares.gov.cz/ekonomicke-subjekty-v-be/rest";
 
 /**
- * Mapování číselníku ČSÚ kategoriePoctuPracovniku na kategorie dle segmentace
- * SPEC (mikro <25, malá 25–99, střední 100–249, velká 250+).
+ * Překlad kódu počtu pracovníků na segment dle SPEC.
+ * Sdílí jediný zdroj pravdy s modulem `res` — číselník je oficiální a
+ * jeho kódy nejsou intuitivní (`000` = neuvedeno, `110` = bez zaměstnanců).
+ *
+ * Pozn.: vyhledávací endpoint ARES tenhle údaj nevrací, takže je tu prakticky
+ * vždy null; skutečný zdroj velikosti je statistický registr (`src/res.ts`).
  */
 export function mapujVelikost(kod: string | null | undefined): AresZaznam["velikostKategorie"] {
-  if (!kod) return null;
-  const k = Number(kod);
-  if (Number.isNaN(k)) return null;
-  if (k <= 210) return "mikro"; // bez zaměstnanců až 20–24
-  if (k <= 230) return "mala"; // 25–49, 50–99
-  if (k <= 320) return "stredni"; // 100–199, 200–249
-  return "velka"; // 250+
+  return segmentPodleKategorie(kod ?? null);
 }
 
 interface AresSubjektDto {
@@ -106,6 +111,33 @@ export function vytvorAresKlienta(opts: AresKlientOpts = {}): AresKlient {
       if (res.status === 404) return null;
       if (!res.ok) throw new Error(`ARES ${res.status} pro IČO ${ico}`);
       return mapujSubjekt((await res.json()) as AresSubjektDto);
+    },
+
+    async najdiPodleJmena(nazev) {
+      const ocisteny = nazev.trim();
+      if (ocisteny.length < 3) return null;
+      const res = await setrny(() =>
+        fetchFn(`${ZAKLAD}/ekonomicke-subjekty/vyhledat`, {
+          method: "POST",
+          headers: { "content-type": "application/json", accept: "application/json" },
+          body: JSON.stringify({ obchodniJmeno: ocisteny, pocet: 5, start: 0 }),
+        }),
+      );
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        pocetCelkem?: number;
+        ekonomickeSubjekty?: AresSubjektDto[];
+      };
+      const subjekty = (data.ekonomickeSubjekty ?? [])
+        .map(mapujSubjekt)
+        .filter((s): s is AresZaznam => s !== null);
+      if (subjekty.length === 0) return null;
+      if (subjekty.length === 1) return subjekty[0]!;
+
+      // Víc kandidátů — bereme jen přesnou shodu názvu, jinak radši nic.
+      const norm = (s: string) => s.toLowerCase().replace(/[\s.,]/g, "");
+      const presna = subjekty.filter((s) => norm(s.nazev) === norm(ocisteny));
+      return presna.length === 1 ? presna[0]! : null;
     },
 
     async najdiFirmyVObci(kodObce, o = {}) {

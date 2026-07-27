@@ -90,3 +90,15 @@ describe("tvrdá pravidla v DB", () => {
     expect(rows).toHaveLength(0);
   });
 });
+
+describe("segmenty velikosti (migrace 0003)", () => {
+  it("povolí segmenty dle SPEC a odmítne staré názvy", async () => {
+    await db.query("insert into companies (ico, nazev) values ('27604977','Segment test')");
+    for (const s of ["mikro", "stredni", "korporat"]) {
+      await db.query("update companies set velikost_kategorie = $1 where ico = '27604977'", [s]);
+    }
+    await expect(
+      db.query("update companies set velikost_kategorie = 'velka' where ico = '27604977'"),
+    ).rejects.toThrow();
+  });
+});

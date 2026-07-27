@@ -292,6 +292,48 @@ describe("deník vyřazení (kalibrace pravidel)", () => {
   });
 });
 
+describe("velké město: sweep rejstříku nestačí", () => {
+  it("běh pokračuje z ostatních zdrojů a řekne to lidsky", async () => {
+    // Plzeň má 49 831 subjektů, po zúžení na formy zaměstnavatelů 13 600 —
+    // pořád přes limit. Nesmí to vypadat jako úspěšný sběr.
+    const aresVelke: AresKlient = {
+      overFirmu: async (i) => vsechny.find((f) => f.ico === i) ?? null,
+      najdiFirmyVObci: async () => {
+        throw new Error(
+          "Obec 554791 má 13 600 subjektů a rejstřík vydá nejvýš 1 000 na dotaz. " +
+            "Pracoviště v ní hledej přes otevřená data MPSV a OpenStreetMap.",
+        );
+      },
+      najdiPodleJmena: async () => null,
+    };
+
+    const s = await spustCmuchala(
+      { db, ares: aresVelke, res, geokoder, mpsv }, jidelnaId, { aresSweep: true },
+    );
+
+    expect(s.kvalifikovano).toBe(2); // MPSV svoje dodal
+    expect(s.poznamkyProPlaybook.join(" ")).toMatch(/13 600/);
+    expect(s.poznamkyProPlaybook.join(" ")).toMatch(/MPSV/);
+  });
+
+  it("sweep posílá do rejstříku zúžení na formy zaměstnavatelů", async () => {
+    let zachyceno: readonly string[] | undefined;
+    const aresSpy: AresKlient = {
+      overFirmu: async () => null,
+      najdiFirmyVObci: async (_kod, o) => {
+        zachyceno = o?.pravniFormy;
+        return [];
+      },
+      najdiPodleJmena: async () => null,
+    };
+    await spustCmuchala({ db, ares: aresSpy, res, geokoder }, jidelnaId, { aresSweep: true });
+
+    expect(zachyceno).toContain("112"); // s.r.o. chceme
+    expect(zachyceno).not.toContain("101"); // živnostníka ne
+    expect(zachyceno).not.toContain("145"); // bytový dům ne
+  });
+});
+
 describe("bytové domy a živnostníci", () => {
   const svj: AresZaznam = {
     ico: "26352524", nazev: "Společenství vlastníků jednotek Hrádek, 1. máje 180",

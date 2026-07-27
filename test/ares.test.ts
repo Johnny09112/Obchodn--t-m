@@ -120,4 +120,42 @@ describe("najdiFirmyVObci", () => {
     expect(vysledek).toHaveLength(10);
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
+
+  it("umí dotaz zúžit na vybrané právní formy", async () => {
+    // Bez zúžení spadne sweep na obcích nad 1 000 subjektů. Filtr na právní
+    // formu je jediný, který ARES doopravdy uplatní — ověřeno reálnými dotazy.
+    const fetchFn = mockFetch(() => ({ pocetCelkem: 0, ekonomickeSubjekty: [] }));
+    const ares = vytvorAresKlienta({ fetchFn, prodlevaMs: 0 });
+    await ares.najdiFirmyVObci(561215, { pravniFormy: ["112", "121"] });
+
+    const telo = JSON.parse(String(fetchFn.mock.calls[0]![1]?.body));
+    expect(telo.pravniForma).toEqual(["112", "121"]);
+    expect(telo.sidlo).toEqual({ kodObce: 561215 });
+  });
+
+  it("bez zúžení pole pravniForma vůbec neposílá", async () => {
+    const fetchFn = mockFetch(() => ({ pocetCelkem: 0, ekonomickeSubjekty: [] }));
+    const ares = vytvorAresKlienta({ fetchFn, prodlevaMs: 0 });
+    await ares.najdiFirmyVObci(560740);
+    expect(JSON.parse(String(fetchFn.mock.calls[0]![1]?.body))).not.toHaveProperty("pravniForma");
+  });
+
+  it("u překročeného limitu řekne kolik jich je a co s tím", async () => {
+    // ARES vrací HTTP 400. Bez srozumitelné hlášky se z běhu nedá poznat,
+    // že jsme o data přišli kvůli velikosti města, ne kvůli výpadku.
+    const fetchFn = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          kod: "CHYBA_VSTUPU",
+          subKod: "VYSTUP_PRILIS_MNOHO_VYSLEDKU",
+          popis: "Zadaný dotaz vrací příliš mnoho výsledků (13 600). Povoleno je maximálně 1 000 výsledků.",
+        }),
+        { status: 400, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const ares = vytvorAresKlienta({ fetchFn, prodlevaMs: 0 });
+    await expect(ares.najdiFirmyVObci(554791)).rejects.toThrow(/13 600/); // kolik jich je
+    await expect(ares.najdiFirmyVObci(554791)).rejects.toThrow(/1 000/); // kde je strop
+    await expect(ares.najdiFirmyVObci(554791)).rejects.toThrow(/MPSV/); // kudy dál
+  });
 });

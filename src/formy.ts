@@ -89,6 +89,28 @@ export function jeOsvc(kod: string | null | undefined): boolean {
   return /^10[0-8]$/.test(kod);
 }
 
+/**
+ * Právní formy, které chceme ze sweepu rejstříku dostat — tedy subjekty,
+ * u nichž má smysl ptát se na firemní obědy.
+ *
+ * Slouží k zúžení dotazu na ARES. To je nutnost, ne optimalizace: bez něj
+ * sweep spadne na každé obci nad 1 000 subjektů (Stříbro 1 580 → 285).
+ * Zároveň tím z výsledku mizí živnostníci a bytové domy, které bychom
+ * stejně vyřazovali až na naší straně.
+ *
+ * Vědomě sem NEPATŘÍ: 100–108 a 424/425 (fyzické osoby — oslovují se jinou
+ * formou), 145 a 233 (bytové domy), 711/721 (politické strany a církve).
+ */
+export const FORMY_ZAMESTNAVATELU: readonly string[] = [
+  "111", "112", "113", "114", "121", // obchodní společnosti
+  "141", "161", "701", "706", "736", "751", // neziskovky, spolky, ústavy
+  "205", "231", "232", "234", // družstva (bytová 233 sem nepatří)
+  "301", "325", "331", "332", "421", // stát, příspěvkové organizace, pobočky
+  "601", "611", "621", "625", "631", "641", // školy a školská zařízení
+  "651", "661", // zdravotnická zařízení, výzkumné instituce
+  "771", "801", "811", // svazky obcí, obce, městské části
+];
+
 /** Název formy pro člověka. Neznámý kód nepřekládáme — radši nic než dohad. */
 export function popisFormy(kod: string | null | undefined): string | null {
   if (!kod) return null;

@@ -2,6 +2,13 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-27 · Claude · **Sweep rejstříku je nástroj pro obce, ne pro města.**
+  Dotaz se zužuje na právní formy zaměstnavatelů (`FORMY_ZAMESTNAVATELU`),
+  což vyřeší vše do velikosti Stříbra (1 580 → 285). Velká města se sweepem
+  pokrývat nebudeme ani po dalším zúžení: zóna jídelny má 3 km, ne celé
+  město, a sídlo v Plzni neříká, kde se pracuje. Pro města platí MPSV
+  a OpenStreetMap. Neprojde-li sweep, zapíše se to viditelně do souhrnu.
+
 - 2026-07-27 · majitel · **Bytová družstva (SVJ) se vyřazují, OSVČ ne.**
   Společenství vlastníků je dům, ne zaměstnavatel — pryč (s důvodem v deníku
   vyřazení). Živnostníci se ale **zachovají v samostatné kartotéce**: budou se

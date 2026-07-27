@@ -1,5 +1,43 @@
 # Poznatky a gotchas
 
+## Limit 1 000 v ARES: co filtruje a co se jen tváří (2026-07-27)
+
+Ověřeno reálnými dotazy na `/ekonomicke-subjekty/vyhledat`. **Jediné dva
+filtry, které se doopravdy uplatní, jsou `sidlo.kodObce` a `pravniForma`.**
+
+| filtr | chování |
+|---|---|
+| `pravniForma` (pole kódů) | **funguje**, Plzeň 49 831 → 13 600, Stříbro 1 580 → 285 |
+| `czNace` | funguje, ale **porovnává PŘESNÝ kód** — dotaz „56" nenajde firmu s „56110" |
+| `datumVzniku` | **tiše ignorován** (počet se nezmění) |
+| `pocetZamestnancu` | **tiše ignorován** (počet se nezmění) |
+
+**Dělit dotaz podle CZ-NACE nejde.** Test na Bezdružicích: 18 s.r.o. celkem,
+součet přes všechny dvoumístné oddíly našel jen 15. Tři chyběly — mají uložené
+pětimístné kódy (`56110`), které se dvoumístnému dotazu nerovnají. Kdybychom
+takhle „pokryli" Plzeň, tiše bychom přišli o ~17 % firem a mysleli si, že máme
+hotovo. **Poučení: každé dělení dotazu se musí ověřit proti nedělenému
+výsledku na malém vzorku, jinak se ztráta nepozná.**
+
+**Jak se to tedy řeší:** sweep si u ARES rovnou říká jen o právní formy
+zaměstnavatelů (`FORMY_ZAMESTNAVATELU` v `src/formy.ts`). Vyřeší to všechny
+obce do velikosti Stříbra a navíc z výsledku mizí živnostníci a bytové domy
+u zdroje. **Velká města tím vyřešená nejsou a ani být nemají** — v Plzni
+zbývá 13 600 subjektů, ale sweep podle obce je tam stejně špatný nástroj:
+zóna jídelny má 3 km, ne celé město, a sídlo v Plzni neříká, kde se pracuje.
+Pro města platí MPSV + OpenStreetMap. Když sweep neprojde, zapíše se to do
+`poznamkyProPlaybook`, ne jen mezi technické chyby — díra v pokrytí musí být
+vidět v souhrnu.
+
+## Právní forma: kód „100" znamená v každém zdroji něco jiného (2026-07-27)
+
+Číselník `PravniForma` vrací tři sady podle zdroje (`com`, `res`, `rzp`).
+U kódu **100** si protiřečí: obchodní rejstřík „Podnikající fyzická osoba
+tuzemská", živnostenský „Fyzická osoba nepodnikající". V našich datech pod ním
+seděli konkrétní lidé vedení jménem, takže patří k živnostníkům tak jako tak —
+ale je to varování: **u číselníků ARES nestačí vzít první nalezený název.**
+(Podobná past už jednou byla u `KategoriePoctuPracovniku`, kód „000".)
+
 ## Kartotéku zaplavují SVJ a OSVČ (2026-07-27)
 
 Ze 194 kvalifikovaných firem se známou velikostí je **jen 20 firem s 25 a víc

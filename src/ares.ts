@@ -20,8 +20,19 @@ export interface AresZaznam {
 export interface AresKlient {
   /** GET /ekonomicke-subjekty/{ico}; 404 nebo nevalidní IČO → null. */
   overFirmu(ico: string): Promise<AresZaznam | null>;
-  /** POST /ekonomicke-subjekty/vyhledat dle kódu obce, se stránkováním. */
-  najdiFirmyVObci(kodObce: number, opts?: { max?: number }): Promise<AresZaznam[]>;
+  /**
+   * POST /ekonomicke-subjekty/vyhledat dle kódu obce, se stránkováním.
+   *
+   * `pravniFormy` dotaz zúží (viz `FORMY_ZAMESTNAVATELU` v src/formy.ts).
+   * Bez zúžení spadne sweep na každé obci nad 1 000 subjektů. Filtr na právní
+   * formu je jediný, který ARES doopravdy uplatní — `datumVzniku`
+   * i `pocetZamestnancu` se tiše ignorují a `czNace` porovnává přesný kód
+   * (dotaz „56" nenajde firmu s „56110"), takže dělit se podle nich nedá.
+   */
+  najdiFirmyVObci(
+    kodObce: number,
+    opts?: { max?: number; pravniFormy?: readonly string[] },
+  ): Promise<AresZaznam[]>;
   /**
    * Párování názvu pracoviště (např. z mapy) na subjekt v rejstříku.
    * Vrací shodu jen tehdy, je-li jednoznačná — u víc kandidátů raději nic,
@@ -75,6 +86,32 @@ function mapujSubjekt(dto: AresSubjektDto): AresZaznam | null {
     kodObce: dto.sidlo?.kodObce ?? null,
     pravniForma: dto.pravniForma ?? null,
   };
+}
+
+/**
+ * Srozumitelná hláška místo holého „ARES vyhledat 400".
+ *
+ * Překročení limitu je jiný druh problému než výpadek: nepřišli jsme o data
+ * kvůli chybě, ale proto, že je obec příliš velká. Z běhu to musí být poznat,
+ * jinak se tichá díra v pokrytí tváří jako úspěšný sběr.
+ */
+async function popisChybyHledani(res: Response, kodObce: number): Promise<string> {
+  let telo: { subKod?: string; popis?: string } = {};
+  try {
+    telo = (await res.json()) as typeof telo;
+  } catch {
+    /* odpověď nebyla JSON — vystačíme si se stavovým kódem */
+  }
+  if (telo.subKod === "VYSTUP_PRILIS_MNOHO_VYSLEDKU") {
+    const pocet = /\((\d[\d\s ]*)\)/.exec(telo.popis ?? "")?.[1] ?? "?";
+    return (
+      `Obec ${kodObce} má ${pocet} subjektů a rejstřík vydá nejvýš 1 000 na dotaz. ` +
+      `Zúžení podle právní formy už bylo použito a nestačí — obec je na sweep ` +
+      `rejstříku příliš velká. Pracoviště v ní hledej přes otevřená data MPSV ` +
+      `a OpenStreetMap; sídlo v takovém městě stejně neříká, kde se pracuje.`
+    );
+  }
+  return `ARES vyhledat ${res.status} (kodObce ${kodObce})${telo.popis ? `: ${telo.popis}` : ""}`;
 }
 
 export interface AresKlientOpts {
@@ -155,12 +192,14 @@ export function vytvorAresKlienta(opts: AresKlientOpts = {}): AresKlient {
             headers: { "content-type": "application/json", accept: "application/json" },
             body: JSON.stringify({
               sidlo: { kodObce },
+              // Prázdné pole by ARES bral jako „žádná forma nevyhovuje".
+              ...(o.pravniFormy?.length ? { pravniForma: [...o.pravniFormy] } : {}),
               pocet: Math.min(strankaVelikost, max - vysledek.length),
               start,
             }),
           }),
         );
-        if (!res.ok) throw new Error(`ARES vyhledat ${res.status} (kodObce ${kodObce})`);
+        if (!res.ok) throw new Error(await popisChybyHledani(res, kodObce));
         const data = (await res.json()) as {
           pocetCelkem: number;
           ekonomickeSubjekty?: AresSubjektDto[];

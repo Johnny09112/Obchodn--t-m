@@ -1,7 +1,7 @@
 import type { AresKlient, AresZaznam } from "./ares.js";
 import type { Db } from "./db.js";
 import type { Enricher } from "./enrich.js";
-import { jeBytovyDum, popisFormy } from "./formy.js";
+import { FORMY_ZAMESTNAVATELU, jeBytovyDum, popisFormy } from "./formy.js";
 import { jeValidniIco } from "./ico.js";
 import { klasifikujZonu, vzdalenostM, type Bod } from "./geo.js";
 import type { Geokoder } from "./geocode.js";
@@ -261,9 +261,14 @@ async function sesbirejKandidaty(
   // doložené zaměstnance je to nejúplnější seznam firem sídlících v obci.
   if (opts.aresSweep !== false && jidelna.kod_obce != null) {
     try {
-      // 1 000 je tvrdý strop samotného ARES. Obce nad tento počet subjektů
-      // (typicky velká města) potřebují zúžení dotazu — viz docs/FAZE-0.md.
-      for (const f of await deps.ares.najdiFirmyVObci(jidelna.kod_obce, { max: 1000 })) {
+      // 1 000 je tvrdý strop samotného ARES. Dotaz proto rovnou zužujeme na
+      // právní formy zaměstnavatelů — bez toho sweep spadne na každé obci
+      // nad tisíc subjektů (Stříbro 1 580 → 285). Živnostníci a bytové domy
+      // tím z výsledku mizí u zdroje, ne až po stažení.
+      for (const f of await deps.ares.najdiFirmyVObci(jidelna.kod_obce, {
+        max: 1000,
+        pravniFormy: FORMY_ZAMESTNAVATELU,
+      })) {
         kandidati.push({
           zdroj: "ares",
           zdrojUrl: `https://ares.gov.cz/ekonomicke-subjekty/${f.ico}`,
@@ -273,7 +278,12 @@ async function sesbirejKandidaty(
         souhrn.dleZdroje.ares++;
       }
     } catch (e) {
-      souhrn.chyby.push({ kdo: "zdroj ARES", chyba: e instanceof Error ? e.message : String(e) });
+      const zprava = e instanceof Error ? e.message : String(e);
+      souhrn.chyby.push({ kdo: "zdroj ARES", chyba: zprava });
+      // Výpadek sweepu znamená díru v pokrytí — musí být vidět v souhrnu,
+      // ne jen v technickém výpisu chyb, jinak se tichá ztráta tváří jako
+      // úspěšný sběr.
+      souhrn.poznamkyProPlaybook.push(`sweep rejstříku neproběhl: ${zprava}`);
     }
   }
 

@@ -17,7 +17,14 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **126 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **143 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- Bytové domy (SVJ, bytová družstva) se nezařazují; živnostníci mají vlastní
+  část kartotéky. Rozlišuje právní forma z rejstříku (`companies.pravni_forma`,
+  migrace 0008), ne název. Data: 208 → **110 firem + 57 živnostníků**,
+  41 bytových domů vyřazeno.
+- Sweep rejstříku se u ARES rovnou zužuje na formy zaměstnavatelů →
+  **Stříbro odblokované** (1 580 subjektů spadlo → 285 projde). Ověřeno
+  naostro. Plzeň sweepem pokrytá nebude, a to záměrně (viz rozhodnutí).
 - Partnerská jídelna se nemůže stát kandidátem (migrace 0007, `jidelny.ico`,
   důvod vyřazení `partnerska_jidelna`). IČO všech 4 jídelen doplněno z ARES.
 - Fronta na rešerši jde zúžit podle velikosti: `k-obohaceni --segmenty …`.
@@ -45,11 +52,13 @@ Kapacita známá jen u Bezdružic (10 obědů/den). Všech 20 firem nad
 
 ## Další krok (v tomto pořadí)
 
-1. **Rozhodnout o SVJ a OSVČ** — čeká na majitele (viz níž). Blokuje
-   smysluplné rozšíření rešerše na menší firmy.
-2. **Vyřešit limit 1 000 výsledků ARES** — blokuje Stříbro i Plzeň
-   (Plzeň = 342 zaměstnavatelů jen v datech MPSV). Zúžit dotaz podle
-   městské části nebo oboru. **Hlavní blokátor růstu.**
+1. **Rozhodnout, jestli se jde do Stříbra** — technicky je odblokované
+   (285 subjektů projde), ale jídelna ve Stříbře není mezi odsouhlasenými
+   pěti. Rozhoduje majitel.
+2. **Plzeň přes MPSV + OpenStreetMap**, ne přes sweep rejstříku. 342
+   zaměstnavatelů z otevřených dat MPSV je hotový seznam; sweep je tam
+   špatný nástroj (viz rozhodnutí 2026-07-27). Potřebná je jídelna
+   34. ZŠ Plzeň v DB.
 3. **Projít vzorek z 1 288 subjektů „velikost neuvedena"** — můžou se tam
    schovávat skuteční zaměstnavatelé, dnes je pouštíme jen ze slabšího zdroje.
 4. Zbytek fáze 0 (tvrzení, šablony, doména, právník — viz `docs/FAZE-0.md`).

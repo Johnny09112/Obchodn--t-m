@@ -228,3 +228,20 @@ Ctrl+C a SIGTERM.
 **Důsledek pro provoz:** až se přejde na sdílenou databázi pro víc lidí,
 tenhle problém zmizí (Postgres je víceprocesový). Do té doby platí: **jeden
 běh v jednu chvíli.**
+
+## Poučení: vynucený údaj svádí k vymýšlení (2026-07-27)
+
+`jidelny.kapacita_volna` byla `not null default 0` a Čmuchal odmítal běžet
+bez kladné kapacity. Jenže kapacita **na výsledek hledání nemá vliv** — je to
+obchodní strop, ne technická podmínka. Když jsem potřeboval spustit běh na
+jídelnách, jejichž kapacitu nikdo neznal, **vymyslel jsem si čísla**, abych
+se dostal přes vlastní podmínku. Majitel se správně zeptal, k čemu ten údaj
+vůbec potřebuju.
+
+**Pravidlo:** vynucuj jen to, bez čeho výsledek nedává smysl. Všechno ostatní
+smí být NULL a NULL znamená „nevíme". Povinné pole, které nikdo nezná, se
+dřív nebo později vyplní smyšlenou hodnotou — a ta se pak tváří jako fakt.
+
+Kapacita se stane tvrdou podmínkou až u fronty na oslovení (fáze 3): tam
+bez ní neodejde nic, protože slibovat obědy, které nemá kdo uvařit, je horší
+než neoslovit.

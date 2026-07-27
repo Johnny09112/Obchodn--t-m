@@ -168,3 +168,23 @@ neovlivňuje nic navenek. Zapisují se sem strategie vyhledávání a jejich
 - nespárováno s rejstříkem: Obecní úřad Úherce
 - nespárováno s rejstříkem: Kavárna
 - nespárováno s rejstříkem: Základní škola
+
+## Běh 2026-07-27 (d3edaa5d-7817-458b-b40c-926c457d2f6c)
+- agentura práce vyřazena: MSRCZ MARINA GLOBAL. s.r.o. (nabírala pro SIGNUM s.r.o.)
+- agentura práce vyřazena: MARCIUS PLUS s.r.o. (nabírala pro Signum s.r.o.)
+- nespárováno s rejstříkem: SIGNUM s.r.o.
+
+## Běh 2026-07-27 (5a8d5233-3930-4b91-9c8d-ac29b88a2905)
+- agentura práce vyřazena: OT KOVO METAL, s.r.o. (nabírala pro s.r.o. Zbůch)
+- nespárováno s rejstříkem: s.r.o. Zbůch
+- nespárováno s rejstříkem: Líně
+- nespárováno s rejstříkem: ZŠ Líně, druhý stupeň
+- nespárováno s rejstříkem: ZŠ Líně, první stupeň
+- nespárováno s rejstříkem: Mateřská škola
+- nespárováno s rejstříkem: Obecní úřad Líně
+- nespárováno s rejstříkem: Zbůch
+- nespárováno s rejstříkem: Obecní úřad Zbůch
+- nespárováno s rejstříkem: Obecní úřad Úherce
+- nespárováno s rejstříkem: Kavárna
+- nespárováno s rejstříkem: Základní škola
+- polohu se nepodařilo určit: DOM Plzeň, s.r.o.

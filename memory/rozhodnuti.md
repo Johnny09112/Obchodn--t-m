@@ -56,3 +56,12 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   identifikátory bez diakritiky) — konzistence se SPEC.
 - 2026-07-24 · Claude (navrženo, nepotvrzeno) · Doporučení technologie =
   hybrid: kódové jádro (tvrdá pravidla) + Claude Code agenti. **Čeká na S0.2.**
+- 2026-07-27 · majitel · **Mikropodniky se NEZAHAZUJÍ, ale ukládají.** Bude se
+  na ně cílit jinou formou reklamy než e-mailem. Práh `--min-zamestnancu`
+  proto řídí jen zařazení do fronty na oslovení, ne uložení.
+- 2026-07-27 · majitel · **U každého vyřazeného kandidáta se zapisuje důvod**
+  (tabulka `vyrazeni`, migrace 0005). Majitel bude v prvních fázích seznamy
+  procházet; postupným broušením pravidel se má systém dostat do autonomního
+  režimu. Bez deníku vyřazení to nejde.
+- 2026-07-27 · majitel · **Kartotéka se člení podle oblastí** (obcí jídelen),
+  ne jako jeden plochý seznam.

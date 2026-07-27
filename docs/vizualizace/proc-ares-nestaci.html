@@ -1,0 +1,286 @@
+<title>Cantinero — proč ARES nestačí</title>
+
+<style>
+  :root {
+    --ink: #131c1f; --ink-soft: #46585a; --ink-faint: #7c8e8e;
+    --ground: #ecefec; --surface: #f8faf8; --surface-2: #e3e8e4;
+    --line: #c9d2cc; --line-soft: #dbe2dc;
+    --accent: #1f6570; --accent-soft: #d6e6e7;
+    --good: #3d7a36; --good-soft: #dbe9d6;
+    --warn: #8f6110; --warn-soft: #f0e5c8;
+    --crit: #94352d; --crit-soft: #f2dcd8;
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --wrap: 1080px; --prose: 66ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e2e9e6; --ink-soft: #9fb0ae; --ink-faint: #71827f;
+      --ground: #0f1516; --surface: #171f20; --surface-2: #1e2829;
+      --line: #2c3839; --line-soft: #232e2f;
+      --accent: #64b6c0; --accent-soft: #16333a;
+      --good: #82bd76; --good-soft: #1b2e1c;
+      --warn: #d3a444; --warn-soft: #302614;
+      --crit: #d9776c; --crit-soft: #331d1a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e9e6; --ink-soft: #9fb0ae; --ink-faint: #71827f;
+    --ground: #0f1516; --surface: #171f20; --surface-2: #1e2829;
+    --line: #2c3839; --line-soft: #232e2f;
+    --accent: #64b6c0; --accent-soft: #16333a;
+    --good: #82bd76; --good-soft: #1b2e1c;
+    --warn: #d3a444; --warn-soft: #302614;
+    --crit: #d9776c; --crit-soft: #331d1a;
+  }
+  :root[data-theme="light"] {
+    --ink: #131c1f; --ink-soft: #46585a; --ink-faint: #7c8e8e;
+    --ground: #ecefec; --surface: #f8faf8; --surface-2: #e3e8e4;
+    --line: #c9d2cc; --line-soft: #dbe2dc;
+    --accent: #1f6570; --accent-soft: #d6e6e7;
+    --good: #3d7a36; --good-soft: #dbe9d6;
+    --warn: #8f6110; --warn-soft: #f0e5c8;
+    --crit: #94352d; --crit-soft: #f2dcd8;
+  }
+
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 24px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2rem, 4.6vw, 3.1rem); font-weight: 800; letter-spacing: -0.032em; line-height: 1.06; }
+  h2 { font-size: clamp(1.3rem, 2.5vw, 1.75rem); font-weight: 750; letter-spacing: -0.02em; }
+  h3 { font-size: 1rem; font-weight: 700; }
+  p { margin: 0; max-width: var(--prose); }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 60ch; }
+  .eyebrow { font-family: var(--mono); font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+  .muted { color: var(--ink-soft); }
+  .tiny { font-size: 0.855rem; line-height: 1.5; }
+  code { font-family: var(--mono); font-size: 0.86em; }
+  section { padding: 54px 0; border-top: 1px solid var(--line-soft); }
+  .sec-head { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  header.hero { padding: 58px 0 46px; background: var(--surface); border-bottom: 1px solid var(--line); }
+
+  /* důkaz */
+  .dukaz { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .dukaz div { background: var(--surface); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+  .dukaz dt { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); }
+  .dukaz dd { margin: 0; font-size: 1.5rem; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .dukaz dd small { display: block; font-size: 0.8rem; font-weight: 400; color: var(--ink-soft); letter-spacing: 0; }
+  .dukaz .spatne dd { color: var(--crit); }
+
+  /* obrácení */
+  .obrat { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .obrat { grid-template-columns: 1fr; } }
+  .sloupec { background: var(--surface); border: 1px solid var(--line); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .sloupec.stary { border-left: 4px solid var(--crit); }
+  .sloupec.novy { border-left: 4px solid var(--good); }
+  .krok { display: flex; gap: 10px; align-items: baseline; }
+  .krok b { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-faint); }
+  .krok span { font-size: 0.9rem; }
+  .vysledek { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line-soft); font-size: 0.86rem; }
+  .vysledek.spatny { color: var(--crit); }
+  .vysledek.dobry { color: var(--good); }
+
+  /* zdroje */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 700px; }
+  thead th { text-align: left; font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-faint); font-weight: 600; padding: 11px 14px;
+    border-bottom: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; }
+  tbody td { padding: 13px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono);
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 2px; white-space: nowrap; }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .chip.free { color: var(--good); background: var(--good-soft); }
+  .chip.pozor { color: var(--warn); background: var(--warn-soft); }
+  .chip.ne { color: var(--crit); background: var(--crit-soft); }
+
+  .note { border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    background: var(--surface); padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .note.varovani { border-left-color: var(--warn); }
+  .note h3 { font-size: 0.95rem; }
+  ul.cist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+  ul.cist li { font-size: 0.895rem; }
+  footer { padding: 36px 0 58px; border-top: 1px solid var(--line-soft); color: var(--ink-faint); font-size: 0.85rem; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header class="hero">
+  <div class="wrap stack">
+    <span class="eyebrow">Cantinero · zjištění z prvního ostrého běhu · 27. 7. 2026</span>
+    <h1>Hledáme na špatné straně</h1>
+    <p class="lede">
+      Rejstřík ARES ví, kde je firma <b>zapsaná</b>. My potřebujeme vědět, kde
+      se <b>pracuje</b> — protože obědy jedí lidé v provozu, ne razítko v sídle.
+    </p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Důkaz</span>
+      <h2>Co ukázal běh na Bezdružicích</h2>
+      <p class="muted">Skutečná čísla z prvního ostrého běhu, ne odhad.</p>
+    </div>
+
+    <dl class="dukaz">
+      <div><dt>Nalezeno subjektů</dt><dd>40<small>mechanika bez chyby</small></dd></div>
+      <div class="spatne"><dt>Z toho zaměstnavatelů</dt><dd>0<small>všechny testované mají kód „000“</small></dd></div>
+      <div class="spatne"><dt>Rozpětí skóre</dt><dd>52–56<small>nerozlišuje, tedy k ničemu</small></dd></div>
+      <div class="spatne"><dt>Zinkovna nalezena</dt><dd>ne<small>sídlí mimo obec</small></dd></div>
+    </dl>
+
+    <div class="note varovani" style="margin-top: 20px;">
+      <h3>Proč zinkovna vypadla</h3>
+      <p class="tiny">
+        V celém rejstříku existuje jediná firma se slovem „zinkovna“ v názvu —
+        a sídlí v Bílině. Provoz v Bezdružicích je <b>provozovna firmy zapsané
+        jinde</b>. Ověřil jsem i živnostenský rejstřík: seznam provozoven
+        přes ARES prostě nedostaneme. Hledáním podle sídla ji nenajdeme nikdy.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Řešení</span>
+      <h2>Otočit pořadí otázek</h2>
+    </div>
+
+    <div class="obrat">
+      <div class="sloupec stary">
+        <span class="eyebrow" style="color: var(--crit)">Dosud</span>
+        <h3>Od rejstříku k místu</h3>
+        <div class="krok"><b>1</b><span>Vyjmenuj firmy zapsané v obci</span></div>
+        <div class="krok"><b>2</b><span>Zjisti, kde sídlí</span></div>
+        <div class="krok"><b>3</b><span>Změř vzdálenost k jídelně</span></div>
+        <p class="vysledek spatny">
+          Výsledek: skořápky, živnostníci a chybějící velké provozy.
+        </p>
+      </div>
+
+      <div class="sloupec novy">
+        <span class="eyebrow" style="color: var(--good)">Nově</span>
+        <h3>Od místa k rejstříku</h3>
+        <div class="krok"><b>1</b><span>Najdi pracoviště v zóně — kanceláře, výrobu, hotely, obchody, ordinace</span></div>
+        <div class="krok"><b>2</b><span>Přiřaď právní subjekt přes ARES (ověření zůstává)</span></div>
+        <div class="krok"><b>3</b><span>Zahoď všechny bez jediného zaměstnance</span></div>
+        <div class="krok"><b>4</b><span>Boduj podle pracoviště, ne podle sídla</span></div>
+        <p class="vysledek dobry">
+          Výsledek: místa, kde se opravdu chodí na oběd.
+        </p>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top: 20px;">
+      <h3>Filtr na živnostníky už máme — jen jsme ho nepoužívali</h3>
+      <p class="tiny">
+        Statistický registr u každého IČO uvádí kategorii počtu zaměstnanců.
+        Kód <code>000</code> znamená „bez zaměstnanců“ — a přesně ten měly
+        všechny testované firmy z Bezdružic. Tenhle jediný údaj odfiltruje
+        živnostníky i prázdné schránky, a zároveň spraví bodování, kterému
+        dnes chybí čtvrtina bodů. Musí se ale dotáhnout zvlášť pro každou
+        firmu, protože ve výsledku hledání není.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Zdroje</span>
+      <h2>Odkud brát pracoviště</h2>
+      <p class="muted">Ověřeno v praxi, ne z dokumentace.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Zdroj</th><th>Co z něj máme</th><th>Cena a podmínky</th><th>Stav</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>ARES</b><br /><span class="tiny muted">státní rejstřík</span></td>
+            <td class="tiny">Ověření firmy, adresa sídla, obor, právní forma. Povinný krok — bez něj firma nevznikne.</td>
+            <td class="tiny">Zdarma, bez klíče.</td>
+            <td><span class="chip free">Používáme</span></td>
+          </tr>
+          <tr>
+            <td><b>Statistický registr</b><br /><span class="tiny muted">součást ARES</span></td>
+            <td class="tiny">Kategorie počtu zaměstnanců. Klíčový filtr na živnostníky a schránky.</td>
+            <td class="tiny">Zdarma, jeden dotaz na firmu.</td>
+            <td><span class="chip pozor">Doplnit</span></td>
+          </tr>
+          <tr>
+            <td><b>OpenStreetMap</b><br /><span class="tiny muted">Overpass API</span></td>
+            <td class="tiny">Fyzická pracoviště v zóně. V testu našel hotel Prusík, hotel Jirásek, KAPIC software, obchody i zdravotní středisko — nic z toho ARES nedal.</td>
+            <td class="tiny">Zdarma, bez klíče. Hlavní server bývá přetížený, jede se přes zrcadlo.</td>
+            <td><span class="chip pozor">Ověřeno, napojit</span></td>
+          </tr>
+          <tr>
+            <td><b>Weby firem a obcí</b></td>
+            <td class="tiny">Doplnění, ověření a citace. Obce často mají seznam místních zaměstnavatelů.</td>
+            <td class="tiny">Zdarma. Respektujeme pravidla webů.</td>
+            <td><span class="chip pozor">Rozšířit</span></td>
+          </tr>
+          <tr>
+            <td><b>Pracovní inzeráty</b></td>
+            <td class="tiny">Silný signál: kdo nabírá, ten má provoz a lidi. Uvádějí místo výkonu práce.</td>
+            <td class="tiny">Zdarma ke čtení. Nikdy nesmí do obsahu zprávy.</td>
+            <td><span class="chip pozor">Zvážit</span></td>
+          </tr>
+          <tr>
+            <td><b>Google Places / Firmy.cz</b></td>
+            <td class="tiny">Nejúplnější seznam provozoven včetně otevírací doby a kontaktů.</td>
+            <td class="tiny">Placené, případně omezené podmínkami užití.</td>
+            <td><span class="chip ne">Rozhodneš ty</span></td>
+          </tr>
+          <tr>
+            <td><b>LinkedIn</b></td>
+            <td class="tiny">—</td>
+            <td class="tiny">Zakázáno zadáním. Nikdy.</td>
+            <td><span class="chip ne">Nikdy</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Další krok</span>
+      <h2>Co navrhuji udělat</h2>
+    </div>
+    <ul class="cist">
+      <li><b>Dotáhnout počty zaměstnanců</b> ze statistického registru a zahodit všechny bez zaměstnanců.</li>
+      <li><b>Napojit OpenStreetMap</b> jako zdroj pracovišť a párovat je na rejstřík.</li>
+      <li><b>Spravit obory</b> — chodí v nesourodých formátech, takže se občas netrefíme.</li>
+      <li><b>Přebodovat</b> podle pracoviště a počtu lidí, ne podle sídla.</li>
+      <li><b>Pustit Bezdružice znovu</b> a porovnat se současnými čtyřiceti nálezy.</li>
+    </ul>
+    <div class="note" style="margin-top: 20px;">
+      <h3>Jedna otázka na tebe</h3>
+      <p class="tiny">
+        Zůstáváme u bezplatných zdrojů, nebo mám počítat i s placeným Google
+        Places? Doporučuji nejdřív vyzkoušet zdarma — po opravě uvidíme, kolik
+        pracovišť nám ještě uniká, a teprve pak se rozhodovat o placení.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Cantinero · zjištění a návrh pro session S0.3c · vše ověřeno reálnými dotazy 27. 7. 2026
+  </div>
+</footer>

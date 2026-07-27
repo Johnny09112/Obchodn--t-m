@@ -23,6 +23,25 @@ Mechanika prošla (0 chyb, 39 kvalifikováno), ale **kvalita dat je slabá**.
 Důsledek: skóre se pohybovalo v úzkém pásmu 52–56 b, tedy **nerozlišuje**.
 Než se pojede Plzeň, je potřeba tyhle čtyři věci opravit.
 
+## Zdroje dat — ověřeno 2026-07-27 (klíčové pro návrh Čmuchala v2)
+
+- **ARES zná jen SÍDLA, ne provozovny.** Sub-registr RŽP (`/ekonomicke-subjekty-rzp/{ico}`)
+  vrací `zivnosti` a `adresySubjektu`, ale **žádné provozovny** (`provozovnyStav`
+  je undefined). Zinkovna v Bezdružicích proto přes ARES nejde najít — v celém
+  ARES je „zinkovna" jediná (Žárová zinkovna Bílina) a sídlí jinde.
+  → Provozovny se musí hledat jinudy: fyzicky podle místa.
+- **Počet zaměstnanců JE dostupný** — ale v sub-registru RES
+  (`/ekonomicke-subjekty-res/{ico}` → `zaznamy[0].statistickeUdaje.kategoriePoctuPracovniku`),
+  ne v základním detailu ani ve výsledku hledání. **Kód „000" = bez zaměstnanců.**
+  Všechny tři testované s.r.o. v Bezdružicích mají „000" → nejsou to odběratelé.
+  **Tohle je hledaný filtr na OSVČ a prázdné schránky.**
+- **OpenStreetMap (Overpass API) funguje a najde reálná pracoviště**, která
+  ARES minul: Léčebný Hotel Prusík, Lázeňský hotel Jirásek, KAPIC software,
+  COOP, zdravotní středisko, restaurace. Zdarma, legální, bez klíče.
+  Gotchy: hlavní server `overpass-api.de` často vrací **504** → použít mirror
+  `overpass.kumi.systems`; dotaz držet úzký (velký radius + moc tagů = timeout);
+  povinný slušný User-Agent s kontaktem.
+
 ## ARES — ověřeno reálnými dotazy 2026-07-26
 
 - **Limit 1 000 výsledků** na `/ekonomicke-subjekty/vyhledat`. Nad limit vrací

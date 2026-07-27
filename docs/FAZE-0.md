@@ -135,6 +135,34 @@ Skilly do `.claude/skills/`: `overeni-firmy` (ARES+evidence postup),
 **Od tebe:** nic, jen review.
 **Výstup:** commitnuté definice agentů a skillů.
 
+### S0.3c — Čmuchal v2: obrácené hledání *(zásadní, nahrazuje dosavadní postup)*
+
+**Problém zjištěný prvním ostrým během:** hledání „firmy podle obce sídla"
+najde skořápky a živnostníky, a mine skutečné zaměstnavatele. V Bezdružicích
+nenašlo zinkovnu (její firma sídlí jinde), zato našlo 40 subjektů, z nichž
+většina nemá jediného zaměstnance.
+
+**Řešení — obrátit pořadí.** Dnes: *rejstřík → firmy → kde jsou*.
+Nově: *místo → kdo tam pracuje → kdo to právně je*.
+
+1. **Najdi pracoviště v zóně** (fyzická místa, kde někdo pracuje):
+   OpenStreetMap/Overpass (kanceláře, průmysl, hotely, obchody, školy,
+   ordinace), web a mapy, stránky obce, pracovní inzeráty s místem výkonu.
+2. **Přiřaď právní subjekt** — název pracoviště → ARES → IČO.
+   TP-1 zůstává v platnosti: firma vzniká pořád jen po ověření v ARES.
+3. **Filtruj podle zaměstnanců** — sub-registr RES vrací
+   `kategoriePoctuPracovniku`; kód `000` (bez zaměstnanců) = zahodit.
+   Tím padá problém s OSVČ i se schránkami.
+4. **Boduj podle pracoviště**, ne podle sídla — obědy se jedí tam, kde se
+   pracuje.
+
+**Ponechat** i dosavadní sweep podle obce jako druhotný zdroj, ale s tvrdou
+podmínkou „má aspoň jednoho zaměstnance".
+
+**Otevřená otázka pro majitele:** Google Places / Firmy.cz jsou kvalitní, ale
+placené nebo s omezením podmínek užití. Návrh: zůstat u bezplatných a legálních
+zdrojů (OSM + ARES + weby firem), a placené zvážit až podle výsledků.
+
 ### S0.3b — Oprava: ARES limit 1 000 výsledků *(nutné před během na Plzni)*
 **Cíl:** `najdiFirmyVObci` spadne na obcích nad 1 000 subjektů — Plzeň jich má
 49 831. Navrhnout a implementovat zúžení dotazu (městská část / CZ-NACE /

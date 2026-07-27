@@ -130,10 +130,18 @@
 
     <dl class="dukaz">
       <div><dt>Nalezeno subjektů</dt><dd>40<small>mechanika bez chyby</small></dd></div>
-      <div class="spatne"><dt>Z toho zaměstnavatelů</dt><dd>0<small>všechny testované mají kód „000“</small></dd></div>
-      <div class="spatne"><dt>Rozpětí skóre</dt><dd>52–56<small>nerozlišuje, tedy k ničemu</small></dd></div>
-      <div class="spatne"><dt>Zinkovna nalezena</dt><dd>ne<small>sídlí mimo obec</small></dd></div>
+      <div class="spatne"><dt>Bez zaměstnanců</dt><dd>16<small>registr to říká výslovně</small></dd></div>
+      <div class="spatne"><dt>Údaj neuveden</dt><dd>21<small>nevíme, tedy nepoužitelné</small></dd></div>
+      <div class="spatne"><dt>Skutečných zaměstnavatelů</dt><dd>3<small>a jedním je obecní úřad</small></dd></div>
     </dl>
+
+    <p class="tiny muted" style="margin-top: 14px;">
+      Dotáhl jsem počty zaměstnanců ke všem čtyřiceti nálezům. Ze čtyřiceti
+      subjektů má doložené zaměstnance <b>jediná trojice</b> — a to včetně
+      města Bezdružice. Přitom v obci prokazatelně zaměstnavatelé jsou:
+      z databáze pracovních míst jich vyšlo pět, mezi nimi firma nabírající
+      osm lidí najednou. <b>Ani jeden z nich nebyl mezi našimi čtyřiceti.</b>
+    </p>
 
     <div class="note varovani" style="margin-top: 20px;">
       <h3>Proč zinkovna vypadla</h3>
@@ -214,10 +222,32 @@
             <td><span class="chip free">Používáme</span></td>
           </tr>
           <tr>
-            <td><b>Statistický registr</b><br /><span class="tiny muted">součást ARES</span></td>
-            <td class="tiny">Kategorie počtu zaměstnanců. Klíčový filtr na živnostníky a schránky.</td>
+            <td><b>Statistický registr</b><br /><span class="tiny muted">sub-registr ARES</span></td>
+            <td class="tiny">Kategorie počtu zaměstnanců ve dvaceti stupních od „bez zaměstnanců“ po „10 000 a více“. Klíčový filtr. Není ve výsledku hledání — musí se dotáhnout zvlášť pro každé IČO.</td>
             <td class="tiny">Zdarma, jeden dotaz na firmu.</td>
-            <td><span class="chip pozor">Doplnit</span></td>
+            <td><span class="chip free">Hotovo</span></td>
+          </tr>
+          <tr>
+            <td><b>Databáze pracovních míst</b><br /><span class="tiny muted">otevřená data MPSV</span></td>
+            <td class="tiny">
+              <b>Největší objev.</b> U každého inzerátu je IČO zaměstnavatele
+              a obec, kde se <i>skutečně pracuje</i> — tedy provozovna, ne sídlo.
+              V Bezdružicích našla pět zaměstnavatelů, v Plzni tři sta čtyřicet.
+            </td>
+            <td class="tiny">Zdarma, bez klíče. Filtry na straně serveru nefungují, stahuje se celý balík (~178 MB) a filtruje u nás.</td>
+            <td><span class="chip free">Ověřeno</span></td>
+          </tr>
+          <tr>
+            <td><b>Číselníky ARES</b></td>
+            <td class="tiny">Oficiální překlad kódů. Ušetřil chybu: kód „000“ neznamená „bez zaměstnanců“, ale „neuvedeno“ — to je úplně jiná informace.</td>
+            <td class="tiny">Zdarma.</td>
+            <td><span class="chip free">Hotovo</span></td>
+          </tr>
+          <tr>
+            <td><b>Živnostenský rejstřík</b><br /><span class="tiny muted">sub-registr ARES</span></td>
+            <td class="tiny">Živnosti a adresy subjektu. <b>Provozovny nevrací</b> — ověřeno, tudy cesta nevede.</td>
+            <td class="tiny">Zdarma.</td>
+            <td><span class="chip ne">Slepá ulička</span></td>
           </tr>
           <tr>
             <td><b>OpenStreetMap</b><br /><span class="tiny muted">Overpass API</span></td>
@@ -238,10 +268,22 @@
             <td><span class="chip pozor">Zvážit</span></td>
           </tr>
           <tr>
+            <td><b>Obchodní rejstřík</b><br /><span class="tiny muted">otevřená data justice.cz</span></td>
+            <td class="tiny">Účetní závěrky, a z nich skutečné počty zaměstnanců a obraty. Také odštěpné závody.</td>
+            <td class="tiny">Zdarma. Zatím neověřeno.</td>
+            <td><span class="chip pozor">Na řadě</span></td>
+          </tr>
+          <tr>
+            <td><b>Registr plátců DPH</b></td>
+            <td class="tiny">Signál skutečné ekonomické aktivity — kdo je plátce, ten něco dělá.</td>
+            <td class="tiny">Zdarma. První pokus o spojení selhal, vyžaduje došetření.</td>
+            <td><span class="chip pozor">Neověřeno</span></td>
+          </tr>
+          <tr>
             <td><b>Google Places / Firmy.cz</b></td>
             <td class="tiny">Nejúplnější seznam provozoven včetně otevírací doby a kontaktů.</td>
             <td class="tiny">Placené, případně omezené podmínkami užití.</td>
-            <td><span class="chip ne">Rozhodneš ty</span></td>
+            <td><span class="chip ne">Mimo hru</span></td>
           </tr>
           <tr>
             <td><b>LinkedIn</b></td>
@@ -269,11 +311,13 @@
       <li><b>Pustit Bezdružice znovu</b> a porovnat se současnými čtyřiceti nálezy.</li>
     </ul>
     <div class="note" style="margin-top: 20px;">
-      <h3>Jedna otázka na tebe</h3>
+      <h3>Použitelné i pro jiné zájemce</h3>
       <p class="tiny">
-        Zůstáváme u bezplatných zdrojů, nebo mám počítat i s placeným Google
-        Places? Doporučuji nejdřív vyzkoušet zdarma — po opravě uvidíme, kolik
-        pracovišť nám ještě uniká, a teprve pak se rozhodovat o placení.
+        Všechny zdroje výše jsou celostátní a bezplatné — nic z toho není
+        vázané na Bezdružice ani na jednu jídelnu. Model „najdi pracoviště
+        v okruhu kolem bodu, ověř v rejstříku, odfiltruj podle zaměstnanců“
+        funguje pro libovolnou adresu v Česku. To je přesně ta obecnost,
+        kterou by potřeboval případný další zájemce.
       </p>
     </div>
   </div>

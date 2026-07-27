@@ -23,6 +23,31 @@ Mechanika prošla (0 chyb, 39 kvalifikováno), ale **kvalita dat je slabá**.
 Důsledek: skóre se pohybovalo v úzkém pásmu 52–56 b, tedy **nerozlišuje**.
 Než se pojede Plzeň, je potřeba tyhle čtyři věci opravit.
 
+## MPSV volná místa — nejlepší zdroj provozoven (ověřeno 2026-07-27)
+
+`https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json` — otevřená data
+Úřadu práce. **U každého inzerátu je `zamestnavatel.ico` + `zamestnavatel.nazev`
+a `mistoVykonuPrace.pracoviste[].adresa.obec.id` (RÚIAN kód obce).** To je přímý
+signál „tahle firma má pracoviště tady", tedy to, co ARES nedá.
+
+- **Filtry a `limit` v URL se ignorují** — vždy přijde celý balík: ~178 MB,
+  39 438 inzerátů, stažení ~8 s. Nutno cachovat na disk a filtrovat lokálně.
+- Výsledky testu: Bezdružice 5 zaměstnavatelů, Zbůch 6, Plzeň 342,
+  Tlučná 0, Hrádek u Rokycan 0.
+- Omezení: je to bodový signál — kdo zrovna nenabírá, tam není. Doplňkový
+  zdroj, ne jediný.
+
+## Kategorie počtu zaměstnanců — POZOR na kód „000"
+
+Oficiální číselník se dá stáhnout:
+`POST /ciselniky-nazevniky/vyhledat` s `{"kodCiselniku":"KategoriePoctuPracovniku"}`.
+**`000` = „Neuvedeno", NIKOLI „bez zaměstnanců" — tou je až `110`.** Původní
+mapování v `ares.ts` bylo kvůli tomu špatně. Správný číselník je v `src/res.ts`.
+
+Ověření na 40 firmách z prvního běhu: 16× bez zaměstnanců, 21× neuvedeno,
+2× 1–5, 1× 25–49 (město Bezdružice). **Skuteční zaměstnavatelé z MPSV nebyli
+mezi nimi ani jednou** — potvrzuje, že hledání podle sídla je slepá cesta.
+
 ## Zdroje dat — ověřeno 2026-07-27 (klíčové pro návrh Čmuchala v2)
 
 - **ARES zná jen SÍDLA, ne provozovny.** Sub-registr RŽP (`/ekonomicke-subjekty-rzp/{ico}`)

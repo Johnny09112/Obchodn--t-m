@@ -1,0 +1,510 @@
+<title>Rešerše 20 největších firem — 27. 7. 2026</title>
+
+<style>
+  :root {
+    --ink:      #16202b;
+    --ink-soft: #3d4a57;
+    --muted:    #6c7784;
+    --line:     #dde1de;
+    --surface:  #f5f7f5;
+    --card:     #ffffff;
+    --accent:   #9c4d1c;
+    --ok:       #2c6a4c;
+    --ok-bg:    #e6f0ea;
+    --warn:     #8a5f0f;
+    --warn-bg:  #f6efdd;
+    --off:      #7b838c;
+    --off-bg:   #eceeed;
+    --excl:     #375c86;
+    --excl-bg:  #e5ecf4;
+
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:      #e8ecea;
+      --ink-soft: #b6bfc6;
+      --muted:    #8b959e;
+      --line:     #2b343d;
+      --surface:  #11171d;
+      --card:     #19212a;
+      --accent:   #d4823f;
+      --ok:       #74c39a;
+      --ok-bg:    #1a2f26;
+      --warn:     #d6a94b;
+      --warn-bg:  #322a15;
+      --off:      #8b939b;
+      --off-bg:   #232b33;
+      --excl:     #7fa9d8;
+      --excl-bg:  #1b2836;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:      #e8ecea;
+    --ink-soft: #b6bfc6;
+    --muted:    #8b959e;
+    --line:     #2b343d;
+    --surface:  #11171d;
+    --card:     #19212a;
+    --accent:   #d4823f;
+    --ok:       #74c39a;
+    --ok-bg:    #1a2f26;
+    --warn:     #d6a94b;
+    --warn-bg:  #322a15;
+    --off:      #8b939b;
+    --off-bg:   #232b33;
+    --excl:     #7fa9d8;
+    --excl-bg:  #1b2836;
+  }
+  :root[data-theme="light"] {
+    --ink:      #16202b;
+    --ink-soft: #3d4a57;
+    --muted:    #6c7784;
+    --line:     #dde1de;
+    --surface:  #f5f7f5;
+    --card:     #ffffff;
+    --accent:   #9c4d1c;
+    --ok:       #2c6a4c;
+    --ok-bg:    #e6f0ea;
+    --warn:     #8a5f0f;
+    --warn-bg:  #f6efdd;
+    --off:      #7b838c;
+    --off-bg:   #eceeed;
+    --excl:     #375c86;
+    --excl-bg:  #e5ecf4;
+  }
+
+  body {
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 2.5rem 1.25rem 5rem;
+  }
+  .wrap { max-width: 62rem; margin: 0 auto; display: flex; flex-direction: column; gap: 2.75rem; }
+
+  /* ---------------------------------------------------------- hlavička */
+  .eyebrow {
+    font-size: .75rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 .6rem;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 400; font-size: clamp(1.85rem, 4vw, 2.6rem);
+    line-height: 1.15; margin: 0 0 .7rem; text-wrap: balance; letter-spacing: -.01em;
+  }
+  .lede { color: var(--ink-soft); max-width: 44rem; margin: 0; font-size: 1.05rem; }
+
+  h2 {
+    font-family: var(--serif); font-weight: 400; font-size: 1.4rem;
+    margin: 0 0 .35rem; letter-spacing: -.005em;
+  }
+  h2 + .sub { color: var(--muted); font-size: .92rem; margin: 0 0 1.1rem; }
+
+  /* ------------------------------------------------------------ dlaždice */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .9rem; }
+  .tile {
+    background: var(--card); border: 1px solid var(--line); border-radius: 3px;
+    padding: 1.1rem 1.15rem; display: flex; flex-direction: column; gap: .1rem;
+    border-top: 3px solid var(--tint, var(--muted));
+  }
+  .tile .num {
+    font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums;
+    font-weight: 600; color: var(--tint, var(--ink));
+  }
+  .tile .num small { font-size: .95rem; font-weight: 400; color: var(--muted); }
+  .tile .lbl { font-size: .84rem; color: var(--ink-soft); }
+  .t-ok   { --tint: var(--ok); }
+  .t-warn { --tint: var(--warn); }
+  .t-excl { --tint: var(--excl); }
+  .t-off  { --tint: var(--off); }
+
+  /* -------------------------------------------------------------- zjištění */
+  .findings { display: flex; flex-direction: column; gap: .9rem; }
+  .finding {
+    background: var(--card); border: 1px solid var(--line); border-radius: 3px;
+    border-left: 3px solid var(--tint, var(--accent)); padding: 1rem 1.15rem;
+  }
+  .finding h3 {
+    font-size: .95rem; margin: 0 0 .3rem; font-weight: 600; color: var(--ink);
+  }
+  .finding p { margin: 0; color: var(--ink-soft); font-size: .93rem; }
+
+  /* --------------------------------------------------------------- tabulka */
+  .scroller { overflow-x: auto; border: 1px solid var(--line); border-radius: 3px; background: var(--card); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 46rem; }
+  thead th {
+    text-align: left; font-weight: 600; font-size: .74rem; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--muted); padding: .8rem .85rem;
+    border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--card);
+  }
+  tbody td { padding: .75rem .85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { border-left: 3px solid transparent; }
+  tr.s-ok   { border-left-color: var(--ok); }
+  tr.s-warn { border-left-color: var(--warn); }
+  tr.s-excl { border-left-color: var(--excl); }
+  tr.s-off  { border-left-color: var(--off); }
+  td.firma { font-weight: 600; }
+  td.firma .misto { display: block; font-weight: 400; color: var(--muted); font-size: .82rem; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink-soft); }
+  .kont { display: flex; flex-direction: column; gap: .3rem; }
+  .kont a { color: var(--ink); text-decoration-color: var(--line); text-underline-offset: 2px; }
+  .kont a:hover { text-decoration-color: var(--accent); }
+  .osoba { color: var(--muted); font-size: .82rem; }
+
+  .chip {
+    display: inline-block; font-size: .7rem; letter-spacing: .04em; text-transform: uppercase;
+    font-weight: 600; padding: .15rem .45rem; border-radius: 2px; white-space: nowrap;
+  }
+  .c-ok   { background: var(--ok-bg);   color: var(--ok); }
+  .c-warn { background: var(--warn-bg); color: var(--warn); }
+  .c-excl { background: var(--excl-bg); color: var(--excl); }
+  .c-off  { background: var(--off-bg);  color: var(--off); }
+
+  /* --------------------------------------------------------------- otázka */
+  .otazka {
+    background: var(--card); border: 1px solid var(--line); border-radius: 3px;
+    border-top: 3px solid var(--accent); padding: 1.4rem 1.5rem;
+  }
+  .otazka h2 { margin-top: 0; }
+  .otazka ul { margin: .5rem 0 0; padding-left: 1.1rem; color: var(--ink-soft); }
+  .otazka li { margin-bottom: .45rem; }
+  .otazka li:last-child { margin-bottom: 0; }
+
+  .legenda { display: flex; flex-wrap: wrap; gap: 1.1rem; font-size: .82rem; color: var(--muted); }
+  .legenda span { display: flex; align-items: center; gap: .4rem; }
+  .swatch { width: .65rem; height: .65rem; border-radius: 1px; flex: none; }
+
+  footer {
+    border-top: 1px solid var(--line); padding-top: 1.25rem;
+    color: var(--muted); font-size: .84rem;
+  }
+  footer strong { color: var(--ink-soft); font-weight: 600; }
+  a:focus-visible, :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Cantinero · skutečná data k 27. 7. 2026</p>
+    <h1>Umí systém dohledat, komu vlastně napsat?</h1>
+    <p class="lede">
+      Vzali jsme 20 největších zaměstnavatelů v dojezdových zónách našich čtyř
+      jídelen — všechny mají aspoň 25 zaměstnanců — a nechali u nich dohledat
+      kontaktní osobu a způsob stravování. Tohle je odpověď.
+    </p>
+  </header>
+
+  <section class="tiles">
+    <div class="tile t-ok">
+      <span class="num">17<small> / 20</small></span>
+      <span class="lbl">firem má doložený kontakt</span>
+    </div>
+    <div class="tile t-ok">
+      <span class="num">10</span>
+      <span class="lbl">z nich i konkrétní jméno člověka</span>
+    </div>
+    <div class="tile t-excl">
+      <span class="num">2</span>
+      <span class="lbl">vyřazeny — mají vlastní jídelnu</span>
+    </div>
+    <div class="tile t-off">
+      <span class="num">0</span>
+      <span class="lbl">firem uvádí, jak řeší obědy</span>
+    </div>
+  </section>
+
+  <section class="findings">
+    <h2>Co z toho plyne</h2>
+    <p class="sub">Tři věci, které stojí za pozornost.</p>
+
+    <div class="finding" style="--tint: var(--ok)">
+      <h3>Kontakty se dohledat dají — a u čtyř firem rovnou ten správný</h3>
+      <p>
+        U B&nbsp;&amp;&nbsp;BC, SIGNUM, VOCHOC TRADE a BBS jsme našli adresu
+        výslovně určenou pro obchodní nabídky nebo jmenného obchodního zástupce.
+        To je nejlepší možný typ kontaktu: píše se někomu, kdo nabídky přijímat má.
+      </p>
+    </div>
+
+    <div class="finding" style="--tint: var(--off)">
+      <h3>Jak firmy řeší obědy, na webu nikdo nepíše — ani jedna z dvaceti</h3>
+      <p>
+        Počítali jsme s tím, že to bude vzácné. Že to bude nula ze dvaceti, ne.
+        Znamená to, že se na tenhle údaj nedá stavět personalizace oslovení —
+        buď se zjistí až v rozhovoru, nebo se s ním nepracuje vůbec.
+      </p>
+    </div>
+
+    <div class="finding" style="--tint: var(--excl)">
+      <h3>Podezření u firmy SIGNUM bylo plané</h3>
+      <p>
+        Dřívější běh ji označil za možnou agenturu práce. Ve skutečnosti je to
+        žárová zinkovna se sítí jedenácti provozů; záměna vznikla tím, že pro
+        její bezdružický provoz sháněly lidi najímací agentury. Je to legitimní
+        cíl — a s 500–999 zaměstnanci největší v celé zóně.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Všech dvacet firem</h2>
+    <p class="sub">Seřazeno podle skóre. Barevný pruh vlevo říká, jak firma dopadla.</p>
+
+    <div class="legenda" style="margin-bottom: .9rem">
+      <span><i class="swatch" style="background: var(--ok)"></i> kontakt na jmenovanou osobu</span>
+      <span><i class="swatch" style="background: var(--warn)"></i> jen obecná adresa</span>
+      <span><i class="swatch" style="background: var(--excl)"></i> vyřazeno — vlastní jídelna</span>
+      <span><i class="swatch" style="background: var(--off)"></i> nic se nenašlo</span>
+    </div>
+
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr>
+            <th>Firma</th>
+            <th>Zaměstnanců</th>
+            <th>Od jídelny</th>
+            <th>Kontakt</th>
+            <th>Stav</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="s-ok">
+            <td class="firma">SIGNUM spol. s r.o.<span class="misto">zinkovna · Bezdružice</span></td>
+            <td class="num">500–999</td>
+            <td class="num">262 m</td>
+            <td><div class="kont">
+              <a href="https://signumcz.com/zinkovna/bezdruzice/">pavel.prochazka@signumcz.com</a>
+              <span class="osoba">Pavel Procházka · obchodní zástupce</span>
+            </div></td>
+            <td><span class="chip c-ok">pro nabídky</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">MONTEFERRO HRÁDEK a.&nbsp;s.<span class="misto">Hrádek</span></td>
+            <td class="num">200–249</td>
+            <td class="num">929 m</td>
+            <td><div class="kont">
+              <a href="https://monteferro.it/network-contacts/">customer.service@monteferro.cz</a>
+              <span class="osoba">ze stránek mateřské firmy</span>
+            </div></td>
+            <td><span class="chip c-warn">obecná adresa</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">BBS OCHRANA MAJETKU s.r.o.<span class="misto">Zbůch</span></td>
+            <td class="num">100–199</td>
+            <td class="num">511 m</td>
+            <td><div class="kont">
+              <a href="https://bbs.eu/kontakt/">richardbayer@bbs.eu</a>
+              <span class="osoba">Richard Bayer · obchodní oddělení</span>
+            </div></td>
+            <td><span class="chip c-ok">pro nabídky</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">B&nbsp;&amp;&nbsp;BC, a.&nbsp;s.<span class="misto">Zbůch</span></td>
+            <td class="num">100–199</td>
+            <td class="num">298 m</td>
+            <td><div class="kont">
+              <a href="http://www.babc.cz/kontakty">nabidky@babc.cz</a>
+              <span class="osoba">a obchod@babc.cz</span>
+            </div></td>
+            <td><span class="chip c-ok">pro nabídky</span></td>
+          </tr>
+          <tr class="s-excl">
+            <td class="firma">Centrum pobytových a terénních sociálních služeb Zbůch<span class="misto">Zbůch</span></td>
+            <td class="num">100–199</td>
+            <td class="num">1 044 m</td>
+            <td><div class="kont">
+              <a href="https://www.centrumzbuch.cz/kontakty">info@centrumzbuch.cz</a>
+              <span class="osoba">má vlastní jídelnu — doloženo</span>
+            </div></td>
+            <td><span class="chip c-excl">vyřazeno</span></td>
+          </tr>
+          <tr class="s-warn">
+            <td class="firma">Elkamet s.r.o.<span class="misto">Tlučná</span></td>
+            <td class="num">100–199</td>
+            <td class="num">2 266 m</td>
+            <td><div class="kont">
+              <a href="https://www.regionplzen.cz/firma/elkamet-plzen/">info@elkamet.cz</a>
+              <span class="osoba">jen z katalogu, ne z webu firmy</span>
+            </div></td>
+            <td><span class="chip c-warn">slabší zdroj</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">Město Hrádek<span class="misto">Hrádek</span></td>
+            <td class="num">50–99</td>
+            <td class="num">0 m</td>
+            <td><div class="kont">
+              <a href="https://www.mestohradek-ro.cz/kontakty/kontakty-mestsky-urad/">tajemnik@mestohradek.cz</a>
+              <span class="osoba">Jiří Drnec · tajemník</span>
+            </div></td>
+            <td><span class="chip c-ok">jmenný</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">Obec Tlučná<span class="misto">Tlučná</span></td>
+            <td class="num">50–99</td>
+            <td class="num">409 m</td>
+            <td><div class="kont">
+              <a href="https://www.obec-tlucna.cz/cs/kontakt/">podatelna@obec-tlucna.cz</a>
+            </div></td>
+            <td><span class="chip c-warn">obecná adresa</span></td>
+          </tr>
+          <tr class="s-off">
+            <td class="firma">REVIANT s.r.o.<span class="misto">Zbůch</span></td>
+            <td class="num">25–49</td>
+            <td class="num">511 m</td>
+            <td><span class="osoba">nemá dohledatelný web</span></td>
+            <td><span class="chip c-off">nic</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">VOCHOC TRADE, s.r.o.<span class="misto">Zbůch</span></td>
+            <td class="num">25–49</td>
+            <td class="num">643 m</td>
+            <td><div class="kont">
+              <a href="https://www.vochoc.cz/kontakty">martin.vochoc@vochoc.cz</a>
+              <span class="osoba">Martin Vochoc · obchodní zástupce</span>
+            </div></td>
+            <td><span class="chip c-ok">pro nabídky</span></td>
+          </tr>
+          <tr class="s-warn">
+            <td class="firma">DS Zbůch s.r.o.<span class="misto">Zbůch</span></td>
+            <td class="num">25–49</td>
+            <td class="num">790 m</td>
+            <td><div class="kont"><a href="https://www.dszbuch.cz/sluzby">dszbuch@seznam.cz</a></div></td>
+            <td><span class="chip c-warn">obecná adresa</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">MAS Český Západ, z.s.<span class="misto">Bezdružice</span></td>
+            <td class="num">25–49</td>
+            <td class="num">317 m</td>
+            <td><div class="kont">
+              <a href="https://www.mascz.cz/kontakty.html">florian@mascz.cz</a>
+              <span class="osoba">Jan Florian · manažer</span>
+            </div></td>
+            <td><span class="chip c-ok">jmenný</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">Obec Zbůch<span class="misto">Zbůch</span></td>
+            <td class="num">25–49</td>
+            <td class="num">310 m</td>
+            <td><div class="kont">
+              <a href="https://www.zbuch.cz/kontakt/">starosta@zbuch.cz</a>
+              <span class="osoba">Dušan Duchek · starosta</span>
+            </div></td>
+            <td><span class="chip c-ok">jmenný</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">Město Bezdružice<span class="misto">Bezdružice</span></td>
+            <td class="num">25–49</td>
+            <td class="num">414 m</td>
+            <td><div class="kont">
+              <a href="https://www.bezdruzice.cz/kontakty/">tajemnik@bezdruzice.cz</a>
+              <span class="osoba">Jana Wajdová · tajemnice</span>
+            </div></td>
+            <td><span class="chip c-ok">jmenný</span></td>
+          </tr>
+          <tr class="s-warn">
+            <td class="firma">KEN - STAV s.r.o.<span class="misto">Zbůch</span></td>
+            <td class="num">25–49</td>
+            <td class="num">425 m</td>
+            <td><div class="kont">
+              <a href="https://www.zivefirmy.cz/ken-stav_f1608695">ken-stav@seznam.cz</a>
+              <span class="osoba">Jozef Žiga · jednatel — z katalogu</span>
+            </div></td>
+            <td><span class="chip c-warn">slabší zdroj</span></td>
+          </tr>
+          <tr class="s-ok">
+            <td class="firma">KOVOVÝROBA HONZÍK, s.r.o.<span class="misto">Bezdružice</span></td>
+            <td class="num">25–49</td>
+            <td class="num">642 m</td>
+            <td><div class="kont">
+              <a href="https://www.kovo-honzik.cz/kontakty">info@kovo-honzik.cz</a>
+              <span class="osoba">Jaromír Honzík</span>
+            </div></td>
+            <td><span class="chip c-ok">jmenný</span></td>
+          </tr>
+          <tr class="s-off">
+            <td class="firma">I.U.STAVBY s.r.o.<span class="misto">Tlučná</span></td>
+            <td class="num">25–49</td>
+            <td class="num">640 m</td>
+            <td><span class="osoba">nemá dohledatelný web</span></td>
+            <td><span class="chip c-off">nic</span></td>
+          </tr>
+          <tr class="s-warn">
+            <td class="firma">H.B. TEXTILIE, s.r.o.<span class="misto">Zbůch</span></td>
+            <td class="num">25–49</td>
+            <td class="num">948 m</td>
+            <td><div class="kont">
+              <a href="https://www.firmy.cz/detail/299163-h-b-textilie-zbuch.html">hbtextilie@volny.cz</a>
+              <span class="osoba">jen z katalogu, ne z webu firmy</span>
+            </div></td>
+            <td><span class="chip c-warn">slabší zdroj</span></td>
+          </tr>
+          <tr class="s-off">
+            <td class="firma">Centrum Zbůch, z.s.<span class="misto">Zbůch</span></td>
+            <td class="num">25–49</td>
+            <td class="num">1 044 m</td>
+            <td><span class="osoba">spolek bez vlastního kontaktu; sdílí adresu i vedení s Centrem pobytových služeb</span></td>
+            <td><span class="chip c-off">nic</span></td>
+          </tr>
+          <tr class="s-excl">
+            <td class="firma">Základní škola a mateřská škola Vejprnice<span class="misto">Tlučná</span></td>
+            <td class="num">100–199</td>
+            <td class="num">2 996 m</td>
+            <td><div class="kont">
+              <a href="https://zsvejprnice.cz/skola/kontakty/">skola@zsvejprnice.cz</a>
+              <span class="osoba">má vlastní jídelnu — doloženo</span>
+            </div></td>
+            <td><span class="chip c-excl">vyřazeno</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="otazka">
+    <h2>Co potřebuji od tebe</h2>
+    <p class="sub">Jedno rozhodnutí a jedno upozornění.</p>
+
+    <ul>
+      <li>
+        <strong>Kartotéku zaplavují bytová družstva a živnostníci.</strong>
+        Ze 194 firem se známou velikostí má jen těchto 20 aspoň 25 zaměstnanců.
+        Zbytek jsou z velké části společenství vlastníků bytů (jen v Hrádku přes
+        patnáct) a živnostníci vedení vlastním jménem. Formálně „zaměstnance"
+        mají, ale obědy tam nikdo neodebírá. Odfiltrovat je umím spolehlivě —
+        ale je to vyřazení celé kategorie, a to je tvoje rozhodnutí.
+      </li>
+      <li>
+        <strong>U tří firem je kontakt jen z katalogu třetí strany</strong>
+        (Živé firmy, Firmy.cz, RegionPlzeň), ne z webu samotné firmy. Údaj tam
+        může být zastaralý. Označil jsem je zvlášť, ať to není vidět až po odeslání.
+      </li>
+      <li>
+        <strong>Kapacity Zbůchu, Tlučné a Hrádku pořád nikdo nezná.</strong>
+        Na sběr dat to nevadí, ale bez nich se nesmí oslovovat — slibovat obědy,
+        které nemá kdo uvařit, je horší než neoslovit.
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>
+      <strong>Nic se nikam neodeslalo</strong> a odeslat se ani nedá — systém na to
+      zatím nemá nástroj. Ke každému údaji výše je uložený odkaz na konkrétní
+      stránku a doslovná citace textu, ze kterého pochází; co se nepodařilo doložit,
+      zůstalo prázdné. Rešerši dělal agent na předplatném, takže náklady na tenhle
+      běh byly nulové.
+    </p>
+    <p>
+      Podrobnosti u každé firmy včetně citací najdeš v kartotéce
+      (<code>docs/vizualizace/kartoteka.html</code>), rozložení v území na mapě
+      (<code>docs/vizualizace/mapa.html</code>).
+    </p>
+  </footer>
+
+</div>

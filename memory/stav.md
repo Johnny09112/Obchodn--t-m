@@ -17,26 +17,53 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **121 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **126 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- Partnerská jídelna se nemůže stát kandidátem (migrace 0007, `jidelny.ico`,
+  důvod vyřazení `partnerska_jidelna`). IČO všech 4 jídelen doplněno z ARES.
+- Fronta na rešerši jde zúžit podle velikosti: `k-obohaceni --segmenty …`.
+- **První ostrá dávka rešerše — konec procesu ověřen.** 20 firem nad
+  25 zaměstnanců napříč všemi 4 oblastmi: **17 z 20 má doložený kontakt**,
+  z toho 10 na jmenovanou osobu a 4 přímo adresu pro obchodní nabídky.
+  26 kontaktů, 5 nálezů, 0 odmítnutých zápisů, 0 USD. Shrnutí pro majitele:
+  `docs/vizualizace/reserse-2026-07-27.html`, poznatky v `playbook-cmuchal.md`
+  (běh `c12acbba-7f70-4972-ad30-24cc413e5972`).
 
-**Data (v `data/pgdata-v5`):** 209 firem ve 4 oblastech, integrita ověřená.
-Zbůch 55 firem (10 nad 25 zam.) · Tlučná 65 (5) · Bezdružice 24 (4) ·
-Hrádek 65 (2). Kapacita známá jen u Bezdružic (10 obědů/den).
+**Data (v `data/pgdata-v5`):** 208 firem ve 4 oblastech, integrita ověřená.
+Kapacita známá jen u Bezdružic (10 obědů/den). Všech 20 firem nad
+25 zaměstnanců je prověřeno rešerší.
+
+## Poučení z první dávky rešerše
+
+- **Způsob stravování se z webu dohledat nedá** — 0 z 20 firem ho uvádí.
+  Na personalizaci podle tohoto údaje se nedá stavět.
+- **Vlastní jídelna se doložit dá** a je to stejně cenný nález jako kontakt:
+  vyřadila Centrum pobytových služeb Zbůch a ZŠ Vejprnice z cílení.
+- **U 3 firem je kontakt jen z katalogu třetí strany** (Živé firmy, Firmy.cz,
+  RegionPlzeň), ne z webu firmy → údaj může být zastaralý, značit zvlášť.
+- **SIGNUM není agentura práce**, ale žárová zinkovna (500–999 zam.) —
+  podezření z dřívějška bylo záměnou s agenturami, které pro ni najímaly.
 
 ## Další krok (v tomto pořadí)
 
-1. **Vyřadit vlastní jídelnu ze seznamu firem** — v Tlučné je mezi kandidáty
-   ZŠ, která je zároveň náš partner. Sama sobě obědy prodávat nebude.
-2. **Projít vzorek z 1 288 subjektů „velikost neuvedena"** — můžou se tam
-   schovávat skuteční zaměstnavatelé, dnes je pouštíme jen ze slabšího zdroje.
-3. **Vyřešit limit 1 000 výsledků ARES** — blokuje Stříbro i Plzeň
+1. **Rozhodnout o SVJ a OSVČ** — čeká na majitele (viz níž). Blokuje
+   smysluplné rozšíření rešerše na menší firmy.
+2. **Vyřešit limit 1 000 výsledků ARES** — blokuje Stříbro i Plzeň
    (Plzeň = 342 zaměstnavatelů jen v datech MPSV). Zúžit dotaz podle
-   městské části nebo oboru.
-4. Pak rešerše kontaktů na nejlepší kandidáty a zbytek fáze 0
-   (tvrzení, šablony, doména, právník — viz `docs/FAZE-0.md`).
+   městské části nebo oboru. **Hlavní blokátor růstu.**
+3. **Projít vzorek z 1 288 subjektů „velikost neuvedena"** — můžou se tam
+   schovávat skuteční zaměstnavatelé, dnes je pouštíme jen ze slabšího zdroje.
+4. Zbytek fáze 0 (tvrzení, šablony, doména, právník — viz `docs/FAZE-0.md`).
+
+**Otevřené k dořešení:** skóre se po rešerši nepřepočítává — firma s doloženou
+vlastní jídelnou si drží původní skóre z doby sběru. Před frontou na oslovení
+(fáze 3) to bude potřeba srovnat.
 
 ## Co čeká na majitele
 
+- **Rozhodnutí o SVJ a OSVČ** — kartotéku zaplavují společenství vlastníků
+  bytů (v Hrádku přes 15) a živnostníci vedení vlastním jménem. Formálně mají
+  zaměstnance, ale obědy tam nikdo neodebírá. Vyřazení celé kategorie je
+  změna pravidel → rozhoduje majitel. Detail v `memory/poznatky.md`.
 - Skutečné kapacity Zbůchu, Tlučné a Hrádku (potřeba až před fází 3).
 - Projít vyřazené kandidáty a říct, co tam nepatří → brousíme pravidla.
 - Rozhodnutí o sdílené databázi, až bude systém používat i kolega.
@@ -52,6 +79,7 @@ Hrádek 65 (2). Kapacita známá jen u Bezdružic (10 obědů/den).
 | Technické poznatky a pasti | `memory/poznatky.md` |
 | Postřehy z rešerší | `playbook-cmuchal.md` |
 | Vizuální výstupy | `docs/vizualizace/` (mapa a kartotéka se generují) |
+| Výsledek první rešerše | `docs/vizualizace/reserse-2026-07-27.html` |
 
 ## Příkazy
 
@@ -59,6 +87,7 @@ Hrádek 65 (2). Kapacita známá jen u Bezdružic (10 obědů/den).
 npm test
 CANTINERO_DATA_DIR=data/pgdata-v5 npm run cli -- stav
 CANTINERO_DATA_DIR=data/pgdata-v5 npm run cli -- kartoteka
+CANTINERO_DATA_DIR=data/pgdata-v5 npm run cli -- k-obohaceni --segmenty stredni,korporat
 CANTINERO_DATA_DIR=data/pgdata-v5 NOMINATIM_CONTACT=… npm run cli -- run --jidelna <id>
 ```
 

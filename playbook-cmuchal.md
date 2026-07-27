@@ -325,3 +325,54 @@ neovlivňuje nic navenek. Zapisují se sem strategie vyhledávání a jejich
 - nespárováno s rejstříkem: Perfekt kámen
 - nespárováno s rejstříkem: Mateřská školka respirační
 - nespárováno s rejstříkem: Mateřská školka Hrádek
+
+## Rešerše 2026-07-27 — dávka 20 firem (Zbůch/Tlučná/Bezdružice/Hrádek, běh c12acbba-7f70-4972-ad30-24cc413e5972)
+
+Výsledek: 26 kontaktů, 5 nálezů (2× ma_vlastni_jidelnu, 3× ucel_adresy) u 17 z 20
+firem; 3 firmy bez nálezu (REVIANT s.r.o., I.U.STAVBY s.r.o., Centrum Zbůch z.s.).
+Žádná položka nebyla při zápisu odmítnuta.
+
+**Co neslo ovoce:**
+- **Stránka Kontakty obcí a měst** je nejspolehlivější zdroj u veřejné správy —
+  jmenný rozpis podle agend (tajemník/tajemnice = nejbližší obdoba HR kontaktu,
+  podatelna/evidence = obecná adresa). Fungovalo u všech 4 obcí/měst v dávce.
+  Stravování zaměstnanců úřadu se na těchto stránkách nikdy neuvádí.
+- **Specializovaná podstránka pro konkrétní provozovnu** (ne obecná firemní
+  Kontakty) je klíčová u firem s víc pobočkami — potvrzeno znovu u SIGNUM
+  (`/zinkovna/bezdruzice/`) a u MONTEFERRO (síťová stránka mateřské firmy
+  `monteferro.it/network-contacts/` obsahovala český kontakt, když `.cz`
+  doména sama o sobě nešla načíst).
+- **Sekce "cenové nabídky" / "obchodní zástupci" na firemním webu** = přímý
+  zdroj kontaktu úrovně 1 (B & BC nabidky@babc.cz, BBS richardbayer@bbs.eu,
+  Vochoc martin.vochoc@vochoc.cz, Signum pavel.prochazka@signumcz.com) —
+  hledat cíleně tuto sekci, ne jen obecné "Kontakty".
+- **U sociálních/pobytových zařízení hledat konkrétní podstránku o stravě**
+  (ne obecné "O nás") — u CPTS Zbůch teprve stránka "Přihláška a odhláška
+  stravy v jídelně" obsahovala doslovnou frázi "Jídelně CPTS Zbůch" a potvrdila
+  vlastní jídelnu; u ZŠ a MŠ Vejprnice podobně stránka "/informace-sj".
+  Obecná stránka jen odkazovala na "Poskytování stravy" bez detailu.
+- **Cloudflare-obfuskované e-maily** (zivefirmy.cz, babc.cz) se dají obejít
+  přímým `curl` na syrové HTML — adresa bývá čitelná v `application/ld+json`
+  schema.org markupu i tam, kde viditelný text stránky e-mail maskuje.
+
+**Co bylo slepé:**
+- **Firmy bez vlastního webu** (REVIANT s.r.o. — jen jenprace.cz inzerát bez
+  jména kontaktu a benefitů; I.U.STAVBY s.r.o. — žádná stopa mimo rejstřík).
+  Nově vzniklé s.r.o. (IČO začínající řadou 1x) mívají nulovou webovou stopu.
+- **Malé pracovní agregátory (nyransko.cz, volnamista.cz) rychle expirují**
+  (404 do pár měsíců) — Google/WebSearch snippet s citací ze zaniklé stránky
+  nelze použít jako `zdrojUrl`. U Elkamet s.r.o. tak zůstala nedoložená
+  nadějná zmínka o "stravování zdarma v nové denní místnosti" — ověřovat vždy
+  přímým fetchem, ne jen souhrnem z vyhledávání.
+- **Organizace sdílející adresu/vedení s jinou firmou nemusí mít vlastní
+  publikovaný kontakt** — Centrum Zbůch, z.s. (zapsaný spolek) sídlí na stejné
+  adrese a se stejným vedením jako CPTS Zbůch, ale nemá dohledatelnou vlastní
+  kontaktní stránku; nedomýšlet sdílený kontakt bez přímého dokladu.
+
+**Vyjasněno k dřívějšímu podezření:**
+- **SIGNUM spol. s r.o. (IČO 18200061) je žárová zinkovna** (síť 11 provozů,
+  Bezdružice v provozu od podzimu 2021), NE agentura práce. Dřívější záznamy
+  v tomto playbooku o "agentuře práce" se týkaly firem MSRCZ MARINA GLOBAL a
+  MARCIUS PLUS, které pro provoz SIGNUM v Bezdružici najímaly pracovníky —
+  ty byly správně vyřazeny jako agentury, SIGNUM samo je výrobní firma a
+  kvalifikovaný cíl.

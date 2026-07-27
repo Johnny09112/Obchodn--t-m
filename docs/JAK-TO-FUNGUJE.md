@@ -107,14 +107,38 @@ odesílání a velkým červeným vypínačem.
 | **4 Statistik + Marketér** | Měření, testy variant | Schvaluješ návrhy změn |
 | **5 Ředitel** | Týdenní hlášení, dohled | Čteš pondělní report, schvaluješ návrhy |
 
+## Není to „appka", která běží sama a žere tokeny
+
+Tohle je důležité upřesnění (rozhodnuto 26. 7.): Cantinero **není** samostatný
+program běžící na serveru. Jsou to **nástroje + agent**:
+
+- **Nástroje** jsou hotový kód: ověř firmu v rejstříku, změř vzdálenost,
+  ulož do kartotéky s pojistkami, spočítej přehled. Běží u tebe na počítači,
+  zadarmo, bez internetu (kromě dotazů na rejstřík a mapy).
+- **Agent** jsem já v Claude Code na tvém předplatném Max. Řeknu si nástrojům,
+  co potřebuju, a dohledám na webu to, co nástroje neumí.
+- **Kartotéka** je databáze **u tebe v počítači**, ve složce `data/`. Žádný
+  cloud. Záloha = zkopírovat tu složku na disk nebo do Dropboxu.
+
+Tvoje stávající projekty na Supabase se **nijak nedotýkají a nic se
+nepozastavuje** — Cantinero je od nich úplně oddělené.
+
+Dávkový režim 20–50 firem denně na tohle sedí ideálně. Kdyby systém někdy měl
+běžet nepřetržitě sám (nebo pro cizího klienta), tehdy se teprve vrátíme
+k placenému API — ale to je jiná etapa a jiná ekonomika.
+
 ## Co to stojí (řádově)
 
-- **Databáze**: Supabase v řádu stovek Kč/měs (nebo alternativa dle S0.2).
-- **AI náklady**: platí se za dohledávání na webu — hrubě jednotky USD na
-  ~10 obohacených firem; 200 firem fáze 1 ≈ nižší desítky USD. Každý běh
-  má útratu zapsanou, takže ji uvidíš černé na bílém.
+- **Databáze**: 0 Kč — běží lokálně u tebe.
+- **AI**: 0 Kč navíc — jede z předplatného Max, které už platíš.
+- **Rejstřík ARES a mapy**: zdarma (jen se chováme slušně a neposíláme
+  dotazy rychleji, než dovolují).
 - **Doména + e-mail**: stovky Kč/rok + případný nástroj na odesílání (fáze 3).
 - **Právník**: jednorázově před fází 3.
+
+Placené API by přišlo na řadu jedině u varianty „prodáváme to dalším firmám" —
+a jestli to má vůbec smysl, je samostatná analýza (S0.10), kterou doporučuju
+dělat až budeme mít výsledky fáze 1.
 
 ## Otázky k potvrzení (tady se pochopíme, nebo doladíme)
 
@@ -122,5 +146,5 @@ odesílání a velkým červeným vypínačem.
 2. Ovládání konverzací + později obrazovky — stačí, nebo chceš obrazovky dřív?
 3. Souhlasíš, že fáze 1 poběží „nasucho" (jen sběr dat, nic ven), dokud
    neodsouhlasíš vzorek 30 firem?
-4. Máš představu o jiné technologii, kterou zmiňuješ? (Proberu v S0.2 —
-   varianty a doporučení jsou v `docs/FAZE-0.md`, kap. 3.)
+4. ✅ Vyřešeno 26. 7.: provoz na předplatném, lokální databáze, 20–50 firem
+   denně, žádná samostatná appka. Analýza produktizace až po fázi 1.

@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 *.log
+
+# Lokální databáze (obsahuje data o firmách — do gitu nepatří).
+# Záloha = zkopírovat celý adresář data/ jinam.
+data/

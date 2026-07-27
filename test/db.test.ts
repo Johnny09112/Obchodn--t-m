@@ -8,7 +8,18 @@ beforeAll(async () => {
   await spustMigrace(db);
 });
 
-describe("migrace a tvrdá pravidla v DB", () => {
+describe("migrace", () => {
+  it("jsou idempotentní — opakované spuštění nic nepřidá ani nespadne", async () => {
+    const znovu = await spustMigrace(db);
+    expect(znovu).toEqual([]);
+    const rows = await db.query<{ pocet: string }>(
+      "select count(*)::text as pocet from system_state",
+    );
+    expect(rows[0]!.pocet).toBe("1");
+  });
+});
+
+describe("tvrdá pravidla v DB", () => {
   it("system_state má jediný řádek se sending_enabled=false", async () => {
     const rows = await db.query<{ sending_enabled: boolean }>(
       "select sending_enabled from system_state",

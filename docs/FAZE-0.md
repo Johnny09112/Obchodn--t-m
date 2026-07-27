@@ -49,7 +49,27 @@ kontrolní session S0.9 (go/no-go do fáze 1).
 
 ---
 
-## 3. S0.2 — Rozhodnutí o technologii (nejdůležitější)
+## 3. S0.2 — Rozhodnutí o technologii
+
+> **Částečně rozhodnuto 2026-07-26 (majitel):** provoz na **předplatném
+> Claude Max 5×**, ne na API tokenech. Cílový objem 20–50 firem denně.
+> API se řeší až u případného externího klienta. Databáze **lokálně**, žádný
+> cloud. → Vybrána varianta **V2 s kódovým jádrem** (viz níže). Zbývá sepsat
+> ADR a doladit, jak přesně se běhy spouštějí (konverzačně vs. naplánovaně).
+
+**Co to prakticky znamená:** Cantinero *není* samostatná aplikace, která běží
+sama a spotřebovává tokeny. Je to **sada nástrojů + agent**:
+
+- **Nástroje = kód** (hotový, zdarma, deterministický): ověření firmy v ARES,
+  geokódování, výpočet zóny a vzdálenosti, bodování, zápis do kartotéky
+  s vynucenými pojistkami, přehledy a metriky.
+- **Agent = Claude Code** na tvém předplatném: rozhoduje, co hledat, dohledává
+  na webu to, co nástroje neumí (stravování, kontakty, účel adresy), a výsledky
+  cpe do kartotéky přes tytéž pojistky.
+- **Data = lokální Postgres** v adresáři `data/` na tvém stroji.
+
+Mezní náklad jednoho běhu je tím pádem **nula** — platíš jen předplatné,
+které už máš.
 
 Tři realistické varianty „kdo pohání agenty":
 
@@ -72,13 +92,17 @@ credentials. Nejblíž vizi „běží nepřetržitě bez denního zásahu".
 - ✅ Infrastrukturu (smyčku, sandbox, plánování) drží Anthropic; auditní stopa sessions.
 - ❌ Beta, vyšší cena, tvrdá pravidla musí zůstat v DB/nástrojích (to máme).
 
-**Doporučení: hybrid V1+V2 teď, V3 zvážit od fáze 3.**
-Jádro (DB, pravidla, ARES, geo, skóre) zůstává kód — to je neprůstřelnost,
-kterou SPEC vyžaduje („kontrola vynucená v kódu, nikoli v promptu"). Nad ním
-Claude Code s definovanými agenty a skilly pro fáze 1–2, kde stejně chceš
-člověka u ruky. Až bude potřeba 24/7 provoz Obchodníka a Statistika (fáze 3+),
-rozhodneme o V3/plánovači podle zkušeností. Rozhodnutí zapíšeme jako ADR do
-`docs/adr/0001-technologie.md`.
+**Zvoleno: V2 s kódovým jádrem (hybrid V1+V2).** Jádro (DB, pravidla, ARES,
+geo, skóre) zůstává kód — to je neprůstřelnost, kterou SPEC vyžaduje
+(„kontrola vynucená v kódu, nikoli v promptu"). Nad ním Claude Code
+s definovanými agenty a skilly. V3 (nebo V1 s API) se vrací na stůl teprve
+tehdy, až bude potřeba nepřetržitý bezobslužný provoz — tedy fáze 3+ nebo
+externí klient. Rozhodnutí se zapíše jako ADR do `docs/adr/0001-technologie.md`.
+
+**Co zbývá dořešit v S0.2:** (a) limity předplatného pro dávkové běhy 20–50
+firem denně — ověřit prakticky na prvním běhu; (b) jestli běhy spouštíš
+konverzačně, nebo je chceš naplánované; (c) jak přepsat `src/enrich.ts`
+z API cesty na nástroj pro agenta (zůstane jako varianta pro klienta).
 
 ---
 
@@ -127,11 +151,15 @@ jako kód + test).
 **Od tebe:** fakta o produktu/službě (ceny ne — ty se neslibují), schválení tvrzení.
 **Výstup:** schválená knihovna tvrzení, šablony ve stavu `navrzeno`→`schvaleno`.
 
-### S0.6 — Databázový projekt a prostředí *(po S0.2)*
-**Cíl:** založit produkční DB (Supabase projekt — placené, potvrdíš cenu; nebo
-jiná volba z ADR), aplikovat migrace, nastavit `.env`, ověřit `cli stav`.
-**Od tebe:** potvrzení založení projektu + ANTHROPIC_API_KEY pro enrichment.
-**Výstup:** běžící prostředí, dry-run Čmuchala na 5 firmách.
+### S0.6 — Prostředí a databáze *(z velké části hotovo 2026-07-26)*
+**Cíl:** funkční lokální prostředí bez cloudu a bez nákladů.
+**Hotovo:** lokální Postgres v `data/pgdata` (PGlite), idempotentní migrace,
+`data/` mimo git, `npm run cli -- migrate|stav` ověřeno. **Stávající Supabase
+projekty zůstávají nedotčené — nic se nepozastavuje.**
+**Zbývá:** přepnout enrichment z API na nástroj pro agenta (viz S0.2),
+pak dry-run Čmuchala na 5 firmách.
+**Od tebe:** nic. Cloud (Supabase/Neon) se řeší až kdyby data měla být
+sdílená mezi více lidmi nebo stroji — dnes to není potřeba.
 
 ### S0.7 — Odesílací doména a podepsaná osoba *(příprava na fázi 3, dlouhé lhůty!)*
 **Cíl:** vybrat odesílací (sub)doménu, nastavit SPF, DKIM, DMARC, naplánovat
@@ -148,6 +176,22 @@ opakovaně", adresný dopis, telefon, budoucí produktizace se správou souhlas�
 **Od tebe:** výběr advokáta a schůzka.
 **Výstup:** brief pro advokáta v `docs/pravni-brief.md`.
 
+### S0.10 — Analýza: má smysl systém prodávat? *(paralelní proud, rozhoduje o produktizaci)*
+**Cíl:** než se cokoli investuje do „appky pro klienty", zjistit, jestli je to
+byznys. Obsah analýzy: kdo je cílový zákazník (jídelny? cateringy? firmy?
+obchodní týmy obecně?), jakou bolest to řeší a čím se to dnes řeší, konkurence
+a náhražky, cenový model (jednorázově / měsíčně / podíl), co by se muselo
+doprogramovat (správa souhlasů jako nevypnutelná součást, izolace dat mezi
+klienty, účtování API — dle SPEC kap. 13 je to i právní podmínka), a jaká je
+minimální ověřovací varianta (např. 3 rozhovory s potenciálními zákazníky).
+**Klíčové zjištění dopředu:** Cantinero pro vlastní potřebu = předplatné, nula
+mezních nákladů. Cantinero jako produkt pro klienty = API tokeny, hosting,
+podpora, právní odpovědnost. Jsou to dva různé produkty s různou ekonomikou.
+**Od tebe:** kontext trhu a tvoje ambice; rozhodnutí, jestli tenhle proud vůbec
+otevřít teď, nebo až po vyhodnocení fáze 1 (**doporučuji až po fázi 1** —
+budeš mít reálná data o tom, jestli systém vůbec funguje).
+**Výstup:** `docs/analyza-produkt.md` + rozhodnutí jít/nejít do produktizace.
+
 ### S0.9 — Kontrolní session: go/no-go *(závěr fáze 0)*
 **Cíl:** projít checklist dokončení (kap. 5), vyhodnotit, rozhodnout start
 fáze 1 (ostré běhy Čmuchala) a revidovat plán fáze 1 podle ADR.
@@ -156,22 +200,25 @@ fáze 1 (ostré běhy Čmuchala) a revidovat plán fáze 1 podle ADR.
 
 ## 5. Kritéria dokončení fáze 0
 
+- [x] Lokální prostředí a databáze běží, migrace idempotentní (S0.6)
+- [x] Rozhodnut režim provozu: předplatné, 20–50 firem/den, bez cloudu (S0.2)
 - [ ] CLAUDE.md, paměť, oprávnění, agenti a skilly commitnuté (S0.1, S0.3)
-- [ ] ADR o technologii schválené (S0.2)
+- [ ] ADR o technologii sepsané + enrichment přepnutý z API na agenta (S0.2)
 - [ ] ≥ 1 aktivní jídelna se zónou a kapacitou v DB; znám strop obchodu (S0.4)
 - [ ] Knihovna tvrzení schválená, šablony navržené (S0.5)
-- [ ] Produkční DB běží, dry-run Čmuchala prošel (S0.6)
+- [ ] Dry-run Čmuchala na 5 firmách prošel (S0.6)
 - [ ] Doména s SPF/DKIM/DMARC, zahřívání běží, podepsaná osoba určena (S0.7)
 - [ ] Právní brief hotový, konzultace domluvená (S0.8)
+- [ ] *(volitelně, doporučeno až po fázi 1)* Analýza produktizace (S0.10)
 
 ## 6. Rozhodnutí, která jsou jen tvoje (souhrn)
 
-1. **Technologie** (S0.2) — doporučuji hybrid: kódové jádro + Claude Code agenti.
-2. **Supabase / jiná DB** (S0.6) — placená akce.
-3. **Seznam jídelen** (S0.4) — bez nich není území.
-4. **Fakta o produktu** a schválení tvrzení (S0.5).
-5. **Doména + podepsaná osoba** (S0.7).
-6. **Advokát** (S0.8).
-7. Denní limity a rozpočet na API náklady (můžeme nechat na fázi 3, ale
-   rozpočet na enrichment ve fázi 1 je dobré říct dopředu — hrubý odhad:
-   nižší jednotky USD na 10 obohacených firem).
+| # | Rozhodnutí | Stav |
+|---|---|---|
+| 1 | Technologie a režim provozu (S0.2) | ✅ předplatné + lokální DB, 20–50/den |
+| 2 | Cloudová DB (S0.6) | ✅ zatím nepotřeba, Supabase se nedotýkáme |
+| 3 | **Seznam jídelen (S0.4)** | ⏳ **blokuje fázi 1** — bez nich není území |
+| 4 | Fakta o produktu a schválení tvrzení (S0.5) | ⏳ |
+| 5 | Doména + podepsaná osoba (S0.7) | ⏳ dlouhé lhůty, začít brzy |
+| 6 | Advokát (S0.8) | ⏳ deadline před fází 3 |
+| 7 | Otevřít analýzu produktizace teď, nebo po fázi 1? (S0.10) | ⏳ doporučuji po fázi 1 |

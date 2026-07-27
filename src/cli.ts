@@ -1,29 +1,40 @@
 import { parseArgs } from "node:util";
 import { appendFile } from "node:fs/promises";
 import Anthropic from "@anthropic-ai/sdk";
-import { pripojPostgres, spustMigrace, type Db } from "./db.js";
+import { pripojPglite, pripojPostgres, spustMigrace, type Db } from "./db.js";
 import { vytvorAresKlienta } from "./ares.js";
 import { vytvorGeokoder } from "./geocode.js";
 import { vytvorEnricher, type Enricher } from "./enrich.js";
 import { spustCmuchala } from "./cmuchal.js";
 import { metrikyFaze1, prehledStavu } from "./metriky.js";
 
-function pripojDb(): Db {
+/**
+ * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
+ * Cloudový Postgres se použije jen tehdy, je-li vyplněná DATABASE_URL.
+ */
+async function pripojDb(): Promise<Db> {
   const url = process.env.DATABASE_URL;
-  if (!url) {
-    console.error(
-      "Chybí DATABASE_URL. Nastav connection string na Postgres/Supabase (viz .env.example).",
-    );
-    process.exit(1);
-  }
-  return pripojPostgres(url);
+  if (url) return pripojPostgres(url);
+  const dir = process.env.CANTINERO_DATA_DIR ?? "data/pgdata";
+  return pripojPglite(dir);
+}
+
+function kdeBeziDb(): string {
+  return process.env.DATABASE_URL
+    ? "vzdálený Postgres (DATABASE_URL)"
+    : `lokální databáze (${process.env.CANTINERO_DATA_DIR ?? "data/pgdata"})`;
 }
 
 async function cmdMigrate(): Promise<void> {
-  const db = pripojDb();
+  const db = await pripojDb();
   try {
-    await spustMigrace(db);
-    console.log("Migrace aplikovány.");
+    const aplikovane = await spustMigrace(db);
+    console.log(`Databáze: ${kdeBeziDb()}`);
+    console.log(
+      aplikovane.length === 0
+        ? "Žádné nové migrace — schéma je aktuální."
+        : `Aplikováno migrací: ${aplikovane.join(", ")}`,
+    );
   } finally {
     await db.close();
   }
@@ -49,7 +60,7 @@ async function cmdSeedJidelna(argv: string[]): Promise<void> {
       process.exit(1);
     }
   }
-  const db = pripojDb();
+  const db = await pripojDb();
   try {
     const rows = await db.query<{ id: string }>(
       `insert into jidelny (nazev, adresa, lat, lng, kod_obce, kapacita_volna, zona_metru)
@@ -98,7 +109,7 @@ async function cmdRun(argv: string[]): Promise<void> {
     );
   }
 
-  const db = pripojDb();
+  const db = await pripojDb();
   try {
     const souhrn = await spustCmuchala(
       {
@@ -132,7 +143,7 @@ async function cmdRun(argv: string[]): Promise<void> {
 }
 
 async function cmdStav(): Promise<void> {
-  const db = pripojDb();
+  const db = await pripojDb();
   try {
     const p = await prehledStavu(db);
     console.log("Firmy dle stavu:");
@@ -152,7 +163,7 @@ async function cmdStav(): Promise<void> {
 }
 
 async function cmdMetriky(): Promise<void> {
-  const db = pripojDb();
+  const db = await pripojDb();
   try {
     const m = await metrikyFaze1(db);
     const pct = (x: number) => `${(x * 100).toFixed(0)} %`;
@@ -185,7 +196,7 @@ switch (prikaz) {
     break;
   default:
     console.log(`Cantinero — fáze 1 (Čmuchal). Příkazy:
-  migrate                          aplikuje migrace na DATABASE_URL
+  migrate                          založí/aktualizuje schéma (lokálně, nebo na DATABASE_URL)
   seed-jidelna --nazev … --adresa … --lat … --lng … --kod-obce … --kapacita … [--zona 3000]
   run --jidelna <id> [--limit N]   spustí Čmuchala pro jídelnu
   stav                             počty firem a kapacita jídelen

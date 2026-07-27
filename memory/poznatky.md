@@ -9,5 +9,10 @@
 - **PGlite**: Postgres 17 ve WASM, testy běží offline; nepodporuje vnořené
   transakce (vnitřní `tx` sdílí vnější).
 - **Windows/Git**: CRLF warningy jsou neškodné; nechat default autocrlf.
-- **Enrichment náklady**: claude-opus-4-8 $5/M in + $25/M out; hrubý odhad
-  jednotky USD na ~10 obohacených firem (plus web search). Sledovat v agent_runs.
+- **Enrichment náklady**: platí jen při provozu přes API. Rozhodnuto jinak —
+  enrichment dělá agent v Claude Code na předplatném (viz rozhodnuti.md),
+  takže mezní náklad je nula. `src/enrich.ts` (API cesta) zůstává jako
+  varianta pro externího klienta; ceník claude-opus-4-8 $5/M in + $25/M out.
+- **PGlite na disku**: `new PGlite(cesta)` si **nevytvoří vnořený adresář** —
+  je potřeba `mkdir -p` předem (řeší `pripojPglite`). Datový adresář má i
+  prázdný ~39 MB (běžná režie Postgresu), záloha = zkopírovat `data/`.

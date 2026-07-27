@@ -1,5 +1,33 @@
 # Poznatky a gotchas
 
+## Kartotéku zaplavují SVJ a OSVČ (2026-07-27)
+
+Ze 194 kvalifikovaných firem se známou velikostí je **jen 20 firem s 25 a víc
+zaměstnanci**. Zbytek je šum dvojího druhu:
+
+- **Společenství vlastníků jednotek (SVJ)** — v Hrádku jich je přes patnáct
+  („Společenství vlastníků jednotek Hrádek, Nová Huť, 1. máje 178…186"). Mají
+  formálně „1–5 zaměstnanců", ale nikdo tam neobědvá. Je to bytový dům.
+- **Fyzické osoby / OSVČ** vedené vlastním jménem („Miroslav Böhm", „Jitka
+  Lukáš"). Živnostník není odběratel firemních obědů.
+
+Práh `--min-zamestnancu` je nevyřadí, protože formálně zaměstnance mají.
+Odfiltrovat je jde spolehlivě: SVJ podle CZ-NACE 68200 + názvu, OSVČ podle
+právní formy z rejstříku. **Otevřené — čeká na rozhodnutí majitele**, protože
+vyřazení celé kategorie je změna pravidel, ne technická drobnost.
+
+Praktický důsledek pro rešerši: frontu je nutné zúžit na `stredni,korporat`,
+jinak by agent trávil čas na bytových družstvech.
+
+## Partner v kartotéce (2026-07-27)
+
+Partnerská jídelna je právní subjekt se zaměstnanci a ze sweepu rejstříku
+vypadne jako běžný kandidát — ZŠ Tlučná se takhle dostala mezi firmy
+k oslovení. **Obecné poučení: seznam „koho oslovit" musí umět vyloučit
+i vlastní stranu, ne jen nevhodné cizí subjekty.** Řešeno migrací 0007
+(`jidelny.ico`), párování jde přes IČO — názvy v rejstříku se od těch
+používaných v praxi liší natolik, že by porovnávání názvů selhalo.
+
 ## První ostrý běh (Bezdružice, 40 kandidátů, 2026-07-27) — co selhalo
 
 Mechanika prošla (0 chyb, 39 kvalifikováno), ale **kvalita dat je slabá**.

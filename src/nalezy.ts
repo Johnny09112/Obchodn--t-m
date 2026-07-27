@@ -12,6 +12,7 @@
 import { z } from "zod";
 import type { Db } from "./db.js";
 import { jeValidniIco } from "./ico.js";
+import type { Segment } from "./res.js";
 import {
   ukonciBeh,
   zacniBeh,
@@ -168,16 +169,24 @@ export interface FirmaKObohaceni {
 /**
  * Firmy připravené k rešerši: kvalifikované, v zóně, dosud neprověřené.
  * Nejzajímavější (nejvyšší skóre) první.
+ *
+ * `segmenty` frontu zúží na dané velikosti. Rešerše stojí čas agenta, takže
+ * u firmy s pěti lidmi se nevyplatí stejně jako u firmy s pěti sty. Firmy
+ * s neznámou velikostí zúžením propadnou — nevíme o nich dost.
  */
 export async function firmyKObohaceni(
   db: Db,
-  opts: { limit?: number; jidelnaId?: string },
+  opts: { limit?: number; jidelnaId?: string; segmenty?: Segment[] },
 ): Promise<FirmaKObohaceni[]> {
   const podminky = ["stav = 'kvalifikovany'", "v_zone is true", "obohaceno_at is null"];
   const params: unknown[] = [];
   if (opts.jidelnaId) {
     params.push(opts.jidelnaId);
     podminky.push(`nejblizsi_jidelna_id = $${params.length}`);
+  }
+  if (opts.segmenty?.length) {
+    params.push(opts.segmenty);
+    podminky.push(`velikost_kategorie = any($${params.length})`);
   }
 
   const radky = await db.query<{

@@ -2,6 +2,20 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-27 · majitel · **Priorita: hloubka před šířkou.** Místo odblokování
+  Plzně a Stříbra jdeme nejdřív dohledat kontakty u nejlepších ~20 firem.
+  Důvod: dosud není ověřené, že konec procesu (rešerše) vůbec dá použitelné
+  kontakty — zjistit to na 20 firmách je levnější než na 500. Limit 1 000
+  výsledků ARES zůstává jako další krok.
+- 2026-07-27 · Claude · **Partnerská jídelna se vyřazuje podle IČO, ne názvu**
+  (migrace 0007, `jidelny.ico`, důvod vyřazení `partnerska_jidelna`). Názvy
+  v rejstříku se liší od těch na vývěsce, porovnávat je by bylo nespolehlivé.
+  Vyřazuje se proti IČO všech jídelen, ne jen právě zpracovávané.
+- 2026-07-27 · Claude · **Fronta na rešerši se dá zúžit na velikost firmy**
+  (`k-obohaceni --segmenty stredni,korporat`). Rešerše stojí čas agenta;
+  u firmy s pěti lidmi se nevyplatí stejně jako u firmy s pěti sty. Firmy
+  s neznámou velikostí zúžením propadnou — nevíme o nich dost.
+
 - 2026-07-26 · majitel · **Prvních 5 jídelen** (Bezdružice, 34. ZŠ Plzeň,
   Zbůch, Tlučná, Hrádek u Rokycan). **Začínáme Bezdružicemi**, zbytek až po
   testu. Jídelna Bezdružice založena v DB (kodObce 560740, 49.90624/12.97442),

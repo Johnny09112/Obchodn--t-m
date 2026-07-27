@@ -8,7 +8,7 @@ import { vytvorEnricher, type Enricher } from "./enrich.js";
 import { spustCmuchala } from "./cmuchal.js";
 import { metrikyFaze1, prehledStavu } from "./metriky.js";
 import { vygenerujMapu } from "./mapa.js";
-import { vytvorResKlienta } from "./res.js";
+import { vytvorResKlienta, type Segment } from "./res.js";
 import { vytvorMpsvKlienta } from "./mpsv.js";
 import { vytvorOsmKlienta } from "./osm.js";
 import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
@@ -213,13 +213,19 @@ async function cmdKartoteka(argv: string[]): Promise<void> {
 async function cmdKObohaceni(argv: string[]): Promise<void> {
   const { values } = parseArgs({
     args: argv,
-    options: { limit: { type: "string" }, jidelna: { type: "string" } },
+    options: {
+      limit: { type: "string" },
+      jidelna: { type: "string" },
+      // Např. --segmenty stredni,korporat — u drobných se rešerše nevyplatí.
+      segmenty: { type: "string" },
+    },
   });
   const db = await pripojDb();
   try {
     const firmy = await firmyKObohaceni(db, {
       limit: values.limit ? Number(values.limit) : undefined,
       jidelnaId: values.jidelna,
+      segmenty: values.segmenty?.split(",").map((s) => s.trim()) as Segment[] | undefined,
     });
     // Strojově čitelný výstup — čte ho agent, ne člověk.
     console.log(JSON.stringify(firmy, null, 2));
@@ -320,7 +326,8 @@ switch (prikaz) {
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
-  k-obohaceni [--limit N]          vypíše firmy čekající na rešerši (pro agenta)
+  k-obohaceni [--limit N] [--segmenty stredni,korporat]
+                                   vypíše firmy čekající na rešerši (pro agenta)
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
     process.exit(prikaz ? 1 : 0);

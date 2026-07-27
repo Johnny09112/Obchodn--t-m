@@ -53,6 +53,20 @@ describe("firmyKObohaceni", () => {
     expect(f.map((x) => x.ico)).toEqual(["17255686"]);
   });
 
+  it("umí frontu zúžit na velké firmy — u drobných se rešerše nevyplatí", async () => {
+    await db.query("update companies set velikost_kategorie = 'stredni' where ico = '25242407'");
+    await db.query("update companies set velikost_kategorie = 'mikro' where ico = '17255686'");
+
+    const f = await firmyKObohaceni(db, { segmenty: ["stredni", "korporat"] });
+    expect(f.map((x) => x.ico)).toEqual(["25242407"]);
+  });
+
+  it("bez zúžení vrátí i firmy s neznámou velikostí", async () => {
+    await db.query("update companies set velikost_kategorie = null");
+    expect(await firmyKObohaceni(db, {})).toHaveLength(2);
+    expect(await firmyKObohaceni(db, { segmenty: ["stredni"] })).toHaveLength(0);
+  });
+
   it("respektuje limit a firmy mimo zónu nenabízí", async () => {
     expect(await firmyKObohaceni(db, { limit: 1 })).toHaveLength(1);
     await db.query("update companies set v_zone = false where ico = '17255686'");

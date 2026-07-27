@@ -96,6 +96,7 @@ async function cmdRun(argv: string[]): Promise<void> {
       jidelna: { type: "string" },
       limit: { type: "string" },
       "bez-sweep": { type: "boolean", default: false },
+      "min-zamestnancu": { type: "string" },
     },
   });
   if (!values.jidelna) {
@@ -134,6 +135,7 @@ async function cmdRun(argv: string[]): Promise<void> {
       {
         limit: values.limit ? Number(values.limit) : undefined,
         aresSweep: values["bez-sweep"] !== true,
+        minZamestnancu: values["min-zamestnancu"] ? Number(values["min-zamestnancu"]) : undefined,
       },
     );
 
@@ -142,7 +144,8 @@ async function cmdRun(argv: string[]): Promise<void> {
     console.log(`  kvalifikováno: ${souhrn.kvalifikovano}`);
     console.log(`  čeká na jídelnu: ${souhrn.cekajicich}`);
     console.log(`  zahozeno: ${souhrn.zahozeno}, přeskočeno (už v DB): ${souhrn.preskoceno}`);
-    console.log(`  chyb: ${souhrn.chyby.length}, náklady: $${souhrn.nakladyUsd.toFixed(2)}`);
+    console.log(`  vyřazeno — bez zaměstnanců: ${souhrn.bezZamestnancu}, pod limitem velikosti: ${souhrn.podLimitem}, agentur: ${souhrn.agentur}, nevhodný obor: ${souhrn.vyloucenyObor}`);
+    console.log(`  chyb: ${souhrn.chyby.length}, náklady: ${souhrn.nakladyUsd.toFixed(2)}`);
 
     if (souhrn.poznamkyProPlaybook.length > 0) {
       const datum = new Date().toISOString().slice(0, 10);
@@ -294,7 +297,8 @@ switch (prikaz) {
     console.log(`Cantinero — fáze 1 (Čmuchal). Příkazy:
   migrate                          založí/aktualizuje schéma (lokálně, nebo na DATABASE_URL)
   seed-jidelna --nazev … --adresa … --obec … --lat … --lng … --kod-obce … --kapacita … [--zona 3000]
-  run --jidelna <id> [--limit N]   spustí Čmuchala pro jídelnu
+  run --jidelna <id> [--limit N] [--min-zamestnancu 10]
+                                   spustí Čmuchala pro jídelnu
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji

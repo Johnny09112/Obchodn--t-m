@@ -50,6 +50,18 @@ export function segmentPodleKategorie(kod: string | null): Segment | null {
   return "korporat";
 }
 
+/**
+ * Splňuje firma minimální velikost? Porovnává se **spodní hranice** pásma,
+ * takže „10–19" projde prahem 10, ale „6–9" ne.
+ * Neuvedená velikost vrací `null` — nevíme, a rozhodnutí necháme na volajícím.
+ */
+export function splnujeMinimum(kod: string | null, minZamestnancu: number): boolean | null {
+  if (!kod) return null;
+  const k = KATEGORIE_PRACOVNIKU[kod];
+  if (!k || k.od === null) return null;
+  return k.od >= minZamestnancu;
+}
+
 /** True jen tam, kde registr výslovně říká „bez zaměstnanců" (kód 110). */
 export function jeBezZamestnancu(kod: string | null): boolean {
   return kod === "110";

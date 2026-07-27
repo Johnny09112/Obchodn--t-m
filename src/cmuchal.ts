@@ -8,6 +8,7 @@ import type { MpsvKlient } from "./mpsv.js";
 import type { OsmKlient } from "./osm.js";
 import type { ResKlient } from "./res.js";
 import { jeVyloucenyObor, spocitejSkore } from "./score.js";
+import { splnujeMinimum } from "./res.js";
 import {
   nastavGeo,
   nastavSkore,
@@ -32,6 +33,12 @@ export interface CmuchalDeps {
   enricher?: Enricher;
 }
 
+/**
+ * Výchozí minimální počet zaměstnanců. Mikrofirmy do 10 lidí se vyplatí
+ * oslovovat jen výjimečně — práce je stejná, odběr zlomkový.
+ */
+export const VYCHOZI_MIN_ZAMESTNANCU = 10;
+
 export type ZdrojKandidata = "mpsv" | "osm" | "ares";
 
 interface Kandidat {
@@ -51,6 +58,7 @@ export interface CmuchalSouhrn {
   kvalifikovano: number;
   cekajicich: number;
   bezZamestnancu: number;
+  podLimitem: number;
   agentur: number;
   vyloucenyObor: number;
   nesparovano: number;
@@ -83,7 +91,7 @@ interface Jidelna {
 export async function spustCmuchala(
   deps: CmuchalDeps,
   jidelnaId: string,
-  opts: { limit?: number; aresSweep?: boolean } = {},
+  opts: { limit?: number; aresSweep?: boolean; minZamestnancu?: number } = {},
 ): Promise<CmuchalSouhrn> {
   const { db } = deps;
 
@@ -105,6 +113,7 @@ export async function spustCmuchala(
     jidelnaId,
     limit: opts.limit ?? null,
     aresSweep: opts.aresSweep !== false,
+    minZamestnancu: opts.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU,
   });
 
   const souhrn: CmuchalSouhrn = {
@@ -114,6 +123,7 @@ export async function spustCmuchala(
     kvalifikovano: 0,
     cekajicich: 0,
     bezZamestnancu: 0,
+    podLimitem: 0,
     agentur: 0,
     vyloucenyObor: 0,
     nesparovano: 0,
@@ -130,7 +140,7 @@ export async function spustCmuchala(
 
     for (const kandidat of kandidati.slice(0, opts.limit ?? kandidati.length)) {
       try {
-        await zpracujKandidata(deps, jidelna, kandidat, souhrn);
+        await zpracujKandidata(deps, jidelna, kandidat, souhrn, opts.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU);
       } catch (e) {
         souhrn.chyby.push({
           kdo: kandidat.ico ?? kandidat.nazev,
@@ -255,6 +265,7 @@ async function zpracujKandidata(
   jidelna: Jidelna,
   kandidat: Kandidat,
   souhrn: CmuchalSouhrn,
+  minZamestnancu: number,
 ): Promise<void> {
   const { db } = deps;
 
@@ -301,6 +312,13 @@ async function zpracujKandidata(
   // Sweep rejstříku je hodně zašuměný — z něj bereme jen doložené zaměstnavatele.
   if (kandidat.zdroj === "ares" && resUdaje?.segment === null) {
     souhrn.bezZamestnancu++;
+    return;
+  }
+  // Práh velikosti: u mikrofirem je práce s oslovením stejná jako u velkých,
+  // ale výnos zlomkový. Neznámou velikost prahem neposuzujeme — přišla-li
+  // firma ze silnějšího zdroje (pracoviště, mapa), necháme ji projít.
+  if (splnujeMinimum(resUdaje?.kategorieKod ?? null, minZamestnancu) === false) {
+    souhrn.podLimitem++;
     return;
   }
 

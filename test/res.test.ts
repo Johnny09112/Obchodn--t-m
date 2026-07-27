@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   jeBezZamestnancu,
+  splnujeMinimum,
   segmentPodleKategorie,
   vytvorResKlienta,
 } from "../src/res.js";
@@ -67,5 +68,20 @@ describe("nactiUdaje", () => {
     expect(await k.nactiUdaje("25235753")).toBeNull();
     expect(await k.nactiUdaje("123")).toBeNull();
     expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("splnujeMinimum", () => {
+  it("porovnává spodní hranici pásma", () => {
+    expect(splnujeMinimum("210", 10)).toBe(true); // 10–19
+    expect(splnujeMinimum("130", 10)).toBe(false); // 6–9
+    expect(splnujeMinimum("230", 25)).toBe(true); // 25–49
+    expect(splnujeMinimum("220", 25)).toBe(false); // 20–24
+  });
+
+  it("neuvedená velikost i bez zaměstnanců vrací null / false", () => {
+    expect(splnujeMinimum("000", 10)).toBeNull();
+    expect(splnujeMinimum(null, 10)).toBeNull();
+    expect(splnujeMinimum("110", 10)).toBe(false); // bez zaměstnanců
   });
 });

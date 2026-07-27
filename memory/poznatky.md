@@ -178,3 +178,34 @@ Zároveň ručně (Mapy Google, Firmy.cz) našel 6 firem, které nám unikly.
   názvem — nejspíš OSVČ pod jménem majitele. Dohledatelné jen rešerší.
 - Zvážit vyřazení SVJ (společenství vlastníků) — mají „zaměstnance", ale
   nikdo tam neobědvá.
+
+## Průzkum obcí — kde jsou vůbec zajímavé firmy (2026-07-27)
+
+Sweep + filtr na počet zaměstnanců přes všechny cílové obce. „Zajímavá" =
+10 a víc zaměstnanců (mikrofirmy majitel označil za nezajímavé).
+
+| obec | subjektů | bez zam. | 1–9 | 10–24 | 25–99 | 100+ | zajímavých |
+|---|---|---|---|---|---|---|---|
+| Bezdružice | 212 | 165 | 21 | 2 | 3 | 0 | **5** |
+| Zbůch | 556 | 497 | 40 | 9 | 8 | 2 | **19** |
+| Tlučná | 745 | 681 | 56 | 5 | 3 | 0 | **8** |
+| Hrádek u Rokycan | 450 | 395 | 50 | 2 | 2 | 1 | **5** |
+| Stříbro | >1000 | — | — | — | — | — | **nezjištěno** |
+| Plzeň | 49 831 | — | — | — | — | — | **nezjištěno** |
+
+Největší zaměstnavatelé mimo Bezdružice: MONTEFERRO HRÁDEK a.s. (200–249),
+Centrum pobytových a terénních sociálních služeb Zbůch (100–199),
+Obec Tlučná a ZŠ Tlučná (50–99), Město Hrádek (50–99).
+
+**Stříbro i Plzeň překračují tvrdý limit 1 000 výsledků ARES** → bez zúžení
+dotazu je sweep nepoužitelný. To je teď hlavní blokátor růstu.
+
+**Poměr signál/šum je stabilní:** ~85 % subjektů v obci nemá zaměstnance nebo
+je údaj neuvedený. Bez filtru je seznam obce k ničemu, s filtrem je nejlepší.
+
+## Práh velikosti firmy (2026-07-27)
+
+Majitel: mikrofirmy jsou málo zajímavé — práce s oslovením stejná, odběr
+zlomkový. Zaveden `--min-zamestnancu`, výchozí **10**. Neuvedená velikost se
+prahem neposuzuje (firma ze silnějšího zdroje projde). Zbůch: 36 firem
+vyřazeno pod limitem, zůstalo 21 s reálnou velikostí.

@@ -154,3 +154,17 @@ neovlivňuje nic navenek. Zapisují se sem strategie vyhledávání a jejich
 - nespárováno s rejstříkem: Kavárna a cukrárna Bellissima
 - nespárováno s rejstříkem: Zdravotní středisko
 - nespárováno s rejstříkem: Prášková lakovna
+
+## Běh 2026-07-27 (a6ef959b-f622-4c33-808d-0ae46c8a1e96)
+- agentura práce vyřazena: OT KOVO METAL, s.r.o. (nabírala pro s.r.o. Zbůch)
+- nespárováno s rejstříkem: s.r.o. Zbůch
+- nespárováno s rejstříkem: Líně
+- nespárováno s rejstříkem: ZŠ Líně, druhý stupeň
+- nespárováno s rejstříkem: ZŠ Líně, první stupeň
+- nespárováno s rejstříkem: Mateřská škola
+- nespárováno s rejstříkem: Obecní úřad Líně
+- nespárováno s rejstříkem: Zbůch
+- nespárováno s rejstříkem: Obecní úřad Zbůch
+- nespárováno s rejstříkem: Obecní úřad Úherce
+- nespárováno s rejstříkem: Kavárna
+- nespárováno s rejstříkem: Základní škola

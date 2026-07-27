@@ -201,7 +201,7 @@ describe("záchrana firem s nezaměřitelnou adresou", () => {
     };
     const resLokal: ResKlient = {
       nactiUdaje: async (ico) => ({
-        ico, kategorieKod: "120", kategoriePopis: "1–5", segment: "mikro",
+        ico, kategorieKod: "210", kategoriePopis: "10–19", segment: "mikro",
         bezZamestnancu: false, zdrojUrl: `https://ares.gov.cz/res/${ico}`,
       }),
     };
@@ -221,5 +221,49 @@ describe("záchrana firem s nezaměřitelnou adresou", () => {
     );
     expect(ev[0]!.citace).toContain("nepodařilo zaměřit");
     expect(ev[0]!.citace).toContain("střed obce");
+  });
+});
+
+describe("práh velikosti firmy", () => {
+  const maly: AresZaznam = {
+    ico: "48362956", nazev: "Malá dílna s.r.o.", adresa: "Náves 1",
+    obec: "Bezdružice", czNace: ["25610"], velikostKategorie: null, kodObce: 560740,
+  };
+  const aresMaly: AresKlient = {
+    overFirmu: async () => maly,
+    najdiFirmyVObci: async () => [maly],
+    najdiPodleJmena: async () => null,
+  };
+  const resSKodem = (kod: string): ResKlient => ({
+    nactiUdaje: async (ico) => ({
+      ico, kategorieKod: kod, kategoriePopis: kod, segment: "mikro",
+      bezZamestnancu: false, zdrojUrl: `https://ares.gov.cz/res/${ico}`,
+    }),
+  });
+
+  it("firmu pod prahem vyřadí a spočítá", async () => {
+    const s = await spustCmuchala(
+      { db, ares: aresMaly, res: resSKodem("120"), geokoder }, // 1–5 zaměstnanců
+      jidelnaId, { minZamestnancu: 10 },
+    );
+    expect(s.podLimitem).toBe(1);
+    expect(s.kvalifikovano).toBe(0);
+  });
+
+  it("firmu nad prahem pustí dál", async () => {
+    const s = await spustCmuchala(
+      { db, ares: aresMaly, res: resSKodem("230"), geokoder }, // 25–49
+      jidelnaId, { minZamestnancu: 10 },
+    );
+    expect(s.podLimitem).toBe(0);
+    expect(s.kvalifikovano).toBe(1);
+  });
+
+  it("s prahem 0 projdou i nejmenší firmy", async () => {
+    const s = await spustCmuchala(
+      { db, ares: aresMaly, res: resSKodem("120"), geokoder },
+      jidelnaId, { minZamestnancu: 0 },
+    );
+    expect(s.kvalifikovano).toBe(1);
   });
 });

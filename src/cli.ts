@@ -11,6 +11,7 @@ import { vygenerujMapu } from "./mapa.js";
 import { vytvorResKlienta, type Segment } from "./res.js";
 import { vytvorMpsvKlienta } from "./mpsv.js";
 import { vytvorOsmKlienta } from "./osm.js";
+import { vytvorRegistrKlienta } from "./registr.js";
 import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
 
@@ -134,6 +135,7 @@ async function cmdRun(argv: string[]): Promise<void> {
         geokoder: vytvorGeokoder({ kontakt }),
         mpsv: vytvorMpsvKlienta(),
         osm: vytvorOsmKlienta({ kontakt }),
+        registr: vytvorRegistrKlienta(),
         enricher,
       },
       values.jidelna,

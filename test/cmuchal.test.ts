@@ -6,6 +6,7 @@ import type { Geokoder } from "../src/geocode.js";
 import type { MpsvKlient } from "../src/mpsv.js";
 import type { OsmKlient } from "../src/osm.js";
 import type { ResKlient, ResUdaje } from "../src/res.js";
+import type { RegistrKlient } from "../src/registr.js";
 
 let db: Db;
 let jidelnaId: string;
@@ -289,6 +290,76 @@ describe("deník vyřazení (kalibrace pravidel)", () => {
       [s.behId],
     );
     expect(Number(v[0]!.pocet)).toBeGreaterThan(0);
+  });
+});
+
+describe("kompletní registr ČSÚ jako zdroj kandidátů", () => {
+  const zaznam = (ico: string, nazev: string, kategorieKod: string) => ({
+    ico, nazev, pravniForma: "112", kategorieKod, nace: ["25610"],
+    adresa: "Náves 1", obec: "Bezdružice", psc: "34901", jednotka: 560740,
+    zdrojUrl: "https://opendata.csu.gov.cz/soubory/od/od_org03/res_data.csv",
+  });
+
+  it("nahradí sweep rejstříku a použije jeho územní jednotky", async () => {
+    let dostalJednotky: number[] | undefined;
+    const registr: RegistrKlient = {
+      jednotkyObce: async () => [560740, 560741],
+      zamestnavateleVJednotkach: async (j) => {
+        dostalJednotky = j;
+        return [zaznam("25242407", agrofarmy.nazev, "130")];
+      },
+    };
+    await db.query("update jidelny set ico = '75007126' where id = $1", [jidelnaId]);
+
+    const s = await spustCmuchala({ db, ares, res, geokoder, registr }, jidelnaId, {
+      aresSweep: true,
+    });
+
+    expect(dostalJednotky).toEqual([560740, 560741]);
+    expect(s.dleZdroje.registr).toBe(1);
+    expect(s.dleZdroje.ares).toBe(0); // starý sweep se už nepoužil
+    expect(s.kvalifikovano).toBe(1);
+  });
+
+  it("malé firmy nepustí ani k ověřování — velikost zná dopředu", async () => {
+    // V tom je celá úspora: dnes se velikost zjišťuje až dotazem na každou
+    // firmu zvlášť, takže se nedá filtrovat dřív, než se firma stáhne.
+    let overovano = 0;
+    const aresPocitajici: AresKlient = {
+      ...ares,
+      overFirmu: async (i) => {
+        overovano++;
+        return vsechny.find((f) => f.ico === i) ?? null;
+      },
+    };
+    const registr: RegistrKlient = {
+      jednotkyObce: async () => [560740],
+      zamestnavateleVJednotkach: async (_j, o) => {
+        expect(o?.minZamestnancu).toBe(25); // práh se předává do registru
+        return [zaznam("25489631", zinkovna.nazev, "240")];
+      },
+    };
+    await db.query("update jidelny set ico = '75007126' where id = $1", [jidelnaId]);
+
+    await spustCmuchala({ db, ares: aresPocitajici, res, geokoder, registr }, jidelnaId, {
+      minZamestnancu: 25,
+    });
+    expect(overovano).toBe(1); // jen ta jedna, co prošla prahem v registru
+  });
+
+  it("bez IČO jídelny vezme aspoň její obec, ať se běh nezastaví", async () => {
+    let dostalJednotky: number[] | undefined;
+    const registr: RegistrKlient = {
+      jednotkyObce: async () => [],
+      zamestnavateleVJednotkach: async (j) => {
+        dostalJednotky = j;
+        return [];
+      },
+    };
+    await db.query("update jidelny set ico = null where id = $1", [jidelnaId]);
+
+    await spustCmuchala({ db, ares, res, geokoder, registr }, jidelnaId);
+    expect(dostalJednotky).toEqual([560740]); // kod_obce jídelny
   });
 });
 

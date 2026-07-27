@@ -7,6 +7,7 @@ import { klasifikujZonu, vzdalenostM, type Bod } from "./geo.js";
 import type { Geokoder } from "./geocode.js";
 import type { MpsvKlient } from "./mpsv.js";
 import type { OsmKlient } from "./osm.js";
+import type { RegistrKlient } from "./registr.js";
 import type { ResKlient } from "./res.js";
 import { jeVyloucenyObor, spocitejSkore } from "./score.js";
 import { splnujeMinimum } from "./res.js";
@@ -32,6 +33,11 @@ export interface CmuchalDeps {
   mpsv?: MpsvKlient;
   /** Fyzická pracoviště v zóně (OpenStreetMap). */
   osm?: OsmKlient;
+  /**
+   * Kompletní registr ČSÚ. Je-li k dispozici, nahrazuje sweep ARES —
+   * nemá limit 1 000 výsledků a zná velikost firmy dopředu.
+   */
+  registr?: RegistrKlient;
   /** Bez enricheru běží jen deterministická část. */
   enricher?: Enricher;
 }
@@ -42,7 +48,7 @@ export interface CmuchalDeps {
  */
 export const VYCHOZI_MIN_ZAMESTNANCU = 10;
 
-export type ZdrojKandidata = "mpsv" | "osm" | "ares";
+export type ZdrojKandidata = "mpsv" | "osm" | "ares" | "registr";
 
 interface Kandidat {
   zdroj: ZdrojKandidata;
@@ -52,12 +58,19 @@ interface Kandidat {
   /** Známá poloha pracoviště (OSM). Jinak se dopočítá z adresy sídla. */
   poloha?: Bod;
   nabizenychMist?: number;
+  /**
+   * Velikost už známá ze zdroje (registr ČSÚ ji nese s sebou). Ušetří dotaz
+   * do statistického registru na každou firmu zvlášť.
+   */
+  kategorieKod?: string;
 }
 
 export interface CmuchalSouhrn {
   behId: string;
   kandidatu: number;
   dleZdroje: Record<ZdrojKandidata, number>;
+  /** Kolik firem odpadlo v registru na prahu velikosti, než se na ně sáhlo. */
+  odfiltrovanoVRegistru: number;
   kvalifikovano: number;
   cekajicich: number;
   bezZamestnancu: number;
@@ -83,6 +96,7 @@ interface Jidelna {
   lat: number;
   lng: number;
   kod_obce: number | null;
+  ico: string | null;
   zona_metru: number;
   kapacita_volna: number | null;
   aktivni: boolean;
@@ -104,7 +118,7 @@ export async function spustCmuchala(
 
   const jidelny = await db.query<Jidelna>(
     `select id, nazev, obec, lat::float8 as lat, lng::float8 as lng, kod_obce,
-            zona_metru, kapacita_volna, aktivni
+            ico, zona_metru, kapacita_volna, aktivni
      from jidelny where id = $1`,
     [jidelnaId],
   );
@@ -133,7 +147,8 @@ export async function spustCmuchala(
   const souhrn: CmuchalSouhrn = {
     behId,
     kandidatu: 0,
-    dleZdroje: { mpsv: 0, osm: 0, ares: 0 },
+    dleZdroje: { mpsv: 0, osm: 0, ares: 0, registr: 0 },
+    odfiltrovanoVRegistru: 0,
     kvalifikovano: 0,
     cekajicich: 0,
     bezZamestnancu: 0,
@@ -188,7 +203,7 @@ async function sesbirejKandidaty(
   deps: CmuchalDeps,
   jidelna: Jidelna,
   souhrn: CmuchalSouhrn,
-  opts: { aresSweep?: boolean },
+  opts: { aresSweep?: boolean; minZamestnancu?: number },
 ): Promise<Kandidat[]> {
   const kandidati: Kandidat[] = [];
 
@@ -256,10 +271,49 @@ async function sesbirejKandidaty(
     }
   }
 
-  // Zdroj C — sweep rejstříku podle obce. Sám o sobě je zašuměný (v Bezdružicích
-  // 212 subjektů, z toho 26 skutečných zaměstnavatelů), ale po filtru na
-  // doložené zaměstnance je to nejúplnější seznam firem sídlících v obci.
-  if (opts.aresSweep !== false && jidelna.kod_obce != null) {
+  // Zdroj C — kompletní seznam firem sídlících v území.
+  //
+  // Přednost má registr ČSÚ: nemá limit 1 000 výsledků, takže funguje stejně
+  // na vesnici i v Praze, a nese s sebou velikost firmy. Práh velikosti se
+  // proto uplatní JEŠTĚ V REGISTRU — malé firmy se vůbec nestahují.
+  // Sweep ARES zůstává jako záloha, když registr není k dispozici.
+  if (opts.aresSweep !== false && deps.registr) {
+    try {
+      // Statutární město je v registru rozdělené na obvody. Bez jejich
+      // dohledání by jídelna v Plzni viděla desetinu města.
+      const jednotky = jidelna.ico ? await deps.registr.jednotkyObce(jidelna.ico) : [];
+      const kde = jednotky.length ? jednotky : jidelna.kod_obce != null ? [jidelna.kod_obce] : [];
+
+      if (kde.length === 0) {
+        souhrn.poznamkyProPlaybook.push(
+          `jídelna ${jidelna.nazev} nemá IČO ani kód obce — registr se nedal použít`,
+        );
+      } else {
+        if (kde.length > 1) {
+          souhrn.poznamkyProPlaybook.push(
+            `${jidelna.obec ?? "obec"} je v registru rozdělená na ${kde.length} územních jednotek`,
+          );
+        }
+        const minZam = opts.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU;
+        for (const f of await deps.registr.zamestnavateleVJednotkach(kde, {
+          minZamestnancu: minZam,
+        })) {
+          kandidati.push({
+            zdroj: "registr",
+            zdrojUrl: f.zdrojUrl,
+            ico: f.ico,
+            nazev: f.nazev,
+            kategorieKod: f.kategorieKod,
+          });
+          souhrn.dleZdroje.registr++;
+        }
+      }
+    } catch (e) {
+      const zprava = e instanceof Error ? e.message : String(e);
+      souhrn.chyby.push({ kdo: "registr ČSÚ", chyba: zprava });
+      souhrn.poznamkyProPlaybook.push(`registr ČSÚ se nepodařilo použít: ${zprava}`);
+    }
+  } else if (opts.aresSweep !== false && jidelna.kod_obce != null) {
     try {
       // 1 000 je tvrdý strop samotného ARES. Dotaz proto rovnou zužujeme na
       // právní formy zaměstnavatelů — bez toho sweep spadne na každé obci
@@ -390,6 +444,7 @@ async function zpracujKandidata(
     return;
   }
   // Sweep rejstříku je hodně zašuměný — z něj bereme jen doložené zaměstnavatele.
+  // (U registru ČSÚ to řešit nemusíme: ten už prahem prošel u zdroje.)
   if (kandidat.zdroj === "ares" && resUdaje?.segment === null) {
     souhrn.bezZamestnancu++;
     await vyrad("neuvedena_velikost", "velikost neuvedena a jediným zdrojem je sweep rejstříku", ico);

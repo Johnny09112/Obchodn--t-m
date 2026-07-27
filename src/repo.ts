@@ -192,7 +192,7 @@ export type DuvodVyrazeni =
 export interface VyrazeniVstup {
   behId: string;
   jidelnaId: string;
-  zdroj: "mpsv" | "osm" | "ares";
+  zdroj: "mpsv" | "osm" | "ares" | "registr";
   nazev: string;
   ico?: string;
   duvod: DuvodVyrazeni;

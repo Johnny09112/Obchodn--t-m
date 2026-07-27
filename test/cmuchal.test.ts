@@ -292,6 +292,59 @@ describe("deník vyřazení (kalibrace pravidel)", () => {
   });
 });
 
+describe("bytové domy a živnostníci", () => {
+  const svj: AresZaznam = {
+    ico: "26352524", nazev: "Společenství vlastníků jednotek Hrádek, 1. máje 180",
+    adresa: "1. máje 180", obec: "Bezdružice", czNace: ["68200"],
+    velikostKategorie: null, kodObce: 560740, pravniForma: "145",
+  };
+  const zivnostnik: AresZaznam = {
+    ico: "45407070", nazev: "KATEŘINA POHLOTOVÁ", adresa: "Náves 5",
+    obec: "Bezdružice", czNace: ["47790"], velikostKategorie: null,
+    kodObce: 560740, pravniForma: "101",
+  };
+  const resMaly: ResKlient = {
+    nactiUdaje: async (ico) => ({
+      ico, kategorieKod: "120", kategoriePopis: "1–5", segment: "mikro",
+      bezZamestnancu: false, zdrojUrl: `https://ares.gov.cz/res/${ico}`,
+    }),
+  };
+  const aresObojí = (zaznamy: AresZaznam[]): AresKlient => ({
+    overFirmu: async (i) => zaznamy.find((z) => z.ico === i) ?? null,
+    najdiFirmyVObci: async () => zaznamy,
+    najdiPodleJmena: async () => null,
+  });
+
+  it("bytový dům vyřadí — formálně zaměstnavatel, fakticky dům", async () => {
+    const s = await spustCmuchala(
+      { db, ares: aresObojí([svj]), res: resMaly, geokoder }, jidelnaId,
+    );
+    expect(s.bytovychDomu).toBe(1);
+    expect(s.kvalifikovano).toBe(0);
+    expect(await db.query("select 1 from companies where ico = '26352524'")).toHaveLength(0);
+
+    const v = await db.query<{ duvod: string; detail: string }>(
+      "select duvod, detail from vyrazeni where ico = '26352524'",
+    );
+    expect(v[0]!.duvod).toBe("bytovy_dum");
+    expect(v[0]!.detail).toContain("Společenství vlastníků");
+  });
+
+  it("živnostníka NEVYŘADÍ — bude se oslovovat jinou formou", async () => {
+    // Rozhodnutí majitele 2026-07-27: OSVČ se zachovají v samostatné
+    // kartotéce, stejně jako mikropodniky. Neuložit ≠ nezahodit.
+    const s = await spustCmuchala(
+      { db, ares: aresObojí([zivnostnik]), res: resMaly, geokoder }, jidelnaId,
+    );
+    expect(s.kvalifikovano).toBe(1);
+
+    const f = await db.query<{ pravni_forma: string }>(
+      "select pravni_forma from companies where ico = '45407070'",
+    );
+    expect(f[0]!.pravni_forma).toBe("101"); // ať jde kartotéka členit
+  });
+});
+
 describe("partnerská jídelna se nesmí objevit mezi firmami", () => {
   // Naši partneři (školy, které pro nás vaří) vyjdou ze sweepu rejstříku jako
   // běžní zaměstnavatelé. Nabízet obědy vlastní jídelně nedává smysl.

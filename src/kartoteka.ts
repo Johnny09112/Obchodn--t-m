@@ -6,6 +6,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { Db } from "./db.js";
+import { jeOsvc, popisFormy } from "./formy.js";
 
 export interface KartotekaData {
   jidelny: Array<{
@@ -18,7 +19,7 @@ export interface KartotekaData {
     velikost_kategorie: string | null; ma_vlastni_jidelnu: boolean | null;
     jidelna: string | null; oblast: string | null;
     zpusob_stravovani: string | null; cz_nace: string[];
-    obohaceno_at: string | null;
+    obohaceno_at: string | null; pravni_forma: string | null;
   }>;
   kontakty: Array<{
     ico: string; jmeno: string | null; prijmeni: string | null;
@@ -47,7 +48,7 @@ export async function nactiKartoteku(db: Db): Promise<KartotekaData> {
     firmy: await db.query(
       `select c.ico, c.nazev, c.obec, c.stav, c.skore, c.vzdalenost_m, c.v_zone,
               c.velikost_kategorie, c.ma_vlastni_jidelnu, c.zpusob_stravovani,
-              c.cz_nace, c.obohaceno_at,
+              c.cz_nace, c.obohaceno_at, c.pravni_forma,
               j.nazev as jidelna,
               coalesce(j.obec, 'bez oblasti') as oblast
        from companies c
@@ -129,6 +130,7 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
   <div class="detail">
     <dl class="udaje">
       <dt>IČO</dt><dd>${esc(f.ico)}</dd>
+      <dt>Právní forma</dt><dd>${esc(popisFormy(f.pravni_forma) ?? "—")}</dd>
       <dt>Sídlo</dt><dd>${esc(f.obec ?? "—")}</dd>
       <dt>Vlastní jídelna</dt><dd>${f.ma_vlastni_jidelnu === null ? "<i>nevíme</i>" : f.ma_vlastni_jidelnu ? "ano" : "ne"}</dd>
       <dt>Stravování</dt><dd>${f.zpusob_stravovani ? esc(f.zpusob_stravovani) : "<i>nevíme</i>"}</dd>
@@ -159,7 +161,11 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
 
   const oblastiHtml = oblasti
     .map((o) => {
-      const firmy = d.firmy.filter((f) => (f.oblast ?? "bez oblasti") === o);
+      const vOblasti = d.firmy.filter((f) => (f.oblast ?? "bez oblasti") === o);
+      // Živnostníci se oslovují jinou formou než firmy, takže se nesmí míchat
+      // do jednoho seznamu (rozhodnutí majitele 2026-07-27).
+      const firmy = vOblasti.filter((f) => !jeOsvc(f.pravni_forma));
+      const zivnostnici = vOblasti.filter((f) => jeOsvc(f.pravni_forma));
       const vyrazene = d.vyrazeni.filter((v) => (v.oblast ?? "bez oblasti") === o);
       const jidelna = d.jidelny.find((j) => j.obec === o);
       const velke = firmy.filter((f) => f.velikost_kategorie !== "mikro").length;
@@ -181,6 +187,18 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
     </div>
   </div>
   ${firmy.map(firmaHtml).join("")}
+
+  ${zivnostnici.length === 0 ? "" : `
+  <details class="zivnostnici">
+    <summary>Živnostníci (${zivnostnici.length}) — oslovují se jinou formou než firmy</summary>
+    <div class="detail">
+      <p class="tiny muted">
+        Podnikající fyzické osoby. E-mailová nabídka firemních obědů u nich
+        nedává smysl, proto jsou stranou — ale nezahazují se.
+      </p>
+      ${zivnostnici.map(firmaHtml).join("")}
+    </div>
+  </details>`}
 
   ${vyrazene.length === 0 ? "" : `
   <details class="vyrazene">
@@ -314,6 +332,11 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
   details.vyrazene summary { padding:10px 16px; cursor:pointer; font-family:var(--mono);
     font-size:.78rem; color:var(--ink-soft); }
   details.vyrazene summary::-webkit-details-marker { display:none; }
+  details.zivnostnici { background:var(--surface-2); border:1px solid var(--line);
+    margin-top:12px; }
+  details.zivnostnici summary { padding:10px 16px; cursor:pointer; font-family:var(--mono);
+    font-size:.78rem; color:var(--ink-soft); }
+  details.zivnostnici summary::-webkit-details-marker { display:none; }
   .duvod { font-family:var(--mono); font-size:.68rem; text-transform:uppercase;
     letter-spacing:.04em; padding:2px 7px; border-radius:2px;
     background:var(--warn-soft); color:var(--warn); white-space:nowrap; }

@@ -2,6 +2,12 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-27 · majitel · **Bytová družstva (SVJ) se vyřazují, OSVČ ne.**
+  Společenství vlastníků je dům, ne zaměstnavatel — pryč (s důvodem v deníku
+  vyřazení). Živnostníci se ale **zachovají v samostatné kartotéce**: budou se
+  oslovovat jinou formou než firmy. Stejná logika jako u mikropodniků
+  (rozhodnutí z 2026-07-27): neukládat ≠ nezahazovat.
+
 - 2026-07-27 · majitel · **Priorita: hloubka před šířkou.** Místo odblokování
   Plzně a Stříbra jdeme nejdřív dohledat kontakty u nejlepších ~20 firem.
   Důvod: dosud není ověřené, že konec procesu (rešerše) vůbec dá použitelné

@@ -13,6 +13,7 @@ const subjektOdpoved = {
     kodObce: 554782,
   },
   czNace: ["62010", "73110"],
+  pravniForma: "121",
   statistickeUdaje: { kategoriePoctuPracovniku: "330" },
 };
 
@@ -40,8 +41,15 @@ describe("overFirmu", () => {
       obec: "Praha",
       velikostKategorie: "korporat",
       kodObce: 554782,
+      pravniForma: "121",
     });
     expect(z!.czNace).toContain("62010");
+  });
+
+  it("chybějící právní formu nedoplňuje", async () => {
+    const { pravniForma, ...bezFormy } = subjektOdpoved;
+    const ares = vytvorAresKlienta({ fetchFn: mockFetch(() => bezFormy), prodlevaMs: 0 });
+    expect((await ares.overFirmu("25596641"))!.pravniForma).toBeNull();
   });
 
   it("vrátí null pro 404", async () => {

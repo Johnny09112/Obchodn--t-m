@@ -85,3 +85,36 @@ describe("členění podle oblastí a deník vyřazení", () => {
     expect(html).toContain("nabírá pro SIGNUM");
   });
 });
+
+describe("živnostníci mají vlastní část kartotéky", () => {
+  // Rozhodnutí majitele 2026-07-27: OSVČ se nezahazují, ale oslovují se
+  // jinou formou než firmy — proto nesmí být promíchaní v jednom seznamu.
+  const zaklad = {
+    obec: "Bezdružice", stav: "kvalifikovany", skore: 50, vzdalenost_m: 100,
+    v_zone: true, velikost_kategorie: "mikro", ma_vlastni_jidelnu: null,
+    jidelna: "ZŠ Bezdružice", oblast: "Bezdružice", zpusob_stravovani: null,
+    cz_nace: [], obohaceno_at: null,
+  };
+
+  it("oddělí živnostníky od firem a řekne proč", async () => {
+    const d = await nactiKartoteku(db);
+    d.firmy = [
+      { ...zaklad, ico: "25232657", nazev: "KOVOVÝROBA HONZÍK, s.r.o.", pravni_forma: "112" },
+      { ...zaklad, ico: "45407070", nazev: "KATEŘINA POHLOTOVÁ", pravni_forma: "101" },
+    ];
+    const html = sestavKartoteku(d, "1. 1. 2026");
+
+    expect(html).toContain("Živnostníci (1)");
+    expect(html).toMatch(/oslovují se jinou formou/i);
+    // Do počtu firem v oblasti se živnostník počítat nesmí.
+    expect(html).toContain("<b>1</b> firem");
+  });
+
+  it("bez živnostníků se ta část vůbec nezobrazí", async () => {
+    const d = await nactiKartoteku(db);
+    d.firmy = [
+      { ...zaklad, ico: "25232657", nazev: "KOVOVÝROBA HONZÍK, s.r.o.", pravni_forma: "112" },
+    ];
+    expect(sestavKartoteku(d, "1. 1. 2026")).not.toContain("Živnostníci");
+  });
+});

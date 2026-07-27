@@ -13,6 +13,8 @@ export interface AresZaznam {
   czNace: string[];
   velikostKategorie: Segment | null;
   kodObce?: number | null;
+  /** Kód dle číselníku ARES „PravniForma" (viz src/formy.ts). NULL = neuvedeno. */
+  pravniForma?: string | null;
 }
 
 export interface AresKlient {
@@ -54,6 +56,7 @@ interface AresSubjektDto {
     kodObce?: number;
   };
   czNace?: string[];
+  pravniForma?: string;
   statistickeUdaje?: { kategoriePoctuPracovniku?: string };
 }
 
@@ -70,6 +73,7 @@ function mapujSubjekt(dto: AresSubjektDto): AresZaznam | null {
     czNace: dto.czNace ?? [],
     velikostKategorie: mapujVelikost(dto.statistickeUdaje?.kategoriePoctuPracovniku),
     kodObce: dto.sidlo?.kodObce ?? null,
+    pravniForma: dto.pravniForma ?? null,
   };
 }
 

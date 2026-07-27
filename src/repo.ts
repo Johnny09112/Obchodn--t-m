@@ -24,8 +24,9 @@ function overZdroj(e: EvidenceVstup): void {
  */
 export async function zalozFirmu(db: Db, ares: AresZaznam): Promise<void> {
   await db.query(
-    `insert into companies (ico, nazev, adresa, obec, okres, kraj, psc, cz_nace, velikost_kategorie)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    `insert into companies (ico, nazev, adresa, obec, okres, kraj, psc, cz_nace,
+                            velikost_kategorie, pravni_forma)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
      on conflict (ico) do nothing`,
     [
       ares.ico,
@@ -37,6 +38,7 @@ export async function zalozFirmu(db: Db, ares: AresZaznam): Promise<void> {
       ares.psc ?? null,
       ares.czNace,
       ares.velikostKategorie,
+      ares.pravniForma ?? null,
     ],
   );
 }
@@ -184,7 +186,8 @@ export type DuvodVyrazeni =
   | "neuvedena_velikost"
   | "poloha_neznama"
   | "mimo_zonu"
-  | "partnerska_jidelna";
+  | "partnerska_jidelna"
+  | "bytovy_dum";
 
 export interface VyrazeniVstup {
   behId: string;

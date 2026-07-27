@@ -1,6 +1,7 @@
 import type { AresKlient, AresZaznam } from "./ares.js";
 import type { Db } from "./db.js";
 import type { Enricher } from "./enrich.js";
+import { jeBytovyDum, popisFormy } from "./formy.js";
 import { jeValidniIco } from "./ico.js";
 import { klasifikujZonu, vzdalenostM, type Bod } from "./geo.js";
 import type { Geokoder } from "./geocode.js";
@@ -64,6 +65,8 @@ export interface CmuchalSouhrn {
   agentur: number;
   /** Kandidátů vyřazených proto, že jsou to naše vlastní partnerské jídelny. */
   partnerskychJidelen: number;
+  /** Společenství vlastníků a bytová družstva — dům, ne zaměstnavatel. */
+  bytovychDomu: number;
   vyloucenyObor: number;
   nesparovano: number;
   zahozeno: number;
@@ -137,6 +140,7 @@ export async function spustCmuchala(
     podLimitem: 0,
     agentur: 0,
     partnerskychJidelen: 0,
+    bytovychDomu: 0,
     vyloucenyObor: 0,
     nesparovano: 0,
     zahozeno: 0,
@@ -351,8 +355,18 @@ async function zpracujKandidata(
     return;
   }
 
-  // Krok 2 — filtry. Nejdřív obor: restaurace a agentury práce nemá smysl
-  // oslovovat vůbec, ať už mají zaměstnanců kolik chtějí.
+  // Krok 2 — filtry.
+  // Bytový dům (společenství vlastníků, bytové družstvo) zaměstnance formálně
+  // má — správce, úklid —, ale nikdo tam neobědvá. Živnostníci se naopak
+  // NEVYŘAZUJÍ: majitel je bude oslovovat jinou formou (rozhodnutí 2026-07-27).
+  if (jeBytovyDum(ares.pravniForma)) {
+    souhrn.bytovychDomu++;
+    await vyrad("bytovy_dum", popisFormy(ares.pravniForma) ?? "bytový dům", ico);
+    return;
+  }
+
+  // Obor: restaurace a agentury práce nemá smysl oslovovat vůbec, ať už mají
+  // zaměstnanců kolik chtějí.
   if (jeVyloucenyObor(ares.czNace)) {
     souhrn.vyloucenyObor++;
     await vyrad("vylouceny_obor", `CZ-NACE ${ares.czNace.join(", ")}`, ico);

@@ -7,7 +7,7 @@ import type { Geokoder } from "./geocode.js";
 import type { MpsvKlient } from "./mpsv.js";
 import type { OsmKlient } from "./osm.js";
 import type { ResKlient } from "./res.js";
-import { spocitejSkore } from "./score.js";
+import { jeVyloucenyObor, spocitejSkore } from "./score.js";
 import {
   nastavGeo,
   nastavSkore,
@@ -51,6 +51,8 @@ export interface CmuchalSouhrn {
   kvalifikovano: number;
   cekajicich: number;
   bezZamestnancu: number;
+  agentur: number;
+  vyloucenyObor: number;
   nesparovano: number;
   zahozeno: number;
   preskoceno: number;
@@ -102,7 +104,7 @@ export async function spustCmuchala(
   const behId = await zacniBeh(db, "cmuchal", {
     jidelnaId,
     limit: opts.limit ?? null,
-    aresSweep: opts.aresSweep ?? false,
+    aresSweep: opts.aresSweep !== false,
   });
 
   const souhrn: CmuchalSouhrn = {
@@ -112,6 +114,8 @@ export async function spustCmuchala(
     kvalifikovano: 0,
     cekajicich: 0,
     bezZamestnancu: 0,
+    agentur: 0,
+    vyloucenyObor: 0,
     nesparovano: 0,
     zahozeno: 0,
     preskoceno: 0,
@@ -156,6 +160,24 @@ async function sesbirejKandidaty(
   if (deps.mpsv && jidelna.kod_obce != null) {
     try {
       for (const z of await deps.mpsv.zamestnavateleVObci(jidelna.kod_obce)) {
+        // Agentura práce sama v obci nikoho nekrmí — obědy řeší firma, kde
+        // ti lidé fyzicky pracují. Pokud ji inzerát prozradí, přidáme rovnou ji.
+        if (z.jeAgentura) {
+          souhrn.agentur++;
+          souhrn.poznamkyProPlaybook.push(
+            `agentura práce vyřazena: ${z.nazev}${z.proKoho ? ` (nabírala pro ${z.proKoho})` : ""}`,
+          );
+          if (z.proKoho) {
+            kandidati.push({
+              zdroj: "mpsv",
+              zdrojUrl: z.zdrojUrl,
+              nazev: z.proKoho,
+              nabizenychMist: z.mist,
+            });
+            souhrn.dleZdroje.mpsv++;
+          }
+          continue;
+        }
         kandidati.push({
           zdroj: "mpsv",
           zdrojUrl: z.zdrojUrl,
@@ -192,11 +214,14 @@ async function sesbirejKandidaty(
     }
   }
 
-  // Zdroj C — doplňkový sweep rejstříku podle obce. Vypnutý by default,
-  // protože sám o sobě vrací hlavně schránky a živnostníky.
-  if (opts.aresSweep && jidelna.kod_obce != null) {
+  // Zdroj C — sweep rejstříku podle obce. Sám o sobě je zašuměný (v Bezdružicích
+  // 212 subjektů, z toho 26 skutečných zaměstnavatelů), ale po filtru na
+  // doložené zaměstnance je to nejúplnější seznam firem sídlících v obci.
+  if (opts.aresSweep !== false && jidelna.kod_obce != null) {
     try {
-      for (const f of await deps.ares.najdiFirmyVObci(jidelna.kod_obce, { max: 200 })) {
+      // 1 000 je tvrdý strop samotného ARES. Obce nad tento počet subjektů
+      // (typicky velká města) potřebují zúžení dotazu — viz docs/FAZE-0.md.
+      for (const f of await deps.ares.najdiFirmyVObci(jidelna.kod_obce, { max: 1000 })) {
         kandidati.push({
           zdroj: "ares",
           zdrojUrl: `https://ares.gov.cz/ekonomicke-subjekty/${f.ico}`,
@@ -261,9 +286,20 @@ async function zpracujKandidata(
     return;
   }
 
-  // Krok 2 — filtr na skutečné zaměstnavatele.
+  // Krok 2 — filtry. Nejdřív obor: restaurace a agentury práce nemá smysl
+  // oslovovat vůbec, ať už mají zaměstnanců kolik chtějí.
+  if (jeVyloucenyObor(ares.czNace)) {
+    souhrn.vyloucenyObor++;
+    return;
+  }
+
   const resUdaje = await deps.res.nactiUdaje(ico);
   if (resUdaje?.bezZamestnancu) {
+    souhrn.bezZamestnancu++;
+    return;
+  }
+  // Sweep rejstříku je hodně zašuměný — z něj bereme jen doložené zaměstnavatele.
+  if (kandidat.zdroj === "ares" && resUdaje?.segment === null) {
     souhrn.bezZamestnancu++;
     return;
   }
@@ -293,6 +329,16 @@ async function zpracujKandidata(
       const adresa = [ares.adresa, ares.obec].filter(Boolean).join(", ");
       poloha = (await deps.geokoder.geokoduj(adresa)) ?? undefined;
       polohaPopis = `poloha odvozena z adresy sídla: ${adresa}`;
+    }
+
+    // Záchrana: adresa se nedá zaměřit (u vesnic běžné — čísla popisná bez
+    // ulic mapy neznají), ale z rejstříku víme, že firma sídlí v naší obci.
+    // Zahodit ji by znamenalo přijít o skutečné zaměstnavatele.
+    if (!poloha && sidloVeStejneObci && jidelna.obec) {
+      poloha = (await deps.geokoder.geokoduj(jidelna.obec)) ?? undefined;
+      polohaPopis =
+        `sídlo v obci ${jidelna.obec} dle rejstříku; přesnou adresu „${ares.adresa ?? "?"}" ` +
+        `se nepodařilo zaměřit — poloha je střed obce`;
     }
   }
   if (!poloha) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { jeKancelarskyObor, oddilNace, spocitejSkore } from "../src/score.js";
+import { jeKancelarskyObor, jeVyloucenyObor, oddilNace, spocitejSkore } from "../src/score.js";
 
 describe("oddilNace", () => {
   it("normalizuje kódy různých délek na oddíl", () => {
@@ -93,5 +93,23 @@ describe("spocitejSkore", () => {
     expect(spocitejSkore({ ...z, vzdalenostM: 200 })).toBeGreaterThan(
       spocitejSkore({ ...z, vzdalenostM: 2500 }),
     );
+  });
+});
+
+describe("jeVyloucenyObor", () => {
+  it("vyloučí restaurace a kavárny (oddíl 56)", () => {
+    expect(jeVyloucenyObor(["56110"])).toBe(true); // restaurace
+    expect(jeVyloucenyObor(["56110", "47250"])).toBe(true); // i jako vedlejší obor
+  });
+
+  it("vyloučí agentury práce (oddíl 78)", () => {
+    expect(jeVyloucenyObor(["78100"])).toBe(true);
+  });
+
+  it("nevyloučí ubytování, výrobu ani kanceláře", () => {
+    expect(jeVyloucenyObor(["55100"])).toBe(false); // hotel — zaměstnance má
+    expect(jeVyloucenyObor(["25610"])).toBe(false); // povrchová úprava kovů
+    expect(jeVyloucenyObor(["62010"])).toBe(false);
+    expect(jeVyloucenyObor([])).toBe(false);
   });
 });

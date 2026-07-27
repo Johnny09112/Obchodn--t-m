@@ -131,3 +131,50 @@ přesně ty, které hledání podle sídla nikdy nenajde.
   pracoviště je za rohem). Řešeno: nesouhlasí-li obec sídla s obcí pracoviště,
   bere se střed obce pracoviště a přibližnost se přizná v evidenci.
 - Segmenty velikosti sjednoceny se SPEC (mikro/stredni/korporat), migrace 0003.
+
+## Kalibrace hledání podle zpětné vazby majitele (2026-07-27)
+
+Majitel prověřil prvních 5 nálezů: **2 správně, 2 agentury práce, 1 restaurace.**
+Zároveň ručně (Mapy Google, Firmy.cz) našel 6 firem, které nám unikly.
+
+### Co se opravilo
+
+1. **Agentury práce.** MPSV je prozradí dvěma způsoby: příznakem
+   `souhlasAgenturyAgentura`, a hlavně **názvem pracoviště** —
+   „MSRCZ MARINA GLOBAL. s.r.o. (SIGNUM s.r.o.)" nebo „…, pracoviště
+   Bezdružice, Signum s.r.o.". Skutečný zaměstnavatel se z názvu vytáhne
+   a nasadí místo agentury.
+2. **Vyloučené obory.** CZ-NACE 56 (stravování — restaurace si vaří samy)
+   a 78 (agentury práce). Vyřadilo 26 subjektů včetně Café Kryštof Harant.
+3. **Sweep rejstříku zapnut natrvalo**, ale jen s doloženými zaměstnanci.
+   Sám o sobě je zašuměný (212 subjektů → 26 zaměstnavatelů), ale je to
+   **nejúplnější seznam firem sídlících v obci** a našel oba nálezy majitele
+   (KOVOVÝROBA HONZÍK 25–49 zam., ROLDECO).
+4. **Strop sweepu byl 200, obec má 212** → ROLDECO vypadlo za hranou.
+   Zvednuto na 1 000 (tvrdý limit samotného ARES).
+5. **Geokódování vesnických adres selhává** („č.p. 137" bez ulice).
+   Dřív se firma zahodila; nově se použije střed obce, je-li sídlo v naší
+   obci — zachránilo 4 skutečné zaměstnavatele.
+6. **Verzování cache MPSV.** Po přidání rozpoznávání agentur se načetl
+   starý index bez nových polí a filtr tiše nefungoval. Index má teď
+   `verze`; při změně formátu se zahodí. **Obecné poučení: každá cache
+   odvozených dat potřebuje verzi formátu.**
+
+### Výsledek na Bezdružicích
+
+| | před kalibrací | po kalibraci |
+|---|---|---|
+| firem v kartotéce | 5 | 23 |
+| z toho agentur | 2 | 0 |
+| z toho restaurací | 1 | 0 |
+| nálezy majitele nalezeny | 0 ze 6 | KOVOVÝROBA HONZÍK, ROLDECO |
+
+### Co zbývá
+
+- **Párování názvů z map na rejstřík je pořád slabé** (z 28 pracovišť z OSM
+  se spárovalo pár). „Prášková lakovna" = LAK SERVIS, „Zdravotní středisko",
+  „Penzion Mír"… → práce pro agenta, ne pro kód.
+- ZP Servis a LAK SERVIS nemají na webu IČO a v rejstříku nejsou pod tím
+  názvem — nejspíš OSVČ pod jménem majitele. Dohledatelné jen rešerší.
+- Zvážit vyřazení SVJ (společenství vlastníků) — mají „zaměstnance", ale
+  nikdo tam neobědvá.

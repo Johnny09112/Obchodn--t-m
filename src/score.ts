@@ -37,6 +37,24 @@ export function oddilNace(kod: string): string | null {
   return c.slice(0, 2);
 }
 
+/**
+ * Obory, které nemá smysl oslovovat nabídkou obědů — vyřazují se úplně,
+ * ne jen bodově.
+ *
+ * 56 — Stravování a pohostinství: restaurace a kavárny si vaří samy,
+ *      pro nás jsou to spíš konkurenti než zákazníci.
+ * 78 — Činnosti související se zaměstnáním: agentury práce nabírají lidi
+ *      pro někoho jiného; obědy řeší firma, kde ti lidé fyzicky pracují.
+ */
+const VYLOUCENE_ODDILY = new Set(["56", "78"]);
+
+export function jeVyloucenyObor(czNace: string[]): boolean {
+  return czNace.some((k) => {
+    const o = oddilNace(k);
+    return o !== null && VYLOUCENE_ODDILY.has(o);
+  });
+}
+
 export function jeKancelarskyObor(czNace: string[]): boolean {
   return czNace.some((k) => {
     const o = oddilNace(k);

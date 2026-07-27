@@ -63,8 +63,10 @@ const geokoder: Geokoder = {
 const mpsv: MpsvKlient = {
   zamestnavateleVObci: async () => [
     { ico: "25242407", nazev: agrofarmy.nazev, mist: 8, inzeratu: 2, kodObce: 560740,
+      cisloDomovni: 2, jeAgentura: false, proKoho: null,
       zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
     { ico: "25489631", nazev: zinkovna.nazev, mist: 12, inzeratu: 3, kodObce: 560740,
+      cisloDomovni: 291, jeAgentura: false, proKoho: null,
       zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
   ],
 };
@@ -183,5 +185,41 @@ describe("spustCmuchala — obrácené hledání", () => {
     );
     expect(b).toHaveLength(1);
     expect(b[0]!.konec).not.toBeNull();
+  });
+});
+
+describe("záchrana firem s nezaměřitelnou adresou", () => {
+  it("firmu sídlící v obci nezahodí, když mapy neznají její adresu", async () => {
+    const nezamerne: AresZaznam = {
+      ico: "48362956", nazev: "ROLDECO, spol. s r.o.", adresa: "č.p. 137",
+      obec: "Bezdružice", czNace: ["49410"], velikostKategorie: null, kodObce: 560740,
+    };
+    const aresLokal: AresKlient = {
+      overFirmu: async (i) => (i === nezamerne.ico ? nezamerne : null),
+      najdiFirmyVObci: async () => [nezamerne],
+      najdiPodleJmena: async () => null,
+    };
+    const resLokal: ResKlient = {
+      nactiUdaje: async (ico) => ({
+        ico, kategorieKod: "120", kategoriePopis: "1–5", segment: "mikro",
+        bezZamestnancu: false, zdrojUrl: `https://ares.gov.cz/res/${ico}`,
+      }),
+    };
+    // Adresu neumí zaměřit, obec ano — přesně stav z ostrého běhu.
+    const geoLokal: Geokoder = {
+      geokoduj: async (a) => (a === "Bezdružice" ? { lat: 49.9062, lng: 12.9744 } : null),
+    };
+
+    const s = await spustCmuchala(
+      { db, ares: aresLokal, res: resLokal, geokoder: geoLokal }, jidelnaId,
+    );
+    expect(s.kvalifikovano).toBe(1);
+    expect(s.zahozeno).toBe(0);
+
+    const ev = await db.query<{ citace: string }>(
+      "select citace from evidence where ico = '48362956' and atribut = 'adresa'",
+    );
+    expect(ev[0]!.citace).toContain("nepodařilo zaměřit");
+    expect(ev[0]!.citace).toContain("střed obce");
   });
 });

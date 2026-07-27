@@ -95,7 +95,7 @@ async function cmdRun(argv: string[]): Promise<void> {
     options: {
       jidelna: { type: "string" },
       limit: { type: "string" },
-      "ares-sweep": { type: "boolean", default: false },
+      "bez-sweep": { type: "boolean", default: false },
     },
   });
   if (!values.jidelna) {
@@ -133,7 +133,7 @@ async function cmdRun(argv: string[]): Promise<void> {
       values.jidelna,
       {
         limit: values.limit ? Number(values.limit) : undefined,
-        aresSweep: values["ares-sweep"] === true,
+        aresSweep: values["bez-sweep"] !== true,
       },
     );
 

@@ -516,6 +516,41 @@ describe("velké město: sweep rejstříku nestačí", () => {
   });
 });
 
+describe("ruční blacklist majitele", () => {
+  it("firmu z blacklistu nezaloží a do deníku napíše majitelův důvod", async () => {
+    await db.query(
+      `insert into blacklist (typ, hodnota, duvod)
+       values ('ico','25242407','už jsme jednali, nemají zájem')`,
+    );
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
+
+    expect(s.naBlacklistu).toBe(1);
+    expect(await db.query("select 1 from companies where ico = '25242407'")).toHaveLength(0);
+
+    const v = await db.query<{ duvod: string; detail: string }>(
+      "select duvod, detail from vyrazeni where ico = '25242407'",
+    );
+    expect(v[0]!.duvod).toBe("blacklist");
+    expect(v[0]!.detail).toContain("nemají zájem");
+  });
+
+  it("pravidlo podle oboru vyřadí i firmu, kterou majitel nejmenoval", async () => {
+    await db.query(
+      `insert into blacklist (typ, hodnota, duvod) values ('nace','25','kovovýrobu neděláme')`,
+    );
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
+    // Zinkovna má CZ-NACE 25610.
+    expect(s.naBlacklistu).toBe(1);
+    expect(await db.query("select 1 from companies where ico = '25489631'")).toHaveLength(0);
+  });
+
+  it("prázdný blacklist nikoho nevyřadí", async () => {
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
+    expect(s.naBlacklistu).toBe(0);
+    expect(s.kvalifikovano).toBe(2);
+  });
+});
+
 describe("bytové domy a živnostníci", () => {
   const svj: AresZaznam = {
     ico: "26352524", nazev: "Společenství vlastníků jednotek Hrádek, 1. máje 180",

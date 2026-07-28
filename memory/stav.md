@@ -17,7 +17,12 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **215 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **235 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **Krok 2 frontendového plánu hotový: kategorie a blacklist** (migrace 0012).
+  Kategorie jsou data, ne kód — dají se upravit bez zásahu do programu.
+  167 firem zařazeno; „Restaurace a pohostinství" je zatím prázdná, protože
+  stravování vyřazujeme už při sběru. Blacklist má povinný důvod a uplatní
+  se při sběru (`vyrazeni.duvod = 'blacklist'`).
 - **Krok 1 frontendového plánu hotový: oblast je samostatná věc.**
   Smí existovat bez jídelny (obrácený postup) a může být kruh i nakreslený
   tvar. Migrace 0011, `src/oblast.ts`, CLI `oblast nova|prirad|firmy`.
@@ -95,6 +100,11 @@ vlastní jídelnou si drží původní skóre z doby sběru. Před frontou na os
 (fáze 3) to bude potřeba srovnat.
 
 ## Co čeká na majitele
+
+- **Dobrousit kategorie.** Do „ostatních" spadlo 24 firem, z toho spolky
+  a sport (CZ-NACE 93, 94, 90 — 10 firem), opravny (95 — 2), zemědělství
+  a rybolov (01, 03 — 2). Chce majitel pro ně vlastní kategorie, nebo je
+  přiřadit do stávajících?
 
 - **Návrh Čmuchala ke schválení:** u mikrofirem bez webu zkusit veřejné
   registry zadávacích řízení (profily zadavatelů, ISVZ/NEN) — pokud firma

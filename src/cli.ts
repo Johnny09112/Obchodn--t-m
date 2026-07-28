@@ -24,6 +24,10 @@ import { doplnKontakty } from "./kontakty.js";
 import { prepocitejDosah } from "./dosah.js";
 import { rozborZony } from "./zona.js";
 import {
+  nactiBlacklist, pridejPravidlo, smazPravidlo, type TypPravidla,
+} from "./blacklist.js";
+import { priradKategorie } from "./kategorie.js";
+import {
   firmyVOblasti, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
   type Oblast,
 } from "./oblast.js";
@@ -523,6 +527,90 @@ async function cmdOblast(argv: string[]): Promise<void> {
   }
 }
 
+/** Doplní ke všem firmám kategorii podle oboru. */
+async function cmdKategorie(): Promise<void> {
+  const db = await pripojDb();
+  try {
+    const v = await priradKategorie(db);
+    console.log(`Zařazeno firem: ${v.zarazeno}\n`);
+    console.table(
+      await db.query(
+        `select k.nazev, count(c.ico)::int as firem
+         from kategorie k left join companies c on c.kategorie = k.kod
+         group by k.nazev, k.poradi order by k.poradi`,
+      ),
+    );
+    if (v.vOstatnich.length > 0) {
+      // Bez tohohle výpisu by firmy do „ostatních" tiše mizely a nešlo by
+      // poznat, že členění někde nesedí.
+      console.log("\nObory, které skončily v „ostatních“ — podklad k dobroušení:");
+      for (const o of v.vOstatnich.slice(0, 12)) {
+        console.log(`  oddíl CZ-NACE ${o.oddil}: ${o.pocet} firem`);
+      }
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/** Ruční pravidla majitele — obdoba automatického vyřazování. */
+async function cmdBlacklist(argv: string[]): Promise<void> {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    options: {
+      typ: { type: "string" },
+      hodnota: { type: "string" },
+      duvod: { type: "string" },
+      id: { type: "string" },
+    },
+  });
+  const akce = positionals[0] ?? "seznam";
+  const db = await pripojDb();
+  try {
+    if (akce === "pridej") {
+      if (!values.typ || !values.hodnota || !values.duvod) {
+        console.error(
+          "Chybí --typ (ico|nazev|nace|pravni_forma), --hodnota nebo --duvod.\n" +
+            "Důvod je povinný schválně: bez něj se za měsíc nedá poznat, proč tam pravidlo je.",
+        );
+        process.exit(1);
+      }
+      await pridejPravidlo(db, {
+        typ: values.typ as TypPravidla,
+        hodnota: values.hodnota,
+        duvod: values.duvod,
+      });
+      console.log("Pravidlo přidáno. Uplatní se při příštím sběru.");
+      return;
+    }
+
+    if (akce === "smaz") {
+      if (!values.id) {
+        console.error("Chybí --id");
+        process.exit(1);
+      }
+      await smazPravidlo(db, values.id);
+      console.log("Pravidlo smazáno.");
+      return;
+    }
+
+    const pravidla = await nactiBlacklist(db);
+    if (pravidla.length === 0) {
+      console.log(
+        "Blacklist je prázdný.\n" +
+          "Přidej: blacklist pridej --typ ico --hodnota 25232657 --duvod \"už jsme jednali\"",
+      );
+      return;
+    }
+    for (const p of pravidla) {
+      console.log(`${p.id}  ${p.typ.padEnd(13)} ${p.hodnota.padEnd(20)} ${p.duvod}`);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
 /** Přepočte, které jídelny mají kterou firmu v dosahu. */
 async function cmdDosah(argv: string[]): Promise<void> {
   const { values } = parseArgs({ args: argv, options: { jidelna: { type: "string" } } });
@@ -648,6 +736,12 @@ switch (prikaz) {
   case "oblast":
     await cmdOblast(zbytek);
     break;
+  case "kategorie":
+    await cmdKategorie();
+    break;
+  case "blacklist":
+    await cmdBlacklist(zbytek);
+    break;
   case "zona":
     await cmdZona(zbytek);
     break;
@@ -675,6 +769,10 @@ switch (prikaz) {
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
+  kategorie                        doplní firmám kategorii podle oboru
+  blacklist [seznam]               vypíše ruční pravidla
+  blacklist pridej --typ ico|nazev|nace|pravni_forma --hodnota … --duvod …
+  blacklist smaz --id <id>
   oblast [seznam]                  vypíše oblasti hledání
   oblast nova --nazev … (--lat … --lng … --polomer … | --body "49.6,13.2 49.7,13.3")
                                    založí oblast; jídelna je NEPOVINNÁ

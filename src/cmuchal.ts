@@ -1,6 +1,7 @@
 import type { AresKlient, AresZaznam } from "./ares.js";
 import type { Db } from "./db.js";
 import type { Enricher } from "./enrich.js";
+import { naBlacklistu, nactiBlacklist, type Pravidlo } from "./blacklist.js";
 import { FORMY_ZAMESTNAVATELU, jeBytovyDum, popisFormy } from "./formy.js";
 import { jeValidniIco } from "./ico.js";
 import { klasifikujZonu, vzdalenostM, type Bod } from "./geo.js";
@@ -83,6 +84,8 @@ export interface CmuchalSouhrn {
   partnerskychJidelen: number;
   /** Společenství vlastníků a bytová družstva — dům, ne zaměstnavatel. */
   bytovychDomu: number;
+  /** Vyřazeno ručním pravidlem majitele. */
+  naBlacklistu: number;
   vyloucenyObor: number;
   nesparovano: number;
   zahozeno: number;
@@ -159,6 +162,7 @@ export async function spustCmuchala(
     agentur: 0,
     partnerskychJidelen: 0,
     bytovychDomu: 0,
+    naBlacklistu: 0,
     vyloucenyObor: 0,
     nesparovano: 0,
     zahozeno: 0,
@@ -176,6 +180,9 @@ export async function spustCmuchala(
       .map((j) => j.ico),
   );
 
+  // Ruční pravidla majitele — načtou se jednou, platí pro celý běh.
+  const blacklist = await nactiBlacklist(db);
+
   try {
     const kandidati = await sesbirejKandidaty(deps, jidelna, souhrn, opts);
     souhrn.kandidatu = kandidati.length;
@@ -185,6 +192,7 @@ export async function spustCmuchala(
         await zpracujKandidata(deps, jidelna, kandidat, souhrn, {
           minZamestnancu: opts.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU,
           partnerskaIca,
+          blacklist,
         });
       } catch (e) {
         souhrn.chyby.push({
@@ -402,7 +410,11 @@ async function zpracujKandidata(
   jidelna: Jidelna,
   kandidat: Kandidat,
   souhrn: CmuchalSouhrn,
-  pravidla: { minZamestnancu: number; partnerskaIca: Set<string> },
+  pravidla: {
+    minZamestnancu: number;
+    partnerskaIca: Set<string>;
+    blacklist: readonly Pravidlo[];
+  },
 ): Promise<void> {
   const { db } = deps;
   const { minZamestnancu, partnerskaIca } = pravidla;
@@ -478,6 +490,17 @@ async function zpracujKandidata(
   if (jeBytovyDum(ares.pravniForma)) {
     souhrn.bytovychDomu++;
     await vyrad("bytovy_dum", popisFormy(ares.pravniForma) ?? "bytový dům", ico);
+    return;
+  }
+
+  // Ruční pravidla majitele. Až za ověřením v rejstříku, protože pravidlo
+  // může mířit na obor nebo právní formu, které jsou známé teprve odtud.
+  const pravidlo = naBlacklistu(pravidla.blacklist, {
+    ico, nazev: ares.nazev, czNace: ares.czNace, pravniForma: ares.pravniForma,
+  });
+  if (pravidlo) {
+    souhrn.naBlacklistu++;
+    await vyrad("blacklist", pravidlo.duvod, ico);
     return;
   }
 

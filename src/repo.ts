@@ -211,7 +211,8 @@ export type DuvodVyrazeni =
   | "poloha_neznama"
   | "mimo_zonu"
   | "partnerska_jidelna"
-  | "bytovy_dum";
+  | "bytovy_dum"
+  | "blacklist";
 
 export interface VyrazeniVstup {
   behId: string;

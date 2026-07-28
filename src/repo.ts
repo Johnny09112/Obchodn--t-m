@@ -140,6 +140,30 @@ export interface GeoVstup {
   vZone: boolean;
 }
 
+/**
+ * Zaznamená, že jídelna má firmu v dosahu.
+ *
+ * Firma smí být v dosahu víc jídelen zároveň — nepřeřazuje se mezi nimi
+ * (rozhodnutí majitele 2026-07-28). Opakovaný zápis přepíše vzdálenost,
+ * takže přepočet jde pustit kdykoli znovu.
+ */
+export async function zapisDosah(
+  db: Db,
+  ico: string,
+  jidelnaId: string,
+  d: { vzdalenostM: number; vZone: boolean },
+): Promise<void> {
+  await db.query(
+    `insert into dosah (ico, jidelna_id, vzdalenost_m, v_zone)
+     values ($1,$2,$3,$4)
+     on conflict (ico, jidelna_id) do update
+       set vzdalenost_m = excluded.vzdalenost_m,
+           v_zone = excluded.v_zone,
+           zjisteno_at = now()`,
+    [ico, jidelnaId, d.vzdalenostM, d.vZone],
+  );
+}
+
 export async function nastavGeo(db: Db, ico: string, g: GeoVstup): Promise<void> {
   await db.query(
     `update companies

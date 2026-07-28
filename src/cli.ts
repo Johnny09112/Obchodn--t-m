@@ -21,6 +21,9 @@ import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
 import { novePoznatky } from "./playbook.js";
 import { doplnKontakty } from "./kontakty.js";
+import { prepocitejDosah } from "./dosah.js";
+import { rozborZony } from "./zona.js";
+import { vzdalenostM } from "./geo.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -284,6 +287,142 @@ async function cmdDoplnitKontakty(argv: string[]): Promise<void> {
   }
 }
 
+/**
+ * Podklad pro rozhodnutí o velikosti zóny. Rozhoduje majitel — tohle mu jen
+ * ukáže, kolik firem při jakém poloměru přibude, ať to není od oka.
+ */
+async function cmdZona(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      jidelna: { type: "string" },
+      polomery: { type: "string", default: "1000,2000,3000,5000,10000" },
+      "min-zamestnancu": { type: "string", default: "10" },
+    },
+  });
+  if (!values.jidelna) {
+    console.error("Chybí --jidelna <id>");
+    process.exit(1);
+  }
+
+  const db = await pripojDb();
+  try {
+    const j = await db.query<{
+      nazev: string; obec: string; lat: number; lng: number; zona_metru: number; ico: string | null;
+    }>(
+      `select nazev, obec, lat::float8 as lat, lng::float8 as lng, zona_metru, ico
+       from jidelny where id = $1`,
+      [values.jidelna],
+    );
+    const jidelna = j[0];
+    if (!jidelna) {
+      console.error(`Jídelna ${values.jidelna} neexistuje`);
+      process.exit(1);
+    }
+
+    const registr = vytvorRegistrKlienta();
+    const jednotky = jidelna.ico ? await registr.jednotkyObce(jidelna.ico) : [];
+    const minZam = Number(values["min-zamestnancu"]);
+    const zaznamy = await registr.zamestnavateleVJednotkach(jednotky, { minZamestnancu: minZam });
+
+    // Registr nenese souřadnice — bez zaměření se vzdálenost spočítat nedá.
+    // Používáme polohy firem, které už v kartotéce máme.
+    const znamePolohy = await db.query<{ ico: string; lat: number; lng: number }>(
+      `select ico, lat::float8 as lat, lng::float8 as lng
+       from companies where lat is not null`,
+    );
+    const podleIco = new Map(znamePolohy.map((f) => [f.ico, f]));
+    const sPolohou = zaznamy
+      .map((z) => {
+        const p = podleIco.get(z.ico);
+        return p ? { ico: z.ico, kategorieKod: z.kategorieKod, lat: p.lat, lng: p.lng } : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+
+    console.log(`${jidelna.nazev} (${jidelna.obec}), dnešní zóna ${jidelna.zona_metru} m`);
+    console.log(
+      `firem nad ${minZam} zam. v území: ${zaznamy.length}` +
+        `, z toho se známou polohou: ${sPolohou.length}`,
+    );
+    if (sPolohou.length < zaznamy.length) {
+      console.log(
+        `  (${zaznamy.length - sPolohou.length} firem ještě nemá zaměřenou adresu — ` +
+          `objeví se až po sběru)`,
+      );
+    }
+    console.log("");
+    const radky = rozborZony({ lat: jidelna.lat, lng: jidelna.lng }, sPolohou, {
+      polomery: values.polomery.split(",").map((p) => Number(p.trim())),
+      minZamestnancu: minZam,
+    });
+    for (const r of radky) {
+      console.log(
+        `  ${String(r.polomerM / 1000).padStart(5)} km   ${String(r.firem).padStart(4)} firem` +
+          `   ${r.pribude > 0 ? `(+${r.pribude})` : ""}`,
+      );
+    }
+
+    // Bez tohohle upozornění výpis klame: nulový přírůstek u velkých
+    // poloměrů neznamená „dál nic není“, ale „dál jsme se nedívali“.
+    const posledni = radky[radky.length - 1];
+    if (posledni && posledni.pribude === 0 && radky.length > 1) {
+      console.log(
+        `\n  POZOR: počítají se jen firmy se sídlem v území jídelny (${jidelna.obec}).` +
+          `\n  Nulový přírůstek u větších poloměrů tedy neznamená, že tam firmy nejsou —` +
+          `\n  znamená, že do sousedních obcí tenhle rozbor nevidí. Na rozšíření zóny` +
+          `\n  za hranice obce je potřeba nejdřív posbírat i sousední území.`,
+      );
+    }
+
+    // Překryv se sousedy — druhá polovina rozhodnutí o zóně.
+    const sousede = await db.query<{ nazev: string; obec: string; lat: number; lng: number; zona_metru: number }>(
+      `select nazev, obec, lat::float8 as lat, lng::float8 as lng, zona_metru
+       from jidelny where id <> $1 and aktivni is true`,
+      [values.jidelna],
+    );
+    const blizke = sousede
+      .map((s) => ({
+        ...s,
+        m: vzdalenostM({ lat: jidelna.lat, lng: jidelna.lng }, { lat: s.lat, lng: s.lng }),
+      }))
+      .filter((s) => s.m < 25_000)
+      .sort((a, b) => a.m - b.m);
+    if (blizke.length > 0) {
+      console.log("\n  sousední jídelny:");
+      for (const s of blizke) {
+        const prekryvOd = Math.max(0, s.m - s.zona_metru);
+        console.log(
+          `    ${s.obec.padEnd(12)} ${String(Math.round(s.m / 1000)).padStart(3)} km` +
+            `   zóny se překryjí, jakmile naše přesáhne ${(prekryvOd / 1000).toFixed(1)} km`,
+        );
+      }
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/** Přepočte, které jídelny mají kterou firmu v dosahu. */
+async function cmdDosah(argv: string[]): Promise<void> {
+  const { values } = parseArgs({ args: argv, options: { jidelna: { type: "string" } } });
+  const db = await pripojDb();
+  try {
+    const v = await prepocitejDosah(db, { jidelnaId: values.jidelna });
+    console.log(
+      `Přepočteno: ${v.firem} firem × jídelny = ${v.dvojic} dvojic, ` +
+        `v zóně ${v.vZone}`,
+    );
+    const sdilene = await db.query<{ pocet: string }>(
+      `select count(*)::text as pocet from (
+         select ico from dosah where v_zone is true group by ico having count(*) > 1
+       ) x`,
+    );
+    console.log(`Firem v dosahu víc jídelen zároveň: ${sdilene[0]!.pocet}`);
+  } finally {
+    await db.close();
+  }
+}
+
 async function cmdKObohaceni(argv: string[]): Promise<void> {
   const { values } = parseArgs({
     args: argv,
@@ -292,6 +431,8 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       jidelna: { type: "string" },
       // Např. --segmenty stredni,korporat — u drobných se rešerše nevyplatí.
       segmenty: { type: "string" },
+      // Firmy, kde známe jméno, ale ne spojení na něj.
+      "bez-spojeni": { type: "boolean", default: false },
     },
   });
   const db = await pripojDb();
@@ -300,6 +441,7 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       limit: values.limit ? Number(values.limit) : undefined,
       jidelnaId: values.jidelna,
       segmenty: values.segmenty?.split(",").map((s) => s.trim()) as Segment[] | undefined,
+      jenBezSpojeni: values["bez-spojeni"] === true,
     });
     // Strojově čitelný výstup — čte ho agent, ne člověk.
     console.log(JSON.stringify(firmy, null, 2));
@@ -382,6 +524,12 @@ switch (prikaz) {
   case "kartoteka":
     await cmdKartoteka(zbytek);
     break;
+  case "zona":
+    await cmdZona(zbytek);
+    break;
+  case "dosah":
+    await cmdDosah(zbytek);
+    break;
   case "doplnit-kontakty":
     await cmdDoplnitKontakty(zbytek);
     break;
@@ -403,10 +551,14 @@ switch (prikaz) {
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
+  zona --jidelna <id> [--polomery 1000,3000,5000]
+                                   kolik firem přibude při jakém poloměru zóny
+  dosah [--jidelna <id>]           přepočte, které jídelny mají kterou firmu v dosahu
   doplnit-kontakty [--limit N] [--jidelna id]
                                    doplní kontakty u firem, které už v kartotéce jsou
-  k-obohaceni [--limit N] [--segmenty stredni,korporat]
-                                   vypíše firmy čekající na rešerši (pro agenta)
+  k-obohaceni [--limit N] [--segmenty stredni,korporat] [--bez-spojeni]
+                                   vypíše firmy čekající na rešerši (pro agenta);
+                                   --bez-spojeni = známe jméno, chybí e-mail i telefon
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
     process.exit(prikaz ? 1 : 0);

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { firmyKObohaceni, zapisDavku } from "../src/nalezy.js";
-import { nastavGeo, nastavStav, zalozFirmu } from "../src/repo.js";
+import { nastavGeo, nastavStav, zalozFirmu, zapisKontakt } from "../src/repo.js";
 import type { AresZaznam } from "../src/ares.js";
 
 let db: Db;
@@ -65,6 +65,32 @@ describe("firmyKObohaceni", () => {
     await db.query("update companies set velikost_kategorie = null");
     expect(await firmyKObohaceni(db, {})).toHaveLength(2);
     expect(await firmyKObohaceni(db, { segmenty: ["stredni"] })).toHaveLength(0);
+  });
+
+  it("umí vybrat firmy, kde známe jméno, ale ne spojení", async () => {
+    // Firma je hotová, až když ke jménu máme e-mail nebo telefon
+    // (rozhodnutí majitele 2026-07-28). Tohle je přesně ta fronta, kterou
+    // má rešerše dodělat — a je nejcennější, protože agent už ví, KOHO hledat.
+    await zapisKontakt(db, "25242407", {
+      jmeno: "Tomáš", prijmeni: "Honzík", pozice: "jednatel", urovenAdresy: 3,
+      zdrojUrl: "https://ares.gov.cz/ekonomicke-subjekty/25242407",
+      citace: "veřejný rejstřík: jednatel Tomáš Honzík",
+    });
+    await zapisKontakt(db, "17255686", {
+      jmeno: "Jana", prijmeni: "Nováková", email: "j.novakova@firma.cz",
+      urovenAdresy: 3, zdrojUrl: "https://firma.cz/kontakty",
+      citace: "Jana Nováková, j.novakova@firma.cz",
+    });
+
+    const f = await firmyKObohaceni(db, { jenBezSpojeni: true });
+    expect(f.map((x) => x.ico)).toEqual(["25242407"]); // ta s e-mailem už je hotová
+    expect(f[0]!.chybi).toContain("spojeni");
+    expect(f[0]!.znameOsoby).toEqual(["Tomáš Honzík (jednatel)"]);
+  });
+
+  it("firmu bez jediného jména do téhle fronty nedává — tam se nemá čeho chytit", async () => {
+    const f = await firmyKObohaceni(db, { jenBezSpojeni: true });
+    expect(f).toHaveLength(0);
   });
 
   it("respektuje limit a firmy mimo zónu nenabízí", async () => {

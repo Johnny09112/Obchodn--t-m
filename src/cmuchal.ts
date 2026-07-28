@@ -19,6 +19,7 @@ import {
   zacniBeh,
   zalozFirmu,
   zapisAtribut,
+  zapisDosah,
   zapisKontakt,
   zaznamVyrazeni,
   type DuvodVyrazeni,
@@ -446,9 +447,20 @@ async function zpracujKandidata(
     return;
   }
 
-  const jizJe = await db.query("select 1 from companies where ico = $1", [ico]);
+  // Firmu, kterou už známe, znovu neověřujeme ani nezaměřujeme. Zaznamenáme
+  // ale, že ji má v dosahu i tahle jídelna — firma smí patřit víc jídelnám
+  // zároveň a nepřeřazuje se mezi nimi (rozhodnutí majitele 2026-07-28).
+  const jizJe = await db.query<{ lat: number | null; lng: number | null }>(
+    "select lat::float8 as lat, lng::float8 as lng from companies where ico = $1",
+    [ico],
+  );
   if (jizJe.length > 0) {
     souhrn.preskoceno++;
+    const znama = jizJe[0]!;
+    if (znama.lat != null && znama.lng != null) {
+      const m = vzdalenostM({ lat: znama.lat, lng: znama.lng }, { lat: jidelna.lat, lng: jidelna.lng });
+      await zapisDosah(db, ico, jidelna.id, { vzdalenostM: m, vZone: m <= jidelna.zona_metru });
+    }
     return;
   }
 
@@ -561,6 +573,7 @@ async function zpracujKandidata(
     zdrojUrl: kandidat.zdrojUrl,
     citace: polohaPopis,
   });
+  await zapisDosah(db, ico, jidelna.id, { vzdalenostM: vzdalenost, vZone: zona !== "mimo" });
 
   if (resUdaje?.segment) {
     await zapisAtribut(db, ico, "velikost_kategorie", resUdaje.segment, {

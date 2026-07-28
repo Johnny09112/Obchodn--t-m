@@ -2,6 +2,18 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Firma je z hlediska kontaktu HOTOVÁ, když známe
+  jméno konkrétní osoby A zároveň e-mail nebo telefon na ni.** Obecná adresa
+  `info@` nestačí — personalizace je to, čím se chceme lišit. To je zároveň
+  měřítko úspěšnosti rešerše.
+- 2026-07-28 · majitel · **Firma smí být v dosahu VÍC jídelen zároveň.**
+  Nepřeřazovat ji mezi nimi — zaznamenat, že ji mají v dosahu obě, a do
+  statistiky každé jídelny ji započítat. Jde o obchodní potenciál oblasti,
+  ne o vlastnictví firmy. → vztah mnoho k mnoha (tabulka `dosah`).
+- 2026-07-28 · majitel · **Zóna se nastavuje ke každé oblasti zvlášť a vždy
+  po doptání** — u odloučených vesnic může být větší, při překryvu jídelen
+  menší. Před rozhodnutím ukázat, kolik firem přibude při 2/3/5/10 km.
+
 - 2026-07-28 · majitel · **Postup pro novou oblast musí být zapsaný tak, aby
   stačilo říct název oblasti a práce začala.** → `docs/NOVA-OBLAST.md`,
   odkaz z `CLAUDE.md`. Dosud postup nikde souvisle nebyl a skládal se

@@ -164,6 +164,12 @@ export interface FirmaKObohaceni {
   vzdalenostM: number | null;
   /** Co u firmy ještě chybí — vodítko, co má agent hledat. */
   chybi: string[];
+  /**
+   * Osoby, které už u firmy známe — typicky jednatel z rejstříku.
+   * Agent pak nehledá „nějaký kontakt", ale spojení na konkrétního člověka,
+   * což je mnohem lepší výchozí pozice.
+   */
+  znameOsoby: string[];
 }
 
 /**
@@ -173,20 +179,42 @@ export interface FirmaKObohaceni {
  * `segmenty` frontu zúží na dané velikosti. Rešerše stojí čas agenta, takže
  * u firmy s pěti lidmi se nevyplatí stejně jako u firmy s pěti sty. Firmy
  * s neznámou velikostí zúžením propadnou — nevíme o nich dost.
+ *
+ * `jenBezSpojeni` vybere firmy, u kterých **známe jméno, ale ne způsob, jak
+ * se k člověku dostat**. Firma je hotová teprve se jménem A e-mailem nebo
+ * telefonem (rozhodnutí majitele 2026-07-28); tahle fronta je proto
+ * nejcennější — agent už ví, koho hledat, jen shání spojení.
  */
 export async function firmyKObohaceni(
   db: Db,
-  opts: { limit?: number; jidelnaId?: string; segmenty?: Segment[] },
+  opts: {
+    limit?: number;
+    jidelnaId?: string;
+    segmenty?: Segment[];
+    jenBezSpojeni?: boolean;
+  },
 ): Promise<FirmaKObohaceni[]> {
-  const podminky = ["stav = 'kvalifikovany'", "v_zone is true", "obohaceno_at is null"];
+  const podminky = ["f.stav = 'kvalifikovany'", "f.v_zone is true"];
+  if (!opts.jenBezSpojeni) {
+    // Standardní fronta jde po firmách, které rešerší ještě neprošly.
+    podminky.push("f.obohaceno_at is null");
+  } else {
+    podminky.push(
+      // Známe osobu…
+      `exists (select 1 from contacts k where k.ico = f.ico and k.prijmeni is not null)`,
+      // …ale nemáme na ni ani e-mail, ani telefon.
+      `not exists (select 1 from contacts k where k.ico = f.ico
+                     and (k.email is not null or k.telefon is not null))`,
+    );
+  }
   const params: unknown[] = [];
   if (opts.jidelnaId) {
     params.push(opts.jidelnaId);
-    podminky.push(`nejblizsi_jidelna_id = $${params.length}`);
+    podminky.push(`f.nejblizsi_jidelna_id = $${params.length}`);
   }
   if (opts.segmenty?.length) {
     params.push(opts.segmenty);
-    podminky.push(`velikost_kategorie = any($${params.length})`);
+    podminky.push(`f.velikost_kategorie = any($${params.length})`);
   }
 
   const radky = await db.query<{
@@ -198,10 +226,18 @@ export async function firmyKObohaceni(
     ma_vlastni_jidelnu: boolean | null;
     zpusob_stravovani: string | null;
     kontaktu: number;
+    spojeni: number;
+    osoby: string[] | null;
   }>(
     `select f.ico, f.nazev, f.obec, f.skore, f.vzdalenost_m,
             f.ma_vlastni_jidelnu, f.zpusob_stravovani,
-            (select count(*)::int from contacts c where c.ico = f.ico) as kontaktu
+            (select count(*)::int from contacts c where c.ico = f.ico) as kontaktu,
+            (select count(*)::int from contacts c where c.ico = f.ico
+               and (c.email is not null or c.telefon is not null)) as spojeni,
+            (select array_agg(
+                      trim(coalesce(c.jmeno,'') || ' ' || coalesce(c.prijmeni,''))
+                      || coalesce(' (' || c.pozice || ')', ''))
+               from contacts c where c.ico = f.ico and c.prijmeni is not null) as osoby
      from companies f
      where ${podminky.join(" and ")}
      order by f.skore desc nulls last
@@ -214,6 +250,8 @@ export async function firmyKObohaceni(
     if (r.ma_vlastni_jidelnu === null) chybi.push("ma_vlastni_jidelnu");
     if (r.zpusob_stravovani === null) chybi.push("zpusob_stravovani");
     if (r.kontaktu === 0) chybi.push("kontakt");
+    // Firma je hotová se jménem A spojením — tohle je ta druhá půlka.
+    if (r.spojeni === 0) chybi.push("spojeni");
     return {
       ico: r.ico,
       nazev: r.nazev,
@@ -221,6 +259,7 @@ export async function firmyKObohaceni(
       skore: r.skore,
       vzdalenostM: r.vzdalenost_m,
       chybi,
+      znameOsoby: r.osoby ?? [],
     };
   });
 }

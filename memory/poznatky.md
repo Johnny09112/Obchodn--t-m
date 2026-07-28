@@ -1,5 +1,25 @@
 # Poznatky a gotchas
 
+## Supabase vystavuje schéma `public` veřejnému API (2026-07-28)
+
+Po přenosu dat hlásila kontrola Supabase **28 tabulek jako chybu**: schéma
+`public` je vystavené přes datové API, takže kdokoli s veřejným klíčem
+projektu by si mohl stáhnout celou kartotéku — **včetně tabulky `contacts`
+se jmény, e-maily a telefony konkrétních lidí.**
+
+Vyřešeno migrací 0015: RLS zapnuté na všech tabulkách, **bez pravidel**.
+To znamená „zvenčí nesmí nikdo nic". Náš přístup to neomezí, protože se
+připojujeme jako vlastník tabulek a ten RLS obchází.
+
+**Zbylá hlášení „RLS enabled, no policy" jsou v pořádku** — je to zamýšlený
+stav. Výslovná pravidla dostane až frontend, kdy bude jasné, kdo co smí;
+vymýšlet je dopředu by znamenalo hádat.
+
+**Poučení: cloudová databáze není lokální databáze na jiném stroji.**
+Má vlastní vrstvu vystavenou internetu a to, co je lokálně bezpečné
+implicitně, tam musí být zapnuté výslovně. Po každé změně schématu spustit
+kontrolu (`get_advisors` typu `security`).
+
 ## Supabase: přímá adresa databáze je jen na IPv6 (2026-07-28)
 
 Nový projekt (`Customer_finder`, ref `sedjnwllzyeuiruxgoil`, eu-central-1)

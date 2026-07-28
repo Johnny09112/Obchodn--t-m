@@ -4,6 +4,12 @@ _Aktualizováno: 2026-07-27_
 
 ## Kde jsme
 
+> **Data jsou nově ve sdílené databázi** (Supabase projekt `Customer_finder`,
+> ref `sedjnwllzyeuiruxgoil`, eu-central-1). Připojení řídí `DATABASE_URL`
+> v `.env` — **přes pooler, ne přímo** (viz poznatky, přímá adresa je jen
+> IPv6). Lokální `data/pgdata-v5` zůstává jako záloha, ale už se nepoužívá;
+> `CANTINERO_DATA_DIR` se uplatní jen bez `DATABASE_URL`.
+
 Fáze 0 (přípravná) běží, ale **Čmuchal už sbírá naostro** — kalibrujeme ho
 na reálných datech dřív, než se pustí zbytek fáze 0.
 

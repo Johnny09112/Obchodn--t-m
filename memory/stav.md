@@ -17,7 +17,14 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **179 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **200 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **Kontakty: 18 z 20 firem nad 25 zaměstnanců je hotových** (známe jméno
+  osoby i spojení na ni). Zbývají dvě — I.U.STAVBY nemá vůbec webovou stopu,
+  H.B. TEXTILIE má jméno i e-mail, ale na různých záznamech (viz poznatky).
+- **Firma smí být v dosahu víc jídelen** (tabulka `dosah`, migrace 0010).
+  Dnes 0 sdílených, ale Zbůch a Tlučná se zónami už překrývají.
+- `cli zona` ukáže, kolik firem přibude při jakém poloměru. **Vidí ale jen
+  do území jídelny** — na rozšíření zóny za hranice obce nestačí.
 - **5 jídelen**, z toho 4 se známou kapacitou (70 obědů/den celkem).
   Pátá je 34. ZŠ Plzeň, Gerská — kapacita zatím neznámá.
 - `.env` se načítá sám, `NOMINATIM_CONTACT` se už nemusí psát k příkazům.
@@ -84,6 +91,15 @@ vlastní jídelnou si drží původní skóre z doby sběru. Před frontou na os
 (fáze 3) to bude potřeba srovnat.
 
 ## Co čeká na majitele
+
+- **Návrh Čmuchala ke schválení:** u mikrofirem bez webu zkusit veřejné
+  registry zadávacích řízení (profily zadavatelů, ISVZ/NEN) — pokud firma
+  byla subdodavatelem na veřejné zakázce, bývá tam kontakt na statutárního
+  zástupce. Agent to podle pravidel nezkusil a čeká na schválení.
+- **Má se hledat spojení i u 81 mikrofirem?** Podle dřívějšího rozhodnutí
+  se na ně cílí jinou formou než e-mailem, takže by ten čas šel spíš do Plzně.
+- **Je firma „hotová", když je jméno na jednom záznamu a e-mail na druhém?**
+  Přísně 18 z 20, na úrovni firmy 19 z 20 (viz poznatky).
 
 - **Rozhodnutí o SVJ a OSVČ** — kartotéku zaplavují společenství vlastníků
   bytů (v Hrádku přes 15) a živnostníci vedení vlastním jménem. Formálně mají

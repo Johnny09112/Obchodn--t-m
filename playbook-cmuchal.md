@@ -61,12 +61,12 @@ vzoru je vymýšlení, které se v kartotéce tváří jako fakt.
 
 | typ subjektu | co zabírá | co je slepé |
 |---|---|---|
-| Obce a města | stránka Kontakty s rozpisem podle agend; tajemník = nejbližší obdoba HR, podatelna = obecná adresa | stravování zaměstnanců úřadu se neuvádí nikdy |
+| Obce a města | stránka Kontakty s rozpisem podle agend; tajemník = nejbližší obdoba HR, podatelna = obecná adresa; odkaz z Kontaktů na **epusa.cz** (Portál veřejné správy) dá u jmenované osoby přímý e-mail, často označený „[oficiální]" | stravování zaměstnanců úřadu se neuvádí nikdy |
 | Výroba s víc provozy | podstránka provozovny; sekce obchodních zástupců | obecné Kontakty vedou jen na ústředí |
 | Sociální a pobytová zařízení | konkrétní podstránka o stravě („Přihláška a odhláška stravy") | obecné „O nás" jen odkáže bez detailu |
 | Školy | stránka školní jídelny (`/informace-sj`) doloží vlastní jídelnu | — |
-| Nově vzniklé s.r.o. | statutární orgán z rejstříku | nulová webová stopa, často ani web |
-| Spolky sdílející adresu s jinou organizací | — | vlastní kontakt nemívají; nedomýšlet sdílený |
+| Nově vzniklé s.r.o. bez webu | statutární orgán z rejstříku | nulová webová stopa — stavební/podnikatelské portály i katalogy typu merk.cz nenašly nic navíc (ověřeno na I.U.STAVBY) |
+| Spolky sdílející adresu s jinou organizací | **nevzdávej se u obecné stránky Kontakty** — hledej vlastní podstránku typu „Podpora a sponzoring", „Dary", „Výroční zpráva"; tam bývá kontakt na spolek samotný, oddělený od kontaktu na hlavní organizaci | obecná stránka Kontakty spolek často vůbec nezmíní — nedomýšlet, že sdílí kontakt s hlavní organizací, dokud to není doložené na jeho vlastní podstránce |
 
 ## Technické fígle
 
@@ -79,6 +79,16 @@ vzoru je vymýšlení, které se v kartotéce tváří jako fakt.
 - **Katalogy třetích stran** (Firmy.cz, Živé firmy, RegionPlzeň) jsou
   poslední možnost — údaj tam může být roky starý. Označuj je jako slabší
   zdroj, ať je to při schvalování vidět.
+- **Weby drobných firem na platformě webmium.com** ukazují kontakt jako
+  součást stránky (pagelet) — funguje jak kořenová URL, tak `/kontakt`,
+  obsah je stejný. Je to přímo web firmy, tedy lepší zdroj než firmy.cz,
+  i když stránka vypadá provizorně.
+- **Souhrny z WebSearch mohou halucinovat konkrétní údaje** (telefonní
+  čísla, e-maily), které na cílové stránce vůbec nejsou — ověřeno u
+  kurzy.cz, kde souhrn tvrdil telefon na osobu, ale přímé načtení stránky
+  žádný telefon neobsahovalo. Telefon/e-mail se **nikdy nezapisuje jen
+  z textového souhrnu vyhledávače** — vždy až po přímém načtení a nalezení
+  doslovné citace na stránce.
 
 ## Vyjasněno
 
@@ -90,3 +100,21 @@ vzoru je vymýšlení, které se v kartotéce tváří jako fakt.
 ## Poznatky z běhů
 
 (připojuje se automaticky — jen to, co je nové a obecné)
+
+### Běh 2026-07-28 — dohledání spojení u 4 firem se známým jménem, bez kontaktu
+
+- **Centrum Zbůch, z.s.** (22906291): telefon na předsedkyni Radku
+  Prokešovou se nenašel na obecné stránce Kontakty (ta patří jen sesterské
+  organizaci Centrum pobytových a terénních sociálních služeb Zbůch), ale
+  na podstránce „Podpora a sponzoring", kde je zapsaný spolek uveden
+  odděleně i s vlastním číslem účtu a kontaktem.
+- **H.B. TEXTILIE, s.r.o.** (47719427): e-mail `hbtextilie@volny.cz`
+  známý dřív jen z katalogu firmy.cz se potvrdil na vlastním webu firmy
+  (webmium.com), kde navíc přibyl telefon.
+- **Obec Tlučná** (00258385): jmenný e-mail na starostu se našel přes
+  odkaz „Zaměstnanci OÚ a volené orgány obce" na stránce Kontakty, který
+  vede na epusa.cz — detail osoby tam má pole Email označené „[oficiální]".
+- **I.U.STAVBY s.r.o.** (11913991): bez webu, bez zmínky jako subdodavatel
+  na cizích webech, bez záznamu v katalozích typu merk.cz — u firem tohoto
+  typu (jednatel, kapitál 2000 Kč, žádná webová stopa) je statutární orgán
+  z rejstříku zřejmě jediný dostupný údaj vůbec.

@@ -1,5 +1,33 @@
 # Poznatky a gotchas
 
+## Souhrn z vyhledávače umí halucinovat kontakt (2026-07-28)
+
+Čmuchal při rešerši narazil na to, že **textový souhrn z WebSearch uvedl
+telefonní číslo, které na cílové stránce vůbec nebylo** (kurzy.cz). Kdyby
+se zapsalo, mělo by v kartotéce doložený `zdroj_url` i „citaci" — a bylo by
+to vymyšlené číslo tvářící se jako ověřený fakt.
+
+**Pravidlo: telefon ani e-mail se nikdy nezapisuje ze souhrnu vyhledávače.
+Vždy až po přímém načtení stránky a nalezení doslovné citace.** Zapsáno
+do playbooku. Je to nejzákeřnější druh chyby, protože projde všemi našimi
+kontrolami — zdroj i citace formálně existují.
+
+## Definice „hotovo" má tichý háček (2026-07-28)
+
+Firma je hotová, když známe jméno osoby A spojení na ni. Jenže jméno
+a spojení mohou být na **různých záznamech kontaktu**: u H.B. TEXTILIE
+máme jednatelku ze rejstříku a firemní e-mail z webu, ale ne jako jeden
+kontakt. Přísné čtení (jeden záznam) říká 18 z 20 hotových, čtení na
+úrovni firmy 19 z 20.
+
+Prakticky je taková firma oslovitelná („Vážená paní Bilsheim" na firemní
+adresu), takže úroveň firmy je nejspíš správnější — **ale je to rozhodnutí
+majitele, ne technikálie.** Otevřené.
+
+Vedlejší nález: `zapisKontakt` needuplikuje, takže tentýž e-mail může být
+uložený dvakrát z různých zdrojů (u H.B. TEXTILIE se to stalo). Nevadí to
+integritě, ale v kartotéce to vypadá jako dva kontakty.
+
 ## Přesběr 4 oblastí registrem ČSÚ: 0 nových firem (2026-07-28)
 
 Oblasti vznikly starým sweepem ARES, tak jsme je přejeli znovu i s registrem

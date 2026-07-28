@@ -28,6 +28,7 @@ import {
 } from "./blacklist.js";
 import { priradKategorie } from "./kategorie.js";
 import { nactiProfil, seznamProfilu, zvolProfil } from "./profil.js";
+import { prenesData } from "./prenos.js";
 import {
   firmyVOblasti, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
   type Oblast,
@@ -528,6 +529,62 @@ async function cmdOblast(argv: string[]): Promise<void> {
   }
 }
 
+/**
+ * Přenos lokálních dat do sdílené databáze. Jednorázový krok při přechodu
+ * na provoz pro víc uživatelů.
+ */
+async function cmdPrenos(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: { zdroj: { type: "string" }, potvrdit: { type: "boolean", default: false } },
+  });
+
+  const cilUrl = process.env.DATABASE_URL;
+  if (!cilUrl) {
+    console.error(
+      "Chybí DATABASE_URL — bez ní není kam přenášet.\n" +
+        "Vlož připojovací řetězec sdílené databáze do souboru .env (do gitu se nedostane).",
+    );
+    process.exit(1);
+  }
+
+  const zdrojDir = values.zdroj ?? process.env.CANTINERO_DATA_DIR ?? "data/pgdata";
+  console.log(`Zdroj: lokální databáze ${zdrojDir}`);
+  console.log("Cíl:   sdílená databáze z DATABASE_URL");
+
+  if (!values.potvrdit) {
+    console.log(
+      "\nNic jsem nepřenesl. Přenos se spouští s --potvrdit.\n" +
+        "Předtím si udělej zálohu: zkopíruj celý adresář " + zdrojDir + " jinam.",
+    );
+    return;
+  }
+
+  const zdroj = await pripojPglite(zdrojDir);
+  const cil = await pripojPostgres(cilUrl);
+  try {
+    // Cíl musí mít stejné schéma — migrace se pustí i tam.
+    const migrace = await spustMigrace(cil);
+    console.log(`\nSchéma v cíli: ${migrace.length === 0 ? "už bylo aktuální" : `aplikováno ${migrace.length} migrací`}`);
+
+    const vysledek = await prenesData(zdroj, cil);
+    console.log("\nPřeneseno:");
+    let celkem = 0;
+    for (const r of vysledek) {
+      if (r.radku > 0) console.log(`  ${r.tabulka.padEnd(16)} ${String(r.radku).padStart(6)}`);
+      celkem += r.radku;
+    }
+    console.log(`  ${"celkem".padEnd(16)} ${String(celkem).padStart(6)} řádků`);
+    console.log(
+      "\nHotovo. Od teď stačí mít v .env vyplněnou DATABASE_URL a všechny\n" +
+        "příkazy pracují nad sdílenou databází místo lokální.",
+    );
+  } finally {
+    await zdroj.close();
+    await cil.close();
+  }
+}
+
 /** Profily projektu — koho vlastně hledáme. */
 async function cmdProfil(argv: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
@@ -775,6 +832,9 @@ switch (prikaz) {
   case "oblast":
     await cmdOblast(zbytek);
     break;
+  case "prenos":
+    await cmdPrenos(zbytek);
+    break;
   case "profil":
     await cmdProfil(zbytek);
     break;
@@ -811,6 +871,7 @@ switch (prikaz) {
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
+  prenos [--potvrdit]              přenese lokální data do sdílené databáze (DATABASE_URL)
   profil [seznam]                  vypíše profily projektu (koho hledáme)
   profil zvol <kod>                přepne aktivní profil
   kategorie                        doplní firmám kategorii podle oboru

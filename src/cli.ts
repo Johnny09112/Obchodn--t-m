@@ -585,6 +585,76 @@ async function cmdPrenos(argv: string[]): Promise<void> {
   }
 }
 
+/** Povolené role. Držet shodné s pravidly v migraci 0016. */
+const ROLE = ["super-admin", "admin", "uzivatel"] as const;
+
+/**
+ * Uživatelé aplikace a jejich role.
+ *
+ * Role se ukládá do `raw_app_meta_data`, ne do `raw_user_meta_data` —
+ * to druhé si smí uživatel sám přepsat a povýšil by se na admina.
+ * V novějším rozhraní Supabase se tohle pole nedá editovat, proto příkaz.
+ */
+async function cmdUzivatel(argv: string[]): Promise<void> {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    options: { email: { type: "string" }, role: { type: "string" } },
+  });
+
+  if (!process.env.DATABASE_URL) {
+    console.error("Uživatelé žijí jen ve sdílené databázi — chybí DATABASE_URL.");
+    process.exit(1);
+  }
+  const db = await pripojDb();
+  try {
+    if (positionals[0] === "role") {
+      const { email, role } = values;
+      if (!email || !role) {
+        console.error(`Použití: uzivatel role --email … --role ${ROLE.join("|")}`);
+        process.exit(1);
+      }
+      if (!ROLE.includes(role as (typeof ROLE)[number])) {
+        console.error(`Neznámá role „${role}". Povolené: ${ROLE.join(", ")}`);
+        process.exit(1);
+      }
+      const zmeneno = await db.query<{ email: string }>(
+        `update auth.users
+         set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
+                                 || jsonb_build_object('role', $1::text)
+         where email = $2
+         returning email`,
+        [role, email],
+      );
+      if (zmeneno.length === 0) {
+        console.error(`Uživatel ${email} neexistuje — nejdřív ho založ v Supabase.`);
+        process.exit(1);
+      }
+      console.log(`${email} → ${role}`);
+      console.log("Projeví se po jeho příštím přihlášení (role je v přihlašovacím lístku).");
+      return;
+    }
+
+    const u = await db.query<{ email: string; role: string | null; potvrzeno: string | null }>(
+      `select email, raw_app_meta_data ->> 'role' as role,
+              to_char(email_confirmed_at, 'YYYY-MM-DD') as potvrzeno
+       from auth.users order by created_at`,
+    );
+    if (u.length === 0) {
+      console.log("Zatím žádný uživatel. Zakládají se v Supabase → Authentication → Users.");
+      return;
+    }
+    for (const x of u) {
+      console.log(
+        `${x.email.padEnd(26)} ${(x.role ?? "BEZ ROLE — nesmí nic").padEnd(22)} ` +
+          `${x.potvrzeno ? "ověřen " + x.potvrzeno : "neověřen"}`,
+      );
+    }
+  } finally {
+    await db.close();
+  }
+}
+
 /** Profily projektu — koho vlastně hledáme. */
 async function cmdProfil(argv: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
@@ -835,6 +905,9 @@ switch (prikaz) {
   case "prenos":
     await cmdPrenos(zbytek);
     break;
+  case "uzivatel":
+    await cmdUzivatel(zbytek);
+    break;
   case "profil":
     await cmdProfil(zbytek);
     break;
@@ -872,6 +945,8 @@ switch (prikaz) {
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
   prenos [--potvrdit]              přenese lokální data do sdílené databáze (DATABASE_URL)
+  uzivatel [seznam]                vypíše uživatele aplikace a jejich role
+  uzivatel role --email … --role super-admin|admin|uzivatel
   profil [seznam]                  vypíše profily projektu (koho hledáme)
   profil zvol <kod>                přepne aktivní profil
   kategorie                        doplní firmám kategorii podle oboru

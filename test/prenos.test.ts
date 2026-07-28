@@ -14,6 +14,9 @@ const firma = (ico: string, nazev: string): AresZaznam => ({
   velikostKategorie: "stredni", kodObce: 559661, pravniForma: "112",
 });
 
+// Limit se musí zvednout i přípravě, ne jen testům: pomalé je právě
+// založení dvou databází a spuštění všech migrací v obou. S každou další
+// migrací to roste, takže tady se to jinak bude opakovaně vracet.
 beforeEach(async () => {
   zdroj = await pripojPglite();
   cil = await pripojPglite();
@@ -39,7 +42,7 @@ beforeEach(async () => {
   await zalozOblast(zdroj, {
     nazev: "Průzkum", oblast: { typ: "kruh", stred: { lat: 49.6, lng: 13.2 }, polomerM: 3000 },
   });
-});
+}, 60_000);
 
 // Každý test zakládá DVĚ databáze a pouští v obou všechny migrace, takže
 // je pomalejší než ostatní. S výchozím limitem 10 s to při běhu celé sady

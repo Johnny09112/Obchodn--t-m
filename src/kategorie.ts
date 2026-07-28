@@ -14,14 +14,25 @@ import type { Db } from "./db.js";
 /** Kam spadne obor, který se nepodařilo zařadit. Nikdy ne prázdno. */
 export const OSTATNI = "ostatni";
 
-/** oddíl CZ-NACE („25") → kód kategorie („vyroba") */
-export type PrevodNace = ReadonlyMap<string, string>;
+/** Převodní tabulky načtené z databáze. */
+export interface PrevodNace {
+  /** oddíl CZ-NACE („25") → kategorie („vyroba") */
+  podleOboru: ReadonlyMap<string, string>;
+  /** právní forma („706") → kategorie („spolky") */
+  podleFormy: ReadonlyMap<string, string>;
+}
 
 export async function nactiPrevod(db: Db): Promise<PrevodNace> {
-  const r = await db.query<{ nace_oddil: string; kategorie_kod: string }>(
+  const obory = await db.query<{ nace_oddil: string; kategorie_kod: string }>(
     "select nace_oddil, kategorie_kod from kategorie_nace",
   );
-  return new Map(r.map((x) => [x.nace_oddil, x.kategorie_kod]));
+  const formy = await db.query<{ pravni_forma: string; kategorie_kod: string }>(
+    "select pravni_forma, kategorie_kod from kategorie_forma",
+  );
+  return {
+    podleOboru: new Map(obory.map((x) => [x.nace_oddil, x.kategorie_kod])),
+    podleFormy: new Map(formy.map((x) => [x.pravni_forma, x.kategorie_kod])),
+  };
 }
 
 /** Dvoumístný oddíl z kódu libovolné délky. Písmeno sekce oddíl nemá. */
@@ -31,14 +42,29 @@ export function oddilZNace(nace: string): string | null {
 }
 
 /**
- * Kategorie pro firmu. Firma má často víc oborů; rozhoduje **první, který
- * se podaří zařadit** — v rejstříku bývá převažující činnost první.
+ * Kategorie pro firmu.
+ *
+ * **Právní forma má přednost před oborem.** Spolek se podle oboru poznat
+ * nedá: TJ Baník má „sportovní činnosti" úplně stejně jako komerční fitness
+ * centrum. Forma je tvrdý údaj z rejstříku, obor je popis činnosti.
+ *
+ * Když forma nerozhodne, jde se podle oboru — firma jich má často víc
+ * a rozhoduje první zařaditelný, protože v rejstříku bývá převažující
+ * činnost první.
  */
-export function kategorieProNace(prevod: PrevodNace, czNace: readonly string[]): string {
+export function kategorieProNace(
+  prevod: PrevodNace,
+  czNace: readonly string[],
+  pravniForma?: string | null,
+): string {
+  if (pravniForma) {
+    const podleFormy = prevod.podleFormy.get(pravniForma);
+    if (podleFormy) return podleFormy;
+  }
   for (const nace of czNace) {
     const oddil = oddilZNace(nace);
     if (!oddil) continue;
-    const kategorie = prevod.get(oddil);
+    const kategorie = prevod.podleOboru.get(oddil);
     if (kategorie) return kategorie;
   }
   return OSTATNI;
@@ -58,16 +84,16 @@ export interface VysledekZarazeni {
  */
 export async function priradKategorie(db: Db): Promise<VysledekZarazeni> {
   const prevod = await nactiPrevod(db);
-  const firmy = await db.query<{ ico: string; cz_nace: string[] | null }>(
-    "select ico, cz_nace from companies",
-  );
+  const firmy = await db.query<{
+    ico: string; cz_nace: string[] | null; pravni_forma: string | null;
+  }>("select ico, cz_nace, pravni_forma from companies");
 
   const ostatni = new Map<string, number>();
   let zarazeno = 0;
 
   for (const f of firmy) {
     const nace = f.cz_nace ?? [];
-    const kategorie = kategorieProNace(prevod, nace);
+    const kategorie = kategorieProNace(prevod, nace, f.pravni_forma);
     await db.query("update companies set kategorie = $1 where ico = $2", [kategorie, f.ico]);
     zarazeno++;
 

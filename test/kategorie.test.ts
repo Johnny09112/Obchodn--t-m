@@ -50,8 +50,33 @@ describe("zařazení oboru do kategorie", () => {
 
   it("neznámý obor spadne do ostatních, ne do prázdna", async () => {
     const p = await nactiPrevod(db);
-    expect(kategorieProNace(p, ["01500"])).toBe("ostatni"); // zemědělství
+    expect(kategorieProNace(p, ["08120"])).toBe("ostatni"); // těžba
     expect(kategorieProNace(p, [])).toBe("ostatni");
+  });
+});
+
+describe("spolky se poznají podle právní formy, ne podle oboru", () => {
+  it("sportovní spolek a komerční fitness mají stejný obor, ale jinou kategorii", async () => {
+    // TJ Baník i fitness centrum mají CZ-NACE 93. Rozlišit je umí jedině
+    // právní forma — a to je celý důvod, proč forma dostala přednost.
+    const p = await nactiPrevod(db);
+    expect(kategorieProNace(p, ["93110"], "706")).toBe("spolky"); // spolek
+    expect(kategorieProNace(p, ["93110"], "112")).toBe("sluzby"); // s.r.o.
+  });
+
+  it("forma přebije obor i u výroby", async () => {
+    const p = await nactiPrevod(db);
+    expect(kategorieProNace(p, ["25610"], "706")).toBe("spolky");
+  });
+
+  it("bez známé formy rozhodne obor", async () => {
+    const p = await nactiPrevod(db);
+    expect(kategorieProNace(p, ["25610"], null)).toBe("vyroba");
+  });
+
+  it("zemědělství už nespadá do ostatních", async () => {
+    const p = await nactiPrevod(db);
+    expect(kategorieProNace(p, ["01500"], "112")).toBe("vyroba");
   });
 });
 
@@ -59,7 +84,7 @@ describe("doplnění kategorií do kartotéky", () => {
   it("zařadí firmy a vrátí rozpad", async () => {
     await zalozFirmu(db, firma("25232657", "KOVOVÝROBA HONZÍK", ["25610"]));
     await zalozFirmu(db, firma("48362956", "ROLDECO", ["49410"]));
-    await zalozFirmu(db, firma("17439523", "Neznámý obor", ["01500"]));
+    await zalozFirmu(db, firma("17439523", "Neznámý obor", ["08120"]));
 
     const v = await priradKategorie(db);
     expect(v.zarazeno).toBe(3);
@@ -73,12 +98,12 @@ describe("doplnění kategorií do kartotéky", () => {
   });
 
   it("řekne, co skončilo v ostatních — ať jde členění dobrousit", async () => {
-    await zalozFirmu(db, firma("17439523", "Zemědělec", ["01500"]));
+    await zalozFirmu(db, firma("17439523", "Těžař dva", ["05100"]));
     await zalozFirmu(db, firma("64358836", "Těžař", ["08120"]));
 
     const v = await priradKategorie(db);
     expect(v.vOstatnich).toHaveLength(2);
-    expect(v.vOstatnich.map((x) => x.oddil).sort()).toEqual(["01", "08"]);
+    expect(v.vOstatnich.map((x) => x.oddil).sort()).toEqual(["05", "08"]);
   });
 
   it("opakované spuštění nic nerozbije", async () => {

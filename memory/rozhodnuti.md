@@ -2,6 +2,16 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Frontend přestává být jen na sledování a stává se
+  ovládáním.** Mění tím rozhodnutí z 2026-07-26 („frontend slouží ke sledování
+  a schvalování, ne jako hlavní ovládání"). Důvod: kreslení oblastí a výběr
+  firem do kampaně se konverzačně dělat nedá. **Uživatelé: majitel i kolega**
+  → sdílená databáze a přihlašování od začátku. Návrh v `docs/adr/0001-frontend.md`.
+- 2026-07-28 · Claude (poznámka o sobě) · Majitel se zeptal, proč se frontendu
+  bráním. Část důvodů byla věcná (mění zapsané rozhodnutí, stojí peníze), ale
+  část ne: **vybíral jsem práci podle toho, co si umím sám ověřit** — CLI
+  a testy ano, prohlížeč ne. Zapsáno i do osobního vaultu majitele.
+
 - 2026-07-28 · majitel · **Firma je z hlediska kontaktu HOTOVÁ, když známe
   jméno konkrétní osoby A zároveň e-mail nebo telefon na ni.** Obecná adresa
   `info@` nestačí — personalizace je to, čím se chceme lišit. To je zároveň

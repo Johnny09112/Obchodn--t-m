@@ -1,0 +1,273 @@
+<title>Frontend — návrh k rozhodnutí, 28. 7. 2026</title>
+
+<style>
+  :root {
+    --ink:#1a1e23; --ink-soft:#464d56; --muted:#727a83; --line:#dcdfe2;
+    --surface:#f4f6f7; --card:#ffffff;
+    --accent:#2d5f7d; --accent-2:#a3592c;
+    --ok:#2e6a4b; --ok-bg:#e6f0ea;
+    --ui:#6b4f9e; --ui-bg:#ede8f5;
+    --blok:#9a3838; --blok-bg:#f6e5e5;
+    --serif:"Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#e7eaed; --ink-soft:#b3bac1; --muted:#8a929a; --line:#2a3137;
+      --surface:#12161a; --card:#1a2025; --accent:#7fb2cf; --accent-2:#d68f5c;
+      --ok:#7bc39f; --ok-bg:#182b22; --ui:#b39ad8; --ui-bg:#231c30;
+      --blok:#d78989; --blok-bg:#2f1c1c; }
+  }
+  :root[data-theme="dark"] { --ink:#e7eaed; --ink-soft:#b3bac1; --muted:#8a929a;
+    --line:#2a3137; --surface:#12161a; --card:#1a2025; --accent:#7fb2cf;
+    --accent-2:#d68f5c; --ok:#7bc39f; --ok-bg:#182b22; --ui:#b39ad8;
+    --ui-bg:#231c30; --blok:#d78989; --blok-bg:#2f1c1c; }
+  :root[data-theme="light"] { --ink:#1a1e23; --ink-soft:#464d56; --muted:#727a83;
+    --line:#dcdfe2; --surface:#f4f6f7; --card:#ffffff; --accent:#2d5f7d;
+    --accent-2:#a3592c; --ok:#2e6a4b; --ok-bg:#e6f0ea; --ui:#6b4f9e;
+    --ui-bg:#ede8f5; --blok:#9a3838; --blok-bg:#f6e5e5; }
+
+  body { background:var(--surface); color:var(--ink); font-family:var(--sans);
+    font-size:16px; line-height:1.6; margin:0; padding:2.5rem 1.25rem 5rem; }
+  .wrap { max-width:60rem; margin:0 auto; display:flex; flex-direction:column; gap:2.75rem; }
+  .eyebrow { font-size:.74rem; letter-spacing:.13em; text-transform:uppercase;
+    color:var(--accent-2); font-weight:600; margin:0 0 .6rem; }
+  h1 { font-family:var(--serif); font-weight:400; font-size:clamp(1.9rem,4.3vw,2.7rem);
+    line-height:1.13; margin:0 0 .8rem; text-wrap:balance; }
+  .lede { color:var(--ink-soft); max-width:42rem; margin:0; font-size:1.05rem; }
+  h2 { font-family:var(--serif); font-weight:400; font-size:1.42rem; margin:0 0 .3rem; }
+  h2 + .sub { color:var(--muted); font-size:.92rem; margin:0 0 1.2rem; }
+
+  /* --------------------------------------------------------- schéma */
+  .schema { background:var(--card); border:1px solid var(--line); border-radius:3px;
+    padding:1.6rem; }
+  .schema svg { width:100%; height:auto; max-width:44rem; margin:0 auto; display:block; }
+  .schema p { margin:1.1rem 0 0; color:var(--ink-soft); font-size:.93rem; text-align:center; }
+
+  /* ---------------------------------------------------------- kroky */
+  .kroky { display:flex; flex-direction:column; gap:.7rem; }
+  .krok { background:var(--card); border:1px solid var(--line); border-radius:3px;
+    border-left:3px solid var(--tint); padding:1rem 1.2rem;
+    display:grid; grid-template-columns:2.2rem 1fr auto; gap:1rem; align-items:start; }
+  .krok .cislo { font-family:var(--serif); font-size:1.6rem; color:var(--tint); line-height:1; }
+  .krok h3 { margin:0 0 .2rem; font-size:.98rem; font-weight:600; }
+  .krok p { margin:0; color:var(--ink-soft); font-size:.89rem; }
+  .znak { font-size:.68rem; letter-spacing:.05em; text-transform:uppercase; font-weight:600;
+    padding:.2rem .5rem; border-radius:2px; white-space:nowrap; align-self:center; }
+  .z-bez { background:var(--ok-bg); color:var(--ok); }
+  .z-ui { background:var(--ui-bg); color:var(--ui); }
+  @media (max-width:32rem) { .krok { grid-template-columns:2.2rem 1fr; } .znak { grid-column:2; justify-self:start; } }
+
+  /* --------------------------------------------------------- tabulka */
+  .scroller { overflow-x:auto; border:1px solid var(--line); border-radius:3px; background:var(--card); }
+  table { border-collapse:collapse; width:100%; font-size:.9rem; min-width:32rem; }
+  thead th { text-align:left; font-weight:600; font-size:.72rem; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--muted); padding:.75rem .85rem; border-bottom:1px solid var(--line); }
+  tbody td { padding:.7rem .85rem; border-bottom:1px solid var(--line); color:var(--ink-soft); vertical-align:top; }
+  tbody td:first-child { color:var(--ink); font-weight:600; }
+  tbody tr:last-child td { border-bottom:none; }
+  td.cena { font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--ok); font-weight:600; }
+
+  /* ----------------------------------------------------------- karty */
+  .karty { display:grid; grid-template-columns:repeat(auto-fit,minmax(16rem,1fr)); gap:.9rem; }
+  .karta { background:var(--card); border:1px solid var(--line); border-radius:3px;
+    border-left:3px solid var(--tint,var(--accent)); padding:1.05rem 1.15rem; }
+  .karta h3 { font-size:.95rem; margin:0 0 .3rem; font-weight:600; }
+  .karta p { margin:0; color:var(--ink-soft); font-size:.9rem; }
+
+  .varovani { background:var(--blok-bg); border:1px solid var(--line);
+    border-left:3px solid var(--blok); border-radius:3px; padding:1.15rem 1.3rem; }
+  .varovani h3 { font-size:.98rem; margin:0 0 .4rem; color:var(--blok); }
+  .varovani p { margin:0; color:var(--ink-soft); font-size:.92rem; }
+
+  .otazky { background:var(--card); border:1px solid var(--line); border-radius:3px;
+    border-top:3px solid var(--accent-2); padding:1.4rem 1.5rem; }
+  .otazky ol { margin:.6rem 0 0; padding-left:1.2rem; color:var(--ink-soft); }
+  .otazky li { margin-bottom:.6rem; }
+  .otazky li:last-child { margin-bottom:0; }
+  .otazky b { color:var(--ink); }
+
+  footer { border-top:1px solid var(--line); padding-top:1.25rem; color:var(--muted); font-size:.84rem; }
+  footer strong { color:var(--ink-soft); }
+  :focus-visible { outline:2px solid var(--accent-2); outline-offset:2px; }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Cantinero · návrh k rozhodnutí, 28. 7. 2026</p>
+    <h1>Jak by ta aplikace vypadala</h1>
+    <p class="lede">
+      Postavená pro dva uživatele — tebe a kolegu. Nic z toho zatím
+      nestavím; tohle je návrh, ke kterému potřebuju tvoje ano.
+    </p>
+  </header>
+
+  <section>
+    <h2>Jádro návrhu: aplikace je oči a ruce, ne mozek</h2>
+    <p class="sub">Agent zůstává tam, kde je — u tebe v Claude Code.</p>
+    <div class="schema">
+      <svg viewBox="0 0 640 240" role="img" aria-label="Schéma: dva lidé, aplikace a Claude Code, obojí do jedné sdílené databáze">
+        <!-- lidé -->
+        <g fill="var(--ink-soft)" font-size="13" font-family="system-ui" text-anchor="middle">
+          <circle cx="60" cy="52" r="15" fill="none" stroke="var(--ink-soft)" stroke-width="1.5"/>
+          <text x="60" y="88">ty</text>
+          <circle cx="60" cy="160" r="15" fill="none" stroke="var(--ink-soft)" stroke-width="1.5"/>
+          <text x="60" y="196">kolega</text>
+        </g>
+        <!-- aplikace -->
+        <rect x="170" y="24" width="180" height="60" rx="4" fill="var(--ui-bg)" stroke="var(--ui)" stroke-width="1.5"/>
+        <text x="260" y="50" font-size="14" font-weight="600" fill="var(--ui)" text-anchor="middle" font-family="system-ui">webová aplikace</text>
+        <text x="260" y="70" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-family="system-ui">mapa · oblasti · seznamy</text>
+        <!-- claude code -->
+        <rect x="170" y="132" width="180" height="60" rx="4" fill="var(--ok-bg)" stroke="var(--ok)" stroke-width="1.5"/>
+        <text x="260" y="158" font-size="14" font-weight="600" fill="var(--ok)" text-anchor="middle" font-family="system-ui">Claude Code</text>
+        <text x="260" y="178" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-family="system-ui">agent Čmuchal — sběr a rešerše</text>
+        <!-- databáze -->
+        <rect x="440" y="78" width="160" height="62" rx="4" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="520" y="104" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle" font-family="system-ui">sdílená databáze</text>
+        <text x="520" y="124" font-size="11.5" fill="var(--muted)" text-anchor="middle" font-family="system-ui">jedna pravda pro obojí</text>
+        <!-- šipky -->
+        <g stroke="var(--muted)" stroke-width="1.5" fill="none">
+          <path d="M80 52 L165 52" marker-end="url(#s)"/>
+          <path d="M80 160 L165 160" marker-end="url(#s)"/>
+          <path d="M355 54 C400 54 405 100 435 104" marker-end="url(#s)"/>
+          <path d="M355 162 C400 162 405 118 435 114" marker-end="url(#s)"/>
+        </g>
+        <defs>
+          <marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/>
+          </marker>
+        </defs>
+      </svg>
+      <p>
+        Aplikace nic nespouští — jen ukazuje a zapisuje. Agent dál běží
+        u každého na jeho vlastním předplatném, jen sahá do stejných dat.
+        <strong>Díky tomu aplikace nepotřebuje žádný server</strong>, a to
+        je důvod, proč vyjde na nulu.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Pořadí prací</h2>
+    <p class="sub">První tři kroky dávají smysl, i kdyby se aplikace nakonec neudělala.</p>
+    <div class="kroky">
+      <div class="krok" style="--tint: var(--ok)">
+        <span class="cislo">1</span>
+        <div><h3>Oblasti v jádru</h3>
+          <p>Oblast se stane samostatnou věcí — smí existovat bez jídelny a jídelna se
+             k ní doplní až po jednání. Obrácený postup tím začne fungovat, zatím z příkazu.</p></div>
+        <span class="znak z-bez">bez UI</span>
+      </div>
+      <div class="krok" style="--tint: var(--ok)">
+        <span class="cislo">2</span>
+        <div><h3>Kategorie a blacklist</h3>
+          <p>Obor u firmy už máme, chybí převod na kategorie srozumitelné člověku.
+             Blacklist podle tvých pravidel. Přesně ty filtry, které pak budeš v mapě chtít.</p></div>
+        <span class="znak z-bez">bez UI</span>
+      </div>
+      <div class="krok" style="--tint: var(--ok)">
+        <span class="cislo">3</span>
+        <div><h3>Přesun na sdílenou databázi</h3>
+          <p>Nutný krok pro dva uživatele. Kód to už umí — je to otázka vyplnění jedné
+             hodnoty a přenesení dat, ne přepisování.</p></div>
+        <span class="znak z-bez">bez UI</span>
+      </div>
+      <div class="krok" style="--tint: var(--ui)">
+        <span class="cislo">4</span>
+        <div><h3>Mapa: kreslení oblasti a seznam firem</h3>
+          <p>To hlavní. Uvidíš navrženou oblast, upravíš ji nebo nakreslíš vlastní,
+             a teprve pak se hledá. Postaví se nad skutečnými daty z kroků 1–3.</p></div>
+        <span class="znak z-ui">aplikace</span>
+      </div>
+      <div class="krok" style="--tint: var(--ui)">
+        <span class="cislo">5</span>
+        <div><h3>Kampaně</h3>
+          <p>Předfiltruješ databázi, vybereš firmy z mapy, vznikne kampaň.
+             Samotné odesílání zůstává zavřené — viz níž.</p></div>
+        <span class="znak z-ui">aplikace</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co to bude stát</h2>
+    <p class="sub">Ceny ověřené přímo u Supabase pro tvoji organizaci, ne odhad.</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Položka</th><th>Cena měsíčně</th><th>Poznámka</th></tr></thead>
+        <tbody>
+          <tr><td>Sdílená databáze (Supabase)</td><td class="cena">0 Kč</td>
+            <td>Třetí projekt vedle tvých dvou stávajících. Ty zůstávají nedotčené.</td></tr>
+          <tr><td>Přihlašování</td><td class="cena">0 Kč</td>
+            <td>Součást Supabase. Přístup hlídá přímo databáze, ne aplikace.</td></tr>
+          <tr><td>Hosting aplikace</td><td class="cena">0 Kč</td>
+            <td>Statická stránka bez serveru — proto zdarma.</td></tr>
+          <tr><td>Vlastní doména</td><td>volitelné</td>
+            <td>Bez ní poběží na adrese od hostingu. Rozhoduješ ty.</td></tr>
+          <tr><td>Provoz agenta</td><td class="cena">0 Kč</td>
+            <td>Beze změny — každý na svém předplatném Claude.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Dvě věci, které jsem musel vyřešit jinak, než bych čekal</h2>
+    <div class="karty">
+      <div class="karta" style="--tint: var(--accent)">
+        <h3>Tvary oblastí bez mapového enginu</h3>
+        <p>
+          Sdílená databáze umí počítat s geometrií, ale ta lokální, nad kterou
+          běží testy, ne. Kdybych se o ni opřel, testy přestanou fungovat bez
+          internetu. Tvar se proto ukládá jako obyčejná data a počítá se v kódu —
+          při našich objemech je to otázka milisekund a chová se to všude stejně.
+        </p>
+      </div>
+      <div class="karta" style="--tint: var(--accent)">
+        <h3>Oblast bez jídelny</h3>
+        <p>
+          Dnes je jídelna podmínkou všeho. Aby šel udělat obrácený postup, musí
+          být oblast samostatná věc, ke které se jídelna teprve přiváže. Není to
+          kosmetika — mění to, na čem celý sběr stojí.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="varovani">
+    <h3>Odesílání aplikace neodemyká</h3>
+    <p>
+      Systém nesmí nic odeslat a zapnout to smí jedině člověk — to platí dál
+      a frontend na tom nic nemění. Navíc před prvním odesláním potřebuješ
+      schválená tvrzení o produktu, šablony zpráv a právní posouzení. Kampaň
+      tedy půjde připravit a schválit, ale odeslání je samostatné rozhodnutí,
+      které musí přijít od tebe.
+    </p>
+  </section>
+
+  <section class="otazky">
+    <h2>Co potřebuju od tebe</h2>
+    <ol>
+      <li><b>Založit třetí databázový projekt?</b> Stojí 0 Kč měsíčně. Bez něj
+        nejde krok 3 a tím ani aplikace. Nic nezakládám, dokud neřekneš.</li>
+      <li><b>Jaké kategorie firem dávají obchodně smysl?</b> Můj návrh: výroba ·
+        stavebnictví · doprava a sklady · obchod · úřady a samospráva · školství ·
+        zdravotnictví a sociální služby · služby · ostatní. Uprav podle sebe —
+        tohle je čistě obchodní členění, ne technické.</li>
+      <li><b>Vlastní doména, nebo stačí adresa od hostingu?</b> Doména stojí peníze,
+        takže rozhoduješ ty.</li>
+    </ol>
+  </section>
+
+  <footer>
+    <p>
+      <strong>Nic z toho jsem nezačal stavět.</strong> Technický detail je
+      v <code>docs/adr/0001-frontend.md</code>. Dřívější nabídku „nakresli si
+      oblast a pošli mi ji" ruším — byla to náhražka, která problém obchází
+      místo řešení.
+    </p>
+  </footer>
+
+</div>

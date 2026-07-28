@@ -2,6 +2,15 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-29 · majitel · **Uživatelé aplikace a jejich role:**
+  `janlaub@icloud.com` super-admin (i správa uživatelů) ·
+  `laub@cantinero.cz` admin (vše kromě správy uživatelů) ·
+  `sasek@cantinero.cz` a `prokop@cantinero.cz` uživatel (prohlížet, kreslit
+  oblasti, chystat kampaně). Vlastní rozhraní pro zakládání uživatelů se
+  nestaví — Supabase to umí sám a pro čtyři lidi by to byla zbytečná práce.
+  **Role se čte z `app_metadata`, ne z `user_metadata`** — to druhé si smí
+  uživatel přepsat sám a povýšil by se na admina.
+
 - 2026-07-28 · majitel · **Sdílená databáze je Supabase projekt
   `Customer_finder`** (ref `sedjnwllzyeuiruxgoil`, eu-central-1 Frankfurt,
   0 Kč/měsíc). Ne „Cantinero" — ten název je použitý jinde a systém stejně

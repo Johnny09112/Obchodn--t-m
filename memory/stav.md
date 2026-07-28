@@ -17,7 +17,11 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **200 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **215 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **Krok 1 frontendového plánu hotový: oblast je samostatná věc.**
+  Smí existovat bez jídelny (obrácený postup) a může být kruh i nakreslený
+  tvar. Migrace 0011, `src/oblast.ts`, CLI `oblast nova|prirad|firmy`.
+  Ověřeno naostro: „Průzkum Rokycansko“, kruh 12 km, 41 firem, bez jídelny.
 - **Kontakty: 18 z 20 firem nad 25 zaměstnanců je hotových** (známe jméno
   osoby i spojení na ni). Zbývají dvě — I.U.STAVBY nemá vůbec webovou stopu,
   H.B. TEXTILIE má jméno i e-mail, ale na různých záznamech (viz poznatky).

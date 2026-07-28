@@ -23,6 +23,10 @@ import { novePoznatky } from "./playbook.js";
 import { doplnKontakty } from "./kontakty.js";
 import { prepocitejDosah } from "./dosah.js";
 import { rozborZony } from "./zona.js";
+import {
+  firmyVOblasti, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
+  type Oblast,
+} from "./oblast.js";
 import { vzdalenostM } from "./geo.js";
 
 /**
@@ -402,6 +406,123 @@ async function cmdZona(argv: string[]): Promise<void> {
   }
 }
 
+/**
+ * Oblasti hledání. Oblast smí vzniknout dřív než jídelna — to je celý smysl
+ * obráceného postupu: nejdřív území a seznam firem jako podklad na jednání,
+ * jídelna se přiřadí až po dohodě.
+ */
+async function cmdOblast(argv: string[]): Promise<void> {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    options: {
+      nazev: { type: "string" },
+      lat: { type: "string" },
+      lng: { type: "string" },
+      polomer: { type: "string" },
+      body: { type: "string" }, // GeoJSON-like: "49.6,13.2 49.7,13.2 49.7,13.3"
+      jidelna: { type: "string" },
+      poznamka: { type: "string" },
+      oblast: { type: "string" },
+    },
+  });
+  const akce = positionals[0] ?? "seznam";
+  const db = await pripojDb();
+  try {
+    if (akce === "nova") {
+      if (!values.nazev) {
+        console.error("Chybí --nazev");
+        process.exit(1);
+      }
+      let oblast: Oblast;
+      if (values.body) {
+        oblast = {
+          typ: "polygon",
+          body: values.body.trim().split(/\s+/).map((dvojice) => {
+            const [lat, lng] = dvojice.split(",").map(Number);
+            return { lat: lat!, lng: lng! };
+          }),
+        };
+      } else if (values.lat && values.lng && values.polomer) {
+        oblast = {
+          typ: "kruh",
+          stred: { lat: Number(values.lat), lng: Number(values.lng) },
+          polomerM: Number(values.polomer),
+        };
+      } else {
+        console.error("Zadej buď --lat --lng --polomer (kruh), nebo --body (nakreslený tvar)");
+        process.exit(1);
+      }
+
+      const id = await zalozOblast(db, {
+        nazev: values.nazev,
+        oblast,
+        jidelnaId: values.jidelna,
+        poznamka: values.poznamka,
+      });
+      const pocet = await prepocitejOblastFirmy(db, id);
+      console.log(`Oblast založena: ${id}`);
+      console.log(`  firem uvnitř: ${pocet}`);
+      if (!values.jidelna) {
+        console.log("  jídelna zatím není — přiřadí se příkazem: oblast prirad --oblast <id> --jidelna <id>");
+      }
+      return;
+    }
+
+    if (akce === "prirad") {
+      if (!values.oblast || !values.jidelna) {
+        console.error("Chybí --oblast <id> nebo --jidelna <id>");
+        process.exit(1);
+      }
+      await prirad(db, values.oblast, values.jidelna);
+      console.log("Jídelna přiřazena k oblasti.");
+      return;
+    }
+
+    if (akce === "firmy") {
+      if (!values.oblast) {
+        console.error("Chybí --oblast <id>");
+        process.exit(1);
+      }
+      const firmy = await firmyVOblasti(db, values.oblast);
+      console.log(`Firem v oblasti: ${firmy.length}\n`);
+      for (const f of firmy) {
+        console.log(
+          `  ${String(f.skore ?? "—").padStart(3)} b  ` +
+            `${(f.velikostKategorie ?? "?").padEnd(9)} ` +
+            `${f.vzdalenostM != null ? `${String(f.vzdalenostM).padStart(6)} m` : "        "}  ` +
+            `${f.nazev}`,
+        );
+      }
+      return;
+    }
+
+    // výchozí: seznam
+    const oblasti = await seznamOblasti(db);
+    if (oblasti.length === 0) {
+      console.log("Zatím žádné oblasti. Založ: oblast nova --nazev … --lat … --lng … --polomer …");
+      return;
+    }
+    for (const o of oblasti) {
+      const pocet = await db.query<{ n: string }>(
+        "select count(*)::text as n from oblast_firmy where oblast_id = $1",
+        [o.id],
+      );
+      const tvar =
+        o.oblast.typ === "kruh"
+          ? `kruh ${(o.oblast.polomerM ?? 0) / 1000} km`
+          : `nakreslený tvar (${o.oblast.body?.length ?? 0} bodů)`;
+      console.log(
+        `${o.id}  ${o.nazev.padEnd(24)} ${tvar.padEnd(28)} ` +
+          `${String(pocet[0]!.n).padStart(4)} firem  ` +
+          `${o.jidelnaId ? "jídelna přiřazena" : "BEZ JÍDELNY"}`,
+      );
+    }
+  } finally {
+    await db.close();
+  }
+}
+
 /** Přepočte, které jídelny mají kterou firmu v dosahu. */
 async function cmdDosah(argv: string[]): Promise<void> {
   const { values } = parseArgs({ args: argv, options: { jidelna: { type: "string" } } });
@@ -524,6 +645,9 @@ switch (prikaz) {
   case "kartoteka":
     await cmdKartoteka(zbytek);
     break;
+  case "oblast":
+    await cmdOblast(zbytek);
+    break;
   case "zona":
     await cmdZona(zbytek);
     break;
@@ -551,6 +675,12 @@ switch (prikaz) {
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
+  oblast [seznam]                  vypíše oblasti hledání
+  oblast nova --nazev … (--lat … --lng … --polomer … | --body "49.6,13.2 49.7,13.3")
+                                   založí oblast; jídelna je NEPOVINNÁ
+  oblast prirad --oblast <id> --jidelna <id>
+                                   přiřadí jídelnu k oblasti (až po jednání)
+  oblast firmy --oblast <id>       vypíše firmy v oblasti
   zona --jidelna <id> [--polomery 1000,3000,5000]
                                    kolik firem přibude při jakém poloměru zóny
   dosah [--jidelna <id>]           přepočte, které jídelny mají kterou firmu v dosahu

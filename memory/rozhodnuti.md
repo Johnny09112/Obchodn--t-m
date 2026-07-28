@@ -2,6 +2,12 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Hosting: Vercel** (majitel ho má placený a má
+  do něj přístup), ne Cloudflare Pages. ⚠ **Ale DNS zůstává problém:**
+  `cantinero.cz` je vedená na Cloudflare a majitel do toho účtu přístup
+  nejspíš nemá. Bez něj se `find.cantinero.cz` nerozběhne, ať je hosting
+  kdekoli. Nutno vyřešit před krokem 4 — kdo ke Cloudflare přístup má.
+
 - 2026-07-28 · majitel · **Aplikace má být použitelná i pro jiná odvětví**,
   ne jen pro jídelny. Nasazení pro jiný obor až later a úplně separátně.
   Důsledek už teď: **kategorie firem jsou data, ne kód** — tabulka, která

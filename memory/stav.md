@@ -1,6 +1,10 @@
 # Stav projektu
 
-_Aktualizováno: 2026-07-27_
+_Aktualizováno: 2026-07-29_
+
+> **DALŠÍ KROK: postavit aplikaci (mapa a oblasti).** Příprava je hotová
+> celá. Předávka s technickým zadáním a pastmi:
+> **[docs/DALSI-SESSION-FRONTEND.md](../docs/DALSI-SESSION-FRONTEND.md)**
 
 ## Kde jsme
 
@@ -23,7 +27,11 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **246 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **264 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **Zabezpečení a uživatelé hotové.** RLS na všech tabulkách, pravidla podle
+  rolí (migrace 0015–0016). Čtyři účty ověřené: `janlaub@icloud.com`
+  super-admin · `laub@cantinero.cz` admin · `sasek@` a `prokop@` uživatel.
+  Role se mění příkazem `cli uzivatel role` — v dashboardu to pole není.
 - **Profily projektu** (migrace 0014): pravidla „koho hledáme" jsou data.
   `cantinero` (firmy 10+, restaurace ven) a `cantinero-business` (restaurace,
   jídelny a školy, velikost se neposuzuje). Přepíná se `cli profil zvol <kod>`.

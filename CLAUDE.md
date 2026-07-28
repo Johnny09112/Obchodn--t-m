@@ -113,6 +113,7 @@ zdůvodněním; pokud se dá pokračovat na jiné části práce, neblokuj se č
 ## Struktura
 
 - `SPEC.md` — závazné zadání (v2)
+- `docs/DALSI-SESSION-FRONTEND.md` — **předávka: co stavět dál**
 - `docs/NOVA-OBLAST.md` — **postup pro zpracování nové oblasti od A do Z**
 - `docs/FAZE-0.md` — orchestrace přípravné fáze; `docs/adr/` — rozhodnutí
 - `src/` — jádro (deterministická logika + repository + enrichment)

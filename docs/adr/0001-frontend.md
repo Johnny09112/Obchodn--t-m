@@ -1,6 +1,12 @@
 # ADR 0001 — Frontend pro oblasti, kategorie a kampaně
 
-**Stav:** návrh k odsouhlasení · **Datum:** 2026-07-28 · **Rozhodne:** majitel
+**Stav:** ODSOUHLASENO, kroky 1–3 hotové · **Datum:** 2026-07-28
+· **Aktualizováno:** 2026-07-29
+
+> Rozhodnutí padlá po sepsání: hosting **Vercel** (ne Cloudflare Pages —
+> majitel ho má placený), adresa **find.cantinero.cz**, databáze je projekt
+> **`Customer_finder`** (ne „cantinero", ten název je použitý jinde).
+> Kroky 1–3 jsou hotové; co zbývá, je v `docs/DALSI-SESSION-FRONTEND.md`.
 
 ## Kontext
 

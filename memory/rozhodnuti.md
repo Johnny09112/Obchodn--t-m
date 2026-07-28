@@ -2,6 +2,21 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Aplikace má být použitelná i pro jiná odvětví**,
+  ne jen pro jídelny. Nasazení pro jiný obor až later a úplně separátně.
+  Důsledek už teď: **kategorie firem jsou data, ne kód** — tabulka, která
+  jde upravit, ne pevně zadrátovaný seznam. Zbytek zobecňovat zatím ne.
+- 2026-07-28 · majitel · **Adresa aplikace: `find.cantinero.cz`.**
+  POZOR: doména je registrovaná u Forpsi, ale **DNS je delegované na
+  Cloudflare** (`walt/dee.ns.cloudflare.com`) — záznamy se mění tam, ne
+  ve Forpsi. `find.cantinero.cz` se dnes už překládá (nejspíš zástupný
+  záznam `*`), takže ho bude potřeba přebít konkrétním záznamem.
+- 2026-07-28 · majitel · **Sdílená databáze: pozastavit jeden Supabase
+  projekt a založit třetí.** Pozor: v účtu jsou jen `mas-copilot`
+  a `Johnny09112's Project` — **žádný „Letitgoo"**. Než se něco pozastaví,
+  musí být jasné, co na tom běží. Plán je `free`, tedy limit 2 aktivní
+  projekty; cena třetího je 0 Kč, ale limit je jiná věc než cena.
+
 - 2026-07-28 · majitel · **Frontend přestává být jen na sledování a stává se
   ovládáním.** Mění tím rozhodnutí z 2026-07-26 („frontend slouží ke sledování
   a schvalování, ne jako hlavní ovládání"). Důvod: kreslení oblastí a výběr

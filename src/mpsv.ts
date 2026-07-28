@@ -195,6 +195,13 @@ export function postavIndex(data: SyrovaData): MpsvIndex {
 export interface MpsvKlient {
   /** Zaměstnavatelé s pracovištěm v obci, seřazení podle počtu nabízených míst. */
   zamestnavateleVObci(kodObce: number): Promise<MpsvZamestnavatel[]>;
+  /**
+   * Kontaktní osoba zaměstnavatele podle IČO, bez ohledu na obec.
+   *
+   * Slouží k doplnění kontaktů u firem, které v kartotéce už jsou — ty se
+   * při běhu přeskakují, takže by se k nim nový zdroj jinak nedostal.
+   */
+  kontaktZamestnavatele(ico: string): Promise<MpsvKontakt | null>;
 }
 
 export interface MpsvKlientOpts {
@@ -266,6 +273,18 @@ export function vytvorMpsvKlienta(opts: MpsvKlientOpts = {}): MpsvKlient {
       return Object.entries(obec)
         .map(([ico, z]) => ({ ico, ...z, kodObce, zdrojUrl: ZDROJ }))
         .sort((a, b) => b.mist - a.mist);
+    },
+
+    async kontaktZamestnavatele(ico) {
+      const index = await zajistiIndex();
+      // Index je stavěný obec → IČO, protože tak se v běhu hledá. Tady jdeme
+      // proti srsti přes všechny obce; je to pár tisíc položek v paměti,
+      // takže se druhý index kvůli tomu nevyplatí držet.
+      for (const obec of Object.values(index.obce)) {
+        const kontakt = obec[ico]?.kontakt;
+        if (kontakt) return kontakt;
+      }
+      return null;
     },
   };
 }

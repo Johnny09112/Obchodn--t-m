@@ -2,6 +2,11 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Postup pro novou oblast musí být zapsaný tak, aby
+  stačilo říct název oblasti a práce začala.** → `docs/NOVA-OBLAST.md`,
+  odkaz z `CLAUDE.md`. Dosud postup nikde souvisle nebyl a skládal se
+  pokaždé znovu z hlavy.
+
 - 2026-07-28 · majitel · **Pátá jídelna: 34. ZŠ Plzeň, Gerská 32** (IČO
   66362504, 49.7774414/13.3710132, obvod Plzeň 1 – Bolevec). Kapacita
   zatím neznámá. Kapacity ostatních: Bezdružice 10, Zbůch 20, Tlučná 20,

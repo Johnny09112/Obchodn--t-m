@@ -20,6 +20,7 @@ import { vytvorRegistrKlienta } from "./registr.js";
 import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
 import { novePoznatky } from "./playbook.js";
+import { doplnKontakty } from "./kontakty.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -152,13 +153,37 @@ async function cmdRun(argv: string[]): Promise<void> {
       },
     );
 
+    // Výpis musí kandidáty beze zbytku vysvětlit — jinak se nedá poznat,
+    // jestli někam nemizí tiše. Zbytek se dopočítá a vypíše zvlášť.
+    const rozpad: Array<[string, number]> = [
+      ["kvalifikováno", souhrn.kvalifikovano],
+      ["čeká na jídelnu", souhrn.cekajicich],
+      ["už v kartotéce", souhrn.preskoceno],
+      ["nespárováno s rejstříkem", souhrn.nesparovano],
+      ["bez zaměstnanců", souhrn.bezZamestnancu],
+      ["agentura práce", souhrn.agentur],
+      ["nevhodný obor", souhrn.vyloucenyObor],
+      ["bytový dům", souhrn.bytovychDomu],
+      ["naše vlastní jídelna", souhrn.partnerskychJidelen],
+      ["zahozeno jinak", souhrn.zahozeno],
+    ];
+    const sedi = rozpad.reduce((s, [, n]) => s + n, 0);
+
     console.log(`Běh ${souhrn.behId} dokončen:`);
     console.log(`  kandidátů: ${souhrn.kandidatu}`);
-    console.log(`  kvalifikováno: ${souhrn.kvalifikovano}`);
-    console.log(`  čeká na jídelnu: ${souhrn.cekajicich}`);
-    console.log(`  zahozeno: ${souhrn.zahozeno}, přeskočeno (už v DB): ${souhrn.preskoceno}`);
-    console.log(`  vyřazeno — bez zaměstnanců: ${souhrn.bezZamestnancu}, pod limitem velikosti: ${souhrn.podLimitem}, agentur: ${souhrn.agentur}, nevhodný obor: ${souhrn.vyloucenyObor}`);
+    console.log(
+      `  zdroje — registr ČSÚ: ${souhrn.dleZdroje.registr}, MPSV: ${souhrn.dleZdroje.mpsv}` +
+        `, mapy: ${souhrn.dleZdroje.osm}, sweep ARES: ${souhrn.dleZdroje.ares}`,
+    );
+    for (const [popis, n] of rozpad) {
+      if (n > 0) console.log(`    ${popis}: ${n}`);
+    }
+    if (sedi !== souhrn.kandidatu) {
+      console.log(`    (nezařazeno: ${souhrn.kandidatu - sedi})`);
+    }
+    console.log(`  pod limitem velikosti (uloženo, ale mimo frontu): ${souhrn.podLimitem}`);
     console.log(`  chyb: ${souhrn.chyby.length}, náklady: ${souhrn.nakladyUsd.toFixed(2)}`);
+    for (const c of souhrn.chyby.slice(0, 5)) console.log(`    ! ${c.kdo}: ${c.chyba}`);
 
     // Do playbooku jen to, co je opravdu nové a obecné. Výpis jednotlivých
     // kandidátů se opakuje každý běh a patří do deníku vyřazení, ne sem.
@@ -218,6 +243,38 @@ async function cmdKartoteka(argv: string[]): Promise<void> {
     const v = await vygenerujKartoteku(db, values.vystup!);
     console.log(`Kartotéka vygenerována: ${v.cesta}`);
     console.log(`  firem: ${v.firem}, doložených údajů: ${v.evidenci}`);
+  } finally {
+    await db.close();
+  }
+}
+
+/**
+ * Doplní kontakty u firem, které v kartotéce už jsou. Běžný sběr je
+ * přeskakuje, takže by se k nim nový zdroj kontaktů nikdy nedostal.
+ */
+async function cmdDoplnitKontakty(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: { limit: { type: "string" }, jidelna: { type: "string" } },
+  });
+  const db = await pripojDb();
+  try {
+    const souhrn = await doplnKontakty(
+      { db, ares: vytvorAresKlienta(), mpsv: vytvorMpsvKlienta() },
+      {
+        limit: values.limit ? Number(values.limit) : undefined,
+        jidelnaId: values.jidelna,
+      },
+    );
+    console.log(`Doplnění kontaktů — běh ${souhrn.behId}`);
+    console.log(`  firem bez jmenného kontaktu: ${souhrn.zpracovano}`);
+    console.log(`  kontakt z otevřených dat MPSV: ${souhrn.zMpsv}`);
+    console.log(`  jednatel z veřejného rejstříku: ${souhrn.zRejstriku}`);
+    console.log(`  bez výsledku: ${souhrn.bezVysledku}`);
+    if (souhrn.chyby.length > 0) {
+      console.log(`  chyb: ${souhrn.chyby.length}`);
+      for (const c of souhrn.chyby.slice(0, 5)) console.log(`    ${c.kdo}: ${c.chyba}`);
+    }
   } finally {
     await db.close();
   }
@@ -321,6 +378,9 @@ switch (prikaz) {
   case "kartoteka":
     await cmdKartoteka(zbytek);
     break;
+  case "doplnit-kontakty":
+    await cmdDoplnitKontakty(zbytek);
+    break;
   case "k-obohaceni":
     await cmdKObohaceni(zbytek);
     break;
@@ -339,6 +399,8 @@ switch (prikaz) {
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
+  doplnit-kontakty [--limit N] [--jidelna id]
+                                   doplní kontakty u firem, které už v kartotéce jsou
   k-obohaceni [--limit N] [--segmenty stredni,korporat]
                                    vypíše firmy čekající na rešerši (pro agenta)
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)

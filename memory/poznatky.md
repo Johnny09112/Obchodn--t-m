@@ -1,5 +1,29 @@
 # Poznatky a gotchas
 
+## Nový zdroj se k dřív posbíraným firmám sám nedostane (2026-07-28)
+
+`spustCmuchala` firmu, kterou už zná, přeskočí (`preskoceno`) — a je to
+správně, jinak by se při každém běhu znovu ověřovala a geokódovala. Jenže
+když přibude nový zdroj kontaktů, k dřívějším firmám se nikdy nedostane.
+Přesběr by nepřinesl nic: 148 ze 165 firem bez kontaktu by se přeskočilo.
+
+Řešeno samostatným během `doplnit-kontakty` (`src/kontakty.ts`), který jde
+po firmách bez **jmenného** kontaktu. Výsledek prvního běhu:
+
+| | před | po |
+|---|---|---|
+| firem s konkrétní osobou | 10 z 165 | **103 z 165** |
+| z toho z otevřených dat MPSV | — | 9 |
+| z toho jednatel z rejstříku | — | 84 |
+
+**Ze 62 firem, které zůstaly bez jména, je 59 živnostníků** (formy 100–107)
+— u nich je jméno firmy zároveň jméno člověka, takže chybějící „kontaktní
+osoba" je jen zdání. Skutečná díra jsou 3 subjekty.
+
+**Obecné poučení: kdykoli přibude nový zdroj údajů, ptej se, jestli se
+dostane i k tomu, co už v databázi leží.** Přeskakování známých záznamů je
+optimalizace, která mlčky vytvoří dvě generace dat.
+
 ## Kontakty: co dá jméno u firmy (2026-07-28)
 
 Hlavní úkol Čmuchala je najít konkrétní osobu. Ověřené zdroje:

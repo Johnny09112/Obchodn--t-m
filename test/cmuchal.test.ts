@@ -71,6 +71,7 @@ const mpsv: MpsvKlient = {
       cisloDomovni: 291, jeAgentura: false, proKoho: null,
       zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
   ],
+    kontaktZamestnavatele: async () => null,
 };
 
 const osm: OsmKlient = {
@@ -333,6 +334,7 @@ describe("jednatel z obchodního rejstříku", () => {
                      email: "r@a.cz", telefon: null },
           zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
       ],
+        kontaktZamestnavatele: async () => null,
     };
     await spustCmuchala(
       { db, ares: aresPocitajici, res, geokoder, mpsv: mpsvSKontaktem }, jidelnaId,
@@ -361,6 +363,7 @@ describe("kontaktní osoba z dat úřadu práce", () => {
         },
         zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
     ],
+      kontaktZamestnavatele: async () => null,
   };
 
   it("zapíše jméno, pozici, e-mail i telefon rovnou při sběru", async () => {

@@ -3,6 +3,13 @@
 > Projektová pravidla pro Claude Code (fáze 0, session S0.1).
 > Zdroj pravdy pro zadání je SPEC.md — při rozporu platí SPEC.md.
 
+## Když majitel řekne jen název oblasti
+
+„Pusť Stříbro“, „pojďme na Rokycany“ → **řiď se `docs/NOVA-OBLAST.md`**.
+Je tam celý postup od ověření jídelny přes sběr a doplnění kontaktů až po
+výstupy a zápis do paměti. Neptej se na nic, co se dá zjistit z dat; ptej
+se jen na to, co ví jenom majitel (jestli tam máme partnera, kapacita).
+
 ## Start každé session (povinné, v tomto pořadí)
 
 1. Přečti `memory/MEMORY.md` a `memory/stav.md` — kde jsme a co je další krok.
@@ -106,6 +113,7 @@ zdůvodněním; pokud se dá pokračovat na jiné části práce, neblokuj se č
 ## Struktura
 
 - `SPEC.md` — závazné zadání (v2)
+- `docs/NOVA-OBLAST.md` — **postup pro zpracování nové oblasti od A do Z**
 - `docs/FAZE-0.md` — orchestrace přípravné fáze; `docs/adr/` — rozhodnutí
 - `src/` — jádro (deterministická logika + repository + enrichment)
 - `supabase/migrations/` — schéma; `test/` — testovací sada
@@ -119,8 +127,12 @@ zdůvodněním; pokud se dá pokračovat na jiné části práce, neblokuj se č
 ```bash
 npm test               # celá sada (PGlite, offline)
 npm run typecheck
-npm run cli            # nápověda: migrate | seed-jidelna | run | stav | metriky
+npm run cli            # nápověda ke všem příkazům
 ```
+
+**Aktivní data jsou v `data/pgdata-v5`**, ne ve výchozím `data/pgdata`.
+Ke každému příkazu proto patří `CANTINERO_DATA_DIR=data/pgdata-v5`.
+Databázi smí otevřít jen jeden proces naráz — dva ji tiše rozbijí.
 
 ## Role agentů (SPEC kap. 10)
 

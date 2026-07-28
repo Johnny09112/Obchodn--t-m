@@ -36,6 +36,7 @@ const ares: AresKlient = {
   najdiFirmyVObci: async () => [agrofarmy, skorapka],
   najdiPodleJmena: async (n) =>
     vsechny.find((f) => f.nazev.toLowerCase().includes(n.toLowerCase().slice(0, 8))) ?? null,
+  najdiStatutarniOrgany: async () => [],
 };
 
 const resData: Record<string, Partial<ResUdaje>> = {
@@ -190,6 +191,7 @@ describe("záchrana firem s nezaměřitelnou adresou", () => {
       overFirmu: async (i) => (i === nezamerne.ico ? nezamerne : null),
       najdiFirmyVObci: async () => [nezamerne],
       najdiPodleJmena: async () => null,
+    najdiStatutarniOrgany: async () => [],
     };
     const resLokal: ResKlient = {
       nactiUdaje: async (ico) => ({
@@ -225,6 +227,7 @@ describe("práh velikosti firmy", () => {
     overFirmu: async () => maly,
     najdiFirmyVObci: async () => [maly],
     najdiPodleJmena: async () => null,
+    najdiStatutarniOrgany: async () => [],
   };
   const resSKodem = (kod: string): ResKlient => ({
     nactiUdaje: async (ico) => ({
@@ -290,6 +293,109 @@ describe("deník vyřazení (kalibrace pravidel)", () => {
       [s.behId],
     );
     expect(Number(v[0]!.pocet)).toBeGreaterThan(0);
+  });
+});
+
+describe("jednatel z obchodního rejstříku", () => {
+  const aresSJednatelem: AresKlient = {
+    ...ares,
+    najdiStatutarniOrgany: async () => [
+      { jmeno: "TOMÁŠ", prijmeni: "HONZÍK", funkce: "Jednatel" },
+    ],
+  };
+
+  it("u firmy bez jiného kontaktu zapíše aspoň jméno a funkci", async () => {
+    await spustCmuchala(
+      { db, ares: aresSJednatelem, res, geokoder, mpsv }, jidelnaId,
+    );
+    const k = await db.query<{ jmeno: string; prijmeni: string; pozice: string; email: string | null }>(
+      "select jmeno, prijmeni, pozice, email from contacts where ico = '25242407'",
+    );
+    expect(k[0]).toMatchObject({
+      jmeno: "TOMÁŠ", prijmeni: "HONZÍK", pozice: "Jednatel", email: null,
+    });
+  });
+
+  it("nehledá jednatele tam, kde už kontakt máme — je to dotaz navíc", async () => {
+    let dotazu = 0;
+    const aresPocitajici: AresKlient = {
+      ...ares,
+      najdiStatutarniOrgany: async () => {
+        dotazu++;
+        return [{ jmeno: "TOMÁŠ", prijmeni: "HONZÍK", funkce: "Jednatel" }];
+      },
+    };
+    const mpsvSKontaktem: MpsvKlient = {
+      zamestnavateleVObci: async () => [
+        { ico: "25242407", nazev: agrofarmy.nazev, mist: 8, inzeratu: 1, kodObce: 560740,
+          cisloDomovni: 2, jeAgentura: false, proKoho: null,
+          kontakt: { jmeno: "Radek", prijmeni: "Ondrušek", pozice: "personalista",
+                     email: "r@a.cz", telefon: null },
+          zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
+      ],
+    };
+    await spustCmuchala(
+      { db, ares: aresPocitajici, res, geokoder, mpsv: mpsvSKontaktem }, jidelnaId,
+    );
+    expect(dotazu).toBe(0);
+  });
+
+  it("výpadek rejstříku běh nepoloží", async () => {
+    const rozbity: AresKlient = {
+      ...ares,
+      najdiStatutarniOrgany: async () => { throw new Error("ARES rejstřík 503"); },
+    };
+    const s = await spustCmuchala({ db, ares: rozbity, res, geokoder, mpsv }, jidelnaId);
+    expect(s.kvalifikovano).toBeGreaterThan(0);
+  });
+});
+
+describe("kontaktní osoba z dat úřadu práce", () => {
+  const mpsvSKontaktem: MpsvKlient = {
+    zamestnavateleVObci: async () => [
+      { ico: "25242407", nazev: agrofarmy.nazev, mist: 8, inzeratu: 2, kodObce: 560740,
+        cisloDomovni: 2, jeAgentura: false, proKoho: null,
+        kontakt: {
+          jmeno: "Ing. Radek", prijmeni: "Ondrušek", pozice: "personalista",
+          email: "radek.ondrusek@agrofarmy.cz", telefon: "608 200 094",
+        },
+        zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
+    ],
+  };
+
+  it("zapíše jméno, pozici, e-mail i telefon rovnou při sběru", async () => {
+    await spustCmuchala({ db, ares, res, geokoder, mpsv: mpsvSKontaktem }, jidelnaId);
+
+    const k = await db.query<{
+      jmeno: string; prijmeni: string; pozice: string; email: string;
+      telefon: string; uroven_adresy: number; zdroj_url: string;
+    }>("select jmeno, prijmeni, pozice, email, telefon, uroven_adresy, zdroj_url from contacts where ico = '25242407'");
+
+    expect(k).toHaveLength(1);
+    expect(k[0]).toMatchObject({
+      jmeno: "Ing. Radek", prijmeni: "Ondrušek", pozice: "personalista",
+      email: "radek.ondrusek@agrofarmy.cz", telefon: "608 200 094",
+      uroven_adresy: 3, // jmenná adresa konkrétní osoby
+    });
+    expect(k[0]!.zdroj_url).toContain("data.mpsv.cz");
+  });
+
+  it("přizná, k čemu byla adresa zveřejněná — je pro uchazeče, ne pro nabídky", async () => {
+    // Bez toho by se při schvalování oslovení nedalo poznat, že člověk
+    // svůj kontakt vystavil kvůli náboru, ne kvůli dodavatelům.
+    await spustCmuchala({ db, ares, res, geokoder, mpsv: mpsvSKontaktem }, jidelnaId);
+
+    const ev = await db.query<{ hodnota: string; citace: string }>(
+      "select hodnota, citace from evidence where ico = '25242407' and atribut = 'ucel_adresy'",
+    );
+    expect(ev).toHaveLength(1);
+    expect(ev[0]!.hodnota).toMatch(/uchazeč/i);
+    expect(ev[0]!.citace).toMatch(/inzer|volné místo|nábor/i);
+  });
+
+  it("bez kontaktu v datech nic nezapíše", async () => {
+    await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
+    expect(await db.query("select 1 from contacts")).toHaveLength(0);
   });
 });
 
@@ -376,6 +482,7 @@ describe("velké město: sweep rejstříku nestačí", () => {
         );
       },
       najdiPodleJmena: async () => null,
+    najdiStatutarniOrgany: async () => [],
     };
 
     const s = await spustCmuchala(
@@ -396,6 +503,7 @@ describe("velké město: sweep rejstříku nestačí", () => {
         return [];
       },
       najdiPodleJmena: async () => null,
+    najdiStatutarniOrgany: async () => [],
     };
     await spustCmuchala({ db, ares: aresSpy, res, geokoder }, jidelnaId, { aresSweep: true });
 
@@ -426,6 +534,7 @@ describe("bytové domy a živnostníci", () => {
     overFirmu: async (i) => zaznamy.find((z) => z.ico === i) ?? null,
     najdiFirmyVObci: async () => zaznamy,
     najdiPodleJmena: async () => null,
+    najdiStatutarniOrgany: async () => [],
   });
 
   it("bytový dům vyřadí — formálně zaměstnavatel, fakticky dům", async () => {
@@ -470,6 +579,7 @@ describe("partnerská jídelna se nesmí objevit mezi firmami", () => {
     overFirmu: async (i) => (i === skola.ico ? skola : null),
     najdiFirmyVObci: async () => [skola],
     najdiPodleJmena: async () => null,
+    najdiStatutarniOrgany: async () => [],
   };
   const resSkola: ResKlient = {
     nactiUdaje: async (ico) => ({

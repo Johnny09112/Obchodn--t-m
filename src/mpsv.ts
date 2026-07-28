@@ -31,8 +31,29 @@ export interface MpsvZamestnavatel {
   jeAgentura: boolean;
   /** Firma, pro kterou agentura nabírá — vytažená z názvu pracoviště. */
   proKoho: string | null;
+  /** Kontaktní osoba, kterou zaměstnavatel v inzerátu zveřejnil sám. */
+  kontakt?: MpsvKontakt;
   /** Pro evidenci (TP-2). */
   zdrojUrl: string;
+}
+
+/**
+ * Kontaktní osoba z inzerátu.
+ *
+ * Zaměstnavatel ji do otevřených dat vložil sám, takže je to legitimní
+ * veřejný zdroj — a jediný, který dá jméno, pozici, telefon i e-mail naráz.
+ *
+ * Pozor na účel: ten člověk je tam kvůli uchazečům o zaměstnání, ne kvůli
+ * nabídkám dodavatelů. Do evidence se to musí zapsat pravdivě, ať je při
+ * schvalování oslovení vidět, odkud adresa je.
+ */
+export interface MpsvKontakt {
+  /** Jméno včetně titulu před jménem, pokud ho inzerát uvádí. */
+  jmeno: string | null;
+  prijmeni: string | null;
+  pozice: string | null;
+  email: string | null;
+  telefon: string | null;
 }
 
 interface ZaznamObce {
@@ -42,6 +63,7 @@ interface ZaznamObce {
   cisloDomovni: number | null;
   jeAgentura: boolean;
   proKoho: string | null;
+  kontakt?: MpsvKontakt;
 }
 
 /** obec → IČO → údaje */
@@ -53,6 +75,17 @@ interface SyrovaData {
     souhlasAgenturyAgentura?: boolean;
     souhlasAgenturyUzivatel?: boolean;
     zamestnavatel?: { ico?: string; nazev?: string };
+    prvniKontaktSeZamestnavatelem?: {
+      komuSeHlasit?: {
+        jmeno?: string | null;
+        prijmeni?: string | null;
+        titulPredJmenem?: string | null;
+        titulZaJmenem?: string | null;
+        poziceVeSpolecnosti?: string | null;
+        email?: string | null;
+        telefon?: string | null;
+      } | null;
+    } | null;
     mistoVykonuPrace?: {
       pracoviste?: Array<{
         nazev?: string;
@@ -95,6 +128,34 @@ export function vytahniProKoho(
 }
 
 /** Zredukuje celý balík na kompaktní index obec → zaměstnavatelé. */
+type KomuSeHlasit = NonNullable<
+  NonNullable<NonNullable<SyrovaData["polozky"]>[number]["prvniKontaktSeZamestnavatelem"]>["komuSeHlasit"]
+>;
+
+/**
+ * Kontakt z inzerátu. Pole bývají vyplněná jen zčásti, takže bereme,
+ * co je — stačí jediný použitelný údaj. Úplně prázdný kontakt vracíme jako
+ * `undefined`, ať se do kartotéky nedostane prázdný záznam tvářící se
+ * jako nález.
+ */
+export function vytahniKontakt(k: KomuSeHlasit | null | undefined): MpsvKontakt | undefined {
+  if (!k) return undefined;
+  const ocisti = (h: string | null | undefined) => h?.trim() || null;
+
+  const jmeno = [ocisti(k.titulPredJmenem), ocisti(k.jmeno)].filter(Boolean).join(" ") || null;
+  const prijmeni =
+    [ocisti(k.prijmeni), ocisti(k.titulZaJmenem)].filter(Boolean).join(" ") || null;
+  const kontakt: MpsvKontakt = {
+    jmeno,
+    prijmeni,
+    pozice: ocisti(k.poziceVeSpolecnosti),
+    email: ocisti(k.email),
+    telefon: ocisti(k.telefon),
+  };
+  const maNeco = Object.values(kontakt).some((h) => h !== null);
+  return maNeco ? kontakt : undefined;
+}
+
 export function postavIndex(data: SyrovaData): MpsvIndex {
   const index: MpsvIndex = {};
   for (const v of data.polozky ?? []) {
@@ -122,6 +183,9 @@ export function postavIndex(data: SyrovaData): MpsvIndex {
         zaznam.jeAgentura = true;
         zaznam.proKoho ??= proKoho;
       }
+      // První použitelný kontakt vyhrává. Firma mívá víc inzerátů a bývá
+      // v nich týž člověk; přepisovat ho dalším nemá co zlepšit.
+      zaznam.kontakt ??= vytahniKontakt(v.prvniKontaktSeZamestnavatelem?.komuSeHlasit);
       index[kod]![ico] = zaznam;
     }
   }
@@ -145,7 +209,7 @@ export interface MpsvKlientOpts {
  * jinak by se po nasazení použil starý index bez nových polí a nová logika
  * by tiše nefungovala (stalo se u rozpoznávání agentur).
  */
-const VERZE_INDEXU = 2;
+const VERZE_INDEXU = 3;
 
 interface UlozenyIndex {
   verze?: number;

@@ -43,6 +43,74 @@ const vzorek = {
   ],
 };
 
+describe("kontaktní osoba z inzerátu", () => {
+  // Zaměstnavatel ji zveřejnil sám v otevřených datech úřadu práce. Je to
+  // nejlevnější zdroj jména, pozice, telefonu i e-mailu naráz — data už
+  // stahujeme kvůli pracovištím a kontakt v nich byl celou dobu.
+  const sKontaktem = {
+    polozky: [
+      {
+        pocetMist: 5,
+        zamestnavatel: { ico: "25242407", nazev: "AGROFARMY BEZDRUŽICE s.r.o." },
+        mistoVykonuPrace: { pracoviste: [{ adresa: { obec: { id: "Obec/560740" } } }] },
+        prvniKontaktSeZamestnavatelem: {
+          komuSeHlasit: {
+            jmeno: "Radek", prijmeni: "Ondrušek",
+            titulPredJmenem: "Ing.", titulZaJmenem: null,
+            poziceVeSpolecnosti: "personalista",
+            email: "radek.ondrusek@agrofarmy.cz", telefon: "608 200 094",
+          },
+        },
+      },
+    ],
+  };
+
+  it("vytáhne jméno, pozici, e-mail i telefon", () => {
+    const z = postavIndex(sKontaktem)["560740"]!["25242407"]!;
+    expect(z.kontakt).toMatchObject({
+      jmeno: "Ing. Radek",
+      prijmeni: "Ondrušek",
+      pozice: "personalista",
+      email: "radek.ondrusek@agrofarmy.cz",
+      telefon: "608 200 094",
+    });
+  });
+
+  it("bez kontaktu v inzerátu si nic nedomýšlí", () => {
+    expect(postavIndex(vzorek)["560740"]!["25242407"]!.kontakt).toBeUndefined();
+  });
+
+  it("kontakt s prázdnými poli nebere — je k ničemu", () => {
+    const prazdny = {
+      polozky: [{
+        pocetMist: 1,
+        zamestnavatel: { ico: "25242407", nazev: "A" },
+        mistoVykonuPrace: { pracoviste: [{ adresa: { obec: { id: "Obec/560740" } } }] },
+        prvniKontaktSeZamestnavatelem: {
+          komuSeHlasit: { jmeno: null, prijmeni: null, email: null, telefon: null },
+        },
+      }],
+    };
+    expect(postavIndex(prazdny)["560740"]!["25242407"]!.kontakt).toBeUndefined();
+  });
+
+  it("stačí samotný telefon bez jména", () => {
+    const jenTelefon = {
+      polozky: [{
+        pocetMist: 1,
+        zamestnavatel: { ico: "25242407", nazev: "A" },
+        mistoVykonuPrace: { pracoviste: [{ adresa: { obec: { id: "Obec/560740" } } }] },
+        prvniKontaktSeZamestnavatelem: {
+          komuSeHlasit: { jmeno: null, prijmeni: null, email: null, telefon: "377 123 456" },
+        },
+      }],
+    };
+    expect(postavIndex(jenTelefon)["560740"]!["25242407"]!.kontakt).toMatchObject({
+      telefon: "377 123 456",
+    });
+  });
+});
+
 describe("postavIndex", () => {
   it("sloučí inzeráty jednoho zaměstnavatele a sečte místa", () => {
     const idx = postavIndex(vzorek);

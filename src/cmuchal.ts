@@ -5,7 +5,7 @@ import { FORMY_ZAMESTNAVATELU, jeBytovyDum, popisFormy } from "./formy.js";
 import { jeValidniIco } from "./ico.js";
 import { klasifikujZonu, vzdalenostM, type Bod } from "./geo.js";
 import type { Geokoder } from "./geocode.js";
-import type { MpsvKlient } from "./mpsv.js";
+import type { MpsvKlient, MpsvKontakt } from "./mpsv.js";
 import type { OsmKlient } from "./osm.js";
 import type { RegistrKlient } from "./registr.js";
 import type { ResKlient } from "./res.js";
@@ -63,6 +63,8 @@ interface Kandidat {
    * do statistického registru na každou firmu zvlášť.
    */
   kategorieKod?: string;
+  /** Kontaktní osoba, kterou zaměstnavatel sám zveřejnil (otevřená data MPSV). */
+  kontakt?: MpsvKontakt;
 }
 
 export interface CmuchalSouhrn {
@@ -241,6 +243,7 @@ async function sesbirejKandidaty(
           ico: z.ico,
           nazev: z.nazev,
           nabizenychMist: z.mist,
+          kontakt: z.kontakt,
         });
         souhrn.dleZdroje.mpsv++;
       }
@@ -354,6 +357,43 @@ async function sesbirejKandidaty(
   return [...podleKlice.values()].sort(
     (a, b) => (b.nabizenychMist ?? 0) - (a.nabizenychMist ?? 0),
   );
+}
+
+/**
+ * Uloží kontaktní osobu z inzerátu úřadu práce.
+ *
+ * Účel adresy se zapisuje pravdivě: ten člověk svůj kontakt zveřejnil kvůli
+ * uchazečům o zaměstnání, ne kvůli nabídkám dodavatelů. Bez toho by při
+ * schvalování oslovení nešlo poznat, odkud adresa je — a to je právě ten
+ * rozdíl, na kterém stojí rozhodnutí, jestli se na ni smí psát (TP-6).
+ */
+async function zapisKontaktZInzeratu(
+  db: Db,
+  ico: string,
+  kontakt: MpsvKontakt,
+  zdrojUrl: string,
+): Promise<void> {
+  const kdo = [kontakt.jmeno, kontakt.prijmeni].filter(Boolean).join(" ") || "kontaktní osoba";
+  await zapisKontakt(db, ico, {
+    jmeno: kontakt.jmeno ?? undefined,
+    prijmeni: kontakt.prijmeni ?? undefined,
+    pozice: kontakt.pozice ?? undefined,
+    email: kontakt.email ?? undefined,
+    telefon: kontakt.telefon ?? undefined,
+    // Jmenná adresa konkrétní osoby — nejnižší priorita ze tří úrovní.
+    urovenAdresy: 3,
+    zdrojUrl,
+    citace:
+      `otevřená data MPSV, inzerát na volné místo: kontaktní osoba ${kdo}` +
+      `${kontakt.pozice ? ` (${kontakt.pozice})` : ""}`,
+  });
+
+  await zapisAtribut(db, ico, "ucel_adresy", "zveřejněno pro uchazeče o zaměstnání", {
+    zdrojUrl,
+    citace:
+      "otevřená data MPSV: údaj je v inzerátu na volné místo v poli " +
+      "„komu se hlásit“ — je určený uchazečům o práci, ne dodavatelům",
+  });
 }
 
 async function zpracujKandidata(
@@ -534,6 +574,36 @@ async function zpracujKandidata(
       zdrojUrl: kandidat.zdrojUrl,
       citace: `otevřená data MPSV: pracoviště v obci, ${kandidat.nabizenychMist} nabízených míst`,
     });
+  }
+
+  // Kontaktní osoba, kterou zaměstnavatel sám zveřejnil v inzerátu.
+  // Nejlevnější zdroj jména, pozice, telefonu i e-mailu naráz — data už
+  // stahujeme kvůli pracovištím.
+  if (kandidat.kontakt) {
+    await zapisKontaktZInzeratu(db, ico, kandidat.kontakt, kandidat.zdrojUrl);
+  } else {
+    // Až když jinak nevíme na koho se obrátit: statutární orgán z rejstříku.
+    // Je to dotaz navíc, ale u firem bez inzerátu je to jediné doložitelné
+    // jméno. Selže-li, běh pokračuje — jméno je bonus, ne podmínka.
+    try {
+      for (const clen of (await deps.ares.najdiStatutarniOrgany(ico)).slice(0, 2)) {
+        await zapisKontakt(db, ico, {
+          jmeno: clen.jmeno,
+          prijmeni: clen.prijmeni,
+          pozice: clen.funkce ?? undefined,
+          urovenAdresy: 3,
+          zdrojUrl: `https://ares.gov.cz/ekonomicke-subjekty/${ico}`,
+          citace:
+            `veřejný rejstřík: ${clen.funkce ?? "člen statutárního orgánu"} ` +
+            `${clen.jmeno} ${clen.prijmeni}`,
+        });
+      }
+    } catch (e) {
+      souhrn.chyby.push({
+        kdo: `statutární orgán ${ico}`,
+        chyba: e instanceof Error ? e.message : String(e),
+      });
+    }
   }
 
   // Krok 5 — obohacení z webu (jen v zóně, ať se neplýtvá).

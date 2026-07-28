@@ -39,6 +39,27 @@ export interface AresKlient {
    * abychom si nevymýšleli (TP-2).
    */
   najdiPodleJmena(nazev: string): Promise<AresZaznam | null>;
+
+  /**
+   * Současní členové statutárního orgánu z veřejného rejstříku — u s.r.o.
+   * jednatelé, u a.s. představenstvo.
+   *
+   * Proč: u většiny firem je to jediné jméno, které se dá doložit oficiálním
+   * zdrojem. Kontaktní adresu nedá, ale mění „info@firma.cz" na „info@ a víme,
+   * že jednatel je Tomáš Honzík". U firmy o třiceti lidech je to často přesně
+   * ten, kdo o obědech rozhoduje; u pětisetčlenné rozhodně ne.
+   *
+   * **Bere jen jméno a funkci.** Rejstřík vydá i datum narození a bydliště —
+   * ty se nikdy nikam nepřenášejí.
+   */
+  najdiStatutarniOrgany(ico: string): Promise<StatutarniOrgan[]>;
+}
+
+/** Člen statutárního orgánu. Vědomě neobsahuje nic víc než jméno a funkci. */
+export interface StatutarniOrgan {
+  jmeno: string;
+  prijmeni: string;
+  funkce: string | null;
 }
 
 const ZAKLAD = "https://ares.gov.cz/ekonomicke-subjekty-v-be/rest";
@@ -69,6 +90,22 @@ interface AresSubjektDto {
   czNace?: string[];
   pravniForma?: string;
   statistickeUdaje?: { kategoriePoctuPracovniku?: string };
+}
+
+/**
+ * Odpověď sub-registru veřejného rejstříku. Popisujeme jen to, co používáme —
+ * `fyzickaOsoba` nese i `datumNarozeni` a `adresa`, které vědomě ignorujeme.
+ */
+interface VrOdpoved {
+  zaznamy?: Array<{
+    statutarniOrgany?: Array<{
+      clenoveOrganu?: Array<{
+        datumVymazu?: string;
+        clenstvi?: { funkce?: { nazev?: string } };
+        fyzickaOsoba?: { jmeno?: string; prijmeni?: string };
+      }>;
+    }>;
+  }>;
 }
 
 function mapujSubjekt(dto: AresSubjektDto): AresZaznam | null {
@@ -179,6 +216,36 @@ export function vytvorAresKlienta(opts: AresKlientOpts = {}): AresKlient {
       const norm = (s: string) => s.toLowerCase().replace(/[\s.,]/g, "");
       const presna = subjekty.filter((s) => norm(s.nazev) === norm(ocisteny));
       return presna.length === 1 ? presna[0]! : null;
+    },
+
+    async najdiStatutarniOrgany(ico) {
+      if (!jeValidniIco(ico)) return [];
+      const res = await setrny(() =>
+        fetchFn(`${ZAKLAD}/ekonomicke-subjekty-vr/${ico}`, {
+          headers: { accept: "application/json" },
+        }),
+      );
+      if (res.status === 404) return [];
+      if (!res.ok) throw new Error(`ARES rejstřík ${res.status} pro IČO ${ico}`);
+
+      const data = (await res.json()) as VrOdpoved | null;
+      const clenove = (data?.zaznamy ?? [])
+        .flatMap((z) => z.statutarniOrgany ?? [])
+        .flatMap((o) => o.clenoveOrganu ?? []);
+
+      const vysledek: StatutarniOrgan[] = [];
+      for (const c of clenove) {
+        // Vymazaný člen je bývalý — nabízet ho jako kontakt by bylo zavádějící.
+        if (c.datumVymazu) continue;
+        const jmeno = c.fyzickaOsoba?.jmeno?.trim();
+        const prijmeni = c.fyzickaOsoba?.prijmeni?.trim();
+        // Členem orgánu bývá i právnická osoba — ta není koho oslovit.
+        if (!jmeno || !prijmeni) continue;
+        // Vědomě se opisují jen tři pole. Datum narození ani adresa bydliště
+        // se nesmí dostat dál ani omylem.
+        vysledek.push({ jmeno, prijmeni, funkce: c.clenstvi?.funkce?.nazev?.trim() ?? null });
+      }
+      return vysledek;
     },
 
     async najdiFirmyVObci(kodObce, o = {}) {

@@ -88,6 +88,72 @@ describe("overFirmu", () => {
   });
 });
 
+describe("statutární orgán z obchodního rejstříku", () => {
+  const vrOdpoved = {
+    icoId: "25232657",
+    zaznamy: [{
+      ico: "25232657",
+      statutarniOrgany: [{
+        nazevOrganu: "Statutární orgán",
+        clenoveOrganu: [
+          {
+            // Bývalý jednatel — vymazaný, nesmí se nabízet.
+            datumVymazu: "2014-08-15",
+            clenstvi: { funkce: { nazev: "Jednatel" } },
+            fyzickaOsoba: {
+              jmeno: "Jaromír", prijmeni: "Honzík",
+              datumNarozeni: "1965-03-11",
+              adresa: { textovaAdresa: "Olešovice 4, 33041 Bezvěrov" },
+            },
+          },
+          {
+            clenstvi: { funkce: { nazev: "Jednatel" } },
+            fyzickaOsoba: {
+              jmeno: "TOMÁŠ", prijmeni: "HONZÍK",
+              datumNarozeni: "1990-01-02",
+              adresa: { textovaAdresa: "Kokašice 12" },
+            },
+          },
+        ],
+      }],
+    }],
+  };
+
+  it("vrátí jen současné členy, ne vymazané", async () => {
+    const ares = vytvorAresKlienta({ fetchFn: mockFetch(() => vrOdpoved), prodlevaMs: 0 });
+    const o = await ares.najdiStatutarniOrgany("25232657");
+
+    expect(o).toEqual([{ jmeno: "TOMÁŠ", prijmeni: "HONZÍK", funkce: "Jednatel" }]);
+  });
+
+  it("NIKDY nevrací datum narození ani bydliště", async () => {
+    // Rejstřík je oba údaje vydá, ale nám do kartotéky nepatří — potřebujeme
+    // vědět, na koho se obrátit, ne kdy se narodil a kde bydlí.
+    const ares = vytvorAresKlienta({ fetchFn: mockFetch(() => vrOdpoved), prodlevaMs: 0 });
+    const o = await ares.najdiStatutarniOrgany("25232657");
+
+    const text = JSON.stringify(o);
+    expect(text).not.toContain("1990");
+    expect(text).not.toContain("Kokašice");
+    expect(Object.keys(o[0]!).sort()).toEqual(["funkce", "jmeno", "prijmeni"]);
+  });
+
+  it("u subjektu bez zápisu v rejstříku vrátí prázdno", async () => {
+    const ares = vytvorAresKlienta({ fetchFn: mockFetch(() => null), prodlevaMs: 0 });
+    expect(await ares.najdiStatutarniOrgany("00259705")).toEqual([]);
+  });
+
+  it("člena bez jména přeskočí", async () => {
+    const bezJmena = {
+      zaznamy: [{ statutarniOrgany: [{ clenoveOrganu: [
+        { clenstvi: { funkce: { nazev: "Jednatel" } }, pravnickaOsoba: { obchodniJmeno: "Správce s.r.o." } },
+      ] }] }],
+    };
+    const ares = vytvorAresKlienta({ fetchFn: mockFetch(() => bezJmena), prodlevaMs: 0 });
+    expect(await ares.najdiStatutarniOrgany("25232657")).toEqual([]);
+  });
+});
+
 describe("najdiFirmyVObci", () => {
   it("stránkuje přes /vyhledat a vrátí všechny subjekty", async () => {
     const stranka1 = {

@@ -2,6 +2,24 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Klíčový úkol Čmuchala: dohledat konkrétní osobu**
+  (jméno, pozice, telefon, e-mail — stačí jedno z nich). Jak se k tomu
+  dostane, je na jeho vynalézavosti, ale **každý nový způsob musí předem
+  odsouhlasit majitel.**
+- 2026-07-28 · majitel · **Hranice: nesmíme oslovit vůbec nikoho, ani kvůli
+  zjištění kontaktu.** Žádný telefon na centrálu, žádný dotaz na info@.
+  Kontakty se smí jen dohledávat ve veřejně dostupných zdrojích. Sedí to
+  na TP-8 (systém neodesílá nic).
+- 2026-07-28 · majitel · **Odhadované e-maily se neukládají vůbec.**
+  Odvozená adresa (`jmeno.prijmeni@firma.cz`) se v kartotéce tváří jako
+  fakt a porušuje pravidlo doloženého zdroje (TP-2). Radši žádná adresa.
+- 2026-07-28 · majitel · **Schválené zdroje kontaktů (všechny čtyři):**
+  (1) kontaktní osoba z otevřených dat MPSV, (2) statutární orgán
+  z obchodního rejstříku — **jen jméno a funkce, nikdy datum narození
+  ani bydliště**, (3) registr smluv (nejdřív ověřit přínos), (4) hlubší
+  průzkum webu včetně PDF a archivu, (5) učící se playbook.
+  **LinkedIn zůstává zakázaný** — mění ho jen SPEC, ne tohle rozhodnutí.
+
 - 2026-07-27 · majitel · **Cílem je postupně projít celou ČR**, ne jen okolní
   obce. Velká města (Praha, Brno, Ostrava, K. Vary) musí fungovat stejně jako
   vesnice. → vynutilo si přechod na kompletní registr ČSÚ (viz níž).

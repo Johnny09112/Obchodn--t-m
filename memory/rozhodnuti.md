@@ -2,6 +2,12 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Sdílená databáze je Supabase projekt
+  `Customer_finder`** (ref `sedjnwllzyeuiruxgoil`, eu-central-1 Frankfurt,
+  0 Kč/měsíc). Ne „Cantinero" — ten název je použitý jinde a systém stejně
+  obsluhuje víc projektů. Projekt Letitgoo (`exjrieuhvmzdkregajyh`)
+  pozastaven, aby se vešel do limitu dvou aktivních; jde vrátit zpět.
+
 - 2026-07-28 · majitel · **Systém je jeden, projektů bude víc.** Registr
   subjektů je společný a nic se z něj nezahazuje; **drahá práce (ověření,
   zaměření, rešerše) se dělá až po profilu projektu.** Pravidla „koho

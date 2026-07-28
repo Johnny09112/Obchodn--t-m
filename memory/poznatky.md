@@ -1,5 +1,26 @@
 # Poznatky a gotchas
 
+## Supabase: přímá adresa databáze je jen na IPv6 (2026-07-28)
+
+Nový projekt (`Customer_finder`, ref `sedjnwllzyeuiruxgoil`, eu-central-1)
+dostal připojovací řetězec s hostitelem `db.<ref>.supabase.co` — jenže ten
+**má jen AAAA záznam, tedy pouze IPv6.** Ze sítě bez IPv6 se nepřeloží
+a Node spadne na `getaddrinfo ENOENT`, což vypadá jako překlep v adrese,
+ne jako problém se sítí.
+
+**Řešení: připojovat se přes pooler**, který IPv4 má:
+
+```
+postgresql://postgres.<ref>:HESLO@aws-0-<region>.pooler.supabase.com:5432/postgres
+```
+
+Mění se tři věci naráz — uživatel (`postgres` → `postgres.<ref>`), hostitel
+a nic jiného. **Port musí zůstat 5432 (session mode).** Port 6543 je
+transaction mode, který nepodporuje připravené dotazy a rozbil by migrace.
+
+Ověření, než začneš hledat chybu jinde:
+`nslookup db.<ref>.supabase.co` — vrátí-li jen adresu s dvojtečkami, je to ono.
+
 ## Souhrn z vyhledávače umí halucinovat kontakt (2026-07-28)
 
 Čmuchal při rešerši narazil na to, že **textový souhrn z WebSearch uvedl

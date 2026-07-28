@@ -14,3 +14,7 @@ docs/vizualizace/kartoteka.html
 
 # Jednorázové průzkumné skripty
 src/tmp-*.ts
+
+# Závislosti aplikace
+app/node_modules/
+app/dist/

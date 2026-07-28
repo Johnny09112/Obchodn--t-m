@@ -2,9 +2,23 @@
 
 _Aktualizováno: 2026-07-29_
 
-> **DALŠÍ KROK: postavit aplikaci (mapa a oblasti).** Příprava je hotová
-> celá. Předávka s technickým zadáním a pastmi:
+> **DALŠÍ KROK: mapa a kreslení oblastí v aplikaci.** Kostra aplikace
+> s přihlášením je hotová (`app/`, viz níže). Technické zadání a pasti:
 > **[docs/DALSI-SESSION-FRONTEND.md](../docs/DALSI-SESSION-FRONTEND.md)**
+
+## Aplikace (`app/`) — kde je
+
+Vite + React + TypeScript, vlastní `package.json`, spouští se
+`npm --prefix app run dev` (port 5173). Kořenový `npm test` se jí netýká.
+
+- **Hotové:** přihlášení (Supabase Auth), lišta s rolí a odhlášením,
+  kartotéka firem s hledáním a souhrnem (jen ke čtení).
+- **Ověřené:** nepřihlášený nevidí nic (0 řádků), role `uzivatel` vidí
+  167 firem a 144 kontaktů. Postup ověření bez hesla je v `poznatky.md`.
+- **Neověřené:** samotné přihlášení heslem — to musí zkusit majitel,
+  hesla nezadávám. Aplikace zatím běží jen lokálně, na Vercel nenasazená.
+- **Chybí:** mapa, kreslení oblastí, seznam firem v oblasti, kampaně.
+- Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
 
 ## Kde jsme
 

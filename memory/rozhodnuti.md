@@ -210,3 +210,14 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   režimu. Bez deníku vyřazení to nejde.
 - 2026-07-27 · majitel · **Kartotéka se člení podle oblastí** (obcí jídelen),
   ne jako jeden plochý seznam.
+- 2026-07-29 · Claude · **Aplikace stojí v `app/` jako samostatný projekt**
+  (Vite + React + TypeScript, vlastní `package.json`). Proč: kořenový
+  `npm test` běží nad PGlite offline a nesmí se o frontend zakopnout;
+  Vercel dostane `app` jako kořen. Vratné technické rozhodnutí.
+- 2026-07-29 · Claude · **Publishable klíč je v kódu aplikace**
+  (`app/src/supabase.ts`, přebitelný přes `VITE_*`). Proč: klíč je veřejný
+  ze své podstaty — hranici drží RLS, ne utajení klíče. Ušetří to nastavování
+  při nasazení. `service_role` se do aplikace nedostane nikdy.
+- 2026-07-29 · Claude · **Samoobslužná registrace v aplikaci není.** Účty
+  i hesla zakládá správce. Proč: kdokoli s adresou by si jinak založil účet
+  a role `host` sice nic nevidí, ale nemá smysl tu možnost vůbec nabízet.

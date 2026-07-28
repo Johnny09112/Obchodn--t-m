@@ -1,0 +1,287 @@
+<title>Cantinero — aplikace, stav stavby</title>
+<style>
+  /*
+   * Drží stejný vizuální jazyk jako samotná aplikace (app/src/styl.css):
+   * papírová zeleň, inkoust, razítková modř a údaj s tečkovaným vodičem.
+   * Písma jsou systémová — stránka se otevírá i bez internetu.
+   */
+  :root {
+    --papir: #e9ebe3;
+    --karta: #fcfcf9;
+    --inkoust: #1a211c;
+    --slaby: #5f6b62;
+    --linka: #ced4c6;
+    --razitko: #2e4a7d;
+    --zelen: #3f6b3a;
+    --horcice: #8a6209;
+    --cihla: #8e3b2c;
+    --pismo: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+    --data: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #141815;
+      --karta: #1c221e;
+      --inkoust: #e4e8de;
+      --slaby: #97a396;
+      --linka: #333c35;
+      --razitko: #8fb2e6;
+      --zelen: #79b56f;
+      --horcice: #d3a63f;
+      --cihla: #d98474;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #141815;
+    --karta: #1c221e;
+    --inkoust: #e4e8de;
+    --slaby: #97a396;
+    --linka: #333c35;
+    --razitko: #8fb2e6;
+    --zelen: #79b56f;
+    --horcice: #d3a63f;
+    --cihla: #d98474;
+  }
+  :root[data-theme="light"] {
+    --papir: #e9ebe3;
+    --karta: #fcfcf9;
+    --inkoust: #1a211c;
+    --slaby: #5f6b62;
+    --linka: #ced4c6;
+    --razitko: #2e4a7d;
+    --zelen: #3f6b3a;
+    --horcice: #8a6209;
+    --cihla: #8e3b2c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--papir);
+    color: var(--inkoust);
+    font-family: var(--pismo);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .stranka {
+    max-width: 54rem;
+    margin: 0 auto;
+    padding: 3rem 1.25rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.25rem;
+  }
+
+  .eyebrow {
+    font-family: var(--data);
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--slaby);
+    margin: 0 0 0.4rem;
+  }
+  h1 {
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 650;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 + p { margin: 0.6rem 0 0; color: var(--slaby); max-width: 42rem; }
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.9rem;
+  }
+
+  /* údaj ····· hodnota — nosný prvek, převzatý z aplikace */
+  .udaj { display: flex; align-items: baseline; gap: 0.5rem; margin: 0; padding: 0.25rem 0; }
+  .udaj .popisek { color: var(--slaby); white-space: nowrap; }
+  .udaj::after {
+    content: ""; order: 1; flex: 1; height: 0;
+    border-bottom: 1px dotted var(--linka); transform: translateY(-0.25em);
+  }
+  .udaj .hodnota {
+    order: 2; font-family: var(--data); font-weight: 500;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+
+  .souhrn {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0 2rem;
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    padding: 1rem 1.2rem;
+  }
+
+  ul.seznam { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+  ul.seznam li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-left-width: 3px;
+    border-radius: 3px;
+    padding: 0.7rem 0.9rem;
+  }
+  li .co { font-weight: 600; }
+  li .proc { color: var(--slaby); font-size: 0.9375rem; }
+
+  /* Stav nese tvar i barvu — pozná se i bez rozlišování barev. */
+  .znak { width: 0.7rem; height: 0.7rem; margin-top: 0.45rem; background: currentColor; flex: none; }
+  li.hotovo { border-left-color: var(--zelen); }
+  li.hotovo .znak { color: var(--zelen); }
+  li.ceka { border-left-color: var(--horcice); }
+  li.ceka .znak { color: var(--horcice); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  li.na-majiteli { border-left-color: var(--razitko); }
+  li.na-majiteli .znak { color: var(--razitko); border-radius: 50%; }
+  li.neoverene { border-left-color: var(--cihla); }
+  li.neoverene .znak { color: var(--cihla); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+
+  .legenda { display: flex; flex-wrap: wrap; gap: 0.35rem 1.2rem; font-size: 0.875rem; color: var(--slaby); margin-top: 0.9rem; }
+  .legenda span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .legenda .znak { margin-top: 0; width: 0.6rem; height: 0.6rem; }
+
+  pre {
+    font-family: var(--data);
+    font-size: 0.8125rem;
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    padding: 0.8rem 0.9rem;
+    overflow-x: auto;
+    margin: 0;
+  }
+  footer { color: var(--slaby); font-size: 0.875rem; border-top: 1px dotted var(--linka); padding-top: 1.25rem; }
+  code { font-family: var(--data); font-size: 0.9em; }
+</style>
+
+<div class="stranka">
+  <header>
+    <p class="eyebrow">Cantinero · krok 4 · 29. července 2026</p>
+    <h1>Aplikace stojí na nohou</h1>
+    <p>
+      Kostra webové aplikace a přihlášení jsou hotové. Řetěz od přihlášení
+      přes pravidla přístupu až k datům je ověřený. Mapa a kreslení oblastí
+      jsou další na řadě.
+    </p>
+  </header>
+
+  <section class="souhrn">
+    <p class="udaj"><span class="popisek">Firem v kartotéce</span><span class="hodnota">167</span></p>
+    <p class="udaj"><span class="popisek">Vidí nepřihlášený</span><span class="hodnota">0</span></p>
+    <p class="udaj"><span class="popisek">Kontrola typů</span><span class="hodnota">bez chyby</span></p>
+    <p class="udaj"><span class="popisek">Náklady</span><span class="hodnota">0 Kč</span></p>
+  </section>
+
+  <section>
+    <h2>Co je hotové</h2>
+    <ul class="seznam">
+      <li class="hotovo">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Přihlašovací obrazovka</span><br />
+          <span class="proc">E-mail a heslo přes Supabase. Účty zakládá správce — samoobslužná registrace tu záměrně není.</span>
+        </span>
+      </li>
+      <li class="hotovo">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Kartotéka po přihlášení</span><br />
+          <span class="proc">Seznam firem s hledáním, souhrnem a stavem. Jen ke čtení — zapisuje ji agent.</span>
+        </span>
+      </li>
+      <li class="hotovo">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Nepřihlášený nevidí nic</span><br />
+          <span class="proc">Ověřeno dotazem zvenčí i v databázi: bez přihlášení se vrátí prázdno, ne data.</span>
+        </span>
+      </li>
+      <li class="hotovo">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Přihlášený vidí kartotéku</span><br />
+          <span class="proc">Ověřeno simulací přihlášení přímo v databázi: role <code>uzivatel</code> vidí 167 firem a 144 kontaktů.</span>
+        </span>
+      </li>
+    </ul>
+    <div class="legenda">
+      <span><span class="znak" style="color: var(--zelen)"></span> hotové a ověřené</span>
+      <span><span class="znak" style="color: var(--horcice); clip-path: polygon(50% 0, 100% 100%, 0 100%)"></span> další na řadě</span>
+      <span><span class="znak" style="color: var(--razitko); border-radius: 50%"></span> čeká na tebe</span>
+      <span><span class="znak" style="color: var(--cihla); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%)"></span> neověřené</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Jak se to ověřilo</h2>
+    <p style="margin: 0 0 0.8rem; color: var(--slaby)">
+      Aplikace chodí do databáze jako přihlášený uživatel, kdežto příkazová
+      řádka se připojuje jako vlastník a pravidla obchází — proto se muselo
+      ověřovat zvlášť. Heslo k tomu nebylo potřeba: přihlášení se dá
+      v databázi nasimulovat.
+    </p>
+    <pre>role                nepřihlášený      uživatel
+firmy                          0           167
+kontakty                       0           144
+oblasti                        0             1</pre>
+  </section>
+
+  <section>
+    <h2>Co potřebuju od tebe</h2>
+    <ul class="seznam">
+      <li class="na-majiteli">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Zkus se přihlásit</span><br />
+          <span class="proc">Svým heslem, které já zadávat nesmím. Tím se potvrdí i poslední článek řetězu — samotné přihlášení. Aplikace zatím běží jen na tvém počítači.</span>
+        </span>
+      </li>
+      <li class="na-majiteli">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Nasadit na Vercel?</span><br />
+          <span class="proc">Zatím ne, nebo hned? Adresa <code>find.cantinero.cz</code> se dá připojit až nakonec — do té doby stačí adresa od Vercelu.</span>
+        </span>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Další na řadě</h2>
+    <ul class="seznam">
+      <li class="ceka">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Mapa a kreslení oblastí</span><br />
+          <span class="proc">To hlavní, kvůli čemu aplikace vzniká: natáhnout tvar jedním směrem, když kruh usekne sousední město v půlce. Výpočet je hotový v jádru, aplikace ho jen zobrazí a zapíše.</span>
+        </span>
+      </li>
+      <li class="ceka">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Seznam firem uvnitř oblasti</span><br />
+          <span class="proc">S filtry na velikost, kategorii a stav spojení — pod mapou, ať je vidět, co se výběrem mění.</span>
+        </span>
+      </li>
+      <li class="ceka">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Kampaně</span><br />
+          <span class="proc">Výběr firem do pojmenované kampaně. Odesílání zůstává zavřené — aplikace ho ani neumí.</span>
+        </span>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    Data ze sdílené databáze <code>Customer_finder</code> (eu-central-1), stav k 29. 7. 2026.
+    Žádná ukázková čísla — vše výše je změřené.
+  </footer>
+</div>

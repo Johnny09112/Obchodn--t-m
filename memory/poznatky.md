@@ -497,3 +497,24 @@ dřív nebo později vyplní smyšlenou hodnotou — a ta se pak tváří jako f
 Kapacita se stane tvrdou podmínkou až u fronty na oslovení (fáze 3): tam
 bez ní neodejde nic, protože slibovat obědy, které nemá kdo uvařit, je horší
 než neoslovit.
+
+## Jak vyzkoušet pravidla RLS bez přihlašování (2026-07-29)
+
+Aplikace chodí do databáze pod přihlášeným uživatelem, kdežto náš CLI se
+připojuje jako vlastník a pravidla obchází. Co funguje z příkazové řádky
+tedy nemusí fungovat z aplikace — a ověřit to jde i bez cizího hesla:
+
+```sql
+begin;
+set local role authenticated;
+set local request.jwt.claims = '{"role":"authenticated","app_metadata":{"role":"uzivatel"}}';
+select count(*) from companies;   -- co uvidí aplikace
+rollback;
+```
+
+`auth.jwt()` čte přesně tohle nastavení, takže se chová stejně jako při
+skutečném přihlášení. Role `anon` (nepřihlášený) se zkouší stejně.
+
+Ověřeno 2026-07-29: `anon` vidí 0 firem, `uzivatel` 167 — pravidla drží.
+Pozor, `rollback` na konci není kosmetika: bez něj by případný zápis
+ve zkoušce zůstal v datech.

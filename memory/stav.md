@@ -17,7 +17,11 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **157 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **175 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **Konkrétní osoba u firmy** — hlavní úkol Čmuchala. Kód sám zapisuje
+  kontakt z otevřených dat MPSV (jméno, pozice, e-mail, telefon) a jednatele
+  z veřejného rejstříku tam, kde jinak kontakt není. Měřeno: jméno by
+  přibylo u 8 z 10 firem, které dosud neměly žádné. Detaily v `poznatky.md`.
 - **Zdrojem seznamu firem je kompletní registr ČSÚ** (`src/registr.ts`,
   otevřená data, 541 MB v `data/cache/`). Limit 1 000 výsledků tím přestal
   platit — funguje stejně na vesnici i v Praze. Adresovatelný trh celé ČR:
@@ -57,6 +61,9 @@ Kapacita známá jen u Bezdružic (10 obědů/den). Všech 20 firem nad
 
 ## Další krok (v tomto pořadí)
 
+0. **Přesbírat stávající 4 oblasti** — nové zdroje kontaktů se uplatní až
+   při běhu. Dnešní kartotéka je ještě bez nich. Pozor: index MPSV má novou
+   verzi, takže se soubor stáhne znovu (~178 MB).
 1. **Doplnit jídelny, kde chceme sbírat.** Sběr je technicky odblokovaný
    všude v ČR, ale běh potřebuje jídelnu s IČO a souřadnicemi. Chybí
    34. ZŠ Plzeň (odsouhlasená) a jakákoli jídelna pro Stříbro (neodsouhlasená

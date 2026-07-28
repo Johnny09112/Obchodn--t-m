@@ -14,6 +14,7 @@ import { vytvorOsmKlienta } from "./osm.js";
 import { vytvorRegistrKlienta } from "./registr.js";
 import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
+import { novePoznatky } from "./playbook.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -154,13 +155,18 @@ async function cmdRun(argv: string[]): Promise<void> {
     console.log(`  vyřazeno — bez zaměstnanců: ${souhrn.bezZamestnancu}, pod limitem velikosti: ${souhrn.podLimitem}, agentur: ${souhrn.agentur}, nevhodný obor: ${souhrn.vyloucenyObor}`);
     console.log(`  chyb: ${souhrn.chyby.length}, náklady: ${souhrn.nakladyUsd.toFixed(2)}`);
 
-    if (souhrn.poznamkyProPlaybook.length > 0) {
+    // Do playbooku jen to, co je opravdu nové a obecné. Výpis jednotlivých
+    // kandidátů se opakuje každý běh a patří do deníku vyřazení, ne sem.
+    const stavajici = await readFile("playbook-cmuchal.md", "utf8").catch(() => "");
+    const nove = novePoznatky(stavajici, souhrn.poznamkyProPlaybook);
+    if (nove.length > 0) {
       const datum = new Date().toISOString().slice(0, 10);
       await appendFile(
         "playbook-cmuchal.md",
-        `\n## Běh ${datum} (${souhrn.behId})\n${souhrn.poznamkyProPlaybook.map((p) => `- ${p}`).join("\n")}\n`,
+        `\n## Běh ${datum} (${souhrn.behId})\n${nove.map((p) => `- ${p}`).join("\n")}\n`,
         "utf8",
       );
+      console.log(`  do playbooku přibylo ${nove.length} poznatků`);
     }
   } finally {
     await db.close();

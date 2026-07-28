@@ -1,5 +1,40 @@
 # Poznatky a gotchas
 
+## Kontakty: co dá jméno u firmy (2026-07-28)
+
+Hlavní úkol Čmuchala je najít konkrétní osobu. Ověřené zdroje:
+
+- **Otevřená data MPSV kontakt obsahovala celou dobu** a přehlédli jsme to.
+  `prvniKontaktSeZamestnavatelem.komuSeHlasit` → `jmeno`, `prijmeni`,
+  `titulPredJmenem/ZaJmenem`, **`poziceVeSpolecnosti`**, `email`, `telefon`.
+  Soubor stahujeme kvůli pracovištím, takže to nestojí ani dotaz navíc.
+  Omezení: jen firmy, které nabírají; a **účel adresy je nábor, ne nabídky
+  dodavatelů** — zapisuje se to do evidence, ať je to při schvalování vidět.
+- **Statutární orgán z ARES** `/ekonomicke-subjekty-vr/{ico}` →
+  `zaznamy[].statutarniOrgany[].clenoveOrganu[]`. Měřeno na našich datech:
+  **ze 10 firem nad 25 zam. bez jediného jména by jméno přibylo u 8**,
+  včetně REVIANT a I.U.STAVBY, které nemají vůbec web.
+  - **Pozor: odpověď nese i `datumNarozeni` a adresu bydliště.** Bereme jen
+    jméno a funkci; hlídá to test, který hledá ta pole ve výstupu.
+  - Vymazaní členové (`datumVymazu`) jsou bývalí — přeskakovat.
+  - Členem orgánu bývá i právnická osoba — tu není koho oslovit.
+  - Jména chodí VERZÁLKAMI; neupravujeme je, opravovat je by bylo hádání.
+- **Registr smluv se neosvědčil.** `dump_YYYY_MM.xml` nese jen `nazev`, `ico`,
+  `adresa`, `datovaSchranka` — **žádnou kontaktní osobu**. Jména by byla až
+  uvnitř přiložených PDF. Ověřeno, nestavíme.
+
+## Playbook se utopil ve vlastním logu (2026-07-28)
+
+CLI po každém běhu připisovalo do `playbook-cmuchal.md` všechny poznámky
+včetně výpisu jednotlivých kandidátů („nespárováno s rejstříkem: …").
+Výsledek: **osm kopií téhož čtyřicetiřádkového seznamu** a skutečné poznatky
+v tom zanikly.
+
+Zavedeno `src/playbook.ts`: připíše se jen to, co je obecné a co v souboru
+ještě není. Kdo přesně neprošel a proč, je v tabulce `vyrazeni`, která je na
+to určená. **Obecné poučení: dokument, do kterého stroj přisypává, potřebuje
+filtr — jinak z knihovny udělá skládku.**
+
 ## Kompletní registr ČSÚ — konec limitu 1 000 (2026-07-27)
 
 `https://opendata.csu.gov.cz/soubory/od/od_org03/res_data.csv` — **celý

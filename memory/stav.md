@@ -64,9 +64,6 @@ Kapacita známá jen u Bezdružic (10 obědů/den). Všech 20 firem nad
 
 ## Další krok (v tomto pořadí)
 
-0. **Přesbírat stávající 4 oblasti** — nové zdroje kontaktů se uplatní až
-   při běhu. Dnešní kartotéka je ještě bez nich. Pozor: index MPSV má novou
-   verzi, takže se soubor stáhne znovu (~178 MB).
 1. **Ostrý běh na Plzni** — jídelna je založená, čeká 719 firem nad 25 zam.
    v 10 obvodech. První zkouška velkého města; pozor na počet dotazů na
    geokódování (1 req/s → 719 firem je přes 12 minut jen na zaměřování).

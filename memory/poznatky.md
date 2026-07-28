@@ -1,5 +1,20 @@
 # Poznatky a gotchas
 
+## Přesběr 4 oblastí registrem ČSÚ: 0 nových firem (2026-07-28)
+
+Oblasti vznikly starým sweepem ARES, tak jsme je přejeli znovu i s registrem
+ČSÚ. **Ve všech čtyřech nula nových firem** — všichni kandidáti z registru
+už v kartotéce byli. Dobrá zpráva o kvalitě dat: starý sweep na malých
+obcích nic nemine.
+
+Je to i logické: registr uplatňuje práh velikosti u zdroje (výchozí 10
+zaměstnanců), zatímco starý sweep bral i mikrofirmy a jen je značil. Registr
+tedy na malé obci najde **podmnožinu** toho, co už máme. Jeho přínos je
+jinde — u velkých měst, kde starý sweep vůbec neprojde.
+
+Mimochodem: **Overpass (mapy) byl u Zbůchu nedostupný na obou serverech**,
+běh pokračoval z ostatních zdrojů. Potvrzuje se, že na něm nesmí nic stát.
+
 ## Nový zdroj se k dřív posbíraným firmám sám nedostane (2026-07-28)
 
 `spustCmuchala` firmu, kterou už zná, přeskočí (`preskoceno`) — a je to

@@ -161,7 +161,6 @@ async function cmdRun(argv: string[]): Promise<void> {
       ["už v kartotéce", souhrn.preskoceno],
       ["nespárováno s rejstříkem", souhrn.nesparovano],
       ["bez zaměstnanců", souhrn.bezZamestnancu],
-      ["agentura práce", souhrn.agentur],
       ["nevhodný obor", souhrn.vyloucenyObor],
       ["bytový dům", souhrn.bytovychDomu],
       ["naše vlastní jídelna", souhrn.partnerskychJidelen],
@@ -180,6 +179,11 @@ async function cmdRun(argv: string[]): Promise<void> {
     }
     if (sedi !== souhrn.kandidatu) {
       console.log(`    (nezařazeno: ${souhrn.kandidatu - sedi})`);
+    }
+    // Agentury se odfiltrují ještě před sestavením seznamu kandidátů, takže
+    // do rozpadu výše nepatří — počítaly by se dvakrát.
+    if (souhrn.agentur > 0) {
+      console.log(`  agentur práce odfiltrováno u zdroje: ${souhrn.agentur}`);
     }
     console.log(`  pod limitem velikosti (uloženo, ale mimo frontu): ${souhrn.podLimitem}`);
     console.log(`  chyb: ${souhrn.chyby.length}, náklady: ${souhrn.nakladyUsd.toFixed(2)}`);

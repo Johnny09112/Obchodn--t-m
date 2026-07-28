@@ -17,7 +17,10 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **175 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **179 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **5 jídelen**, z toho 4 se známou kapacitou (70 obědů/den celkem).
+  Pátá je 34. ZŠ Plzeň, Gerská — kapacita zatím neznámá.
+- `.env` se načítá sám, `NOMINATIM_CONTACT` se už nemusí psát k příkazům.
 - **Konkrétní osoba u firmy** — hlavní úkol Čmuchala. Kód sám zapisuje
   kontakt z otevřených dat MPSV (jméno, pozice, e-mail, telefon) a jednatele
   z veřejného rejstříku tam, kde jinak kontakt není. Měřeno: jméno by
@@ -64,12 +67,12 @@ Kapacita známá jen u Bezdružic (10 obědů/den). Všech 20 firem nad
 0. **Přesbírat stávající 4 oblasti** — nové zdroje kontaktů se uplatní až
    při běhu. Dnešní kartotéka je ještě bez nich. Pozor: index MPSV má novou
    verzi, takže se soubor stáhne znovu (~178 MB).
-1. **Doplnit jídelny, kde chceme sbírat.** Sběr je technicky odblokovaný
-   všude v ČR, ale běh potřebuje jídelnu s IČO a souřadnicemi. Chybí
-   34. ZŠ Plzeň (odsouhlasená) a jakákoli jídelna pro Stříbro (neodsouhlasená
-   — majitel chce Stříbro pustit, ale partner tam zatím není).
-2. **Ostrý běh na Plzni** — 719 firem nad 25 zam. v 10 obvodech. První
-   zkouška velkého města; pozor na počet dotazů na geokódování (1 req/s).
+1. **Ostrý běh na Plzni** — jídelna je založená, čeká 719 firem nad 25 zam.
+   v 10 obvodech. První zkouška velkého města; pozor na počet dotazů na
+   geokódování (1 req/s → 719 firem je přes 12 minut jen na zaměřování).
+2. **Stříbro** — technicky odblokované (285 subjektů projde), ale partnerská
+   jídelna tam není. Majitel ho chce pustit; buď najít partnera, nebo obrátit
+   postup a nechat systém napřed ukázat, kde jsou zaměstnanci.
 3. **Projít vzorek subjektů „velikost neuvedena"** — celostátně jich je
    480 498, takže číslo 35 138 cílů je spodní odhad. Můžou se tam schovávat
    skuteční zaměstnavatelé.

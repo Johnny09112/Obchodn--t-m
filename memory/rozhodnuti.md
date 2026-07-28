@@ -2,6 +2,18 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Pátá jídelna: 34. ZŠ Plzeň, Gerská 32** (IČO
+  66362504, 49.7774414/13.3710132, obvod Plzeň 1 – Bolevec). Kapacita
+  zatím neznámá. Kapacity ostatních: Bezdružice 10, Zbůch 20, Tlučná 20,
+  **Hrádek 20** → známé celkem 70 obědů/den.
+- 2026-07-28 · majitel · **Ke každému většímu výstupu chci HTML** — kartotéku
+  i mapu, ne jen text v chatu. (Pravidlo v CLAUDE.md platilo, přestal jsem
+  ho dodržovat a majitel to musel připomenout.) Mapa se posílá jako soubor,
+  ne jako publikovaná stránka — ta má zakázané stahování dlaždic.
+- 2026-07-28 · Claude · **`.env` se načítá automaticky** (`src/env.ts`).
+  Dřív se `NOMINATIM_CONTACT` musel psát ke každému příkazu, což je zbytečné
+  tření. Hodnoty z prostředí mají přednost před souborem.
+
 - 2026-07-28 · majitel · **Klíčový úkol Čmuchala: dohledat konkrétní osobu**
   (jméno, pozice, telefon, e-mail — stačí jedno z nich). Jak se k tomu
   dostane, je na jeho vynalézavosti, ale **každý nový způsob musí předem

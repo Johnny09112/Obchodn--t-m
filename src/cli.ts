@@ -1,5 +1,10 @@
 import { parseArgs } from "node:util";
 import { appendFile, readFile } from "node:fs/promises";
+import { nactiEnv } from "./env.js";
+
+// Hned na začátku, ať nastavení ze souboru vidí i klienti vytvářené níž.
+nactiEnv();
+
 import Anthropic from "@anthropic-ai/sdk";
 import { pripojPglite, pripojPostgres, spustMigrace, type Db } from "./db.js";
 import { vytvorAresKlienta } from "./ares.js";

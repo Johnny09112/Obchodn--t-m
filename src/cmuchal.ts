@@ -2,6 +2,7 @@ import type { AresKlient, AresZaznam } from "./ares.js";
 import type { Db } from "./db.js";
 import type { Enricher } from "./enrich.js";
 import { naBlacklistu, nactiBlacklist, type Pravidlo } from "./blacklist.js";
+import { nactiProfil, oborProchazi, type Profil } from "./profil.js";
 import { FORMY_ZAMESTNAVATELU, jeBytovyDum, popisFormy } from "./formy.js";
 import { jeValidniIco } from "./ico.js";
 import { klasifikujZonu, vzdalenostM, type Bod } from "./geo.js";
@@ -10,7 +11,7 @@ import type { MpsvKlient, MpsvKontakt } from "./mpsv.js";
 import type { OsmKlient } from "./osm.js";
 import type { RegistrKlient } from "./registr.js";
 import type { ResKlient } from "./res.js";
-import { jeVyloucenyObor, spocitejSkore } from "./score.js";
+import { spocitejSkore } from "./score.js";
 import { splnujeMinimum } from "./res.js";
 import {
   nastavGeo,
@@ -75,6 +76,8 @@ export interface CmuchalSouhrn {
   dleZdroje: Record<ZdrojKandidata, number>;
   /** Kolik firem odpadlo v registru na prahu velikosti, než se na ně sáhlo. */
   odfiltrovanoVRegistru: number;
+  /** Podle kterého profilu se sbíralo. */
+  profil: string;
   kvalifikovano: number;
   cekajicich: number;
   bezZamestnancu: number;
@@ -118,7 +121,7 @@ interface Jidelna {
 export async function spustCmuchala(
   deps: CmuchalDeps,
   jidelnaId: string,
-  opts: { limit?: number; aresSweep?: boolean; minZamestnancu?: number } = {},
+  opts: { limit?: number; aresSweep?: boolean; minZamestnancu?: number; profil?: string } = {},
 ): Promise<CmuchalSouhrn> {
   const { db } = deps;
 
@@ -155,6 +158,7 @@ export async function spustCmuchala(
     kandidatu: 0,
     dleZdroje: { mpsv: 0, osm: 0, ares: 0, registr: 0 },
     odfiltrovanoVRegistru: 0,
+    profil: "",
     kvalifikovano: 0,
     cekajicich: 0,
     bezZamestnancu: 0,
@@ -182,17 +186,25 @@ export async function spustCmuchala(
 
   // Ruční pravidla majitele — načtou se jednou, platí pro celý běh.
   const blacklist = await nactiBlacklist(db);
+  // Profil říká, koho vůbec hledáme. Bez něj by pravidla zůstala v kódu
+  // a jiný projekt (Cantinero Business) by znamenal přepisovat program.
+  const profil = await nactiProfil(db, opts.profil);
+  souhrn.profil = profil.kod;
 
   try {
-    const kandidati = await sesbirejKandidaty(deps, jidelna, souhrn, opts);
+    const kandidati = await sesbirejKandidaty(deps, jidelna, souhrn, { ...opts, profilObj: profil });
     souhrn.kandidatu = kandidati.length;
 
     for (const kandidat of kandidati.slice(0, opts.limit ?? kandidati.length)) {
       try {
         await zpracujKandidata(deps, jidelna, kandidat, souhrn, {
-          minZamestnancu: opts.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU,
+          // Práh z příkazu má přednost, jinak platí ten z profilu.
+          // Profil s NULL znamená „velikost neposuzovat" — u jídelen se
+          // ptáme na kapacitu, ne na počet zaměstnanců.
+          minZamestnancu: opts.minZamestnancu ?? profil.minZamestnancu ?? 0,
           partnerskaIca,
           blacklist,
+          profil,
         });
       } catch (e) {
         souhrn.chyby.push({
@@ -214,7 +226,7 @@ async function sesbirejKandidaty(
   deps: CmuchalDeps,
   jidelna: Jidelna,
   souhrn: CmuchalSouhrn,
-  opts: { aresSweep?: boolean; minZamestnancu?: number },
+  opts: { aresSweep?: boolean; minZamestnancu?: number; profilObj?: Profil },
 ): Promise<Kandidat[]> {
   const kandidati: Kandidat[] = [];
 
@@ -306,9 +318,12 @@ async function sesbirejKandidaty(
             `${jidelna.obec ?? "obec"} je v registru rozdělená na ${kde.length} územních jednotek`,
           );
         }
-        const minZam = opts.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU;
+        // Práh i právní formy bere z profilu — jiný projekt hledá jiné
+        // subjekty (Cantinero Business i živnostníky, bez ohledu na velikost).
+        const minZam = opts.minZamestnancu ?? opts.profilObj?.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU;
         for (const f of await deps.registr.zamestnavateleVJednotkach(kde, {
           minZamestnancu: minZam,
+          pravniFormy: opts.profilObj ? [...opts.profilObj.formy] : undefined,
         })) {
           kandidati.push({
             zdroj: "registr",
@@ -414,6 +429,7 @@ async function zpracujKandidata(
     minZamestnancu: number;
     partnerskaIca: Set<string>;
     blacklist: readonly Pravidlo[];
+    profil: Profil;
   },
 ): Promise<void> {
   const { db } = deps;
@@ -504,9 +520,10 @@ async function zpracujKandidata(
     return;
   }
 
-  // Obor: restaurace a agentury práce nemá smysl oslovovat vůbec, ať už mají
-  // zaměstnanců kolik chtějí.
-  if (jeVyloucenyObor(ares.czNace)) {
+  // Obor podle profilu projektu. Pro Cantinero jsou restaurace ven (vaří si
+  // samy), pro Cantinero Business jsou naopak cílem — proto to nesmí být
+  // zadrátované v kódu.
+  if (!oborProchazi(pravidla.profil, ares.czNace)) {
     souhrn.vyloucenyObor++;
     await vyrad("vylouceny_obor", `CZ-NACE ${ares.czNace.join(", ")}`, ico);
     return;

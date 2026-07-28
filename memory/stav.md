@@ -17,7 +17,11 @@ na reálných datech dřív, než se pustí zbytek fáze 0.
 - Rešerše přes agenta na předplatném (`k-obohaceni` → `zapis-nalezy`),
   definice agenta v `.claude/agents/cmuchal.md`.
 - Kartotéka členěná po oblastech + mapa na podkladu OpenStreetMap.
-- **235 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **246 testů zelených, náklady 0 USD** (placené API nikdy neběželo).
+- **Profily projektu** (migrace 0014): pravidla „koho hledáme" jsou data.
+  `cantinero` (firmy 10+, restaurace ven) a `cantinero-business` (restaurace,
+  jídelny a školy, velikost se neposuzuje). Přepíná se `cli profil zvol <kod>`.
+- **Spolky jako kategorie** podle právní formy. „Ostatní" spadly z 24 na 9.
 - **Krok 2 frontendového plánu hotový: kategorie a blacklist** (migrace 0012).
   Kategorie jsou data, ne kód — dají se upravit bez zásahu do programu.
   167 firem zařazeno; „Restaurace a pohostinství" je zatím prázdná, protože

@@ -2,6 +2,18 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-28 · majitel · **Systém je jeden, projektů bude víc.** Registr
+  subjektů je společný a nic se z něj nezahazuje; **drahá práce (ověření,
+  zaměření, rešerše) se dělá až po profilu projektu.** Pravidla „koho
+  hledáme" proto přestala být v kódu a stala se daty (migrace 0014,
+  `src/profil.ts`). Ověřeno na Plzni: `cantinero` propustí 1 449 firem,
+  `cantinero-business` 1 662 restaurací a škol — stejný stroj, opačné zadání.
+  Další projekty majitele: BeHere, Easist, MAS Copilot; z nich čtyři ze šesti
+  hledají subjekty v ČR úplně stejně, jen jiné.
+- 2026-07-28 · majitel · **Spolky jako vlastní kategorie.** Poznají se podle
+  PRÁVNÍ FORMY, ne podle oboru — TJ Baník má „sportovní činnosti" stejně jako
+  komerční fitness. Zemědělství k výrobě, opravny a kultura ke službám.
+
 - 2026-07-28 · majitel · **Hosting: Vercel** (majitel ho má placený a má
   do něj přístup), ne Cloudflare Pages. ⚠ **Ale DNS zůstává problém:**
   `cantinero.cz` je vedená na Cloudflare a majitel do toho účtu přístup

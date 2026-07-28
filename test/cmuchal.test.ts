@@ -516,6 +516,55 @@ describe("velké město: sweep rejstříku nestačí", () => {
   });
 });
 
+describe("profil projektu řídí, koho vůbec hledáme", () => {
+  it("Cantinero Business obrátí zadání — restaurace jsou cíl, ne odpad", async () => {
+    const restaurace: AresZaznam = {
+      ico: "17255686", nazev: "Café Kryštof Harant s.r.o.", adresa: "Náves 1",
+      obec: "Bezdružice", czNace: ["56100"], velikostKategorie: null,
+      kodObce: 560740, pravniForma: "112",
+    };
+    const aresRestaurace: AresKlient = {
+      ...ares,
+      overFirmu: async () => restaurace,
+      najdiFirmyVObci: async () => [restaurace],
+    };
+    const mpsvRestaurace: MpsvKlient = {
+      zamestnavateleVObci: async () => [
+        { ico: "17255686", nazev: restaurace.nazev, mist: 2, inzeratu: 1,
+          kodObce: 560740, cisloDomovni: 1, jeAgentura: false, proKoho: null,
+          zdrojUrl: "https://data.mpsv.cz/x.json" },
+      ],
+      kontaktZamestnavatele: async () => null,
+    };
+
+    // S výchozím profilem restaurace vypadne jako nevhodný obor.
+    const sCantinero = await spustCmuchala(
+      { db, ares: aresRestaurace, res, geokoder, mpsv: mpsvRestaurace }, jidelnaId,
+    );
+    expect(sCantinero.vyloucenyObor).toBe(1);
+    expect(sCantinero.kvalifikovano).toBe(0);
+
+    // Po přepnutí profilu tatáž firma projde.
+    await db.query("update profily set aktivni = false");
+    await db.query("update profily set aktivni = true where kod = 'cantinero-business'");
+
+    const sBusiness = await spustCmuchala(
+      { db, ares: aresRestaurace, res, geokoder, mpsv: mpsvRestaurace }, jidelnaId,
+    );
+    expect(sBusiness.vyloucenyObor).toBe(0);
+    expect(sBusiness.kvalifikovano).toBe(1);
+  });
+
+  it("profil se propíše i do prahu velikosti", async () => {
+    // Business se na velikost neptá — u jídelny nás zajímá kapacita.
+    await db.query("update profily set aktivni = false");
+    await db.query("update profily set aktivni = true where kod = 'cantinero-business'");
+
+    const s = await spustCmuchala({ db, ares, res, geokoder, mpsv }, jidelnaId);
+    expect(s.podLimitem).toBe(0);
+  });
+});
+
 describe("ruční blacklist majitele", () => {
   it("firmu z blacklistu nezaloží a do deníku napíše majitelův důvod", async () => {
     await db.query(

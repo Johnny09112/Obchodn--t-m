@@ -27,6 +27,7 @@ import {
   nactiBlacklist, pridejPravidlo, smazPravidlo, type TypPravidla,
 } from "./blacklist.js";
 import { priradKategorie } from "./kategorie.js";
+import { nactiProfil, seznamProfilu, zvolProfil } from "./profil.js";
 import {
   firmyVOblasti, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
   type Oblast,
@@ -527,6 +528,44 @@ async function cmdOblast(argv: string[]): Promise<void> {
   }
 }
 
+/** Profily projektu — koho vlastně hledáme. */
+async function cmdProfil(argv: string[]): Promise<void> {
+  const { values, positionals } = parseArgs({
+    args: argv, allowPositionals: true, options: { kod: { type: "string" } },
+  });
+  const db = await pripojDb();
+  try {
+    if (positionals[0] === "zvol") {
+      const kod = values.kod ?? positionals[1];
+      if (!kod) {
+        console.error("Chybí kód profilu. Seznam: npm run cli -- profil");
+        process.exit(1);
+      }
+      await zvolProfil(db, kod);
+      console.log(`Aktivní profil: ${kod}. Uplatní se při příštím sběru.`);
+      return;
+    }
+
+    for (const p of await seznamProfilu(db)) {
+      console.log(`${p.aktivni ? "→" : " "} ${p.kod.padEnd(20)} ${p.nazev}`);
+      if (p.popis) console.log(`    ${p.popis}`);
+    }
+
+    const a = await nactiProfil(db);
+    console.log(`\nAktivní profil: ${a.nazev}`);
+    console.log(`  právních forem: ${a.formy.size}`);
+    console.log(`  práh velikosti: ${a.minZamestnancu ?? "neposuzuje se"}`);
+    if (a.jenObory.size > 0) {
+      console.log(`  JEN obory CZ-NACE: ${[...a.jenObory].sort().join(", ")}`);
+    }
+    if (a.vylouceneObory.size > 0) {
+      console.log(`  vyloučené obory: ${[...a.vylouceneObory].sort().join(", ")}`);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
 /** Doplní ke všem firmám kategorii podle oboru. */
 async function cmdKategorie(): Promise<void> {
   const db = await pripojDb();
@@ -736,6 +775,9 @@ switch (prikaz) {
   case "oblast":
     await cmdOblast(zbytek);
     break;
+  case "profil":
+    await cmdProfil(zbytek);
+    break;
   case "kategorie":
     await cmdKategorie();
     break;
@@ -769,6 +811,8 @@ switch (prikaz) {
   stav                             počty firem a kapacita jídelen
   mapa [--vystup cesta.html]       vygeneruje mapu území z aktuálních dat
   kartoteka [--vystup x.html]      vygeneruje prohlížitelnou kartotéku se zdroji
+  profil [seznam]                  vypíše profily projektu (koho hledáme)
+  profil zvol <kod>                přepne aktivní profil
   kategorie                        doplní firmám kategorii podle oboru
   blacklist [seznam]               vypíše ruční pravidla
   blacklist pridej --typ ico|nazev|nace|pravni_forma --hodnota … --duvod …

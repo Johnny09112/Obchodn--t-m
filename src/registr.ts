@@ -55,7 +55,11 @@ export interface RegistrKlient {
    */
   zamestnavateleVJednotkach(
     jednotky: number[],
-    opts?: { minZamestnancu?: number },
+    opts?: {
+      minZamestnancu?: number;
+      /** Které právní formy brát. Bez zadání platí formy zaměstnavatelů. */
+      pravniFormy?: readonly string[];
+    },
   ): Promise<RegistrZaznam[]>;
 
   /**
@@ -172,11 +176,14 @@ export function vytvorRegistrKlienta(opts: RegistrKlientOpts = {}): RegistrKlien
     async zamestnavateleVJednotkach(jednotky, o = {}) {
       const chtene = new Set(jednotky.map(String));
       const nalezene: RegistrZaznam[] = [];
+      // Profil projektu smí seznam forem přepsat — Cantinero Business bere
+      // i živnostníky, protože restauraci často provozuje fyzická osoba.
+      const formy = o.pravniFormy?.length ? new Set(o.pravniFormy) : FORMY;
 
       await projdi((r) => {
         if (!chtene.has(r.hodnota("ICZUJ"))) return;
         if (r.hodnota("DDATZAN")) return; // zaniklý subjekt
-        if (!FORMY.has(r.hodnota("FORMA"))) return; // živnostník, bytový dům…
+        if (!formy.has(r.hodnota("FORMA"))) return; // mimo profil
         // Velikost známe rovnou z registru, takže malé firmy odpadnou dřív,
         // než se na ně sáhne dotazem — v tom je celá úspora.
         if (o.minZamestnancu !== undefined) {

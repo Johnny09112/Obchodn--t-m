@@ -268,3 +268,10 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 - 2026-07-29 · majitel · **Pořadí prací: kampaně → Spojka / Plzeň →
   naplánované běhy agenta → fáze 3.** Automatizace až bude co automatizovat;
   frontu práce vytvoří teprve kampaně.
+- 2026-07-29 · majitel · **Kampaň smí schválit jen `admin` a `super-admin`;
+  připravit ji smí i `uzivatel`.** Schválení je brána, za kterou ve fázi 3
+  začne odcházet komunikace ven. Vynucují pravidla v databázi.
+- 2026-07-29 · majitel · **Čmuchal zatím nenavrhuje tvar oblasti — odloženo
+  do fáze 4.** Tam se poprvé měří, co funguje, takže se teprve pak pozná,
+  jestli je návrh tvaru k něčemu, nebo ho člověk stejně překreslí.
+  V první verzi kreslí tvar člověk.

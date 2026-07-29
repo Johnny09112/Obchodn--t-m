@@ -231,13 +231,13 @@ rozhodnutí majitele, ne výchozí chování.
 | krok | kdo jedná | co dělá |
 |---|---|---|
 | 1 | člověk | pojmenuje záměr; tohle agent nezastane |
-| 2 | člověk rozhoduje, **Čmuchal navrhuje** | Čmuchal umí navrhnout tvar oblasti podle toho, kde se v okolí doopravdy pracuje (otevřená data MPSV, rejstřík) — člověk ho jen upraví tažením bodů |
+| 2 | člověk | kreslí tvar sám; návrh tvaru Čmuchalem je odložený do fáze 4 (kap. 11) |
 | 3 | **Čmuchal** | vyzvedne požadavek z `pruzkumy`, dohledá firmy a kontakty, zapíše výsledek a `run_id` |
 | 4 | systém počítá, člověk schvaluje | souhrn je obyčejný výpočet, žádný agent |
 | fáze 3 | **Obchodník** | píše oslovení po jedné firmě; mimo rozsah tohoto zadání |
 
-Návrh tvaru oblasti Čmuchalem je **volitelný přínos, ne podmínka** — když
-se neudělá, průvodce funguje dál, jen si člověk nakreslí tvar sám.
+Ve fázi 0–2 tedy vstupuje do průvodce **jediný agent, Čmuchal, a jen
+v kroku 3**. Zbytek je člověk a obyčejný výpočet.
 
 ## 7. Pojistky
 
@@ -288,12 +288,14 @@ Ve dvou dávkách, aby se dalo po první zastavit a přehodnotit:
 
 Stejné pořadí jako u oblastí: jádro nejdřív, obrazovka až na hotovém.
 
-## 11. Otevřené — rozhodne majitel
+## 11. Rozhodnuto majitelem (2026-07-29)
 
-1. **Kdo smí kampaň schválit?** Návrh: připravit smí `uzivatel`, schválit
-   jen `admin` a `super-admin`. Schválení je brána, za kterou ve fázi 3
-   začne odcházet komunikace ven — dává smysl ji držet výš. Pokud majitel
-   nechce, zůstane schválení na všech třech rolích.
-2. **Má Čmuchal navrhovat tvar oblasti hned v první verzi?** Je to práce
-   navíc a průvodce funguje i bez toho. Návrh: až po první verzi, na
-   skutečném používání se pozná, jestli je návrh k něčemu.
+1. **Schválit kampaň smí jen `admin` a `super-admin`.** Připravit ji smí
+   i `uzivatel`. Schválení je brána, za kterou ve fázi 3 začne odcházet
+   komunikace ven, a drží se proto výš. Vynucují pravidla přístupu
+   v databázi, ne jen zašedlé tlačítko.
+2. **Čmuchal zatím tvar oblasti nenavrhuje.** Odloženo do **fáze 4**
+   (optimalizace) — tam se poprvé měří, co doopravdy funguje, a teprve
+   podle toho půjde poznat, jestli je návrh tvaru k něčemu, nebo ho
+   člověk stejně vždy překreslí. V první verzi si tvar kreslí člověk sám.
+   Kapitola 6 tomu odpovídá: návrh tvaru je označený jako volitelný přínos.

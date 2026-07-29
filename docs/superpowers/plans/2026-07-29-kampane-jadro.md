@@ -192,7 +192,11 @@ create or replace function public.kampan_pred_schvalenim() returns trigger
 language plpgsql
 as $$
 begin
-  if new.stav = 'schvalena' and old.stav is distinct from 'schvalena' then
+  -- Pojistky pro schválení platí na INSERT i UPDATE
+  -- Na INSERT: rozlišit TG_OP, protože old není přiřazeno
+  if new.stav = 'schvalena' and (
+    TG_OP = 'INSERT' or (TG_OP = 'UPDATE' and old.stav is distinct from 'schvalena')
+  ) then
     if exists (
       select 1 from pruzkumy p
       where p.kampan_id = new.id and p.stav in ('ceka', 'bezi')
@@ -211,7 +215,7 @@ begin
   return new;
 end $$;
 
-create trigger kampan_schvaleni before update on kampane
+create trigger kampan_schvaleni before insert or update on kampane
   for each row execute function public.kampan_pred_schvalenim();
 
 -- ─────────────────────────────────────────── kdo co smí

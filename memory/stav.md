@@ -34,7 +34,36 @@ Vite + React + TypeScript, vlastní `package.json`, spouští se
   s filtry (velikost, zaměření, spojení). Výpočet je sdílený s jádrem
   (`src/oblast-tvar.ts`) — ověřeno, že dává stejná čísla jako SQL i jako
   uložená `oblast_firmy` (41 firem ve 12 km, 144 ve 30 km).
-- **Chybí:** kampaně; mazání oblastí (záměrně — mazání dat rozhoduje majitel).
+- **Chybí:** průvodce kampaní v aplikaci (jádro je hotové, viz níž); mazání
+  oblastí (záměrně — mazání dat rozhoduje majitel).
+
+## Jádro kampaní je hotové (2026-07-30)
+
+Kampaň je pojmenovaný seznam firem k oslovení — **není to rozesílka**,
+nic se neodesílá (to zůstává zakázané až do fáze 3). Hotovo a otestované:
+
+- Kampaň vzniká, dostane správce a volitelně území (oblast), ze kterého se
+  dá jedním příkazem naplnit firmami.
+- Prochází povolenými stavy (rozpracovaná → k posouzení → čeká na průzkum →
+  schválená → …) a databáze hlídá, že se nedá přeskočit ani zrušit bez
+  udání důvodu.
+- **Schválit jde jen tehdy, když má kampaň aspoň jednu firmu s doloženým
+  kontaktem a nečeká na dokončení objednaného průzkumu.** Tuhle pojistku
+  hlídá databáze, ne jen tlačítko ve formuláři — obejít se nedá ani ručním
+  zápisem.
+- Umí souhrn (kolik firem, kolik s kontaktem) a upozorní na překryv s jinou
+  kampaní (stejná firma ve dvou seznamech) — je to jen upozornění, nebrání,
+  protože e-maily samy stejně ještě neodcházejí.
+- Fronta objednávek na průzkum oblasti (`pruzkumy`) — aplikace agenta
+  spustit neumí, takže si o průzkum jen požádá a agent (Čmuchal) si práci
+  vyzvedne, až poběží.
+- Ovládání zatím jen z příkazové řádky: `cli kampan` a `cli pruzkum`.
+- Kdo co smí: nepřihlášený nevidí nic, tým kampaň připraví a upraví,
+  schválit smí jen admin a výš — ověřeno.
+
+**Co zbývá, než tohle uvidí i majitel v aplikaci:** napojit Čmuchala na
+oblasti (aby uměl kampani firmy sám nabídnout, ne jen na příkaz z terminálu),
+a teprve pak postavit průvodce kampaní v samotné aplikaci (`app/`).
 - Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
 
 **Čeká na majitele:** oblast založená v aplikaci má prázdnou `oblast_firmy`,

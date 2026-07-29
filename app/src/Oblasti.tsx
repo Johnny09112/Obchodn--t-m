@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Mapa, type Rezim } from "./Mapa";
+import { PanelVrstev } from "./PanelVrstev";
 import { SeznamFirem } from "./SeznamFirem";
 import { supabase, type Role } from "./supabase";
+import { najdiPrekryv, naOblast, spoctiVrstvy } from "./vrstvy";
 import { bodVOblasti, type Oblast } from "../../src/oblast-tvar";
 import type { Bod } from "../../src/geo";
 import {
@@ -17,16 +19,6 @@ import {
 
 /** Když ještě nejsou data, dívej se na Plzeňsko — tam jsou všechny jídelny. */
 const VYCHOZI = { stred: { lat: 49.7475, lng: 13.3776 }, zoom: 10 };
-
-function naOblast(r: RadekOblasti): Oblast {
-  return r.typ === "kruh"
-    ? {
-        typ: "kruh",
-        stred: { lat: Number(r.stred_lat), lng: Number(r.stred_lng) },
-        polomerM: Number(r.polomer_m),
-      }
-    : { typ: "polygon", body: r.body ?? [] };
-}
 
 const SMI_ZAPISOVAT: Role[] = ["super-admin", "admin", "uzivatel"];
 
@@ -45,6 +37,7 @@ export function Oblasti({ role }: { role: Role }) {
   const [jidelnaId, setJidelnaId] = useState("");
   const [uklada, setUklada] = useState(false);
   const [hlaska, setHlaska] = useState<string | null>(null);
+  const [zobrazene, setZobrazene] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
     Promise.all([nactiFirmy(), nactiJidelny(), nactiKategorie(), nactiOblasti()])
@@ -53,10 +46,26 @@ export function Oblasti({ role }: { role: Role }) {
         setJidelny(j);
         setKategorie(k);
         setOblasti(o);
+        setZobrazene(new Set(o.map((x) => x.id)));
       })
       .catch((e: Error) => setChyba(e.message))
       .finally(() => setNacita(false));
   }, []);
+
+  const vrstvy = useMemo(
+    () => spoctiVrstvy(oblasti, zobrazene, firmy),
+    [oblasti, zobrazene, firmy],
+  );
+  const prekryv = useMemo(() => najdiPrekryv(vrstvy), [vrstvy]);
+
+  function prepniVrstvu(id: string) {
+    setZobrazene((p) => {
+      const s = new Set(p);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  }
 
   const uvnitr = useMemo(() => {
     const s = new Set<string>();
@@ -215,34 +224,8 @@ export function Oblasti({ role }: { role: Role }) {
         </p>
       </div>
 
-      <div className="pas-oblasti sloupec">
-        <div className="ulozene">
-          <span className="nadpisek">Uložené oblasti</span>
-          {oblasti.length === 0 ? (
-            <span className="poznamka">Zatím žádná — založte první vpravo.</span>
-          ) : (
-            <ul className="seznam-oblasti">
-              {oblasti.map((o) => (
-                <li key={o.id}>
-                  <button
-                    className={`polozka ${upravovanaId === o.id ? "vybrana" : ""}`}
-                    onClick={() => otevri(o)}
-                  >
-                    <span className="nazev">{o.nazev}</span>
-                    <span className="popis">
-                      {o.typ === "kruh"
-                        ? `kruh ${((o.polomer_m ?? 0) / 1000).toFixed(1).replace(".", ",")} km`
-                        : `tvar o ${o.body?.length ?? 0} bodech`}
-                      {o.jidelna_id ? "" : " · bez jídelny"}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {smiZapisovat && (
+      {smiZapisovat && (
+        <div className="pas-oblasti sloupec">
           <div className="tlacitka">
             <button className="tlacitko tise" onClick={zacniKruh}>
               Nový kruh
@@ -251,8 +234,8 @@ export function Oblasti({ role }: { role: Role }) {
               Obkreslit tvar
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Pokyn „klikněte do mapy na střed" přijde dřív, než návrh vznikne —
           panel nad mapou tedy ještě nestojí a hláška by neměla kde být. */}
@@ -375,14 +358,33 @@ export function Oblasti({ role }: { role: Role }) {
           </div>
         )}
 
+        <PanelVrstev
+          oblasti={oblasti}
+          zobrazene={zobrazene}
+          vrstvy={vrstvy}
+          prekryv={prekryv}
+          otevrenaId={upravovanaId}
+          onPrepni={prepniVrstvu}
+          onVsechny={(zapnout) =>
+            setZobrazene(zapnout ? new Set(oblasti.map((o) => o.id)) : new Set())
+          }
+          onOtevri={otevri}
+        />
+
         <Mapa
           firmy={firmy}
           jidelny={jidelny}
+          vrstvy={vrstvy}
           navrh={navrh}
           uvnitr={uvnitr}
+          vPrekryvu={prekryv.firmy}
           rezim={rezim}
           onKlikDoMapy={klikDoMapy}
           onPosunVrcholu={posunVrcholu}
+          onKlikNaVrstvu={(id) => {
+            const o = oblasti.find((x) => x.id === id);
+            if (o) otevri(o);
+          }}
           vychozi={VYCHOZI}
         />
       </div>

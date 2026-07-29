@@ -540,3 +540,16 @@ v aplikaci „Zaměstnanců 0", což vypadalo jako změřený údaj. Opraveno na
 
 Kdekoli se počítá souhrn, patří k němu otázka, co má vyjít, když se nesečte
 nic. Nula skoro nikdy.
+
+## Pozdější pravidlo CSS přebilo dřívější mediální dotaz (2026-07-29)
+
+Mobilní pravidlo pro panel vrstev (`position: static`) jsem zapsal do
+mediálního dotazu, který v souboru stál **před** základním pravidlem
+(`position: absolute`). Obě mají stejnou specificitu, takže vyhrálo to
+pozdější — a na telefonu panel zůstal nalepený přes mapu.
+
+**Pravidlo:** mediální dotaz, který má něco přebít, musí v souboru stát
+**za** tím, co přebíjí. Mediální dotaz sám o sobě specificitu nezvyšuje.
+
+Chytilo se to jen proto, že se po každé změně rozvržení měří v prohlížeči,
+kde co leží. Ze čtení kódu to vidět nebylo.

@@ -239,3 +239,15 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   a to je celý smysl kreslení. Seznam uložených oblastí se přesunul nad mapu
   jako řádek štítků (při kreslení ho není potřeba vidět), seznam firem zůstal
   pod mapou — tam se vejdou i kampaně. Na úzké obrazovce panel spadne pod mapu.
+- 2026-07-29 · majitel · **Uložené oblasti jsou volitelné vrstvy mapy, ne pruh
+  štítků.** Důvod majitele: oblastí budou po ČR stovky a budou se překrývat,
+  takže je potřeba je zapínat a vypínat a hlavně vidět, kde se překrývají.
+  Kliknutí na oblast má do budoucna ukázat podrobnost kampaně včetně toho,
+  kdy tam naposledy odešel e-mail (až budou kampaně existovat).
+- 2026-07-29 · Claude · **Překryv oblastí se hlásí jako chyba, ne jako
+  zajímavost.** Majitel popsal scénář, kdy jedna firma dostane dva e-maily
+  ze dvou kampaní (obecná „západní Čechy" + konkrétní „Vary"). To ale
+  **nedovoluje TP-5** — jedna firma, jedno iniciační oslovení. Aplikace proto
+  firmy ve víc oblastech vyznačuje kroužkem a panel vrstev je počítá.
+  Vyloučení oblasti z kampaně tedy není volba, ale jediný povolený tvar.
+  **Změnit to může jedině změna SPEC — rozhoduje majitel.**

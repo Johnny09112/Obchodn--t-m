@@ -529,40 +529,175 @@ h2 {
     margin: 1rem 1.25rem 0;
     box-shadow: none;
   }
-}
 
-/* ─────────────────────────────────────────── pás s uloženými oblastmi */
+  /* Pozor: pravidla pro `.panel.vrstvy` jsou až za jeho základním
+     nastavením níž — odsud by je základní pravidlo přebilo. */
+}
 
 .pas-oblasti {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.75rem 1.5rem;
   margin-bottom: 1rem;
-}
-
-.pas-oblasti .ulozene {
-  flex: 1 1 20rem;
-  min-width: 0;
-}
-
-.pas-oblasti .nadpisek {
-  display: block;
-  font-family: var(--pismo-data);
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--inkoust-slaby);
-  margin-bottom: 0.35rem;
 }
 
 .pas-oblasti .tlacitka {
   margin-top: 0;
+}
+
+.pas-oblasti .tlacitka .tlacitko {
   flex: 0 0 auto;
 }
 
-.pas-oblasti .poznamka {
+/* ────────────────────────────────────────────────── panel vrstev v mapě */
+
+.panel.vrstvy {
+  position: absolute;
+  z-index: 500;
+  top: 0.9rem;
+  right: max(1.25rem, calc(50% - 42rem + 1.25rem));
+  width: 17.5rem;
+  max-height: calc(100% - 1.8rem);
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgb(26 33 28 / 14%);
+}
+
+.panel.vrstvy.sbaleno {
+  width: auto;
+}
+
+.prepinace {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.8125rem;
+}
+
+.seznam-vrstev {
+  list-style: none;
   margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.vrstva {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: start;
+  gap: 0.45rem;
+  padding: 0.25rem 0.3rem;
+  border-radius: var(--r);
+  cursor: pointer;
+}
+
+.vrstva:hover {
+  background: var(--papir);
+}
+
+.vrstva input {
+  margin: 0.3rem 0 0;
+  accent-color: var(--razitko);
+}
+
+.vrstva .swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-top: 0.3rem;
+  border-radius: 2px;
+}
+
+.vrstva .text {
+  min-width: 0;
+}
+
+.vrstva .jmeno {
+  display: block;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.vrstva .jmeno:hover {
+  text-decoration: underline;
+}
+
+.vrstva .jmeno.vybrana {
+  color: var(--razitko);
+}
+
+.vrstva .popis {
+  display: block;
+  font-family: var(--pismo-data);
+  font-size: 0.6875rem;
+  color: var(--inkoust-slaby);
+}
+
+.prekryv {
+  margin-top: 0.9rem;
+  padding: 0.6rem 0.7rem;
+  border-left: 3px solid var(--cihla);
+  background: #f7ecea;
+  border-radius: var(--r);
+}
+
+.prekryv .udaj {
+  padding: 0;
+  margin-bottom: 0.3rem;
+}
+
+.prekryv .udaj > .hodnota {
+  color: var(--cihla);
+  font-weight: 600;
+}
+
+.prekryv .poznamka {
+  margin-top: 0.3rem;
+}
+
+.dvojice {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  font-family: var(--pismo-data);
+  font-size: 0.6875rem;
+  color: var(--inkoust-slaby);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.bez-prekryvu {
+  margin-top: 0.9rem;
+  color: var(--zelen);
+}
+
+/* Na úzké obrazovce jde seznam vrstev pod mapu, za panel s ovládáním tvaru.
+   Musí stát až tady, za základním nastavením `.panel.vrstvy` — dřív v souboru
+   by ho základní pravidlo se stejnou specificitou přebilo. */
+@media (max-width: 48rem) {
+  .panel.vrstvy {
+    order: 3;
+    position: static;
+    width: auto;
+    max-height: none;
+    margin: 1rem 1.25rem 0;
+    box-shadow: none;
+  }
+}
+
+/* Popisek, který má slyšet čtečka, ale na obrazovce by jen překážel. */
+.skryty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .panel h3 {

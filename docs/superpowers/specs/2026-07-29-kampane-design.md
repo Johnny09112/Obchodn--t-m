@@ -232,7 +232,7 @@ rozhodnutí majitele, ne výchozí chování.
 |---|---|---|
 | 1 | člověk | pojmenuje záměr; tohle agent nezastane |
 | 2 | člověk | kreslí tvar sám; návrh tvaru Čmuchalem je odložený do fáze 4 (kap. 11) |
-| 3 | **Čmuchal** | vyzvedne požadavek z `pruzkumy`, dohledá firmy a kontakty, zapíše výsledek a `run_id` |
+| 3 | **Čmuchal** | vyzvedne požadavek z `pruzkumy`, dohledá firmy a kontakty, zapíše výsledek a `run_id` — **zatím to neumí, viz kap. 12** |
 | 4 | systém počítá, člověk schvaluje | souhrn je obyčejný výpočet, žádný agent |
 | fáze 3 | **Obchodník** | píše oslovení po jedné firmě; mimo rozsah tohoto zadání |
 
@@ -298,4 +298,23 @@ Stejné pořadí jako u oblastí: jádro nejdřív, obrazovka až na hotovém.
    (optimalizace) — tam se poprvé měří, co doopravdy funguje, a teprve
    podle toho půjde poznat, jestli je návrh tvaru k něčemu, nebo ho
    člověk stejně vždy překreslí. V první verzi si tvar kreslí člověk sám.
-   Kapitola 6 tomu odpovídá: návrh tvaru je označený jako volitelný přínos.
+
+## 12. Čmuchal zatím neumí prozkoumat oblast
+
+Zjištěno při psaní plánu 2026-07-29.
+
+Sběr (`src/cmuchal.ts`, příkaz `run --jidelna`) vychází z **jídelny a její
+kruhové zóny**. O oblastech neví — v celém modulu se slovo „oblast"
+nevyskytuje. Nakreslený tvar tedy prozkoumat neumí a **požadavek z fronty
+`pruzkumy` sám nevyřídí**.
+
+Důsledky:
+
+- Fronta se postaví, ale zpočátku ji uzavírá člověk ručně.
+- **Krok 3 průvodce dojede naplno jen u kampaně nad už prozkoumaným
+  územím.** U nového území se objedná průzkum a čeká se.
+- Napojení Čmuchala na oblasti je samostatná práce s vlastním plánem
+  a je **podmínkou** pro plné fungování kroku 3.
+
+Řadí se **před** obrazovku průvodce, ne za ni — obrazovka bez toho slibuje
+něco, co se nestane.

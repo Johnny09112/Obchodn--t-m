@@ -164,18 +164,18 @@
 <div class="stranka">
   <header>
     <p class="eyebrow">Cantinero · krok 4 · 29. července 2026</p>
-    <h1>Aplikace stojí na nohou</h1>
+    <h1>Mapa kreslí oblasti</h1>
     <p>
-      Kostra webové aplikace a přihlášení jsou hotové. Řetěz od přihlášení
-      přes pravidla přístupu až k datům je ověřený. Mapa a kreslení oblastí
-      jsou další na řadě.
+      Aplikace umí to, kvůli čemu vznikla: území se dá obkreslit vlastním
+      tvarem, ne jen kruhem, a firmy uvnitř se přepočítávají při každém
+      posunutí bodu. Zbývají kampaně a nasazení.
     </p>
   </header>
 
   <section class="souhrn">
     <p class="udaj"><span class="popisek">Firem v kartotéce</span><span class="hodnota">167</span></p>
     <p class="udaj"><span class="popisek">Vidí nepřihlášený</span><span class="hodnota">0</span></p>
-    <p class="udaj"><span class="popisek">Kontrola typů</span><span class="hodnota">bez chyby</span></p>
+    <p class="udaj"><span class="popisek">Testy jádra</span><span class="hodnota">264 zelených</span></p>
     <p class="udaj"><span class="popisek">Náklady</span><span class="hodnota">0 Kč</span></p>
   </section>
 
@@ -207,7 +207,28 @@
         <span class="znak" aria-hidden="true"></span>
         <span>
           <span class="co">Přihlášený vidí kartotéku</span><br />
-          <span class="proc">Ověřeno simulací přihlášení přímo v databázi: role <code>uzivatel</code> vidí 167 firem a 144 kontaktů.</span>
+          <span class="proc">Ověřeno v databázi i skutečným přihlášením majitele: role <code>uzivatel</code> vidí 167 firem a 144 kontaktů.</span>
+        </span>
+      </li>
+      <li class="hotovo">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Mapa, kruh i vlastní tvar</span><br />
+          <span class="proc">Kruh se nastaví posuvníkem, území jde obkreslit klikáním a body pak posunout tažením. Počet firem uvnitř naskakuje průběžně.</span>
+        </span>
+      </li>
+      <li class="hotovo">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Mapa počítá stejně jako příkazová řádka</span><br />
+          <span class="proc">Výpočet tvaru je jeden a sdílený. U oblasti „Průzkum Rokycansko“ dá 41 firem ve 12 km a 144 ve 30 km — shodně s nezávislým výpočtem v databázi.</span>
+        </span>
+      </li>
+      <li class="hotovo">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Seznam firem s filtry</span><br />
+          <span class="proc">Pod mapou, filtruje podle velikosti, zaměření a toho, jestli na firmu máme spojení.</span>
         </span>
       </li>
     </ul>
@@ -231,6 +252,14 @@
 firmy                          0           167
 kontakty                       0           144
 oblasti                        0             1</pre>
+
+    <p style="margin: 1.2rem 0 0.8rem; color: var(--slaby)">
+      A mapa se ověřila proti nezávislému výpočtu v databázi — kdyby si
+      počítala po svém, ukazovala by jiné číslo, než jaké se pak uloží.
+    </p>
+    <pre>oblast Průzkum Rokycansko      mapa    databáze    uloženo
+poloměr 12 km                    41          41         41
+poloměr 30 km                   144         144          —</pre>
   </section>
 
   <section>
@@ -239,15 +268,22 @@ oblasti                        0             1</pre>
       <li class="na-majiteli">
         <span class="znak" aria-hidden="true"></span>
         <span>
-          <span class="co">Zkus se přihlásit</span><br />
-          <span class="proc">Svým heslem, které já zadávat nesmím. Tím se potvrdí i poslední článek řetězu — samotné přihlášení. Aplikace zatím běží jen na tvém počítači.</span>
+          <span class="co">Zkus nakreslit oblast</span><br />
+          <span class="proc">Nejlíp takovou, kde ti kruh dosud vadil. Zajímá mě, jestli se tvar kreslí a upravuje tak, jak sis to představoval — to z kódu poznat nejde.</span>
+        </span>
+      </li>
+      <li class="na-majiteli">
+        <span class="znak" aria-hidden="true"></span>
+        <span>
+          <span class="co">Smí aplikace zapsat, které firmy do oblasti spadly?</span><br />
+          <span class="proc">Dnes to počítá při každém zobrazení, ale neukládá — ta tabulka je podle pravidel jen pro agenta. Když v aplikaci založíš oblast, příkazová řádka o jejích firmách zatím neví.</span>
         </span>
       </li>
       <li class="na-majiteli">
         <span class="znak" aria-hidden="true"></span>
         <span>
           <span class="co">Nasadit na Vercel?</span><br />
-          <span class="proc">Zatím ne, nebo hned? Adresa <code>find.cantinero.cz</code> se dá připojit až nakonec — do té doby stačí adresa od Vercelu.</span>
+          <span class="proc">Aplikace zatím běží jen na tvém počítači. Adresa <code>find.cantinero.cz</code> se připojí až nakonec — do té doby stačí adresa od Vercelu.</span>
         </span>
       </li>
     </ul>
@@ -256,20 +292,6 @@ oblasti                        0             1</pre>
   <section>
     <h2>Další na řadě</h2>
     <ul class="seznam">
-      <li class="ceka">
-        <span class="znak" aria-hidden="true"></span>
-        <span>
-          <span class="co">Mapa a kreslení oblastí</span><br />
-          <span class="proc">To hlavní, kvůli čemu aplikace vzniká: natáhnout tvar jedním směrem, když kruh usekne sousední město v půlce. Výpočet je hotový v jádru, aplikace ho jen zobrazí a zapíše.</span>
-        </span>
-      </li>
-      <li class="ceka">
-        <span class="znak" aria-hidden="true"></span>
-        <span>
-          <span class="co">Seznam firem uvnitř oblasti</span><br />
-          <span class="proc">S filtry na velikost, kategorii a stav spojení — pod mapou, ať je vidět, co se výběrem mění.</span>
-        </span>
-      </li>
       <li class="ceka">
         <span class="znak" aria-hidden="true"></span>
         <span>

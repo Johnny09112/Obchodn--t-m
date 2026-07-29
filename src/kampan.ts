@@ -6,6 +6,7 @@
  * V tomto modulu proto nikdy nesmí přibýt nic, co skládá nebo odesílá zprávy.
  */
 import type { Db } from "./db.js";
+import { prepocitejOblastFirmy } from "./oblast.js";
 
 export type StavKampane =
   | "rozpracovana"
@@ -67,5 +68,81 @@ export async function nastavUzemi(
     `update kampane set oblast_id = $1, jidelna_id = $2, krok = greatest(krok, 2)
      where id = $3`,
     [v.oblastId, v.jidelnaId ?? null, kampanId],
+  );
+}
+
+export interface FirmaVKampani {
+  ico: string;
+  nazev: string;
+  obec: string | null;
+  stav: "vybrana" | "vyrazena";
+  duvodVyrazeni: string | null;
+  kontaktu: number;
+  skore: number | null;
+}
+
+/**
+ * Doplní do kampaně firmy, které leží v její oblasti.
+ *
+ * **Ručně vyřazené firmy se nevzkřísí** — `on conflict do nothing`. Bez toho
+ * by každé doplnění vrátilo zpátky všechno, co člověk vyhodil, a rozhodnutí
+ * by tiše mizela.
+ *
+ * Příslušnost se před vložením přepočítá, aby se nevycházelo ze zastaralého
+ * seznamu.
+ */
+export async function naplnZOblasti(
+  db: Db,
+  kampanId: string,
+): Promise<{ pridano: number; jizBylo: number }> {
+  const k = await nactiKampan(db, kampanId);
+  if (!k?.oblastId) return { pridano: 0, jizBylo: 0 };
+
+  await prepocitejOblastFirmy(db, k.oblastId);
+
+  const pred = await pocetRadku(db, kampanId);
+  await db.query(
+    `insert into kampan_firmy (kampan_id, ico)
+     select $1, of.ico from oblast_firmy of where of.oblast_id = $2
+     on conflict (kampan_id, ico) do nothing`,
+    [kampanId, k.oblastId],
+  );
+  const po = await pocetRadku(db, kampanId);
+  return { pridano: po - pred, jizBylo: pred };
+}
+
+async function pocetRadku(db: Db, kampanId: string): Promise<number> {
+  const r = await db.query<{ pocet: number }>(
+    "select count(*)::int as pocet from kampan_firmy where kampan_id = $1",
+    [kampanId],
+  );
+  return r[0]?.pocet ?? 0;
+}
+
+/** Vyřadí firmu z kampaně. Důvod je povinný — bez něj se pravidla nebrousí. */
+export async function vyradFirmu(
+  db: Db,
+  kampanId: string,
+  ico: string,
+  duvod: string,
+): Promise<void> {
+  if (!duvod.trim()) throw new Error("Vyřazení firmy potřebuje důvod.");
+  await db.query(
+    `update kampan_firmy set stav = 'vyrazena', duvod_vyrazeni = $1
+     where kampan_id = $2 and ico = $3`,
+    [duvod.trim(), kampanId, ico],
+  );
+}
+
+export async function firmyKampane(db: Db, kampanId: string): Promise<FirmaVKampani[]> {
+  return db.query<FirmaVKampani>(
+    `select kf.ico, c.nazev, c.obec, kf.stav,
+            kf.duvod_vyrazeni as "duvodVyrazeni", c.skore,
+            (select count(*)::int from contacts k where k.ico = kf.ico) as kontaktu
+     from kampan_firmy kf
+     join companies c on c.ico = kf.ico
+     where kf.kampan_id = $1
+     order by c.skore desc nulls last`,
+    [kampanId],
   );
 }

@@ -146,3 +146,49 @@ export async function firmyKampane(db: Db, kampanId: string): Promise<FirmaVKamp
     [kampanId],
   );
 }
+
+/**
+ * Kam se z kterého stavu smí.
+ *
+ * `bezi` a `uzavrena` nemají žádnou příchozí cestu schválně — jsou
+ * v číselníku kvůli fázi 3, ale kód fáze 0–2 do nich nepustí (TP-8).
+ */
+export const PRECHODY: Record<StavKampane, readonly StavKampane[]> = {
+  rozpracovana: ["ceka_na_pruzkum", "k_posouzeni", "zrusena"],
+  ceka_na_pruzkum: ["k_posouzeni", "zrusena"],
+  k_posouzeni: ["schvalena", "ceka_na_pruzkum", "zrusena"],
+  schvalena: ["zrusena"],
+  bezi: [],
+  uzavrena: [],
+  zrusena: [],
+};
+
+/**
+ * Změní stav kampaně. Nepovolený přechod skončí výjimkou.
+ *
+ * Podmínky schválení (průzkum doběhl, aspoň jedna firma s kontaktem) hlídá
+ * navíc spoušť v databázi — tady jsou proto jen kvůli srozumitelné hlášce,
+ * ne jako jediná pojistka.
+ */
+export async function zmenStav(
+  db: Db,
+  kampanId: string,
+  novy: StavKampane,
+  duvod?: string,
+): Promise<void> {
+  const k = await nactiKampan(db, kampanId);
+  if (!k) throw new Error("Kampaň neexistuje.");
+
+  if (!PRECHODY[k.stav].includes(novy)) {
+    throw new Error(`Z „${k.stav}" nejde přejít do „${novy}".`);
+  }
+  if (novy === "zrusena" && !duvod?.trim()) {
+    throw new Error("Zrušení kampaně potřebuje důvod.");
+  }
+
+  await db.query("update kampane set stav = $1, duvod_zruseni = $2 where id = $3", [
+    novy,
+    novy === "zrusena" ? duvod!.trim() : k.duvodZruseni,
+    kampanId,
+  ]);
+}

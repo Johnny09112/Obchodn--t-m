@@ -55,6 +55,27 @@ describe("fronta průzkumů", () => {
     await expect(selhalPruzkum(db, id, "  ")).rejects.toThrow();
   });
 
+  it("dokončit se nedá objednávka, která ještě jen čeká", async () => {
+    const id = await objednejPruzkum(db, { oblastId, pozadal: "a@b.cz" });
+    await expect(
+      dokoncPruzkum(db, id, { firemPrevzato: 1, firemNovych: 1 }),
+    ).rejects.toThrow();
+  });
+
+  it("dokončit se nedá už hotová objednávka podruhé", async () => {
+    const id = await objednejPruzkum(db, { oblastId, pozadal: "a@b.cz" });
+    await zahajPruzkum(db, id);
+    await dokoncPruzkum(db, id, { firemPrevzato: 1, firemNovych: 1 });
+    await expect(
+      dokoncPruzkum(db, id, { firemPrevzato: 2, firemNovych: 2 }),
+    ).rejects.toThrow();
+  });
+
+  it("selhalPruzkum se nedá zapsat pro objednávku, která nebyla zahájena", async () => {
+    const id = await objednejPruzkum(db, { oblastId, pozadal: "a@b.cz" });
+    await expect(selhalPruzkum(db, id, "chyba sítě")).rejects.toThrow();
+  });
+
   it("spočítá nedokončené objednávky kampaně", async () => {
     const kampanId = await zalozKampan(db, { nazev: "K", spravce: "a@b.cz" });
     await objednejPruzkum(db, { oblastId, kampanId, pozadal: "a@b.cz" });

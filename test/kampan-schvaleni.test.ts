@@ -3,7 +3,9 @@ import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { zalozOblast } from "../src/oblast.js";
 import { nastavGeo, zalozFirmu, zapisKontakt } from "../src/repo.js";
 import { naplnZOblasti, nastavUzemi, zalozKampan, zmenStav } from "../src/kampan.js";
-import { dokoncPruzkum, objednejPruzkum, zahajPruzkum } from "../src/pruzkum.js";
+import {
+  dokoncPruzkum, objednejPruzkum, selhalPruzkum, zahajPruzkum,
+} from "../src/pruzkum.js";
 import type { AresZaznam } from "../src/ares.js";
 
 let db: Db;
@@ -81,5 +83,54 @@ describe("pojistky u schválení", () => {
     await zahajPruzkum(db, p);
     await dokoncPruzkum(db, p, { firemPrevzato: 1, firemNovych: 0 });
     await expect(zmenStav(db, kampanId, "schvalena")).resolves.toBeUndefined();
+  });
+
+  it("s neúspěšným průzkumem schválit nejde", async () => {
+    // Regrese: dřív spoušť blokovala jen 'ceka'/'bezi', takže selhalý
+    // průzkum schválení tiše propustil.
+    await zapisKontakt(db, "25232657", {
+      email: "info@firma.cz", urovenAdresy: 2,
+      zdrojUrl: "https://firma.cz/kontakt", citace: "info@firma.cz",
+    });
+    const p = await objednejPruzkum(db, { oblastId, kampanId, pozadal: "a@b.cz" });
+    await zahajPruzkum(db, p);
+    await selhalPruzkum(db, p, "zdroj nedostupný");
+
+    await zmenStav(db, kampanId, "k_posouzeni");
+    await expect(zmenStav(db, kampanId, "schvalena")).rejects.toThrow(/průzkum/);
+  });
+});
+
+describe("databázová zábrana proti stavům bezi/uzavrena (migrace 0020)", () => {
+  // Webová aplikace zapisuje do `kampane` přímo, mimo `src/kampan.ts` —
+  // tahle pojistka proto musí sedět v databázi, ne jen v kódu jádra.
+  it("přímý UPDATE do 'bezi' databáze odmítne", async () => {
+    await expect(
+      db.query("update kampane set stav = 'bezi' where id = $1", [kampanId]),
+    ).rejects.toThrow();
+  });
+
+  it("přímý UPDATE do 'uzavrena' databáze odmítne", async () => {
+    await expect(
+      db.query("update kampane set stav = 'uzavrena' where id = $1", [kampanId]),
+    ).rejects.toThrow();
+  });
+
+  it("přímý INSERT rovnou ve stavu 'bezi' databáze odmítne", async () => {
+    await expect(
+      db.query(
+        "insert into kampane (nazev, spravce, stav) values ($1,$2,'bezi')",
+        ["Jiná kampaň", "a@b.cz"],
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("přímý INSERT rovnou ve stavu 'uzavrena' databáze odmítne", async () => {
+    await expect(
+      db.query(
+        "insert into kampane (nazev, spravce, stav) values ($1,$2,'uzavrena')",
+        ["Jiná kampaň 2", "a@b.cz"],
+      ),
+    ).rejects.toThrow();
   });
 });

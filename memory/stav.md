@@ -45,8 +45,10 @@ nic se neodesílá (to zůstává zakázané až do fáze 3). Hotovo a otestovan
 - Kampaň vzniká, dostane správce a volitelně území (oblast), ze kterého se
   dá jedním příkazem naplnit firmami.
 - Prochází povolenými stavy (rozpracovaná → k posouzení → čeká na průzkum →
-  schválená → …) a databáze hlídá, že se nedá přeskočit ani zrušit bez
-  udání důvodu.
+  schválená → …); **pořadí přechodů hlídá kód** (`src/kampan.ts`), databáze
+  hlídá jen podmínky schválení, povinný důvod zrušení, číselník stavů a
+  (od migrace 0020) zábranu proti stavům `bezi`/`uzavrena` — ty padnou
+  ve fázi 3, dnes do nich nesmí nikdo přejít, ani přímým zápisem.
 - **Schválit jde jen tehdy, když má kampaň aspoň jednu firmu s doloženým
   kontaktem a nečeká na dokončení objednaného průzkumu.** Tuhle pojistku
   hlídá databáze, ne jen tlačítko ve formuláři — obejít se nedá ani ručním

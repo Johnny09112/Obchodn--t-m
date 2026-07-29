@@ -2,6 +2,17 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-30 · Claude · **Zábrana proti stavům `bezi`/`uzavrena` je teď i
+  v databázi** (trigger `kampan_faze3_zabrana`, migrace 0020), nejen v kódu
+  `src/kampan.ts`. Důvod: webová aplikace (`app/src/data.ts`) zapisuje do
+  `kampane` přímo, takže kód jádra pro ni neplatí — tvrdá pravidla se podle
+  projektových pravidel vynucují v databázi. **Ve fázi 3, až se odesílání
+  povolí, se tahle zábrana odstraní** — je to hranice fáze, ne trvalé pravidlo.
+- 2026-07-30 · Claude · **`pruzkum objednej` má povinný `--pozadal <e-mail>`.**
+  Fronta objednávek potřebuje vědět, kdo o průzkum požádal (sloupec
+  `pruzkumy.pozadal not null`); hádat identitu z prostředí (např. z `.env`)
+  by bylo tiché domýšlení, ne doložený údaj.
+
 - 2026-07-29 · majitel · **Uživatelé aplikace a jejich role:**
   `janlaub@icloud.com` super-admin (i správa uživatelů) ·
   `laub@cantinero.cz` admin (vše kromě správy uživatelů) ·

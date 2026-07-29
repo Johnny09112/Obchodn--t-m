@@ -39,7 +39,9 @@ import {
   PRECHODY, seznamKampani, souhrnKampane, vyradFirmu, zalozKampan, zmenStav,
   type StavKampane,
 } from "./kampan.js";
-import { dalsiPruzkum, objednejPruzkum } from "./pruzkum.js";
+import {
+  dalsiPruzkum, dokoncPruzkum, objednejPruzkum, selhalPruzkum, zahajPruzkum,
+} from "./pruzkum.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -689,7 +691,10 @@ async function cmdKampan(argv: string[]): Promise<void> {
         console.error("Použití: kampan stav <id kampaně> <nový stav> [--duvod <text>]");
         process.exit(1);
       }
-      const povolene = Object.keys(PRECHODY) as StavKampane[];
+      // Jen stavy, do kterých se dá skutečně přejít (mají příchozí přechod).
+      // `bezi` a `uzavrena` v číselníku jsou, ale patří až do fáze 3 —
+      // nabízet je tady by matlo, protože přejít do nich stejně nejde.
+      const povolene = [...new Set(Object.values(PRECHODY).flat())] as StavKampane[];
       if (!povolene.includes(novy as StavKampane)) {
         console.error(`Neznámý stav „${novy}". Povolené: ${povolene.join(", ")}`);
         process.exit(1);
@@ -732,6 +737,10 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
     options: {
       kampan: { type: "string" },
       pozadal: { type: "string" },
+      run: { type: "string" },
+      prevzato: { type: "string" },
+      novych: { type: "string" },
+      chyba: { type: "string" },
     },
   });
   const akce = positionals[0] ?? "fronta";
@@ -765,6 +774,60 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       console.log(`  oblast: ${p.oblastId}`);
       if (p.kampanId) console.log(`  kampaň: ${p.kampanId}`);
       console.log(`  požádal: ${p.pozadal}`);
+      return;
+    }
+
+    if (akce === "zahaj") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum zahaj <id> [--run <id běhu>]");
+        process.exit(1);
+      }
+      await zahajPruzkum(db, id, values.run);
+      console.log(`Průzkum ${id}: zahájen (stav bezi).`);
+      return;
+    }
+
+    if (akce === "dokonc") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum dokonc <id> --prevzato <číslo> --novych <číslo>");
+        process.exit(1);
+      }
+      if (!values.prevzato || !values.novych) {
+        console.error("Chybí --prevzato <číslo> nebo --novych <číslo>");
+        process.exit(1);
+      }
+      try {
+        await dokoncPruzkum(db, id, {
+          firemPrevzato: Number(values.prevzato),
+          firemNovych: Number(values.novych),
+        });
+      } catch (e) {
+        console.error((e as Error).message);
+        process.exit(1);
+      }
+      console.log(`Průzkum ${id}: dokončen (stav hotovo).`);
+      return;
+    }
+
+    if (akce === "selhal") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum selhal <id> --chyba <text>");
+        process.exit(1);
+      }
+      if (!values.chyba) {
+        console.error("Chybí --chyba <text>");
+        process.exit(1);
+      }
+      try {
+        await selhalPruzkum(db, id, values.chyba);
+      } catch (e) {
+        console.error((e as Error).message);
+        process.exit(1);
+      }
+      console.log(`Průzkum ${id}: označen jako neúspěšný (stav selhalo).`);
       return;
     }
 
@@ -1251,6 +1314,12 @@ switch (prikaz) {
                                    objedná průzkum území pro agenta
   pruzkum fronta                   vypíše čekající objednávky průzkumu
   pruzkum dalsi                    vypíše nejstarší čekající objednávku
+  pruzkum zahaj <id> [--run <id běhu>]
+                                   označí objednávku jako běžící (stav bezi)
+  pruzkum dokonc <id> --prevzato N --novych N
+                                   dokončí běžící průzkum (stav hotovo)
+  pruzkum selhal <id> --chyba text
+                                   označí běžící průzkum za neúspěšný (stav selhalo)
   k-obohaceni [--limit N] [--segmenty stredni,korporat] [--bez-spojeni]
                                    vypíše firmy čekající na rešerši (pro agenta);
                                    --bez-spojeni = známe jméno, chybí e-mail i telefon

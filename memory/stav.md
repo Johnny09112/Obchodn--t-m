@@ -17,6 +17,10 @@ Vite + React + TypeScript, vlastní `package.json`, spouští se
   167 firem a 144 kontaktů. Postup ověření bez hesla je v `poznatky.md`.
   **Přihlášení heslem ověřil majitel 2026-07-29** — projde dovnitř, vidí
   kartotéku i štítek role.
+- **Aplikace běží na `https://cantinero-find.vercel.app`** (nasazeno 2026-07-29
+  z GitHubu, sestavuje se samo při commitu). Ověřeno: stránka se načte,
+  přihlašovací obrazovka naběhne, z veřejné adresy bez přihlášení nevydá
+  databáze žádná data. Vlastní adresa `find.cantinero.cz` zatím připojená není.
 - **Repozitář je na GitHubu:** `Johnny09112/Obchodn--t-m` (soukromý, `origin`).
   Ověřeno, že neobsahuje tajemství ani data o firmách. Vercel na něj majitel
   napojil 2026-07-29; nastavení sestavení je ve `vercel.json` v kořeni.

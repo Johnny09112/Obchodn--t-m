@@ -18,7 +18,7 @@ export function Kartoteka() {
 
   if (chyba) {
     return (
-      <p className="hlaska" role="alert">
+      <p className="hlaska sloupec" role="alert">
         Kartotéku se nepodařilo načíst: {chyba}
       </p>
     );
@@ -26,11 +26,11 @@ export function Kartoteka() {
   if (!firmy) return <p className="nacitani">Načítám kartotéku…</p>;
 
   return (
-    <>
+    <div className="sloupec">
       <p className="podnadpis odsazeny">
         Firmy ověřené proti rejstříku. Zapisuje je agent, tady se jen prohlížejí.
       </p>
       <SeznamFirem firmy={firmy} kategorie={kategorie} nadpis="Kartotéka" />
-    </>
+    </div>
   );
 }

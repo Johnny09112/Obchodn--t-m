@@ -207,19 +207,19 @@ export function Oblasti({ role }: { role: Role }) {
 
   return (
     <>
-      <h2>Oblasti</h2>
-      <p className="podnadpis">
-        Území, ve kterém se hledají firmy. Kruh se rychle nastaví posuvníkem;
-        když usekne sousední město v půlce, obkreslete tvar ručně.
-      </p>
+      <div className="sloupec">
+        <h2>Oblasti</h2>
+        <p className="podnadpis">
+          Území, ve kterém se hledají firmy. Kruh se rychle nastaví posuvníkem;
+          když usekne sousední město v půlce, obkreslete tvar ručně.
+        </p>
+      </div>
 
-      <div className="deska">
-        <div className="panel">
-          <h3>Uložené oblasti</h3>
+      <div className="pas-oblasti sloupec">
+        <div className="ulozene">
+          <span className="nadpisek">Uložené oblasti</span>
           {oblasti.length === 0 ? (
-            <p className="prazdno maly">
-              Zatím žádná oblast. Založte první tlačítkem níž.
-            </p>
+            <span className="poznamka">Zatím žádná — založte první vpravo.</span>
           ) : (
             <ul className="seznam-oblasti">
               {oblasti.map((o) => (
@@ -240,23 +240,39 @@ export function Oblasti({ role }: { role: Role }) {
               ))}
             </ul>
           )}
+        </div>
 
-          {smiZapisovat && (
-            <div className="tlacitka">
-              <button className="tlacitko tise" onClick={zacniKruh}>
-                Nový kruh
-              </button>
-              <button className="tlacitko tise" onClick={zacniPolygon}>
-                Obkreslit tvar
+        {smiZapisovat && (
+          <div className="tlacitka">
+            <button className="tlacitko tise" onClick={zacniKruh}>
+              Nový kruh
+            </button>
+            <button className="tlacitko tise" onClick={zacniPolygon}>
+              Obkreslit tvar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Pokyn „klikněte do mapy na střed" přijde dřív, než návrh vznikne —
+          panel nad mapou tedy ještě nestojí a hláška by neměla kde být. */}
+      {!navrh && hlaska && (
+        <div className="sloupec">
+          <p className="poznamka zvyraznena">{hlaska}</p>
+        </div>
+      )}
+
+      <div className="deska">
+        {navrh && (
+          <div className="panel plovouci">
+            <div className="hlava-panelu">
+              <h3>{upravovanaId ? "Úprava oblasti" : "Nová oblast"}</h3>
+              <button className="zavrit" onClick={zahod} aria-label="Zavřít panel">
+                ✕
               </button>
             </div>
-          )}
 
-          {navrh && (
             <>
-              <hr className="rozdelovac" />
-              <h3>{upravovanaId ? "Úprava oblasti" : "Nová oblast"}</h3>
-
               <p className="udaj vyrazny">
                 <span className="popisek">Firem uvnitř</span>
                 <span className="hodnota">{uvnitr.size}</span>
@@ -350,17 +366,14 @@ export function Oblasti({ role }: { role: Role }) {
                     >
                       {uklada ? "Ukládám…" : upravovanaId ? "Uložit změny" : "Založit oblast"}
                     </button>
-                    <button className="tlacitko tise" onClick={zahod}>
-                      Zavřít
-                    </button>
                   </div>
                 </>
               )}
             </>
-          )}
 
-          {hlaska && <p className="poznamka zvyraznena">{hlaska}</p>}
-        </div>
+            {hlaska && <p className="poznamka zvyraznena">{hlaska}</p>}
+          </div>
+        )}
 
         <Mapa
           firmy={firmy}
@@ -374,12 +387,14 @@ export function Oblasti({ role }: { role: Role }) {
         />
       </div>
 
-      <SeznamFirem
-        firmy={vybraneFirmy}
-        kategorie={kategorie}
-        nadpis={navrh ? "Firmy v oblasti" : "Všechny firmy"}
-        bezSouradnic={navrh ? bezSouradnic : 0}
-      />
+      <div className="sloupec">
+        <SeznamFirem
+          firmy={vybraneFirmy}
+          kategorie={kategorie}
+          nadpis={navrh ? "Firmy v oblasti" : "Všechny firmy"}
+          bezSouradnic={navrh ? bezSouradnic : 0}
+        />
+      </div>
     </>
   );
 }

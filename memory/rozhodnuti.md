@@ -232,3 +232,10 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   pravidel jen ke čtení (zapisuje agent) a odvodit se dá kdykoli. Důsledek
   k dořešení: oblast založená v aplikaci má tuhle tabulku prázdnou, dokud
   ji nepřepočítá příkazová řádka. **Čeká na majitele** (viz stav.md).
+- 2026-07-29 · majitel + Claude · **Mapa jde přes celou šířku okna, ovládání
+  kresleného tvaru je plovoucí panel nad mapou.** Majitel chtěl mapu na celou
+  šířku a ovládání pod ni; panel pod mapou jsem rozmluvil a majitel na to
+  přistoupil: při tažení posuvníku poloměru by nebylo vidět, jak se kruh mění,
+  a to je celý smysl kreslení. Seznam uložených oblastí se přesunul nad mapu
+  jako řádek štítků (při kreslení ho není potřeba vidět), seznam firem zůstal
+  pod mapou — tam se vejdou i kampaně. Na úzké obrazovce panel spadne pod mapu.

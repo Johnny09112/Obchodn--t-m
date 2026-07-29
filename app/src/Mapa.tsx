@@ -55,10 +55,12 @@ export function Mapa({
     // Kolečko myši nechává mapu na pokoji, dokud se do ní neklikne. Jinak
     // by se stránka nedala projet — nad mapou by se místo posouvání
     // přibližovalo a čtenář by uvízl uprostřed.
-    const m = L.map(obal.current, { zoomControl: true, scrollWheelZoom: false }).setView(
+    // Přiblížení patří vpravo — vlevo nahoře stojí panel s ovládáním tvaru.
+    const m = L.map(obal.current, { zoomControl: false, scrollWheelZoom: false }).setView(
       [vychozi.stred.lat, vychozi.stred.lng],
       vychozi.zoom,
     );
+    L.control.zoom({ position: "topright" }).addTo(m);
     m.on("click", () => m.scrollWheelZoom.enable());
     m.on("mouseout", () => m.scrollWheelZoom.disable());
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -88,12 +90,14 @@ export function Mapa({
     for (const f of firmy) {
       if (f.lat === null || f.lng === null) continue;
       const je = uvnitr.has(f.ico);
+      // Firmy mimo tvar musí být vidět — na zelenomodrém podkladu mapy
+      // světlá šeď mizí. Zůstávají ale zřetelně druhé v pořadí.
       L.circleMarker([f.lat, f.lng], {
-        radius: je ? 5 : 3.5,
-        color: je ? "#2e4a7d" : "#8d968c",
+        radius: je ? 5.5 : 4,
+        color: je ? "#2e4a7d" : "#454f48",
         weight: je ? 1.5 : 1,
-        fillColor: je ? "#2e4a7d" : "#c3c9bf",
-        fillOpacity: je ? 0.85 : 0.5,
+        fillColor: je ? "#2e4a7d" : "#7d8a80",
+        fillOpacity: je ? 0.9 : 0.8,
       })
         .bindTooltip(
           `${f.nazev}${f.obec ? ` · ${f.obec}` : ""}${

@@ -249,10 +249,20 @@ select {
   background: rgb(233 235 227 / 12%);
 }
 
+/*
+ * Mapa jde přes celou šířku okna, text a seznamy zůstávají ve sloupci.
+ * Proto `main` sám šířku neomezuje — dělá to `.sloupec` kolem obsahu,
+ * který se má držet v mezích. Bez toho by se mapa musela roztahovat
+ * zápornými okraji a jednotky `vw` by přidaly vodorovné posouvání.
+ */
 main {
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 1.5rem 0 3rem;
+}
+
+.sloupec {
   max-width: 84rem;
   margin: 0 auto;
+  padding: 0 1.25rem;
 }
 
 .rozcestnik {
@@ -431,23 +441,15 @@ h2 {
 /* ───────────────────────────────────────────────────────── mapa a panel */
 
 .deska {
-  display: grid;
-  grid-template-columns: 20rem 1fr;
-  gap: 1rem;
+  position: relative;
   margin-bottom: 2rem;
 }
 
-@media (max-width: 60rem) {
-  .deska {
-    grid-template-columns: 1fr;
-  }
-}
-
 .mapa {
-  height: min(65vh, 34rem);
-  min-height: 22rem;
-  border: 1px solid var(--linka);
-  border-radius: var(--r);
+  height: min(66vh, 40rem);
+  min-height: 24rem;
+  border-top: 1px solid var(--linka);
+  border-bottom: 1px solid var(--linka);
   background: var(--karta);
 }
 
@@ -456,7 +458,111 @@ h2 {
   border: 1px solid var(--linka);
   border-radius: var(--r);
   padding: 1rem 1.1rem 1.2rem;
-  align-self: start;
+}
+
+/*
+ * Ovládání kresleného tvaru leží nad mapou, ne pod ní. Posuvník poloměru
+ * a počet firem uvnitř dávají smysl jen tehdy, když je zároveň vidět, co
+ * se v mapě děje — pod mapou by se na ně muselo odrolovat a zpětná vazba
+ * by zmizela.
+ */
+.panel.plovouci {
+  position: absolute;
+  z-index: 500; /* nad dlaždicemi a kresbou Leafletu */
+  top: 0.9rem;
+  left: max(1.25rem, calc(50% - 42rem + 1.25rem));
+  width: 19rem;
+  max-height: calc(100% - 1.8rem);
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgb(26 33 28 / 14%);
+}
+
+.hlava-panelu {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.hlava-panelu h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.zavrit {
+  background: none;
+  border: 0;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--inkoust-slaby);
+  cursor: pointer;
+  border-radius: var(--r);
+}
+
+.zavrit:hover {
+  background: var(--papir);
+  color: var(--inkoust);
+}
+
+/*
+ * Na úzké obrazovce se panel nad mapu nevejde a jde pod ni. Musí se k tomu
+ * přeskládat pořadí — v kódu stojí panel před mapou (aby ležel navrchu),
+ * takže bez toho by se na telefonu ovládání ocitlo nad mapou a člověk by
+ * musel odrolovat, aby viděl, co posuvníkem mění.
+ */
+@media (max-width: 48rem) {
+  .deska {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mapa {
+    order: 1;
+  }
+
+  .panel.plovouci {
+    order: 2;
+    position: static;
+    width: auto;
+    max-height: none;
+    margin: 1rem 1.25rem 0;
+    box-shadow: none;
+  }
+}
+
+/* ─────────────────────────────────────────── pás s uloženými oblastmi */
+
+.pas-oblasti {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.pas-oblasti .ulozene {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.pas-oblasti .nadpisek {
+  display: block;
+  font-family: var(--pismo-data);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--inkoust-slaby);
+  margin-bottom: 0.35rem;
+}
+
+.pas-oblasti .tlacitka {
+  margin-top: 0;
+  flex: 0 0 auto;
+}
+
+.pas-oblasti .poznamka {
+  margin: 0;
 }
 
 .panel h3 {
@@ -494,19 +600,18 @@ h2 {
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .polozka {
   display: block;
-  width: 100%;
   text-align: left;
-  background: transparent;
+  background: var(--karta);
   border: 1px solid var(--linka);
   border-left-width: 3px;
   border-radius: var(--r);
-  padding: 0.45rem 0.6rem;
+  padding: 0.4rem 0.7rem;
   cursor: pointer;
 }
 

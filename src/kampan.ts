@@ -192,3 +192,81 @@ export async function zmenStav(
     kampanId,
   ]);
 }
+
+export interface Souhrn {
+  firem: number;
+  vyrazenych: number;
+  seSpojenim: number;
+  /** Rozpad kontaktů podle úrovně adresy (TP-6). `null` = úroveň neurčena. */
+  podleUrovne: Array<{ uroven: number | null; pocet: number }>;
+  kapacitaVolna: number | null;
+}
+
+/**
+ * Podklad pro posouzení kampaně před schválením.
+ *
+ * Kapacita se bere ze jídelny kampaně a může být neznámá — pak zůstane
+ * `null` a nikde se z ní nesmí dělat nula.
+ */
+export async function souhrnKampane(db: Db, kampanId: string): Promise<Souhrn> {
+  const zaklad = await db.query<{
+    firem: number; vyrazenych: number; seSpojenim: number;
+  }>(
+    `select
+       count(*) filter (where kf.stav = 'vybrana')::int as firem,
+       count(*) filter (where kf.stav = 'vyrazena')::int as vyrazenych,
+       count(*) filter (where kf.stav = 'vybrana' and exists (
+         select 1 from contacts c where c.ico = kf.ico))::int as "seSpojenim"
+     from kampan_firmy kf where kf.kampan_id = $1`,
+    [kampanId],
+  );
+
+  const urovne = await db.query<{ uroven: number | null; pocet: number }>(
+    `select c.uroven_adresy as uroven, count(*)::int as pocet
+     from kampan_firmy kf
+     join contacts c on c.ico = kf.ico
+     where kf.kampan_id = $1 and kf.stav = 'vybrana'
+     group by c.uroven_adresy order by c.uroven_adresy nulls last`,
+    [kampanId],
+  );
+
+  const kapacita = await db.query<{ kapacita: number | null }>(
+    `select j.kapacita_volna as kapacita
+     from kampane k left join jidelny j on j.id = k.jidelna_id
+     where k.id = $1`,
+    [kampanId],
+  );
+
+  return {
+    firem: zaklad[0]?.firem ?? 0,
+    vyrazenych: zaklad[0]?.vyrazenych ?? 0,
+    seSpojenim: zaklad[0]?.seSpojenim ?? 0,
+    podleUrovne: urovne,
+    kapacitaVolna: kapacita[0]?.kapacita ?? null,
+  };
+}
+
+/**
+ * Ve kterých jiných kampaních jsou firmy z této kampaně.
+ *
+ * Podle TP-5 smí na firmu odejít jedno oslovení; překryv proto **upozorňuje**
+ * (rozhodnutí majitele 2026-07-29). Tvrdá pojistka sedí až u odesílání
+ * ve fázi 3, podle `companies.osloveno_at`.
+ */
+export async function prekryvKampani(
+  db: Db,
+  kampanId: string,
+): Promise<Array<{ nazev: string; pocet: number }>> {
+  return db.query<{ nazev: string; pocet: number }>(
+    `select k.nazev, count(*)::int as pocet
+     from kampan_firmy moje
+     join kampan_firmy jina
+       on jina.ico = moje.ico and jina.kampan_id <> moje.kampan_id
+     join kampane k on k.id = jina.kampan_id
+     where moje.kampan_id = $1
+       and moje.stav = 'vybrana' and jina.stav = 'vybrana'
+       and k.stav <> 'zrusena'
+     group by k.nazev order by count(*) desc, k.nazev`,
+    [kampanId],
+  );
+}

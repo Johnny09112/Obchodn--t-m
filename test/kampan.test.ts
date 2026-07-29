@@ -4,6 +4,8 @@ import { nactiKampan, seznamKampani, zalozKampan } from "../src/kampan.js";
 import { zalozOblast } from "../src/oblast.js";
 import { nastavGeo, zalozFirmu } from "../src/repo.js";
 import { firmyKampane, naplnZOblasti, nastavUzemi, vyradFirmu } from "../src/kampan.js";
+import { prekryvKampani, souhrnKampane } from "../src/kampan.js";
+import { zapisKontakt } from "../src/repo.js";
 import type { AresZaznam } from "../src/ares.js";
 
 let db: Db;
@@ -144,5 +146,53 @@ describe("založení kampaně", () => {
     await zalozKampan(db, { nazev: "Druhá", spravce: "a@b.cz" });
     const seznam = await seznamKampani(db);
     expect(seznam.map((k) => k.nazev)).toEqual(["Druhá", "První"]);
+  });
+});
+
+describe("souhrn a překryv", () => {
+  it("souhrn spočítá firmy, spojení a rozpad podle úrovně adresy", async () => {
+    const oblastId = await pripravUzemi();
+    const id = await zalozKampan(db, { nazev: "S1", spravce: "a@b.cz" });
+    await nastavUzemi(db, id, { oblastId });
+    await naplnZOblasti(db, id);
+    await zapisKontakt(db, "25232657", {
+      email: "poptavka@firma.cz", urovenAdresy: 2,
+      zdrojUrl: "https://firma.cz/kontakt", citace: "poptavka@firma.cz",
+    });
+
+    const s = await souhrnKampane(db, id);
+    expect(s.firem).toBe(2);
+    expect(s.vyrazenych).toBe(0);
+    expect(s.seSpojenim).toBe(1);
+    expect(s.podleUrovne).toContainEqual({ uroven: 2, pocet: 1 });
+  });
+
+  it("překryv vypíše, ve kterých kampaních firma ještě je", async () => {
+    const oblastId = await pripravUzemi();
+    const prvni = await zalozKampan(db, { nazev: "Široká", spravce: "a@b.cz" });
+    await nastavUzemi(db, prvni, { oblastId });
+    await naplnZOblasti(db, prvni);
+
+    const druha = await zalozKampan(db, { nazev: "Úzká", spravce: "a@b.cz" });
+    await nastavUzemi(db, druha, { oblastId });
+    await naplnZOblasti(db, druha);
+
+    const p = await prekryvKampani(db, druha);
+    expect(p).toEqual([{ nazev: "Široká", pocet: 2 }]);
+  });
+
+  it("vyřazená firma se do překryvu nepočítá", async () => {
+    const oblastId = await pripravUzemi();
+    const prvni = await zalozKampan(db, { nazev: "Prvni", spravce: "a@b.cz" });
+    await nastavUzemi(db, prvni, { oblastId });
+    await naplnZOblasti(db, prvni);
+    await vyradFirmu(db, prvni, "25232657", "nezajímavá");
+    await vyradFirmu(db, prvni, "48362956", "nezajímavá");
+
+    const druha = await zalozKampan(db, { nazev: "Druha", spravce: "a@b.cz" });
+    await nastavUzemi(db, druha, { oblastId });
+    await naplnZOblasti(db, druha);
+
+    expect(await prekryvKampani(db, druha)).toEqual([]);
   });
 });

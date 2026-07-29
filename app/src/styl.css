@@ -251,8 +251,33 @@ select {
 
 main {
   padding: 1.5rem 1.25rem 3rem;
-  max-width: 72rem;
+  max-width: 84rem;
   margin: 0 auto;
+}
+
+.rozcestnik {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.rozcestnik button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: inherit;
+  opacity: 0.7;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.rozcestnik button:hover {
+  opacity: 1;
+}
+
+.rozcestnik button.aktivni {
+  opacity: 1;
+  font-weight: 600;
+  border-bottom-color: currentColor;
 }
 
 h2 {
@@ -401,6 +426,213 @@ h2 {
   color: var(--inkoust-slaby);
   padding: 2rem 0;
   text-align: center;
+}
+
+/* ───────────────────────────────────────────────────────── mapa a panel */
+
+.deska {
+  display: grid;
+  grid-template-columns: 20rem 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 60rem) {
+  .deska {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mapa {
+  height: min(65vh, 34rem);
+  min-height: 22rem;
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  background: var(--karta);
+}
+
+.panel {
+  background: var(--karta);
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  padding: 1rem 1.1rem 1.2rem;
+  align-self: start;
+}
+
+.panel h3 {
+  font-family: var(--pismo-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 0.6rem;
+}
+
+.panel .pole:last-of-type {
+  margin-bottom: 0.6rem;
+}
+
+.panel .rozdelovac {
+  border: 0;
+  border-top: 1px dotted var(--linka);
+  margin: 1.1rem 0;
+}
+
+.tlacitka {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.tlacitka .tlacitko {
+  width: auto;
+  margin-top: 0;
+  flex: 1 1 auto;
+}
+
+.seznam-oblasti {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.polozka {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--linka);
+  border-left-width: 3px;
+  border-radius: var(--r);
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+}
+
+.polozka:hover {
+  background: var(--papir);
+}
+
+.polozka.vybrana {
+  border-left-color: var(--razitko);
+  background: var(--razitko-svetle);
+}
+
+.polozka .nazev {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.polozka .popis {
+  display: block;
+  font-family: var(--pismo-data);
+  font-size: 0.75rem;
+  color: var(--inkoust-slaby);
+}
+
+.udaj.vyrazny {
+  border-top: 1px dotted var(--linka);
+  border-bottom: 1px dotted var(--linka);
+  padding: 0.5rem 0;
+  margin: 0 0 0.8rem;
+}
+
+.udaj.vyrazny > .hodnota {
+  font-size: 1.5rem;
+  font-family: var(--pismo-display);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.poznamka {
+  font-size: 0.8125rem;
+  color: var(--inkoust-slaby);
+  margin: 0.5rem 0 0;
+}
+
+.poznamka.zvyraznena {
+  border-left: 3px solid var(--razitko);
+  background: var(--razitko-svetle);
+  color: var(--inkoust);
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--r);
+  margin-top: 0.9rem;
+}
+
+.odkaz {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--razitko);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.prazdno.maly {
+  padding: 1rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--razitko);
+}
+
+.pole > select {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  background: #fff;
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+}
+
+/* ─────────────────────────────────────────────── značky uvnitř mapy */
+
+.znacka-jidelny {
+  background: var(--horcice);
+  border: 2px solid var(--karta);
+  box-shadow: 0 0 0 1px var(--horcice);
+}
+
+.uchyt {
+  background: var(--karta);
+  border: 2px solid var(--razitko);
+  border-radius: 50%;
+  cursor: grab;
+}
+
+.uchyt:active {
+  cursor: grabbing;
+}
+
+.uchyt-stred {
+  border-radius: 0;
+  transform: rotate(45deg);
+}
+
+/* Leaflet si nastavuje vlastní písmo — ať popisky sedí se zbytkem. */
+.leaflet-container {
+  font-family: var(--pismo-text);
+}
+
+/* ────────────────────────────────────────────────────── seznam a filtry */
+
+.filtry {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0 1rem;
+  margin-bottom: 1rem;
+}
+
+.seznam-firem {
+  margin-top: 2rem;
+}
+
+.podnadpis.odsazeny {
+  margin-bottom: 0.5rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

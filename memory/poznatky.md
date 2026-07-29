@@ -518,3 +518,25 @@ skutečném přihlášení. Role `anon` (nepřihlášený) se zkouší stejně.
 Ověřeno 2026-07-29: `anon` vidí 0 firem, `uzivatel` 167 — pravidla drží.
 Pozor, `rollback` na konci není kosmetika: bez něj by případný zápis
 ve zkoušce zůstal v datech.
+
+## Velikostní segmenty jsou tři, ne čtyři (2026-07-29)
+
+Při stavbě aplikace jsem do filtru napsal škálu **mikro / malá / střední /
+velká**. Vypadala samozřejmě — a byla špatně. Migrace 0003 ji nahradila
+segmentací ze SPEC kap. 10.2: **mikropodnik** (do 25), **střední** (25–250),
+**korporát** (nad 250). Filtr tedy nabízel dvě hodnoty, které v datech nejsou,
+a třetí („korporát") neuměl pojmenovat.
+
+**Poučení:** číselník si nedomýšlej z názvu sloupce. Buď z omezení v databázi
+(`companies_velikost_kategorie_check`), nebo z `select … group by`.
+Platné hodnoty jsou v `src/res.ts` (`Segment`).
+
+## Počet zaměstnanců u firem není vyplněný (2026-07-29)
+
+`companies.zamestnanci_odhad` je NULL u **všech 167 firem** — velikost se
+dnes zná jen jako segment, ne jako číslo. Součet přes prázdný sloupec dal
+v aplikaci „Zaměstnanců 0", což vypadalo jako změřený údaj. Opraveno na
+„neznámé".
+
+Kdekoli se počítá souhrn, patří k němu otázka, co má vyjít, když se nesečte
+nic. Nula skoro nikdy.

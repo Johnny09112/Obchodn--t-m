@@ -1,10 +1,15 @@
+import { useState } from "react";
 import { usePrihlaseni } from "./auth";
 import { Prihlaseni } from "./Prihlaseni";
 import { Kartoteka } from "./Kartoteka";
+import { Oblasti } from "./Oblasti";
 import { POPIS_ROLE, roleZeSession, supabase } from "./supabase";
+
+type Pohled = "oblasti" | "kartoteka";
 
 export function App() {
   const { session, nacita } = usePrihlaseni();
+  const [pohled, setPohled] = useState<Pohled>("oblasti");
 
   // Než se ověří uložené přihlášení, neukazuj ani kartotéku, ani přihlašovací
   // lístek — problikávání by vypadalo jako odhlášení.
@@ -18,6 +23,20 @@ export function App() {
     <>
       <header className="lista">
         <span className="znacka">Cantinero</span>
+        <nav className="rozcestnik">
+          <button
+            className={pohled === "oblasti" ? "aktivni" : ""}
+            onClick={() => setPohled("oblasti")}
+          >
+            Oblasti
+          </button>
+          <button
+            className={pohled === "kartoteka" ? "aktivni" : ""}
+            onClick={() => setPohled("kartoteka")}
+          >
+            Kartotéka
+          </button>
+        </nav>
         <span className="odsazovac" />
         <span className="kdo">{session.user.email}</span>
         <span className="stitek-role">{POPIS_ROLE[role]}</span>
@@ -25,9 +44,7 @@ export function App() {
           Odhlásit
         </button>
       </header>
-      <main>
-        <Kartoteka />
-      </main>
+      <main>{pohled === "oblasti" ? <Oblasti role={role} /> : <Kartoteka />}</main>
     </>
   );
 }

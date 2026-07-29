@@ -15,10 +15,21 @@ Vite + React + TypeScript, vlastní `package.json`, spouští se
   kartotéka firem s hledáním a souhrnem (jen ke čtení).
 - **Ověřené:** nepřihlášený nevidí nic (0 řádků), role `uzivatel` vidí
   167 firem a 144 kontaktů. Postup ověření bez hesla je v `poznatky.md`.
-- **Neověřené:** samotné přihlášení heslem — to musí zkusit majitel,
-  hesla nezadávám. Aplikace zatím běží jen lokálně, na Vercel nenasazená.
-- **Chybí:** mapa, kreslení oblastí, seznam firem v oblasti, kampaně.
+  **Přihlášení heslem ověřil majitel 2026-07-29** — projde dovnitř, vidí
+  kartotéku i štítek role.
+- Aplikace zatím běží jen lokálně, na Vercel nenasazená (nasadí se s mapou).
+- **Mapa hotová:** zobrazení uložených oblastí, kruh s posuvníkem poloměru,
+  obkreslení vlastního tvaru, tažení bodů, živý počet firem uvnitř a seznam
+  s filtry (velikost, zaměření, spojení). Výpočet je sdílený s jádrem
+  (`src/oblast-tvar.ts`) — ověřeno, že dává stejná čísla jako SQL i jako
+  uložená `oblast_firmy` (41 firem ve 12 km, 144 ve 30 km).
+- **Chybí:** kampaně; mazání oblastí (záměrně — mazání dat rozhoduje majitel).
 - Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
+
+**Čeká na majitele:** oblast založená v aplikaci má prázdnou `oblast_firmy`,
+protože do ní aplikace podle pravidel nesmí psát. Buď se po založení pustí
+přepočet z příkazové řádky, nebo se pravidla změní tak, aby směla. Detail
+v `rozhodnuti.md` (2026-07-29).
 
 ## Kde jsme
 

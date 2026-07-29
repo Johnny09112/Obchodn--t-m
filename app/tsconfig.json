@@ -13,5 +13,5 @@
     "skipLibCheck": true,
     "types": ["vite/client"]
   },
-  "include": ["src"]
+  "include": ["src", "../src/oblast-tvar.ts", "../src/geo.ts"]
 }

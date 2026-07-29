@@ -221,3 +221,14 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 - 2026-07-29 · Claude · **Samoobslužná registrace v aplikaci není.** Účty
   i hesla zakládá správce. Proč: kdokoli s adresou by si jinak založil účet
   a role `host` sice nic nevidí, ale nemá smysl tu možnost vůbec nabízet.
+- 2026-07-29 · Claude · **Výpočet tvaru oblasti se sdílí mezi jádrem
+  a aplikací** (`src/oblast-tvar.ts`, importuje ho i `app/`). Proč: mapa musí
+  ukazovat totéž číslo, jaké se pak uloží — dvě kopie ray castingu by se
+  rozešly. Soubor proto nesmí sáhnout na nic, co běží jen v Node.
+  Ověřeno: aplikace i nezávislý výpočet v SQL dají u „Průzkum Rokycansko"
+  shodně 41 firem (12 km) a 144 (30 km).
+- 2026-07-29 · Claude · **Aplikace nezapisuje `oblast_firmy`** — příslušnost
+  firem k oblasti si počítá při každém zobrazení sama. Proč: tabulka je podle
+  pravidel jen ke čtení (zapisuje agent) a odvodit se dá kdykoli. Důsledek
+  k dořešení: oblast založená v aplikaci má tuhle tabulku prázdnou, dokud
+  ji nepřepočítá příkazová řádka. **Čeká na majitele** (viz stav.md).

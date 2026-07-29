@@ -256,3 +256,15 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   kterou lze kdykoli přepočítat týmž výpočtem — TP-2 se jí netýká. Kartotéka
   (`companies`, `contacts`, `evidence`) zůstává pro lidi dál jen ke čtení,
   ověřeno zkouškou: ani super-admin do ní nezapíše.
+- 2026-07-29 · majitel · **Kampaň = pojmenovaný seznam firem, ne rozesílka.**
+  Potvrzeno poté, co jsem upozornil, že SPEC kap. 10.2 kampaňový režim
+  zrušil („individuální oslovení, ne kampaň"). Majitelův příklad se dvěma
+  kampaněmi na jednu firmu tím zůstává, jen z toho neplynou dva e-maily.
+- 2026-07-29 · Claude + majitel · **Krok 4 průvodce rozdělen** na posouzení
+  seznamu (staví se teď) a oslovení (fáze 3). Majitel chtěl v kroku 4 reálné
+  rozhraní pro e-mail; to TP-8 kódu fáze 0–2 zakazuje.
+- 2026-07-29 · majitel · **Překryv kampaní jen upozorní, nebrání.** Tvrdá
+  pojistka TP-5 sedí až u odesílání, podle `companies.osloveno_at`.
+- 2026-07-29 · majitel · **Pořadí prací: kampaně → Spojka / Plzeň →
+  naplánované běhy agenta → fáze 3.** Automatizace až bude co automatizovat;
+  frontu práce vytvoří teprve kampaně.

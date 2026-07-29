@@ -251,3 +251,8 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   firmy ve víc oblastech vyznačuje kroužkem a panel vrstev je počítá.
   Vyloučení oblasti z kampaně tedy není volba, ale jediný povolený tvar.
   **Změnit to může jedině změna SPEC — rozhoduje majitel.**
+- 2026-07-29 · majitel · **Aplikace smí zapisovat `oblast_firmy`** (migrace
+  0017). Zdůvodnění: není to údaj o firmě, ale odvozenina z tvaru oblasti,
+  kterou lze kdykoli přepočítat týmž výpočtem — TP-2 se jí netýká. Kartotéka
+  (`companies`, `contacts`, `evidence`) zůstává pro lidi dál jen ke čtení,
+  ověřeno zkouškou: ani super-admin do ní nezapíše.

@@ -5,7 +5,7 @@ import { SeznamFirem } from "./SeznamFirem";
 import { supabase, type Role } from "./supabase";
 import { najdiPrekryv, naOblast, spoctiVrstvy } from "./vrstvy";
 import { bodVOblasti, type Oblast } from "../../src/oblast-tvar";
-import type { Bod } from "../../src/geo";
+import { vzdalenostM, type Bod } from "../../src/geo";
 import {
   nactiFirmy,
   nactiJidelny,
@@ -154,6 +154,39 @@ export function Oblasti({ role }: { role: Role }) {
 
   // ── uložení
 
+  /**
+   * Zapíše, které firmy do oblasti spadly.
+   *
+   * Není to nový údaj o firmě, jen odvozenina z tvaru — dá se kdykoli
+   * spočítat znovu (migrace 0017). Zapisuje se proto, aby o oblasti
+   * založené v aplikaci věděla i příkazová řádka.
+   *
+   * Nejdřív se maže: po zúžení oblasti musí firmy zmizet, ne zůstat.
+   * Vrací text chyby, nebo null při úspěchu.
+   */
+  async function zapisPrislusnost(oblastId: string, o: Oblast): Promise<string | null> {
+    const radky = firmy
+      .filter((f) => f.lat !== null && f.lng !== null)
+      .filter((f) => bodVOblasti(o, { lat: f.lat!, lng: f.lng! }))
+      .map((f) => ({
+        oblast_id: oblastId,
+        ico: f.ico,
+        // Vzdálenost dává smysl jen u kruhu; u nakresleného tvaru není od čeho.
+        vzdalenost_m: o.stred ? vzdalenostM(o.stred, { lat: f.lat!, lng: f.lng! }) : null,
+      }));
+
+    const smazani = await supabase.from("oblast_firmy").delete().eq("oblast_id", oblastId);
+    if (smazani.error) return smazani.error.message;
+
+    // Po dávkách — velká oblast může mít desetitisíce firem a jeden
+    // požadavek s takovým tělem by neprošel.
+    for (let i = 0; i < radky.length; i += 500) {
+      const { error } = await supabase.from("oblast_firmy").insert(radky.slice(i, i + 500));
+      if (error) return error.message;
+    }
+    return null;
+  }
+
   const hotovyTvar =
     navrh !== null &&
     (navrh.typ === "kruh" ? !!navrh.stred : (navrh.body?.length ?? 0) >= 3);
@@ -182,19 +215,39 @@ export function Oblasti({ role }: { role: Role }) {
       ? await supabase.from("oblasti").update(radek).eq("id", upravovanaId).select("id").single()
       : await supabase.from("oblasti").insert(radek).select("id").single();
 
-    setUklada(false);
     if (error) {
+      setUklada(false);
       setHlaska(`Oblast se nepodařilo uložit: ${error.message}`);
       return;
     }
 
     // Bez zapamatování nového id by druhé kliknutí na Založit oblast
     // vyrobilo druhou stejnou oblast místo úpravy té první.
-    if (data?.id) setUpravovanaId(data.id as string);
+    const id = (data?.id as string | undefined) ?? upravovanaId;
+    if (id) {
+      setUpravovanaId(id);
+      // Čerstvě založená oblast má být v mapě rovnou vidět.
+      setZobrazene((p) => new Set(p).add(id));
+    }
+
+    // Zapisuje se až po uložení tvaru — jinak by seznam firem odkazoval
+    // na oblast, která ještě neexistuje.
+    const chybaZapisu = id ? await zapisPrislusnost(id, navrh) : null;
 
     const cerstve = await nactiOblasti().catch(() => null);
     if (cerstve) setOblasti(cerstve);
+    setUklada(false);
     setRezim("prohlizeni");
+
+    if (chybaZapisu) {
+      setHlaska(
+        `Tvar oblasti „${radek.nazev}" je uložený, ale seznam firem v ní se zapsat nepodařilo: ` +
+          `${chybaZapisu} V aplikaci se počítá dál správně, jen o něm zatím neví příkazová řádka. ` +
+          "Zkuste uložit znovu.",
+      );
+      return;
+    }
+
     setHlaska(
       bylaNova
         ? `Oblast „${radek.nazev}" je založená. Firmy uvnitř vidíte v seznamu níž.`

@@ -17,7 +17,14 @@ Vite + React + TypeScript, vlastní `package.json`, spouští se
   167 firem a 144 kontaktů. Postup ověření bez hesla je v `poznatky.md`.
   **Přihlášení heslem ověřil majitel 2026-07-29** — projde dovnitř, vidí
   kartotéku i štítek role.
-- Aplikace zatím běží jen lokálně, na Vercel nenasazená (nasadí se s mapou).
+- **Repozitář je na GitHubu:** `Johnny09112/Obchodn--t-m` (soukromý, `origin`).
+  Ověřeno, že neobsahuje tajemství ani data o firmách. Vercel na něj majitel
+  napojil 2026-07-29; nastavení sestavení je ve `vercel.json` v kořeni.
+  **Kořenový adresář ve Vercelu musí zůstat kořen repozitáře, ne `app/`** —
+  aplikace si bere sdílený výpočet z `src/`, tedy o adresář výš.
+  Ověřeno, že čerstvý klon se stejnými příkazy sestaví.
+- Konektor Vercelu z Claude Code vidí jen projekt `mas-copilot`, na nový
+  projekt nedosáhne — nasazení tedy nekontroluju já, ale majitel.
 - **Mapa hotová:** zobrazení uložených oblastí, kruh s posuvníkem poloměru,
   obkreslení vlastního tvaru, tažení bodů, živý počet firem uvnitř a seznam
   s filtry (velikost, zaměření, spojení). Výpočet je sdílený s jádrem

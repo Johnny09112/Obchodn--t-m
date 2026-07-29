@@ -553,3 +553,28 @@ pozdější — a na telefonu panel zůstal nalepený přes mapu.
 
 Chytilo se to jen proto, že se po každé změně rozvržení měří v prohlížeči,
 kde co leží. Ze čtení kódu to vidět nebylo.
+
+## Nasazení na Vercel: konektor umí založit projekt, ale ne do něj nasadit (2026-07-29)
+
+Připojený účet Vercelu (tým **TermiShock**, `team_0P7Jjr…`) **založí nový
+projekt** i s prvním produkčním nasazením, ale na **jakékoli další nasazení
+do už existujícího projektu** vrátí `403 forbidden` — produkční i náhledové.
+Projekt se navíc neobjeví ve `list_projects`.
+
+Prakticky to znamená, že nasazovat z Claude Code opakovaně nejde. Řešení je
+**napojit Vercel na git repozitář** (jednorázově z webu Vercelu); pak se
+nasazuje samo při commitu a nic se nemusí nahrávat.
+
+Nastavení sestavení je uložené v `vercel.json` v kořeni, takže import
+z Vercelu si ho převezme sám:
+`installCommand: npm install --prefix app`,
+`buildCommand: npm run build --prefix app`, `outputDirectory: app/dist`.
+Ověřeno lokálně, že tyhle příkazy projdou.
+
+**Repozitář zatím nemá vzdálené úložiště** (`git remote -v` je prázdné) —
+před napojením ho bude potřeba někam vystavit.
+
+**Pozor na nástroj `deploy_to_vercel`:** posílají se mu soubory jedna po
+druhé v jednom volání. Při prvním pokusu jsem šest souborů vynechal a build
+se rozbil. Ke kompletnímu seznamu patří i sdílené `src/geo.ts`
+a `src/oblast-tvar.ts`, které si aplikace bere o adresář výš.

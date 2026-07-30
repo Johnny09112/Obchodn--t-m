@@ -338,3 +338,12 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 - 2026-07-31 · Claude · **Vynechané firmy se vracejí i s důvodem** a příkaz
   je vypíše. Tiché filtrování je horší než žádné — kdo nevidí, proč firma
   v kampani chybí, přestane pravidlům věřit.
+- 2026-07-31 · Claude · **Skóre bez známé vzdálenosti se přepočítává na touž
+  stupnici**, ne usekává na 70 bodů. Jinak by firma z oblasti prohrála i
+  s průměrnou firmou u jídelny, ať je jakkoli dobrá, a třídění podle priority
+  by nedávalo smysl. Firem se známou vzdáleností se to nedotklo.
+- 2026-07-31 · Claude · **Přiřazení jídelny se do opravy skóre nepřidávalo** —
+  drží se rozhodnutí z 2026-07-30, že přiřazování firem k provozům je
+  samostatná funkce. Skóre se počítá z toho, co víme, ne z dosazené jídelny.
+- 2026-07-31 · majitel · **Do návrhu průvodce kampaní se má zapojit design**
+  (dosud se stavělo rovnou z kódu). Postup v `docs/PRUVODCE-KAMPANI-POSTUP.md`.

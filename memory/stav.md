@@ -117,17 +117,35 @@ i když si aplikace seznam plní sama.
 profilu by po přepnutí profilu z kampaně tiše zmizela. Obor a velikost si
 člověk vybírá při schvalování kampaně (rozhodnutí majitele 2026-07-31).
 
+## Obě překážky průvodce opravené (2026-07-31)
+
+**Firmy z oblasti mají skóre.** Vzdálenost k jídelně se nevymýšlí — vypadne
+z výpočtu a zbytek se přepočte na touž stupnici (skóre = podíl získaných
+bodů z dosažitelných). Firma se známou vzdáleností má dosažitelných 100,
+takže se jí nic nemění; uložená skóre v databázi zůstávají platná.
+
+Při tom se našla **horší vada, než jaká byla hlášená**: `vzdalenostM` bylo
+typované jako `number`, ale `null` prošlo a `Math.min(null, 3000)` je 0 —
+firma bez jídelny by dostala **plných 30 bodů za blízkost, kterou nikdo
+neměřil**. Teď je typ `number | null` a null se počítá jako „nevíme".
+
+**Postupová čísla průzkumu sedí.** Dvě příčiny:
+- „nová" znamenalo „prošla tvarem", ne „nově založená" — firma známá
+  z dřívějška se hlásila jako nová. `VysledekFirmy` má teď příznak `nova`.
+- `firemPrevzato` se bralo jako celkový počet firem v oblasti, takže při
+  navazujícím běhu obsahoval i to, co tentýž průzkum našel minule. Teď se
+  odvozuje odečtením: `převzaté = v oblasti celkem − nové`.
+
+Test to hlídá rovnicí `nové + převzaté = počet firem v oblasti`.
+
 ## DALŠÍ KROK: průvodce kampaní v aplikaci (`app/`)
 
 Čtyři kroky podle odsouhlaseného návrhu
 `docs/superpowers/specs/2026-07-29-kampane-design.md`.
+Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
 
-**Dvě věci, které mu podrazí nohy, když se neopraví dřív:**
-- firmy z oblasti nemají skóre (chybí vzdálenost k jídelně) — seznam
-  nepůjde setřídit podle priority,
-- `firemPrevzato` a `firemNovych` se při opakovaných bězích průzkumu
-  sčítají dvakrát, takže postupová čísla nesedí.
-- Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
+**Do návrhu obrazovek se má zapojit design** (rozhodnutí majitele
+2026-07-31) — postup a role viz `docs/PRUVODCE-KAMPANI-POSTUP.md`.
 
 **Zůstává otevřené:** firma, která v kampani **už je** a teprve potom se
 dostane na blacklist, v ní zůstane — filtr se uplatní při doplňování, ne

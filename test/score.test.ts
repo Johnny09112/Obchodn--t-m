@@ -113,3 +113,52 @@ describe("jeVyloucenyObor", () => {
     expect(jeVyloucenyObor([])).toBe(false);
   });
 });
+
+describe("skóre bez známé vzdálenosti", () => {
+  /** Firma z nakreslené oblasti: k žádné jídelně zatím nepatří. */
+  const bezVzdalenosti = {
+    vzdalenostM: null,
+    segment: "stredni" as const,
+    maVlastniJidelnu: null,
+    czNace: ["62010"],
+    urovenAdresy: null,
+  };
+
+  it("firma bez jídelny skóre dostane, ne null", () => {
+    // Regrese: firmy z oblasti neměly skóre vůbec, takže se seznam
+    // v kampani nedal setřídit podle priority.
+    expect(spocitejSkore(bezVzdalenosti)).toBeGreaterThan(0);
+  });
+
+  it("skóre se přepočte na stejnou stupnici, ne na useknutých 70 bodů", () => {
+    // Získáno 25 (střední) + 7 (jídelnu neznáme) + 12 (kancelář) = 44
+    // z dosažitelných 70 → 63 ze 100. Bez přepočtu by firma z oblasti
+    // vždycky prohrála s průměrnou firmou u jídelny, ať je jakkoli dobrá.
+    expect(spocitejSkore(bezVzdalenosti)).toBe(63);
+  });
+
+  it("firma s maximem toho, co o ní víme, dosáhne na 100", () => {
+    expect(
+      spocitejSkore({
+        vzdalenostM: null,
+        segment: "stredni",
+        maVlastniJidelnu: false,
+        czNace: ["62010"],
+        urovenAdresy: 1,
+        nabizenychMist: 9,
+      }),
+    ).toBe(100);
+  });
+
+  it("známá vzdálenost počítá pořád stejně jako dřív", () => {
+    // Regrese: přepočet se nesmí dotknout firem sebraných kolem jídelny.
+    const uJidelny = {
+      vzdalenostM: 1500,
+      segment: "stredni" as const,
+      maVlastniJidelnu: null,
+      czNace: ["62010"],
+      urovenAdresy: null,
+    };
+    expect(spocitejSkore(uJidelny)).toBe(15 + 25 + 7 + 12);
+  });
+});

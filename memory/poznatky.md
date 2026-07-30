@@ -660,3 +660,31 @@ ne na každém vstupu. Vstupů přibývá, výstup je jeden.
 **Druhá věc:** vynechané firmy se vracejí i s důvodem a příkaz je vypíše.
 Tiché filtrování je horší než žádné — kdo nevidí, proč firma v kampani chybí,
 přestane pravidlům věřit a začne je obcházet ručně.
+
+## Volitelný údaj typovaný jako povinný projde a tiše lže (2026-07-31)
+
+`spocitejSkore` mělo `vzdalenostM: number`. Volající, který vzdálenost nezná,
+by měl dostat chybu při kontrole typů — jenže se tam nikdy null nedostal,
+protože ta cesta skóre vůbec nenastavovala. Když jsem ji chtěl zapnout,
+zjistilo se, že `Math.min(null, 3000)` je **0**, tedy plný počet bodů za
+blízkost, kterou nikdo neměřil.
+
+**Poučení:** když se údaj v nějaké cestě legitimně neví, musí to říkat typ
+(`number | null`), i kdyby dnes tu cestu nikdo nevolal. Jinak se z chybějícího
+údaje stane nejlepší možná hodnota — což je přesně opačně, než má být.
+
+**Druhé poučení:** nechybějící hodnotu neřeš dosazením nuly, ale vyřazením
+z výpočtu i ze jmenovatele. Skóre je teď podíl získaných bodů z těch
+dosažitelných, takže se dá porovnávat i mezi firmami, o kterých víme různě
+moc. Firmy se známou vzdáleností to nijak nezměnilo (dosažitelných 100).
+
+## „Uloženo" není totéž co „nově založeno" (2026-07-31)
+
+Průzkum oblasti počítal jako novou každou firmu, která prošla tvarem — včetně
+těch, které kartotéka znala z dřívějška. K tomu se `firemPrevzato` bralo jako
+celkový počet firem v oblasti, takže při navazujícím běhu obsahovalo i to, co
+tentýž průzkum našel minule. Dvě čísla, jedna firma, dvakrát započítaná.
+
+**Poučení:** u průběžných čísel si vždy napiš rovnici, která má platit, a
+otestuj ji (tady `nové + převzaté = počet firem v oblasti`). Jednotlivá čísla
+vypadají věrohodně samostatně; nesmysl je vidět teprve v součtu.

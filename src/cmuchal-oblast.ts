@@ -20,6 +20,7 @@ import { dokoncPruzkum, selhalPruzkum, zahajPruzkum } from "./pruzkum.js";
 import type { RegistrZaznam } from "./registr.js";
 import {
   nastavGeo,
+  nastavSkore,
   nastavStav,
   ukonciBeh,
   zacniBeh,
@@ -28,6 +29,7 @@ import {
   type DuvodVyrazeni,
 } from "./repo.js";
 import { jeBezZamestnancu, segmentPodleKategorie, type ResUdaje } from "./res.js";
+import { spocitejSkore } from "./score.js";
 import { obceVOblasti, KROK_MRIZKY_M } from "./uzemi.js";
 
 export interface Rozhled {
@@ -158,6 +160,15 @@ export async function rozhlednuti(
 export interface VysledekFirmy {
   stav: "ulozena" | "mimo_tvar" | "vyrazena" | "bez_souradnic";
   ico: string | null;
+  /**
+   * Firma v kartotéce dosud nebyla a teď vznikla.
+   *
+   * Uložení a založení není totéž: firma, kterou už známe odjinud (sběr kolem
+   * jídelny, dřívější průzkum), se do oblasti taky „uloží", ale nová není.
+   * Bez tohohle rozlišení se při navazujícím běhu hlásily jako nové i firmy,
+   * které tentýž průzkum našel minule.
+   */
+  nova: boolean;
 }
 
 /**
@@ -218,7 +229,7 @@ export async function zpracujFirmuVOblasti(
     ares = await deps.ares.overFirmu(ico);
     if (!ares) {
       await vyrad("nesparovano", "registr uvádí IČO, které ARES nezná");
-      return { stav: "vyrazena", ico };
+      return { stav: "vyrazena", ico, nova: false };
     }
 
     // Krok 2b — kvalifikace: chceme tuhle firmu vůbec oslovit? Hned po ověření
@@ -246,7 +257,7 @@ export async function zpracujFirmuVOblasti(
     });
     if (!kvalifikace.ok) {
       await vyrad(kvalifikace.duvod, kvalifikace.detail ?? kvalifikace.duvod);
-      return { stav: "vyrazena", ico };
+      return { stav: "vyrazena", ico, nova: false };
     }
 
     // Krok 3 — zaměření adresy sídla ze záznamu registru.
@@ -256,14 +267,14 @@ export async function zpracujFirmuVOblasti(
       // Číselník DuvodVyrazeni „bez_souradnic" nezná — nejbližší vhodný je
       // `poloha_neznama`, stejný, jaký pro tenhle případ používá `zpracujKandidata`.
       await vyrad("poloha_neznama", `adresa „${adresa}" se nedá zaměřit`);
-      return { stav: "bez_souradnic", ico };
+      return { stav: "bez_souradnic", ico, nova: false };
     }
   }
 
   // Krok 4 — rozhoduje tvar oblasti, ne vzdálenost od jídelny.
   if (!bodVOblasti(oblast, bod)) {
     await vyrad("mimo_zonu", "leží mimo nakreslený tvar oblasti");
-    return { stav: "mimo_tvar", ico };
+    return { stav: "mimo_tvar", ico, nova: false };
   }
 
   // Krok 5 — zápis. Vše přes repository vrstvu (TP-1). Oblast nepřiřazuje
@@ -293,17 +304,30 @@ export async function zpracujFirmuVOblasti(
   );
 
   // Nově založená firma z oblasti je kvalifikovaná, ale bez jídelny — přesně
-  // stav `cekajici_na_jidelnu`. Skóre záměrně NENASTAVUJEME: `spocitejSkore`
-  // (src/score.ts) potřebuje vzdálenost k jídelně, tady žádná není a
-  // vymýšlet ji nesmíme (TP-2) — prázdné skóre je legitimní stav, doplní se,
-  // až firmu převezme konkrétní jídelna. Jen u nově založené firmy: firma,
-  // která už byla známá (jiná cesta ji sem přivedla dřív), svůj stav i
-  // skóre už má a tady se nepřepisuje.
+  // stav `cekajici_na_jidelnu`. Skóre se počítá i tak: vzdálenost se nevymýšlí
+  // (TP-2), vypadne z výpočtu a zbytek se přepočte na touž stupnici (viz
+  // `spocitejSkore`). Bez skóre by se seznam firem v kampani nedal setřídit
+  // podle priority — a to je jeho hlavní smysl.
+  //
+  // Jen u nově založené firmy: firma, kterou už kartotéka znala odjinud, má
+  // svůj stav i skóre z lepších podkladů (často včetně vzdálenosti k jídelně)
+  // a tady se nepřepisuje.
   if (ares) {
     await nastavStav(db, ico, "cekajici_na_jidelnu");
+    await nastavSkore(
+      db,
+      ico,
+      spocitejSkore({
+        vzdalenostM: null, // k žádné jídelně zatím nepatří
+        segment: segmentPodleKategorie(zaznam.kategorieKod),
+        maVlastniJidelnu: null, // sběr to nezjišťuje, doplní rešerše
+        czNace: ares.czNace,
+        urovenAdresy: null, // kontakt ještě není
+      }),
+    );
   }
 
-  return { stav: "ulozena", ico };
+  return { stav: "ulozena", ico, nova: ares !== null };
 }
 
 async function nactiPruzkum(db: CmuchalDeps["db"], id: string) {
@@ -371,7 +395,10 @@ export async function vyridPruzkum(
   // Krok 3 — záznam běhu a přepočet už známých firem. Nic se přitom
   // nehledá ani nezaměřuje, jen se sáhne do kartotéky.
   const behId = await zacniBeh(db, "cmuchal-oblast", { pruzkumId, oblastId: p.oblastId });
-  const firemPrevzato = await prepocitejOblastFirmy(db, p.oblastId);
+  // Přepočet je tu kvůli svému účinku, ne kvůli návratovému číslu: doplní do
+  // oblasti firmy, které v tvaru leží a kartotéka je zná odjinud. Kolik jich
+  // bylo „převzatých", se spočítá až na konci — viz krok 6.
+  await prepocitejOblastFirmy(db, p.oblastId);
 
   // Krok 3b — pravidla kvalifikace: koho vůbec chceme (src/kvalifikace.ts).
   // Stejně jako `spustCmuchala` v cmuchal.ts — načtou se jednou, platí pro
@@ -427,8 +454,12 @@ export async function vyridPruzkum(
           blacklist,
           profil,
         });
-        if (vysledek.stav === "ulozena") novych++;
-        else if (vysledek.stav === "mimo_tvar") mimoTvar++;
+        // Počítá se založení, ne uložení. Firma, kterou kartotéka už znala,
+        // se do oblasti taky uloží, ale nová není — jinak by se při
+        // navazujícím běhu hlásila jako nová podruhé.
+        if (vysledek.stav === "ulozena") {
+          if (vysledek.nova) novych++;
+        } else if (vysledek.stav === "mimo_tvar") mimoTvar++;
       }
       await db.query(
         `update pruzkum_useky
@@ -470,6 +501,17 @@ export async function vyridPruzkum(
     [pruzkumId],
   );
   const firemNovych = soucetNovych[0]?.soucet ?? 0;
+
+  // „Převzaté" = firmy, které v tvaru leží a NEZALOŽIL je tenhle průzkum.
+  // Odvozuje se odečtením, ne měřením na začátku běhu: kdyby se vzal prostý
+  // počet firem v oblasti, obsahoval by při navazujícím běhu i to, co tentýž
+  // průzkum našel minule — a ty by se počítaly dvakrát (jednou jako nové,
+  // podruhé jako převzaté).
+  const vOblasti = await db.query<{ pocet: number }>(
+    "select count(*)::int as pocet from oblast_firmy where oblast_id = $1",
+    [p.oblastId],
+  );
+  const firemPrevzato = Math.max(0, (vOblasti[0]?.pocet ?? 0) - firemNovych);
 
   let uzavreno = false;
   if (usekuNedokonceno === 0) {

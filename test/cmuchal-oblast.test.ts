@@ -327,7 +327,7 @@ describe("zpracujFirmuVOblasti", () => {
     pravidla = await vychoziPravidla(db);
   });
 
-  it("firma uvnitř tvaru se uloží s prázdnou jídelnou, čeká na jídelnu a nemá skóre", async () => {
+  it("firma uvnitř tvaru se uloží s prázdnou jídelnou, čeká na jídelnu a dostane skóre", async () => {
     const { deps } = falesneDeps(db);
     const zaznamy = await deps.registr!.zamestnavateleVJednotkach([559661]);
     const zaznamUvnitr = zaznamy.find((z) => z.ico === uvnitr.ico)!;
@@ -340,7 +340,7 @@ describe("zpracujFirmuVOblasti", () => {
       ...pravidla,
     });
 
-    expect(vysledek).toEqual({ stav: "ulozena", ico: uvnitr.ico });
+    expect(vysledek).toEqual({ stav: "ulozena", ico: uvnitr.ico, nova: true });
 
     const firma = await db.query<{
       nejblizsi_jidelna_id: string | null;
@@ -356,9 +356,12 @@ describe("zpracujFirmuVOblasti", () => {
     expect(firma[0]?.lat).not.toBeNull();
     // Kvalifikovaná firma bez jídelny — přesně tahle situace.
     expect(firma[0]?.stav).toBe("cekajici_na_jidelnu");
-    // Skóre počítá vzdálenost k jídelně (src/score.ts) — u oblasti žádná
-    // není a vymýšlet ji nesmíme (TP-2). Prázdné je legitimní stav.
-    expect(firma[0]?.skore).toBeNull();
+    // Skóre se počítá i bez jídelny. Vzdálenost se nevymýšlí (TP-2) — vypadne
+    // z výpočtu a zbytek se přepočte na touž stupnici (viz `spocitejSkore`).
+    // Dřív tu skóre chybělo úplně a seznam v kampani se nedal setřídit podle
+    // priority; změna chování odsouhlasená majitelem 2026-07-31.
+    expect(firma[0]?.skore).not.toBeNull();
+    expect(firma[0]?.skore).toBeGreaterThan(0);
 
     const vOblasti = await db.query(
       "select 1 from oblast_firmy where oblast_id = $1 and ico = $2",
@@ -380,7 +383,7 @@ describe("zpracujFirmuVOblasti", () => {
       ...pravidla,
     });
 
-    expect(vysledek).toEqual({ stav: "mimo_tvar", ico: mimo.ico });
+    expect(vysledek).toEqual({ stav: "mimo_tvar", ico: mimo.ico, nova: false });
 
     const firma = await db.query("select 1 from companies where ico = $1", [mimo.ico]);
     expect(firma.length).toBe(0);
@@ -502,7 +505,7 @@ describe("zpracujFirmuVOblasti", () => {
       ...pravidla,
     });
 
-    expect(vysledek).toEqual({ stav: "vyrazena", ico: "99999999" });
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: "99999999", nova: false });
 
     const firma = await db.query("select 1 from companies where ico = $1", ["99999999"]);
     expect(firma.length).toBe(0);
@@ -573,7 +576,7 @@ describe("zpracujFirmuVOblasti — kvalifikace (koho vůbec chceme)", () => {
 
     const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
 
-    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico });
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico, nova: false });
     expect(await db.query("select 1 from companies where ico = $1", [zaznam.ico])).toHaveLength(0);
     const v = await db.query<{ duvod: string }>("select duvod from vyrazeni where ico = $1", [zaznam.ico]);
     expect(v).toHaveLength(1);
@@ -596,7 +599,7 @@ describe("zpracujFirmuVOblasti — kvalifikace (koho vůbec chceme)", () => {
 
     const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
 
-    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico });
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico, nova: false });
     expect(await db.query("select 1 from companies where ico = $1", [zaznam.ico])).toHaveLength(0);
     const v = await db.query<{ duvod: string; detail: string }>(
       "select duvod, detail from vyrazeni where ico = $1",
@@ -617,7 +620,7 @@ describe("zpracujFirmuVOblasti — kvalifikace (koho vůbec chceme)", () => {
 
     const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
 
-    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico });
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico, nova: false });
     expect(await db.query("select 1 from companies where ico = $1", [zaznam.ico])).toHaveLength(0);
     const v = await db.query<{ duvod: string }>("select duvod from vyrazeni where ico = $1", [zaznam.ico]);
     expect(v).toHaveLength(1);
@@ -632,14 +635,14 @@ describe("zpracujFirmuVOblasti — kvalifikace (koho vůbec chceme)", () => {
 
     const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
 
-    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico });
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico, nova: false });
     expect(await db.query("select 1 from companies where ico = $1", [zaznam.ico])).toHaveLength(0);
     const v = await db.query<{ duvod: string }>("select duvod from vyrazeni where ico = $1", [zaznam.ico]);
     expect(v).toHaveLength(1);
     expect(v[0]?.duvod).toBe("partnerska_jidelna");
   });
 
-  it("kvalifikovaná firma nad oblastí dostane stav 'cekajici_na_jidelnu' a žádné skóre", async () => {
+  it("kvalifikovaná firma nad oblastí dostane stav 'cekajici_na_jidelnu' i skóre", async () => {
     const { deps } = falesneDeps(db);
     const zaznam = zaznamKandidata({ ico: "10000046" });
     sAresem(deps, zaznam);
@@ -653,7 +656,9 @@ describe("zpracujFirmuVOblasti — kvalifikace (koho vůbec chceme)", () => {
       [zaznam.ico],
     );
     expect(firma[0]?.stav).toBe("cekajici_na_jidelnu");
-    expect(firma[0]?.skore).toBeNull();
+    // Vzdálenost k jídelně chybí, ale skóre se z ostatního spočítá — jinak
+    // by se seznam v kampani nedal setřídit podle priority.
+    expect(firma[0]?.skore).toBeGreaterThan(0);
   });
 });
 
@@ -774,6 +779,44 @@ describe("vyridPruzkum", () => {
       [pruzkumId],
     );
     expect(stavPruzkumu[0]?.stav).toBe("bezi");
+  });
+
+  it("firma, kterou kartotéka už zná, se nepočítá jako nová", async () => {
+    // Regrese: „nová" znamená nově založená, ne „prošla tvarem". Firma
+    // sebraná dřív kolem jídelny se tu jen převezme.
+    await zalozFirmu(db, uvnitr);
+    await nastavGeo(db, uvnitr.ico, {
+      ...souradnice[uvnitr.ico]!,
+      jidelnaId: null,
+      vzdalenostM: null,
+      vZone: null,
+    });
+
+    const { deps } = falesneDeps(db);
+    const vysledek = await vyridPruzkum(deps, pruzkumId);
+
+    expect(vysledek.firemPrevzato).toBe(1);
+    expect(vysledek.firemNovych).toBe(0);
+  });
+
+  it("firma z prvního běhu se v druhém nezapočítá podruhé", async () => {
+    // Regrese: `firemPrevzato` se bralo jako celkový počet firem v oblasti,
+    // takže po navazujícím běhu obsahovalo i firmy, které tentýž průzkum
+    // našel jako nové — a ty se pak počítaly dvakrát.
+    const { deps } = falesneDeps(db, {
+      jednotky: DVE_JEDNOTKY,
+      firmyPodleJednotky: FIRMY_DVOU_JEDNOTEK,
+    });
+
+    await vyridPruzkum(deps, pruzkumId, { nejvyseUseku: 1 });
+    const vysledek = await vyridPruzkum(deps, pruzkumId);
+
+    const vOblasti = await db.query<{ pocet: number }>(
+      "select count(*)::int as pocet from oblast_firmy where oblast_id = $1",
+      [oblastId],
+    );
+    expect(vysledek.firemNovych + vysledek.firemPrevzato).toBe(vOblasti[0]!.pocet);
+    expect(vysledek.firemNovych).toBeGreaterThan(0);
   });
 
   it("po posledním úseku se objednávka uzavře na 'hotovo'", async () => {

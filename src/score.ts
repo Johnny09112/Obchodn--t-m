@@ -1,7 +1,11 @@
 import type { Segment } from "./res.js";
 
 export interface SkoreVstup {
-  vzdalenostM: number;
+  /**
+   * `null` = firma zatím nepatří k žádné jídelně (typicky sběr nad nakreslenou
+   * oblastí). Není to „nula metrů" — viz `spocitejSkore`.
+   */
+  vzdalenostM: number | null;
   /** Segment ze statistického registru (SPEC 10.2). NULL = neuvedeno. */
   segment: Segment | null;
   maVlastniJidelnu: boolean | null;
@@ -73,9 +77,25 @@ const BODY_SEGMENT: Record<Segment, number> = {
  * Skóre vhodnosti firmy 0–100 (SPEC 10.1).
  * Vzdálenost 30 · velikost 25 · absence vlastní jídelny 15 ·
  * kancelářský obor 12 · poptávková adresa 8 · živý nábor 10.
+ *
+ * **Neznámá vzdálenost se nepočítá jako nula metrů.** Firma sebraná nad
+ * nakreslenou oblastí k žádné jídelně nepatří (o přiřazení rozhoduje
+ * samostatná funkce), takže vzdálenost prostě není. Kdyby se dosadila nula,
+ * dostala by plných 30 bodů za blízkost, kterou nikdo nezměřil — přesně ten
+ * druh dohadu, který zakazuje TP-2.
+ *
+ * Místo toho vypadne z čitatele i ze jmenovatele a výsledek se přepočte na
+ * touž stupnici: skóre je **podíl získaných bodů z těch dosažitelných**.
+ * Firma se známou vzdáleností má dosažitelných 100, takže jí přepočet nic
+ * nemění. Bez přepočtu by firma z oblasti mohla dosáhnout nejvýš na 70 a
+ * v setříděném seznamu by prohrála i s průměrnou firmou u jídelny, ať je
+ * jakkoli dobrá.
  */
 export function spocitejSkore(v: SkoreVstup): number {
-  const vzdalenost = Math.round(30 * (1 - Math.min(v.vzdalenostM, 3000) / 3000));
+  const vzdalenost =
+    v.vzdalenostM === null
+      ? null
+      : Math.round(30 * (1 - Math.min(v.vzdalenostM, 3000) / 3000));
 
   // Neuvedená velikost nedostane žádné body — nevíme, tedy neodhadujeme (TP-2).
   const velikost = v.segment ? BODY_SEGMENT[v.segment] : 0;
@@ -92,5 +112,8 @@ export function spocitejSkore(v: SkoreVstup): number {
   const mist = v.nabizenychMist ?? 0;
   const nabor = mist >= 5 ? 10 : mist >= 2 ? 7 : mist >= 1 ? 4 : 0;
 
-  return vzdalenost + velikost + jidelna + obor + adresa + nabor;
+  const ziskano = (vzdalenost ?? 0) + velikost + jidelna + obor + adresa + nabor;
+  const dosazitelne = vzdalenost === null ? 70 : 100;
+
+  return Math.round((100 * ziskano) / dosazitelne);
 }

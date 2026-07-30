@@ -1,27 +1,33 @@
 /**
  * Průzkum nakresleného území.
  *
- * Vlastní soubor, aby `cmuchal.ts` (už dnes velký) dál nerostl. Sdílí s ním
- * filtry, ověření v ARES i zápis kandidáta.
+ * Vlastní soubor, aby `cmuchal.ts` (už dnes velký) dál nerostl. Kvalifikaci
+ * („koho vůbec chceme") sdílí s ním přes `src/kvalifikace.ts` — bez toho by
+ * pravidlo přidané pro cestu kolem jídelny na oblast tiše nedosáhlo.
  *
  * **Oblast nepřiřazuje firmu k jídelně** — firmy se ukládají s prázdnou
  * jídelnou a o přiřazení rozhoduje vzdálenost, což je samostatná funkce.
  */
 import type { AresZaznam } from "./ares.js";
-import type { CmuchalDeps } from "./cmuchal.js";
+import { nactiBlacklist, type Pravidlo } from "./blacklist.js";
+import { VYCHOZI_MIN_ZAMESTNANCU, type CmuchalDeps } from "./cmuchal.js";
 import type { Bod } from "./geo.js";
+import { kvalifikujFirmu } from "./kvalifikace.js";
 import { nactiOblast, prepocitejOblastFirmy } from "./oblast.js";
 import { bodVOblasti, type Oblast } from "./oblast-tvar.js";
+import { nactiProfil, type Profil } from "./profil.js";
 import { dokoncPruzkum, selhalPruzkum, zahajPruzkum } from "./pruzkum.js";
 import type { RegistrZaznam } from "./registr.js";
 import {
   nastavGeo,
+  nastavStav,
   ukonciBeh,
   zacniBeh,
   zalozFirmu,
   zaznamVyrazeni,
   type DuvodVyrazeni,
 } from "./repo.js";
+import { jeBezZamestnancu, segmentPodleKategorie, type ResUdaje } from "./res.js";
 import { obceVOblasti, KROK_MRIZKY_M } from "./uzemi.js";
 
 export interface Rozhled {
@@ -129,10 +135,19 @@ export async function zpracujFirmuVOblasti(
     oblast: Oblast;
     oblastId: string;
     behId: string;
+    /**
+     * Koho vůbec chceme oslovit — stejná pravidla jako u cesty kolem
+     * jídelny, sdílená přes `src/kvalifikace.ts`. Bez nich by do oblasti (a
+     * odtud do kampaně) mohl spadnout bytový dům, firma bez zaměstnanců,
+     * nechtěný obor, blacklistovaná firma nebo naše vlastní jídelna.
+     */
+    partnerskaIca: ReadonlySet<string>;
+    blacklist: readonly Pravidlo[];
+    profil: Profil;
   },
 ): Promise<VysledekFirmy> {
   const { db } = deps;
-  const { zaznam, oblast, oblastId, behId } = vstup;
+  const { zaznam, oblast, oblastId, behId, partnerskaIca, blacklist, profil } = vstup;
   const ico = zaznam.ico;
 
   /** Vyřazení kandidáta — vždy i se záznamem do deníku (žádná jídelna tu není). */
@@ -164,6 +179,34 @@ export async function zpracujFirmuVOblasti(
     ares = await deps.ares.overFirmu(ico);
     if (!ares) {
       await vyrad("nesparovano", "registr uvádí IČO, které ARES nezná");
+      return { stav: "vyrazena", ico };
+    }
+
+    // Krok 2b — kvalifikace: chceme tuhle firmu vůbec oslovit? Hned po ověření
+    // v ARES a před zaměřováním adresy, ať se neplýtvá vteřinou na geokódování
+    // firmy, kterou stejně nechceme. Velikost bere přímo ze záznamu registru
+    // (sloupec KATPO) — je stejná jako z ARES statistického registru, ale bez
+    // dalšího síťového dotazu (viz `src/zona.ts`, kde se dělá totéž).
+    const resUdaje: ResUdaje = {
+      ico,
+      kategorieKod: zaznam.kategorieKod,
+      kategoriePopis: null,
+      segment: segmentPodleKategorie(zaznam.kategorieKod),
+      bezZamestnancu: jeBezZamestnancu(zaznam.kategorieKod),
+      zdrojUrl: zaznam.zdrojUrl,
+    };
+    const kvalifikace = kvalifikujFirmu({
+      ico,
+      partnerskaIca,
+      ares,
+      blacklist,
+      profil,
+      resUdaje,
+      zdroj: "registr",
+      minZamestnancu: profil.minZamestnancu ?? VYCHOZI_MIN_ZAMESTNANCU,
+    });
+    if (!kvalifikace.ok) {
+      await vyrad(kvalifikace.duvod, kvalifikace.detail ?? kvalifikace.duvod);
       return { stav: "vyrazena", ico };
     }
 
@@ -199,6 +242,17 @@ export async function zpracujFirmuVOblasti(
      on conflict (oblast_id, ico) do nothing`,
     [oblastId, ico],
   );
+
+  // Nově založená firma z oblasti je kvalifikovaná, ale bez jídelny — přesně
+  // stav `cekajici_na_jidelnu`. Skóre záměrně NENASTAVUJEME: `spocitejSkore`
+  // (src/score.ts) potřebuje vzdálenost k jídelně, tady žádná není a
+  // vymýšlet ji nesmíme (TP-2) — prázdné skóre je legitimní stav, doplní se,
+  // až firmu převezme konkrétní jídelna. Jen u nově založené firmy: firma,
+  // která už byla známá (jiná cesta ji sem přivedla dřív), svůj stav i
+  // skóre už má a tady se nepřepisuje.
+  if (ares) {
+    await nastavStav(db, ico, "cekajici_na_jidelnu");
+  }
 
   return { stav: "ulozena", ico };
 }
@@ -270,6 +324,18 @@ export async function vyridPruzkum(
   const behId = await zacniBeh(db, "cmuchal-oblast", { pruzkumId, oblastId: p.oblastId });
   const firemPrevzato = await prepocitejOblastFirmy(db, p.oblastId);
 
+  // Krok 3b — pravidla kvalifikace: koho vůbec chceme (src/kvalifikace.ts).
+  // Stejně jako `spustCmuchala` v cmuchal.ts — načtou se jednou, platí pro
+  // celý běh. Bez toho by nové pravidlo blacklistu, platné pro cestu kolem
+  // jídelny, na oblast tiše nedosáhlo.
+  const partnerskaIca = new Set(
+    (await db.query<{ ico: string }>("select ico from jidelny where ico is not null")).map(
+      (j) => j.ico,
+    ),
+  );
+  const blacklist = await nactiBlacklist(db);
+  const profil = await nactiProfil(db);
+
   // Krok 4 — úseky ve stavu 'ceka' i 'bezi', podle pořadí, nejvýš
   // opts.nejvyseUseku.
   //
@@ -308,6 +374,9 @@ export async function vyridPruzkum(
           oblast: oblast.oblast,
           oblastId: p.oblastId,
           behId,
+          partnerskaIca,
+          blacklist,
+          profil,
         });
         if (vysledek.stav === "ulozena") novych++;
         else if (vysledek.stav === "mimo_tvar") mimoTvar++;

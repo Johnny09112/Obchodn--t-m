@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
+import { nactiBlacklist, pridejPravidlo } from "../src/blacklist.js";
 import { zalozOblast } from "../src/oblast.js";
+import { nactiProfil, type Profil } from "../src/profil.js";
 import { objednejPruzkum } from "../src/pruzkum.js";
 import { rozhlednuti, vyridPruzkum, zpracujFirmuVOblasti } from "../src/cmuchal-oblast.js";
 import type { AresKlient, AresZaznam } from "../src/ares.js";
@@ -13,6 +15,17 @@ import { nastavGeo, zacniBeh, zalozFirmu } from "../src/repo.js";
 
 let db: Db;
 let pruzkumId: string;
+
+/** Výchozí pravidla kvalifikace pro testy, které je nezkoumají — blacklist a
+ *  partnerské jídelny se čtou z databáze (prázdné, dokud test nic nevloží),
+ *  profil je aktivní profil z migrace (Cantinero). */
+async function vychoziPravidla(db: Db) {
+  return {
+    partnerskaIca: new Set<string>(),
+    blacklist: await nactiBlacklist(db),
+    profil: await nactiProfil(db),
+  };
+}
 
 beforeEach(async () => {
   db = await pripojPglite();
@@ -268,13 +281,15 @@ const OBLAST: Oblast = { typ: "kruh", stred: STRED, polomerM: 3000 };
 describe("zpracujFirmuVOblasti", () => {
   let oblastId: string;
   let behId: string;
+  let pravidla: Awaited<ReturnType<typeof vychoziPravidla>>;
 
   beforeEach(async () => {
     oblastId = await zalozOblast(db, { nazev: "Území", oblast: OBLAST });
     behId = await zacniBeh(db, "cmuchal-oblast", { oblastId });
+    pravidla = await vychoziPravidla(db);
   });
 
-  it("firma uvnitř tvaru se uloží s prázdnou jídelnou a objeví se v oblast_firmy", async () => {
+  it("firma uvnitř tvaru se uloží s prázdnou jídelnou, čeká na jídelnu a nemá skóre", async () => {
     const { deps } = falesneDeps(db);
     const zaznamy = await deps.registr!.zamestnavateleVJednotkach([559661]);
     const zaznamUvnitr = zaznamy.find((z) => z.ico === uvnitr.ico)!;
@@ -284,17 +299,28 @@ describe("zpracujFirmuVOblasti", () => {
       oblast: OBLAST,
       oblastId,
       behId,
+      ...pravidla,
     });
 
     expect(vysledek).toEqual({ stav: "ulozena", ico: uvnitr.ico });
 
-    const firma = await db.query<{ nejblizsi_jidelna_id: string | null; lat: number | null }>(
-      "select nejblizsi_jidelna_id, lat::float8 as lat from companies where ico = $1",
+    const firma = await db.query<{
+      nejblizsi_jidelna_id: string | null;
+      lat: number | null;
+      stav: string;
+      skore: number | null;
+    }>(
+      "select nejblizsi_jidelna_id, lat::float8 as lat, stav, skore from companies where ico = $1",
       [uvnitr.ico],
     );
     expect(firma.length).toBe(1);
     expect(firma[0]?.nejblizsi_jidelna_id).toBeNull();
     expect(firma[0]?.lat).not.toBeNull();
+    // Kvalifikovaná firma bez jídelny — přesně tahle situace.
+    expect(firma[0]?.stav).toBe("cekajici_na_jidelnu");
+    // Skóre počítá vzdálenost k jídelně (src/score.ts) — u oblasti žádná
+    // není a vymýšlet ji nesmíme (TP-2). Prázdné je legitimní stav.
+    expect(firma[0]?.skore).toBeNull();
 
     const vOblasti = await db.query(
       "select 1 from oblast_firmy where oblast_id = $1 and ico = $2",
@@ -313,6 +339,7 @@ describe("zpracujFirmuVOblasti", () => {
       oblast: OBLAST,
       oblastId,
       behId,
+      ...pravidla,
     });
 
     expect(vysledek).toEqual({ stav: "mimo_tvar", ico: mimo.ico });
@@ -345,6 +372,7 @@ describe("zpracujFirmuVOblasti", () => {
       oblast: OBLAST,
       oblastId,
       behId,
+      ...pravidla,
     });
     expect(prvni.stav).toBe("ulozena");
     expect(pocty.zamereni).toBe(1);
@@ -356,6 +384,7 @@ describe("zpracujFirmuVOblasti", () => {
       oblast: OBLAST,
       oblastId,
       behId,
+      ...pravidla,
     });
     expect(druhy.stav).toBe("ulozena");
     expect(pocty.zamereni).toBe(1);
@@ -381,6 +410,7 @@ describe("zpracujFirmuVOblasti", () => {
       oblast: OBLAST,
       oblastId,
       behId,
+      ...pravidla,
     });
 
     expect(vysledek).toEqual({ stav: "vyrazena", ico: "99999999" });
@@ -394,6 +424,147 @@ describe("zpracujFirmuVOblasti", () => {
     );
     expect(vyrazeniRadky.length).toBe(1);
     expect(vyrazeniRadky[0]?.duvod).toBe("nesparovano");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Kvalifikace nad oblastí — stejná pravidla jako u cesty kolem jídelny
+// (src/kvalifikace.ts). Bez toho by do oblasti mohl spadnout bytový dům,
+// firma bez zaměstnanců, blacklistovaná firma nebo naše vlastní jídelna.
+
+describe("zpracujFirmuVOblasti — kvalifikace (koho vůbec chceme)", () => {
+  let oblastId: string;
+  let behId: string;
+
+  beforeEach(async () => {
+    oblastId = await zalozOblast(db, { nazev: "Území", oblast: OBLAST });
+    behId = await zacniBeh(db, "cmuchal-oblast", { oblastId });
+  });
+
+  /** Kandidát z registru, dostatečně obecný, aby ho šlo v jednotlivých testech přeladit. */
+  const zaznamKandidata = (over: Partial<RegistrZaznam> = {}): RegistrZaznam => ({
+    ico: "10000003",
+    nazev: "Testovací s.r.o.",
+    pravniForma: "112",
+    kategorieKod: "330",
+    nace: ["25610"],
+    adresa: "Náves 1",
+    obec: "Zbůch",
+    psc: "330 22",
+    jednotka: VYCHOZI_JEDNOTKA,
+    zdrojUrl: "https://csu.gov.cz/registr",
+    ...over,
+  });
+
+  /** Zaregistruje kandidáta i v ARES — ARES vrací právní formu a obor, na
+   *  kterých kvalifikace rozhoduje, registr sám o sobě nestačí. */
+  function sAresem(deps: CmuchalDeps, zaznam: RegistrZaznam, over: Partial<AresZaznam> = {}) {
+    deps.ares.overFirmu = async (ico) =>
+      ico === zaznam.ico
+        ? {
+            ico: zaznam.ico,
+            nazev: zaznam.nazev,
+            adresa: zaznam.adresa,
+            obec: zaznam.obec,
+            czNace: zaznam.nace,
+            velikostKategorie: null,
+            kodObce: VYCHOZI_JEDNOTKA,
+            pravniForma: zaznam.pravniForma,
+            ...over,
+          }
+        : null;
+    return deps;
+  }
+
+  it("bytový dům se neuloží a zapíše se vyřazení, bez zbytečného zaměření", async () => {
+    const { deps, pocty } = falesneDeps(db);
+    const zaznam = zaznamKandidata({ ico: "10000003" });
+    sAresem(deps, zaznam, { pravniForma: "145" }); // společenství vlastníků jednotek
+    const pravidla = await vychoziPravidla(db);
+
+    const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
+
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico });
+    expect(await db.query("select 1 from companies where ico = $1", [zaznam.ico])).toHaveLength(0);
+    const v = await db.query<{ duvod: string }>("select duvod from vyrazeni where ico = $1", [zaznam.ico]);
+    expect(v).toHaveLength(1);
+    expect(v[0]?.duvod).toBe("bytovy_dum");
+    // Kvalifikace běží před zaměřením adresy — nemá smysl utrácet dotaz na
+    // mapovou službu za firmu, kterou stejně nechceme.
+    expect(pocty.zamereni).toBe(0);
+  });
+
+  it("firma na blacklistu se neuloží a zapíše majitelův důvod", async () => {
+    const { deps } = falesneDeps(db);
+    const zaznam = zaznamKandidata({ ico: "10000011" });
+    sAresem(deps, zaznam);
+    await pridejPravidlo(db, {
+      typ: "ico",
+      hodnota: zaznam.ico,
+      duvod: "s touhle firmou jsme už dřív jednali",
+    });
+    const pravidla = await vychoziPravidla(db);
+
+    const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
+
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico });
+    expect(await db.query("select 1 from companies where ico = $1", [zaznam.ico])).toHaveLength(0);
+    const v = await db.query<{ duvod: string; detail: string }>(
+      "select duvod, detail from vyrazeni where ico = $1",
+      [zaznam.ico],
+    );
+    expect(v).toHaveLength(1);
+    expect(v[0]?.duvod).toBe("blacklist");
+    expect(v[0]?.detail).toBe("s touhle firmou jsme už dřív jednali");
+  });
+
+  it("firma pod prahem velikosti (bez zaměstnanců) se neuloží a zapíše se vyřazení", async () => {
+    const { deps } = falesneDeps(db);
+    // Kategorie 110 = „bez zaměstnanců" (viz KATEGORIE_PRACOVNIKU v src/res.ts) —
+    // hluboko pod prahem profilu (10 zaměstnanců).
+    const zaznam = zaznamKandidata({ ico: "10000020", kategorieKod: "110" });
+    sAresem(deps, zaznam);
+    const pravidla = await vychoziPravidla(db);
+
+    const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
+
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico });
+    expect(await db.query("select 1 from companies where ico = $1", [zaznam.ico])).toHaveLength(0);
+    const v = await db.query<{ duvod: string }>("select duvod from vyrazeni where ico = $1", [zaznam.ico]);
+    expect(v).toHaveLength(1);
+    expect(v[0]?.duvod).toBe("bez_zamestnancu");
+  });
+
+  it("partnerská jídelna se neuloží a zapíše se vyřazení", async () => {
+    const { deps } = falesneDeps(db);
+    const zaznam = zaznamKandidata({ ico: "10000038" });
+    sAresem(deps, zaznam);
+    const pravidla = { ...(await vychoziPravidla(db)), partnerskaIca: new Set([zaznam.ico]) };
+
+    const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
+
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: zaznam.ico });
+    expect(await db.query("select 1 from companies where ico = $1", [zaznam.ico])).toHaveLength(0);
+    const v = await db.query<{ duvod: string }>("select duvod from vyrazeni where ico = $1", [zaznam.ico]);
+    expect(v).toHaveLength(1);
+    expect(v[0]?.duvod).toBe("partnerska_jidelna");
+  });
+
+  it("kvalifikovaná firma nad oblastí dostane stav 'cekajici_na_jidelnu' a žádné skóre", async () => {
+    const { deps } = falesneDeps(db);
+    const zaznam = zaznamKandidata({ ico: "10000046" });
+    sAresem(deps, zaznam);
+    const pravidla = await vychoziPravidla(db);
+
+    const vysledek = await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
+
+    expect(vysledek.stav).toBe("ulozena");
+    const firma = await db.query<{ stav: string; skore: number | null }>(
+      "select stav, skore from companies where ico = $1",
+      [zaznam.ico],
+    );
+    expect(firma[0]?.stav).toBe("cekajici_na_jidelnu");
+    expect(firma[0]?.skore).toBeNull();
   });
 });
 
@@ -558,5 +729,25 @@ describe("vyridPruzkum", () => {
       [pruzkumId],
     );
     expect(stavPruzkumu[0]?.stav).toBe("hotovo");
+  });
+
+  it("načte pravidla kvalifikace z databáze — blacklistovaná firma se úsekem neuloží", async () => {
+    const { deps } = falesneDeps(db);
+    // Ruční pravidlo majitele, přidané do sdílené databáze — stejné, jaké
+    // by ovlivnilo i sběr kolem jídelny (spustCmuchala).
+    await pridejPravidlo(db, {
+      typ: "ico",
+      hodnota: uvnitr.ico,
+      duvod: "majitel si nepřeje oslovovat",
+    });
+
+    const vysledek = await vyridPruzkum(deps, pruzkumId, { nejvyseUseku: 1 });
+
+    expect(vysledek.firemNovych).toBe(0);
+    const firma = await db.query("select 1 from companies where ico = $1", [uvnitr.ico]);
+    expect(firma).toHaveLength(0);
+    const v = await db.query<{ duvod: string }>("select duvod from vyrazeni where ico = $1", [uvnitr.ico]);
+    expect(v).toHaveLength(1);
+    expect(v[0]?.duvod).toBe("blacklist");
   });
 });

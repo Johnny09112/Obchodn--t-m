@@ -13,21 +13,24 @@ Jádro kampaní je hotové a otestované. Ovládá se **jen z příkazové řád
 
 Chybí tedy obrazovky, ne logika.
 
-## Nejdřív rozhodnout: kdo pustí Čmuchala
+## Rozhodnuto (2026-07-31)
 
-**Tohle je největší riziko celé práce a není technické.**
+Aplikace agenta spustit neumí — podle pravidel si o průzkum jen *požádá*.
+Čmuchala dnes pouští člověk z příkazové řádky, kterou kolega u sebe nemá.
+Krok 3 průvodce by tedy čekal, dokud si někdo nevzpomene spustit příkaz.
 
-Aplikace agenta spustit neumí — podle pravidel si o průzkum jen *požádá*
-a Čmuchal si práci vyzvedne, až poběží. Jenže Čmuchala dnes pouští člověk
-z příkazové řádky.
+**Majitel rozhodl: naplánovaný běh.** Čmuchal se sám podívá na frontu
+objednávek každých pár hodin. Aplikace zůstává u objednávání, agenta
+nespouští — žádné tvrdé pravidlo se tím nemění. Je to **předpoklad
+etapy C** a dělá se před ní.
 
-Krok 3 průvodce tedy skončí obrazovkou „čeká na průzkum", která bude čekat
-tak dlouho, dokud si někdo nevzpomene spustit příkaz. Uživatel (kolega)
-u sebe příkazovou řádku nemá.
+Dále rozhodnuto:
 
-Bez rozhodnutí, jak se tahle mezera překlene, je průvodce nedokončitelný —
-postaví se krásná cesta, která v půlce končí u zdi. Návrh variant je
-v otázkách na konci.
+- **Mobil částečně** — kroky 1–2 na počítači, krok 4 čitelný i na telefonu.
+  Kreslení oblasti prstem je nepřesné, prohlédnout a schválit seznam firem
+  cestou dává smysl.
+- **Schvalovat smí dál jen admin a výš.** Role `uzivatel` kampaň připraví,
+  neschválí. Beze změny.
 
 ## Etapy
 
@@ -62,10 +65,21 @@ jí správce a nakreslené území. Napojuje se na hotovou mapu.
 
 Použitelné samo o sobě, i kdyby se dál nepokračovalo.
 
+### B+ — Naplánovaný běh Čmuchala
+
+Samostatná, čistě serverová práce: Čmuchal si sám bere objednávky z fronty
+(`pruzkumy` ve stavu `ceka`) každých pár hodin. Nesouvisí s obrazovkami,
+ale **etapa C bez ní nedává smysl** — jinak by průvodce jen ukazoval
+čekání, které nikdo neukončí.
+
+Pozor při stavbě: dva běhy nad toutéž objednávkou by si rvaly úseky mezi
+sebou (viz komentář ke kroku 4 v `src/cmuchal-oblast.ts`). Plánovač proto
+musí zaručit jeden běh naráz.
+
 ### C — Kroky 3 a 4: průzkum a posouzení seznamu
 
-Nejvíc logiky a jediné místo, kde se čeká na agenta. Předpokládá rozhodnutí
-z úvodu (kdo pustí Čmuchala).
+Nejvíc logiky a jediné místo, kde se čeká na agenta. Předpokládá hotovou
+etapu B+.
 
 Krok 4 je ten cenný: seznam firem s důvody, proč tam kdo je — a proč tam
 někdo není (síto z 31. 7. vrací vynechané firmy i s důvodem).
@@ -84,21 +98,10 @@ někdo není (síto z 31. 7. vrací vynechané firmy i s důvodem).
 - **Mazání kampaní.** Mazání dat rozhoduje majitel, není součástí zadání.
 - **Přiřazování firem k jídelnám.** Samostatná funkce (rozhodnutí 2026-07-30).
 
-## Otázky na majitele
+## Otevřené k dořešení
 
-1. **Jak se dozví systém, že má pustit Čmuchala?** Tři varianty:
-   - *(a)* Zůstane to ruční: aplikace ukáže „objednáno", majitel průzkum
-     pustí z příkazové řádky a aplikace si výsledku všimne. Nejlevnější,
-     ale kolega je odkázaný na majitele.
-   - *(b)* Naplánovaný běh: Čmuchal se sám ptá na frontu objednávek každých
-     pár hodin. Střední práce, žádné nové riziko — pořád nic neodesílá.
-   - *(c)* Spuštění z aplikace. Nejpohodlnější, ale znamená to dát webu
-     právo pustit agenta; to je změna pravidel a chce vlastní rozvahu.
-
-   **Doporučuji (b)** — odemkne to kolegu a nemění to žádné tvrdé pravidlo.
-
-2. **Má být průvodce použitelný na mobilu?** Kreslení oblastí na telefonu
-   je nepraktické, ale *prohlédnout si a schválit* seznam firem cestou dává
-   smysl. Doporučuji: kroky 1–2 na počítači, krok 4 čitelný i na mobilu.
-
-3. **Kdo smí kampaň schválit?** Dnes admin a výš. Zůstává to tak i v aplikaci?
+- **Jak často má plánovač běžet a kde poběží.** Naplánovaný běh je
+  odsouhlasený, ale interval a prostředí (server, vlastní stroj) rozhodnuté
+  nejsou. Vyřeší se na začátku etapy B+.
+- **Jak se uživatel dozví, že je průzkum hotový.** Obrazovka to ukáže při
+  načtení; jestli má přijít i upozornění, je věc návrhu v etapě A.

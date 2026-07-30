@@ -260,48 +260,55 @@
     <p class="datum">Cantinero · návrh postupu · 31. července 2026</p>
     <h1>Průvodce kampaní: jak na to</h1>
     <p class="podtitul">
-      Obě překážky jsou opravené, cesta je volná. Než se začne stavět, je
-      potřeba rozhodnout jednu věc — a ta není technická.
+      Obě překážky jsou opravené a rozhodnutí padla. Cesta je volná —
+      začíná se designem, ne kódem.
     </p>
   </header>
 
   <section class="sekce">
-    <h2>Nejdřív: kdo pustí Čmuchala</h2>
+    <h2>Rozhodnuto: kdo pustí Čmuchala</h2>
     <div class="zed">
-      <p class="zed-stitek">Tohle může práci zastavit v půlce</p>
+      <p class="zed-stitek">Past, která by práci zastavila v půlce</p>
       <p>
         Aplikace agenta spustit neumí — podle pravidel si o průzkum jen
-        <em>požádá</em>. Čmuchala ale dnes pouští člověk z příkazové řádky.
+        <em>požádá</em>. Čmuchala ale dnes pouští člověk z příkazové řádky,
+        kterou kolega u sebe nemá.
       </p>
       <p>
-        Krok 3 průvodce tedy skončí obrazovkou „čeká na průzkum“, která bude
-        čekat, dokud si někdo nevzpomene spustit příkaz. Kolega příkazovou
-        řádku u sebe nemá.
-      </p>
-      <p>
-        Postavit se to dá i tak. Ale byla by to krásná cesta, která v půlce
-        končí u zdi — a to bych ti radši řekl teď než potom.
+        Krok 3 průvodce by tedy skončil obrazovkou „čeká na průzkum“, která
+        čeká, dokud si někdo nevzpomene spustit příkaz.
       </p>
     </div>
 
     <div class="varianty">
       <div class="varianta varianta-doporucena">
-        <span class="varianta-nazev">Naplánovaný běh — doporučuji</span>
+        <span class="varianta-nazev">✓ Naplánovaný běh — zvoleno</span>
         Čmuchal se sám podívá na frontu objednávek každých pár hodin.
         Odemkne to kolegu, nemění to žádné tvrdé pravidlo a pořád nic
-        neodesílá.
-      </div>
-      <div class="varianta">
-        <span class="varianta-nazev">Zůstane to ruční</span>
-        Aplikace ukáže „objednáno“, ty průzkum pustíš z příkazové řádky.
-        Nejlevnější, ale kolega je odkázaný na tebe.
-      </div>
-      <div class="varianta">
-        <span class="varianta-nazev">Spuštění přímo z aplikace</span>
-        Nejpohodlnější, ale znamená dát webu právo pustit agenta. To je
-        změna pravidel a zaslouží si vlastní rozvahu.
+        neodesílá. Postaví se jako <strong>etapa B+</strong>, před etapou C.
       </div>
     </div>
+
+    <p>
+      Zbylé dvě varianty (nechat to ruční, spouštět z aplikace) padly:
+      první nechává kolegu odkázaného na tebe, druhá by znamenala dát webu
+      právo pustit agenta — změna pravidel, na kterou teď není důvod.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Další dvě rozhodnutí</h2>
+    <ul>
+      <li>
+        <strong>Mobil částečně.</strong> Kroky 1–2 na počítači, krok 4
+        (prohlédnout a schválit seznam) čitelný i na telefonu. Kreslení
+        oblasti prstem je nepřesné.
+      </li>
+      <li>
+        <strong>Schvalovat smí dál jen admin a výš.</strong> Tým kampaň
+        připraví, schválíš ji ty nebo druhý admin. Beze změny.
+      </li>
+    </ul>
   </section>
 
   <section class="sekce">
@@ -344,14 +351,26 @@
         </div>
       </div>
 
-      <div class="etapa etapa-blokovana">
+      <div class="etapa">
+        <span class="etapa-znak" aria-hidden="true">B+</span>
+        <div>
+          <p class="etapa-nazev">Naplánovaný běh Čmuchala</p>
+          <p class="etapa-telo">
+            Čistě serverová práce, žádné obrazovky: Čmuchal si sám bere
+            objednávky z fronty. <strong>Etapa C bez ní nedává smysl</strong> —
+            jinak by průvodce jen ukazoval čekání, které nikdo neukončí.
+          </p>
+        </div>
+      </div>
+
+      <div class="etapa">
         <span class="etapa-znak" aria-hidden="true">C</span>
         <div>
           <p class="etapa-nazev">Průzkum a posouzení seznamu</p>
           <p class="etapa-telo">
-            Kroky 3 a 4. Nejvíc logiky a jediné místo, kde se čeká na agenta —
-            <strong>závisí na rozhodnutí výše</strong>. Krok 4 je ten cenný:
-            seznam firem s důvody, proč tam kdo je a proč tam někdo není.
+            Kroky 3 a 4. Nejvíc logiky a jediné místo, kde se čeká na agenta.
+            Krok 4 je ten cenný: seznam firem s důvody, proč tam kdo je
+            a proč tam někdo není.
           </p>
         </div>
       </div>
@@ -385,16 +404,17 @@
   </section>
 
   <section class="sekce">
-    <h2>Co od tebe potřebuji</h2>
+    <h2>Co zbývá dořešit</h2>
     <ul>
-      <li><strong>Kdo pustí Čmuchala</strong> — tři varianty výše, doporučuji naplánovaný běh.</li>
       <li>
-        <strong>Má průvodce fungovat na mobilu?</strong> Kreslení oblastí na
-        telefonu je nepraktické, ale prohlédnout a schválit seznam firem
-        cestou dává smysl. Navrhuji: kroky 1–2 na počítači, krok 4 čitelný
-        i na mobilu.
+        <strong>Jak často má plánovač běžet a kde poběží.</strong> Že běžet
+        má, je rozhodnuté; interval a prostředí se doladí na začátku B+.
       </li>
-      <li><strong>Kdo smí kampaň schválit?</strong> Dnes admin a výš — zůstává to tak?</li>
+      <li>
+        <strong>Má o hotovém průzkumu přijít upozornění?</strong> Obrazovka
+        to ukáže při načtení. Jestli má přijít i zpráva, je otázka pro návrh
+        v etapě A.
+      </li>
     </ul>
   </section>
 

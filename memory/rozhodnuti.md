@@ -347,3 +347,13 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   samostatná funkce. Skóre se počítá z toho, co víme, ne z dosazené jídelny.
 - 2026-07-31 · majitel · **Do návrhu průvodce kampaní se má zapojit design**
   (dosud se stavělo rovnou z kódu). Postup v `docs/PRUVODCE-KAMPANI-POSTUP.md`.
+- 2026-07-31 · majitel · **Čmuchal si frontu objednávek bere naplánovaným
+  během** (každých pár hodin), ne ručním spuštěním ani spuštěním z aplikace.
+  Odemyká to kolegu bez příkazové řádky a nemění žádné tvrdé pravidlo —
+  aplikace pořád jen objednává, agenta nespouští. Je to předpoklad etapy C
+  průvodce kampaní.
+- 2026-07-31 · majitel · **Průvodce kampaní na mobilu jen částečně:** kroky
+  1–2 (založení, kreslení území) na počítači, krok 4 (prohlédnout a schválit
+  seznam firem) čitelný i na telefonu. Kreslení oblasti prstem je nepřesné.
+- 2026-07-31 · majitel · **Schvalovat kampaň smí dál jen admin a výš** —
+  beze změny. Role `uzivatel` kampaň připraví, neschválí.

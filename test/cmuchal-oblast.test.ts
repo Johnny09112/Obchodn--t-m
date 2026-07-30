@@ -137,7 +137,7 @@ describe("rozhlednuti", () => {
   });
 
   it("založí jeden úsek na každou nalezenou jednotku, očíslované od 1, ve stavu 'ceka'", async () => {
-    const { deps } = falesneDeps(db);
+    const { deps, pocty } = falesneDeps(db);
 
     const r = await rozhlednuti(deps, pruzkumId);
 
@@ -151,6 +151,9 @@ describe("rozhlednuti", () => {
       expect(u.poradi).toBe(i + 1);
       expect(u.stav).toBe("ceka");
     });
+    // Rozhlédnutí nic nezaměřuje — geokoduje se jen adresa firmy při jejím
+    // zápisu, ne při odhadu.
+    expect(pocty.zamereni).toBe(0);
   });
 
   it("vrátí počet obcí a počet kandidátů", async () => {
@@ -178,39 +181,36 @@ describe("rozhlednuti", () => {
     expect(pocet[0]?.pocet).toBe(1);
   });
 
-  it("když tvar nezabírá žádnou obec a body se dohledaly: čeká na rozhodnutí, žádný úsek", async () => {
-    // Tvar tak malý (~1 m), že do něj nespadne ani jeden bod mřížky na žádné
-    // úrovni zjemnění — to je „prázdná krajina", ne selhání mapové služby.
-    const drobnyTvarId = await zalozOblast(db, {
-      nazev: "Nepatrný útvar",
-      oblast: {
-        typ: "polygon",
-        body: [
-          { lat: STRED.lat, lng: STRED.lng },
-          { lat: STRED.lat + 0.00001, lng: STRED.lng },
-          { lat: STRED.lat, lng: STRED.lng + 0.00001 },
-        ],
-      },
-    });
-    const drobnyPruzkumId = await objednejPruzkum(db, { oblastId: drobnyTvarId, pozadal: "a@b.cz" });
-    const { deps } = falesneDeps(db);
+  it("když tvar nezabírá žádnou obec: čeká na rozhodnutí, žádný úsek — i když se všechny body dohledaly bez chyby", async () => {
+    // Normální tvar (mřížka najde spoustu bodů), ale zpětné dohledání u
+    // KAŽDÉHO z nich vrátí `null` bez jakékoli chyby — to je legitimní
+    // odpověď „na tomhle místě žádná obec není" (odloučená fabrika
+    // uprostřed pole), ne porucha mapové služby. Ta by se hlásila výjimkou,
+    // ne návratovou hodnotou — viz test níž.
+    const { deps, pocty } = falesneDeps(db);
+    deps.geokoder.zpetne = async () => null;
 
-    const r = await rozhlednuti(deps, drobnyPruzkumId);
+    const r = await rozhlednuti(deps, pruzkumId);
 
     expect(r.cekaNaRozhodnuti).toBe(true);
     expect(r.useku).toBe(0);
+    expect(r.nedohledano).toBeGreaterThan(0); // body byly, jen bez obce
 
-    const useky = await db.query("select 1 from pruzkum_useky where pruzkum_id = $1", [drobnyPruzkumId]);
+    const useky = await db.query("select 1 from pruzkum_useky where pruzkum_id = $1", [pruzkumId]);
     expect(useky.length).toBe(0);
 
-    const stav = await db.query<{ stav: string }>("select stav from pruzkumy where id = $1", [drobnyPruzkumId]);
+    const stav = await db.query<{ stav: string }>("select stav from pruzkumy where id = $1", [pruzkumId]);
     expect(stav[0]?.stav).toBe("ceka_na_rozhodnuti");
+    expect(pocty.zamereni).toBe(0);
   });
 
-  it("když se nedohledal ANI JEDEN bod: objednávka skončí 'selhalo' s důvodem", async () => {
+  it("když geokodér vyhodí výjimku (mrtvá mapová služba): objednávka skončí 'selhalo' s důvodem", async () => {
     const { deps } = falesneDeps(db);
-    // Zpětné dohledání selže úplně napořád — to je mrtvá služba, ne prázdná krajina.
-    deps.geokoder.zpetne = async () => null;
+    // Skutečný geokodér (src/geocode.ts) při selhání služby vyhazuje chybu,
+    // nevrací null — null je vyhrazené pro „tady žádná obec není".
+    deps.geokoder.zpetne = async () => {
+      throw new Error("Nominatim 503");
+    };
 
     await expect(rozhlednuti(deps, pruzkumId)).rejects.toThrow();
 
@@ -220,5 +220,6 @@ describe("rozhlednuti", () => {
     );
     expect(stav[0]?.stav).toBe("selhalo");
     expect(stav[0]?.chyba).toBeTruthy();
+    expect(stav[0]?.chyba).toContain("Nominatim 503");
   });
 });

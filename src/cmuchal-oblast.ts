@@ -31,62 +31,71 @@ export async function rozhlednuti(
   const p = await nactiPruzkum(deps.db, pruzkumId);
   const o = await nactiOblast(deps.db, p.oblastId);
   if (!o) throw new Error("Oblast průzkumu neexistuje.");
-  if (!deps.registr) throw new Error("Průzkum oblasti se bez registru ČSÚ neobejde.");
+  const registr = deps.registr;
+  if (!registr) throw new Error("Průzkum oblasti se bez registru ČSÚ neobejde.");
 
   // Objednávku je potřeba rozběhnout hned: `selhalPruzkum` i `dokoncPruzkum`
   // přijmou jen tu, která běží, a bez toho by se neúspěch neměl kam zapsat.
   await zahajPruzkum(deps.db, pruzkumId);
 
-  const nalez = await obceVOblasti(deps.geokoder, o.oblast, {
-    krokM: opts.krokM ?? KROK_MRIZKY_M,
-  });
+  try {
+    const nalez = await obceVOblasti(deps.geokoder, o.oblast, {
+      krokM: opts.krokM ?? KROK_MRIZKY_M,
+    });
 
-  // Žádný bod se nedohledal — to není prázdná krajina, to je nedostupná
-  // služba. Prohlásit průzkum za hotový by zamlčelo chybu.
-  if (nalez.bodu > 0 && nalez.nedohledano === nalez.bodu) {
-    await selhalPruzkum(
-      deps.db,
-      pruzkumId,
-      "Zpětné dohledání obcí neodpovědělo ani u jednoho bodu — služba je nejspíš nedostupná.",
+    // Prázdný seznam míst je legitimní odpověď, ať byly nedohledané všechny
+    // body mřížky, nebo jen některé — `geokoder.zpetne` vrací `null`, když
+    // na daném bodě prostě žádná obec není (odloučená fabrika uprostřed
+    // pole), a to je stejně platný výsledek jako nalezená obec. Rozdíl proti
+    // mrtvé mapové službě dělá výjimka, ne počet nedohledaných bodů —
+    // skutečný geokodér (src/geocode.ts) při selhání služby vyhazuje chybu,
+    // ne `null`. Tu chytá `catch` níž.
+    if (nalez.mista.length === 0) {
+      await deps.db.query("update pruzkumy set stav = 'ceka_na_rozhodnuti' where id = $1", [
+        pruzkumId,
+      ]);
+      return {
+        obci: 0, useku: 0, kandidatu: 0,
+        nedohledano: nalez.nedohledano, cekaNaRozhodnuti: true,
+      };
+    }
+
+    const jednotky = await registr.jednotkyPodleMist(nalez.mista);
+    let poradi = 0;
+    for (const j of jednotky) {
+      poradi++;
+      await deps.db.query(
+        `insert into pruzkum_useky (pruzkum_id, jednotka, obec, poradi)
+         values ($1,$2,$3,$4) on conflict (pruzkum_id, jednotka) do nothing`,
+        [pruzkumId, j.jednotka, j.obec, poradi],
+      );
+    }
+
+    // Odhad nic nezaměřuje, ale zadarmo taky není úplně: `jednotkyPodleMist`
+    // o pár řádků výš a `zamestnavateleVJednotkach` tady každá streamují
+    // celý místní soubor registru zvlášť, takže se čte dvakrát. Bez sítě to
+    // nic neváží a před několikahodinovým sběrem se to vědomě nechává
+    // neoptimalizované.
+    const kandidati = await registr.zamestnavateleVJednotkach(
+      jednotky.map((j) => j.jednotka),
     );
-    throw new Error("Zpětné dohledání obcí selhalo u všech bodů.");
-  }
 
-  if (nalez.mista.length === 0) {
-    await deps.db.query("update pruzkumy set stav = 'ceka_na_rozhodnuti' where id = $1", [
-      pruzkumId,
-    ]);
     return {
-      obci: 0, useku: 0, kandidatu: 0,
-      nedohledano: nalez.nedohledano, cekaNaRozhodnuti: true,
+      obci: nalez.mista.length,
+      useku: jednotky.length,
+      kandidatu: kandidati.length,
+      nedohledano: nalez.nedohledano,
+      cekaNaRozhodnuti: false,
     };
+  } catch (chyba) {
+    // Výjimka odsud znamená selhání služby (Nominatim nebo registr ČSÚ), ne
+    // prázdnou krajinu — tu ohlašuje `mista.length === 0` výš, ne throw. Bez
+    // tohohle odchycení by objednávka zůstala navždy trčet ve stavu 'bezi'
+    // a kampaň, která na ni čeká, by se nedala nikdy schválit.
+    const popis = chyba instanceof Error ? chyba.message : String(chyba);
+    await selhalPruzkum(deps.db, pruzkumId, `Rozhlédnutí selhalo: ${popis}`);
+    throw chyba;
   }
-
-  const jednotky = await deps.registr.jednotkyPodleMist(nalez.mista);
-  let poradi = 0;
-  for (const j of jednotky) {
-    poradi++;
-    await deps.db.query(
-      `insert into pruzkum_useky (pruzkum_id, jednotka, obec, poradi)
-       values ($1,$2,$3,$4) on conflict (pruzkum_id, jednotka) do nothing`,
-      [pruzkumId, j.jednotka, j.obec, poradi],
-    );
-  }
-
-  // Odhad je zadarmo: `zamestnavateleVJednotkach` čte místní soubor
-  // a nic nezaměřuje. Kolik z kandidátů se bude zaměřovat, se pozná až
-  // podle toho, které z nich už kartotéka zná — to spočítá CLI.
-  const kandidati = await deps.registr.zamestnavateleVJednotkach(
-    jednotky.map((j) => j.jednotka),
-  );
-
-  return {
-    obci: nalez.mista.length,
-    useku: jednotky.length,
-    kandidatu: kandidati.length,
-    nedohledano: nalez.nedohledano,
-    cekaNaRozhodnuti: false,
-  };
 }
 
 async function nactiPruzkum(db: CmuchalDeps["db"], id: string) {

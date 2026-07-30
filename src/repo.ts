@@ -218,7 +218,8 @@ export type DuvodVyrazeni =
 
 export interface VyrazeniVstup {
   behId: string;
-  jidelnaId: string;
+  /** Prázdné u vyřazení z průzkumné oblasti — tam žádná jídelna není. */
+  jidelnaId: string | null;
   zdroj: "mpsv" | "osm" | "ares" | "registr";
   nazev: string;
   ico?: string;

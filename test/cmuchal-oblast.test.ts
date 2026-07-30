@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { zalozOblast } from "../src/oblast.js";
 import { objednejPruzkum } from "../src/pruzkum.js";
-import { rozhlednuti } from "../src/cmuchal-oblast.js";
+import { rozhlednuti, zpracujFirmuVOblasti } from "../src/cmuchal-oblast.js";
 import type { AresKlient, AresZaznam } from "../src/ares.js";
 import type { Geokoder, Misto } from "../src/geocode.js";
+import type { Oblast } from "../src/oblast-tvar.js";
 import type { RegistrKlient, RegistrZaznam } from "../src/registr.js";
 import type { ResKlient } from "../src/res.js";
 import type { CmuchalDeps } from "../src/cmuchal.js";
+import { zacniBeh } from "../src/repo.js";
 
 let db: Db;
 let pruzkumId: string;
@@ -221,5 +223,141 @@ describe("rozhlednuti", () => {
     expect(stav[0]?.stav).toBe("selhalo");
     expect(stav[0]?.chyba).toBeTruthy();
     expect(stav[0]?.chyba).toContain("Nominatim 503");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+
+const OBLAST: Oblast = { typ: "kruh", stred: STRED, polomerM: 3000 };
+
+describe("zpracujFirmuVOblasti", () => {
+  let oblastId: string;
+  let behId: string;
+
+  beforeEach(async () => {
+    oblastId = await zalozOblast(db, { nazev: "Území", oblast: OBLAST });
+    behId = await zacniBeh(db, "cmuchal-oblast", { oblastId });
+  });
+
+  it("firma uvnitř tvaru se uloží s prázdnou jídelnou a objeví se v oblast_firmy", async () => {
+    const { deps } = falesneDeps(db);
+    const zaznamy = await deps.registr!.zamestnavateleVJednotkach([559661]);
+    const zaznamUvnitr = zaznamy.find((z) => z.ico === uvnitr.ico)!;
+
+    const vysledek = await zpracujFirmuVOblasti(deps, {
+      zaznam: zaznamUvnitr,
+      oblast: OBLAST,
+      oblastId,
+      behId,
+    });
+
+    expect(vysledek).toEqual({ stav: "ulozena", ico: uvnitr.ico });
+
+    const firma = await db.query<{ nejblizsi_jidelna_id: string | null; lat: number | null }>(
+      "select nejblizsi_jidelna_id, lat::float8 as lat from companies where ico = $1",
+      [uvnitr.ico],
+    );
+    expect(firma.length).toBe(1);
+    expect(firma[0]?.nejblizsi_jidelna_id).toBeNull();
+    expect(firma[0]?.lat).not.toBeNull();
+
+    const vOblasti = await db.query(
+      "select 1 from oblast_firmy where oblast_id = $1 and ico = $2",
+      [oblastId, uvnitr.ico],
+    );
+    expect(vOblasti.length).toBe(1);
+  });
+
+  it("firma mimo tvar se neuloží a přibude řádek do vyrazeni", async () => {
+    const { deps } = falesneDeps(db);
+    const zaznamy = await deps.registr!.zamestnavateleVJednotkach([559661]);
+    const zaznamMimo = zaznamy.find((z) => z.ico === mimo.ico)!;
+
+    const vysledek = await zpracujFirmuVOblasti(deps, {
+      zaznam: zaznamMimo,
+      oblast: OBLAST,
+      oblastId,
+      behId,
+    });
+
+    expect(vysledek).toEqual({ stav: "mimo_tvar", ico: mimo.ico });
+
+    const firma = await db.query("select 1 from companies where ico = $1", [mimo.ico]);
+    expect(firma.length).toBe(0);
+
+    const vOblasti = await db.query(
+      "select 1 from oblast_firmy where oblast_id = $1 and ico = $2",
+      [oblastId, mimo.ico],
+    );
+    expect(vOblasti.length).toBe(0);
+
+    const vyrazeniRadky = await db.query<{ duvod: string; jidelna_id: string | null }>(
+      "select duvod, jidelna_id from vyrazeni where ico = $1",
+      [mimo.ico],
+    );
+    expect(vyrazeniRadky.length).toBe(1);
+    expect(vyrazeniRadky[0]?.duvod).toBe("mimo_zonu");
+    expect(vyrazeniRadky[0]?.jidelna_id).toBeNull();
+  });
+
+  it("firma, která už má souřadnice, se nezaměřuje podruhé", async () => {
+    const { deps, pocty } = falesneDeps(db);
+    const zaznamy = await deps.registr!.zamestnavateleVJednotkach([559661]);
+    const zaznamUvnitr = zaznamy.find((z) => z.ico === uvnitr.ico)!;
+
+    const prvni = await zpracujFirmuVOblasti(deps, {
+      zaznam: zaznamUvnitr,
+      oblast: OBLAST,
+      oblastId,
+      behId,
+    });
+    expect(prvni.stav).toBe("ulozena");
+    expect(pocty.zamereni).toBe(1);
+
+    // Druhé zpracování téhož záznamu — firma už má souřadnice v `companies`,
+    // takže se nesmí zaměřovat znovu.
+    const druhy = await zpracujFirmuVOblasti(deps, {
+      zaznam: zaznamUvnitr,
+      oblast: OBLAST,
+      oblastId,
+      behId,
+    });
+    expect(druhy.stav).toBe("ulozena");
+    expect(pocty.zamereni).toBe(1);
+  });
+
+  it("firma, kterou ARES nezná, se neuloží a zapíše se vyřazení", async () => {
+    const { deps } = falesneDeps(db);
+    const neznama: RegistrZaznam = {
+      ico: "99999999",
+      nazev: "Neznámá s.r.o.",
+      pravniForma: "112",
+      kategorieKod: "330",
+      nace: ["25610"],
+      adresa: "Nikde 1",
+      obec: "Zbůch",
+      psc: "330 22",
+      jednotka: 559661,
+      zdrojUrl: "https://csu.gov.cz/registr",
+    };
+
+    const vysledek = await zpracujFirmuVOblasti(deps, {
+      zaznam: neznama,
+      oblast: OBLAST,
+      oblastId,
+      behId,
+    });
+
+    expect(vysledek).toEqual({ stav: "vyrazena", ico: "99999999" });
+
+    const firma = await db.query("select 1 from companies where ico = $1", ["99999999"]);
+    expect(firma.length).toBe(0);
+
+    const vyrazeniRadky = await db.query<{ duvod: string }>(
+      "select duvod from vyrazeni where ico = $1",
+      ["99999999"],
+    );
+    expect(vyrazeniRadky.length).toBe(1);
+    expect(vyrazeniRadky[0]?.duvod).toBe("nesparovano");
   });
 });

@@ -7,9 +7,14 @@
  * **Oblast nepřiřazuje firmu k jídelně** — firmy se ukládají s prázdnou
  * jídelnou a o přiřazení rozhoduje vzdálenost, což je samostatná funkce.
  */
+import type { AresZaznam } from "./ares.js";
 import type { CmuchalDeps } from "./cmuchal.js";
+import type { Bod } from "./geo.js";
 import { nactiOblast } from "./oblast.js";
+import { bodVOblasti, type Oblast } from "./oblast-tvar.js";
 import { selhalPruzkum, zahajPruzkum } from "./pruzkum.js";
+import type { RegistrZaznam } from "./registr.js";
+import { nastavGeo, zalozFirmu, zaznamVyrazeni, type DuvodVyrazeni } from "./repo.js";
 import { obceVOblasti, KROK_MRIZKY_M } from "./uzemi.js";
 
 export interface Rozhled {
@@ -96,6 +101,99 @@ export async function rozhlednuti(
     await selhalPruzkum(deps.db, pruzkumId, `Rozhlédnutí selhalo: ${popis}`);
     throw chyba;
   }
+}
+
+export interface VysledekFirmy {
+  stav: "ulozena" | "mimo_tvar" | "vyrazena" | "bez_souradnic";
+  ico: string | null;
+}
+
+/**
+ * Zpracuje jeden záznam z registru pro průzkum oblasti.
+ *
+ * Vlastní, kratší cesta než `zpracujKandidata` v `cmuchal.ts` — ta je
+ * navázaná na jídelnu osmnácti místy včetně celé logiky zón, která u oblasti
+ * nedává smysl. Tady rozhoduje tvar, ne vzdálenost od jídelny.
+ */
+export async function zpracujFirmuVOblasti(
+  deps: CmuchalDeps,
+  vstup: {
+    zaznam: RegistrZaznam;
+    oblast: Oblast;
+    oblastId: string;
+    behId: string;
+  },
+): Promise<VysledekFirmy> {
+  const { db } = deps;
+  const { zaznam, oblast, oblastId, behId } = vstup;
+  const ico = zaznam.ico;
+
+  /** Vyřazení kandidáta — vždy i se záznamem do deníku (žádná jídelna tu není). */
+  const vyrad = (duvod: DuvodVyrazeni, detail: string) =>
+    zaznamVyrazeni(db, {
+      behId,
+      jidelnaId: null,
+      zdroj: "registr",
+      nazev: zaznam.nazev,
+      ico,
+      duvod,
+      detail,
+    });
+
+  let ares: AresZaznam | null = null;
+  let bod: Bod | null = null;
+
+  // Krok 1 — firmu se známými souřadnicemi znovu neověřujeme ani nezaměřujeme.
+  // Každé zaměření je sekundový dotaz na mapovou službu navíc.
+  const znama = await db.query<{ lat: number | null; lng: number | null }>(
+    "select lat::float8 as lat, lng::float8 as lng from companies where ico = $1",
+    [ico],
+  );
+  const zname = znama[0];
+  if (zname && zname.lat != null && zname.lng != null) {
+    bod = { lat: zname.lat, lng: zname.lng };
+  } else {
+    // Krok 2 — TP-1: bez ověření v ARES firma vzniknout nesmí.
+    ares = await deps.ares.overFirmu(ico);
+    if (!ares) {
+      await vyrad("nesparovano", "registr uvádí IČO, které ARES nezná");
+      return { stav: "vyrazena", ico };
+    }
+
+    // Krok 3 — zaměření adresy sídla ze záznamu registru.
+    const adresa = [zaznam.adresa, zaznam.obec].filter(Boolean).join(", ");
+    bod = await deps.geokoder.geokoduj(adresa);
+    if (!bod) {
+      // Číselník DuvodVyrazeni „bez_souradnic" nezná — nejbližší vhodný je
+      // `poloha_neznama`, stejný, jaký pro tenhle případ používá `zpracujKandidata`.
+      await vyrad("poloha_neznama", `adresa „${adresa}" se nedá zaměřit`);
+      return { stav: "bez_souradnic", ico };
+    }
+  }
+
+  // Krok 4 — rozhoduje tvar oblasti, ne vzdálenost od jídelny.
+  if (!bodVOblasti(oblast, bod)) {
+    await vyrad("mimo_zonu", "leží mimo nakreslený tvar oblasti");
+    return { stav: "mimo_tvar", ico };
+  }
+
+  // Krok 5 — zápis. Vše přes repository vrstvu (TP-1). Oblast nepřiřazuje
+  // firmu k jídelně — o to se stará vzdálenost, samostatná funkce.
+  if (ares) await zalozFirmu(db, ares);
+  await nastavGeo(db, ico, {
+    lat: bod.lat,
+    lng: bod.lng,
+    jidelnaId: null,
+    vzdalenostM: null,
+    vZone: null,
+  });
+  await db.query(
+    `insert into oblast_firmy (oblast_id, ico) values ($1,$2)
+     on conflict (oblast_id, ico) do nothing`,
+    [oblastId, ico],
+  );
+
+  return { stav: "ulozena", ico };
 }
 
 async function nactiPruzkum(db: CmuchalDeps["db"], id: string) {

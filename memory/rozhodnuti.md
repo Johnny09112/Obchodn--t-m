@@ -357,3 +357,17 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   seznam firem) čitelný i na telefonu. Kreslení oblasti prstem je nepřesné.
 - 2026-07-31 · majitel · **Schvalovat kampaň smí dál jen admin a výš** —
   beze změny. Role `uzivatel` kampaň připraví, neschválí.
+- 2026-07-31 · majitel · **Krok 2 průvodce má celou mapu včetně kreslení
+  přímo v průvodci**, ne odkaz na obrazovku Oblasti. (Doporučoval jsem opak
+  kvůli menší práci a jedné mapě; majitel zvolil plynulejší průchod.)
+  Provedení: mapa se vyřízne do sdílené součástky pro obě obrazovky —
+  dvě samostatné mapy by se časem rozešly.
+- 2026-07-31 · Claude · **Hotový průzkum se ohlašuje v seznamu kampaní, ne
+  e-mailem.** Upozornění e-mailem by znamenalo postavit odesílání, což fáze
+  0–2 zakazuje (TP-8). Seznam kampaní je proto jediné místo, kde se to
+  člověk dozví — vědomá volba, ne opomenutí.
+- 2026-07-31 · Claude (čeká na potvrzení majitele) · **Správce kampaně se
+  nevybírá ze seznamu uživatelů** — žádná evidence uživatelů neexistuje,
+  lidé jsou v Supabase Auth a prohlížeč je vypsat nesmí (chtělo by to
+  servisní klíč, který do aplikace nepatří). Návrh: správcem je automaticky
+  ten, kdo kampaň zakládá. Odchylka od zadání z 29. 7., kap. 4 krok 1.

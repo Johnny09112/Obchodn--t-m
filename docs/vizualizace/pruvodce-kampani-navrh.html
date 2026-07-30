@@ -1,0 +1,729 @@
+<meta charset="utf-8">
+<title>Průvodce kampaní — návrh obrazovek</title>
+<style>
+  /* ─────────────────────────────────────────────────────────────────
+     Tokeny aplikace (app/src/styl.css) + čtyři, které chybí.
+     Písma se v této ukázce nenačtou z internetu (stránka to nedovolí),
+     takže se zobrazí systémová náhrada. V aplikaci to bude IBM Plex.
+     ───────────────────────────────────────────────────────────────── */
+  :root {
+    --papir: #e9ebe3;
+    --karta: #fcfcf9;
+    --inkoust: #1a211c;
+    --inkoust-slaby: #5f6b62;
+    --linka: #ced4c6;
+    --razitko: #2e4a7d;
+    --razitko-svetle: #e4eaf4;
+    --horcice: #9a6f0e;
+    --cihla: #8e3b2c;
+    --zelen: #3f6b3a;
+
+    /* NOVÉ — dnes se píšou natvrdo */
+    --bila: #fff;
+    --razitko-tmave: #243c67;
+    --cihla-svetle: #f7ecea;
+    --zelen-svetle: #e6efe4;
+
+    /* NOVÉ — stupnice odstupů a velikostí */
+    --o1: .25rem;  --o2: .5rem;   --o3: .75rem;
+    --o4: 1rem;    --o5: 1.5rem;  --o6: 2rem;
+    --t-mikro: .75rem;  --t-maly: .8125rem;  --t-drobny: .875rem;
+    --t-zaklad: .9375rem; --t-nadpis: 1.25rem; --t-velky: 1.75rem;
+
+    --pismo-display: "Familjen Grotesk", system-ui, sans-serif;
+    --pismo-text: "IBM Plex Sans", system-ui, sans-serif;
+    --pismo-data: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+    --r: 3px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--papir);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    font-size: var(--t-zaklad);
+    line-height: 1.5;
+  }
+
+  .stranka {
+    max-width: 58rem;
+    margin-inline: auto;
+    padding: var(--o6) var(--o4) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--o6);
+  }
+
+  /* ── hlavička dokumentu ───────────────────────────────────── */
+
+  .uvod { display: flex; flex-direction: column; gap: var(--o3); }
+
+  .nadtitul {
+    font-family: var(--pismo-data);
+    font-size: var(--t-mikro);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--pismo-display);
+    font-size: var(--t-velky);
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .uvod p { margin: 0; max-width: 46rem; }
+
+  .vystraha {
+    padding: var(--o3) var(--o4);
+    background: var(--razitko-svetle);
+    border-left: 3px solid var(--razitko);
+    border-radius: var(--r);
+    font-size: var(--t-drobny);
+  }
+
+  /* ── obal jedné obrazovky ─────────────────────────────────── */
+
+  .obrazovka { display: flex; flex-direction: column; gap: var(--o3); }
+
+  .obrazovka > h2 {
+    font-family: var(--pismo-display);
+    font-size: var(--t-nadpis);
+    font-weight: 600;
+    margin: 0;
+    padding-top: var(--o4);
+    border-top: 1px solid var(--linka);
+  }
+
+  .k-cemu { margin: 0; color: var(--inkoust-slaby); font-size: var(--t-drobny); max-width: 46rem; }
+
+  .ram {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: var(--r);
+    overflow: hidden;
+  }
+
+  .lista {
+    display: flex;
+    align-items: center;
+    gap: var(--o3);
+    padding: var(--o2) var(--o3);
+    border-bottom: 1px solid var(--linka);
+    background: var(--papir);
+    font-size: var(--t-maly);
+  }
+  .znacka { font-family: var(--pismo-display); font-weight: 700; }
+  .rozcestnik { display: flex; gap: var(--o1); }
+  .rozcestnik span {
+    padding: var(--o1) var(--o2);
+    border-radius: var(--r);
+    color: var(--inkoust-slaby);
+  }
+  .rozcestnik .aktivni { background: var(--razitko-svetle); color: var(--razitko); font-weight: 600; }
+  .odsazovac { margin-left: auto; }
+
+  .telo { padding: var(--o4); display: flex; flex-direction: column; gap: var(--o4); }
+
+  /* ── krokovník (NOVÁ součástka) ───────────────────────────── */
+
+  .krokovnik {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--o1) var(--o3);
+    padding-bottom: var(--o3);
+    border-bottom: 1px solid var(--linka);
+    font-size: var(--t-drobny);
+  }
+  .krok { display: flex; align-items: center; gap: var(--o2); color: var(--inkoust-slaby); }
+  .krok .cislo {
+    width: 1.35rem; height: 1.35rem;
+    display: grid; place-items: center;
+    border: 1px solid var(--linka);
+    border-radius: 50%;
+    font-family: var(--pismo-data);
+    font-size: var(--t-mikro);
+    flex: none;
+  }
+  .krok.hotovy { color: var(--zelen); }
+  .krok.hotovy .cislo { border-color: var(--zelen); background: var(--zelen); color: var(--bila); }
+  .krok.tady { color: var(--razitko); font-weight: 600; }
+  .krok.tady .cislo { border-color: var(--razitko); border-width: 2px; color: var(--razitko); }
+
+  /* ── údaj s tečkovaným vodičem (nosný prvek aplikace) ─────── */
+
+  .udaj { display: flex; align-items: baseline; gap: var(--o2); }
+  .udaj .popisek { color: var(--inkoust-slaby); }
+  .udaj .vodic {
+    flex: 1;
+    border-bottom: 1px dotted var(--linka);
+    transform: translateY(-.2em);
+  }
+  .udaj .hodnota { font-family: var(--pismo-data); font-variant-numeric: tabular-nums; }
+
+  /* ── stav (existuje; tvar i barva) ────────────────────────── */
+
+  .stav { display: inline-flex; align-items: center; gap: var(--o1); white-space: nowrap; font-size: var(--t-drobny); }
+  .stav .znak { width: .55rem; height: .55rem; flex: none; background: currentColor; }
+  .stav.je-rozpracovana { color: var(--inkoust-slaby); }
+  .stav.je-rozpracovana .znak { border-radius: 50%; background: none; border: 1.5px solid currentColor; }
+  .stav.je-ceka .znak { border-radius: 50%; }
+  .stav.je-ceka { color: var(--horcice); }
+  .stav.je-posouzeni { color: var(--razitko); }
+  .stav.je-posouzeni .znak { transform: rotate(45deg); }
+  .stav.je-schvalena { color: var(--zelen); }
+  .stav.je-zrusena { color: var(--cihla); }
+  .stav.je-zrusena .znak { background: none; }
+  .stav.je-zrusena .znak::before { content: "×"; font-size: .9rem; line-height: .5; }
+
+  /* ── hlášky: tři podoby, dnes jen chybová ─────────────────── */
+
+  .hlaska {
+    padding: var(--o2) var(--o3);
+    border-radius: var(--r);
+    font-size: var(--t-drobny);
+    border-left: 3px solid;
+    margin: 0;
+  }
+  .hlaska.je-chyba { border-color: var(--cihla); background: var(--cihla-svetle); color: var(--cihla); }
+  .hlaska.je-klid  { border-color: var(--razitko); background: var(--razitko-svetle); color: var(--razitko); }
+  .hlaska.je-hotovo{ border-color: var(--zelen); background: var(--zelen-svetle); color: var(--zelen); }
+
+  /* ── postup po úsecích (NOVÁ součástka) ───────────────────── */
+
+  .postup { display: flex; flex-direction: column; gap: var(--o2); }
+  .postup-pruh { display: flex; gap: 2px; }
+  .postup-pruh i {
+    flex: 1;
+    height: .5rem;
+    background: var(--linka);
+    border-radius: 1px;
+  }
+  .postup-pruh i.hotovo { background: var(--zelen); }
+  .postup-pruh i.bezi { background: var(--horcice); }
+  .postup-popis { font-size: var(--t-maly); color: var(--inkoust-slaby); font-family: var(--pismo-data); }
+
+  /* ── formulářová pole ─────────────────────────────────────── */
+
+  .pole { display: flex; flex-direction: column; gap: var(--o1); }
+  .pole > label { font-size: var(--t-drobny); color: var(--inkoust-slaby); }
+  .pole .vstup {
+    padding: var(--o2) var(--o3);
+    border: 1px solid var(--linka);
+    border-radius: var(--r);
+    background: var(--bila);
+    min-height: 2.1rem;
+  }
+  .pole .vstup.placeholder { color: var(--inkoust-slaby); }
+  .pole .napoveda { font-size: var(--t-maly); color: var(--inkoust-slaby); }
+  .pole.chybne .vstup { border-color: var(--cihla); }
+
+  /* ── tlačítka ─────────────────────────────────────────────── */
+
+  .tlacitka { display: flex; flex-wrap: wrap; gap: var(--o2); align-items: center; }
+  .tlacitko {
+    padding: var(--o2) var(--o4);
+    background: var(--razitko);
+    color: var(--bila);
+    border: 1px solid var(--razitko);
+    border-radius: var(--r);
+    font-weight: 600;
+    font-size: var(--t-drobny);
+  }
+  .tlacitko.tise { background: none; color: var(--razitko); }
+  .tlacitko.nelze { opacity: .5; }
+  .duvod-nelze { font-size: var(--t-maly); color: var(--inkoust-slaby); }
+
+  /* ── tabulka ──────────────────────────────────────────────── */
+
+  .obal-tabulky { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: var(--t-drobny); }
+  th, td { text-align: left; padding: var(--o2) var(--o3); border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-data);
+    font-size: var(--t-mikro);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--inkoust-slaby);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  td.cislo { font-family: var(--pismo-data); font-variant-numeric: tabular-nums; text-align: right; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* ── prázdný stav ─────────────────────────────────────────── */
+
+  .prazdno {
+    border: 1px dashed var(--linka);
+    border-radius: var(--r);
+    padding: var(--o6) var(--o4);
+    text-align: center;
+    color: var(--inkoust-slaby);
+    display: flex; flex-direction: column; gap: var(--o2);
+  }
+  .prazdno strong { color: var(--inkoust); font-family: var(--pismo-display); }
+
+  /* ── dialog (NOVÁ součástka) ──────────────────────────────── */
+
+  .dialog {
+    max-width: 26rem;
+    background: var(--karta);
+    border: 1px solid var(--inkoust-slaby);
+    border-radius: var(--r);
+    padding: var(--o4);
+    display: flex; flex-direction: column; gap: var(--o3);
+    box-shadow: 0 6px 20px rgba(26,33,28,.18);
+  }
+  .dialog h3 { font-family: var(--pismo-display); font-size: 1.05rem; margin: 0; }
+  .dialog p { margin: 0; font-size: var(--t-drobny); }
+
+  /* ── mapa jako náznak ─────────────────────────────────────── */
+
+  .mapa-nahrada {
+    height: 11rem;
+    border: 1px solid var(--linka);
+    border-radius: var(--r);
+    background:
+      repeating-linear-gradient(0deg, transparent 0 22px, rgba(94,107,98,.13) 22px 23px),
+      repeating-linear-gradient(90deg, transparent 0 22px, rgba(94,107,98,.13) 22px 23px),
+      var(--razitko-svetle);
+    display: grid; place-items: center;
+    color: var(--inkoust-slaby);
+    font-size: var(--t-maly);
+    position: relative;
+  }
+  .mapa-nahrada::after {
+    content: "";
+    position: absolute;
+    width: 7rem; height: 7rem;
+    border: 2px solid var(--razitko);
+    border-radius: 50%;
+    background: rgba(46,74,125,.09);
+  }
+  .mapa-popis { position: relative; z-index: 1; background: var(--karta); padding: 0 var(--o2); }
+
+  /* ── poznámka návrháře ────────────────────────────────────── */
+
+  .pozn {
+    font-size: var(--t-maly);
+    color: var(--inkoust-slaby);
+    border-left: 2px solid var(--linka);
+    padding-left: var(--o3);
+    margin: 0;
+    display: flex; flex-direction: column; gap: var(--o2);
+  }
+  .pozn b { color: var(--inkoust); }
+
+  .mrizka2 { display: grid; gap: var(--o3); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+
+  .sada-udaju { display: flex; flex-direction: column; gap: var(--o2); }
+
+  ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: var(--o1); }
+</style>
+
+<div class="stranka">
+
+  <header class="uvod">
+    <p class="nadtitul">Cantinero · etapa A · návrh · 31. července 2026</p>
+    <h1>Průvodce kampaní: jak budou obrazovky vypadat</h1>
+    <p>
+      Pět obrazovek — seznam kampaní a čtyři kroky průvodce. Postaveno
+      v grafickém jazyce aplikace, aby bylo vidět, jak to doopravdy dopadne,
+      ne jen jaké tam budou krabice.
+    </p>
+    <p class="vystraha">
+      <strong>Všechna čísla a názvy jsou vymyšlené</strong> — slouží jen k
+      ukázce. Písma se tu nenačtou z internetu, takže vidíte systémovou
+      náhradu; v aplikaci to bude stejné písmo jako dnes.
+    </p>
+  </header>
+
+  <!-- ══════════════════════════════════════════ 0. seznam kampaní -->
+  <section class="obrazovka">
+    <h2>Seznam kampaní</h2>
+    <p class="k-cemu">
+      Nová položka v horní liště, vedle Oblastí a Kartotéky. Odsud se kampaň
+      zakládá a sem se člověk vrací k rozdělané.
+    </p>
+
+    <div class="ram">
+      <div class="lista">
+        <span class="znacka">Cantinero</span>
+        <nav class="rozcestnik">
+          <span>Oblasti</span><span>Kartotéka</span><span class="aktivni">Kampaně</span>
+        </nav>
+        <span class="odsazovac"></span>
+        <span>jan@cantinero.cz</span>
+        <span class="stav je-schvalena"><span class="znak"></span>správce</span>
+      </div>
+      <div class="telo">
+        <div class="tlacitka">
+          <span class="tlacitko">Nová kampaň</span>
+        </div>
+        <div class="obal-tabulky">
+          <table>
+            <thead>
+              <tr>
+                <th>Název</th><th>Stav</th><th>Území</th>
+                <th>Firem</th><th>Správce</th><th>Změněno</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Jaro Zbůch</td>
+                <td><span class="stav je-posouzeni"><span class="znak"></span>K posouzení</span></td>
+                <td>Zbůch 5 km</td>
+                <td class="cislo">38</td>
+                <td>jan@cantinero.cz</td>
+                <td class="cislo">dnes</td>
+              </tr>
+              <tr>
+                <td>Rokycansko</td>
+                <td>
+                  <span class="stav je-ceka"><span class="znak"></span>Čeká na průzkum</span><br>
+                  <span class="hlaska je-hotovo" style="display:inline-block;margin-top:.35rem">Průzkum dokončen — pokračovat</span>
+                </td>
+                <td>Průzkum Rokycansko</td>
+                <td class="cislo">—</td>
+                <td>petr@cantinero.cz</td>
+                <td class="cislo">včera</td>
+              </tr>
+              <tr>
+                <td>Tlučná podzim</td>
+                <td><span class="stav je-rozpracovana"><span class="znak"></span>Rozpracovaná</span></td>
+                <td>—</td>
+                <td class="cislo">—</td>
+                <td>jan@cantinero.cz</td>
+                <td class="cislo">3. 7.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p class="pozn">
+      <b>Řádek „Průzkum dokončen“ zastupuje upozornění.</b> Systém ve fázi 0–2
+      nic neodesílá, takže o hotovém průzkumu se nedá dát vědět e-mailem —
+      a stavět kvůli tomu odesílání by porazilo tvrdé pravidlo. Seznam kampaní
+      je proto místo, kde se to člověk dozví. Doporučuji to tak nechat.
+    </p>
+    <p class="pozn">
+      <b>Prázdný seznam</b> ukáže: „Zatím tu žádná kampaň není. Kampaň je
+      pojmenovaný seznam firem, které chcete oslovit — nic se z ní neodesílá.“
+    </p>
+  </section>
+
+  <!-- ══════════════════════════════════════════ 1. založení -->
+  <section class="obrazovka">
+    <h2>Krok 1 — Založení</h2>
+    <p class="k-cemu">Pojmenování záměru. Tohle za člověka nikdo neudělá.</p>
+
+    <div class="ram">
+      <div class="telo">
+        <div class="krokovnik">
+          <span class="krok tady"><span class="cislo">1</span>Založení</span>
+          <span class="krok"><span class="cislo">2</span>Území</span>
+          <span class="krok"><span class="cislo">3</span>Průzkum</span>
+          <span class="krok"><span class="cislo">4</span>Seznam firem</span>
+        </div>
+
+        <div class="pole">
+          <label>Název kampaně</label>
+          <div class="vstup">Jaro Zbůch</div>
+          <span class="napoveda">Podle názvu kampaň poznáte v seznamu. Musí být jedinečný.</span>
+        </div>
+
+        <div class="pole chybne">
+          <label>Název kampaně — když se jméno opakuje</label>
+          <div class="vstup">jaro zbůch</div>
+          <p class="hlaska je-chyba">
+            Kampaň s tímhle názvem už existuje. Zvolte jiný — na velikosti
+            písmen nezáleží.
+          </p>
+        </div>
+
+        <div class="pole">
+          <label>K čemu kampaň je <span style="opacity:.7">(nepovinné)</span></label>
+          <div class="vstup placeholder">Např. jarní nabídka pro firmy do 10 minut od jídelny ve Zbůchu.</div>
+          <span class="napoveda">Poznámka pro vás a kolegy. Nikam se neposílá.</span>
+        </div>
+
+        <div class="pole">
+          <label>Správce kampaně</label>
+          <div class="vstup placeholder">jan@cantinero.cz — vy</div>
+          <span class="napoveda">Kdo za kampaň odpovídá. Doplní se sám podle přihlášení.</span>
+        </div>
+
+        <div class="tlacitka">
+          <span class="tlacitko tise">Zrušit</span>
+          <span class="tlacitko">Pokračovat na území</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="pozn">
+      <b>Rozdělaná kampaň se ukládá po každém kroku.</b> Okno jde kdykoli
+      zavřít a vrátit se k ní ze seznamu — proto tu není žádné „uložit“.
+    </p>
+    <p class="pozn">
+      <b>Správce se nevybírá ze seznamu — potřebuji tvoje potvrzení.</b>
+      Zadání z 29. 7. slibovalo výběr z lidí, jenže žádná evidence uživatelů
+      neexistuje; lidé žijí v přihlašovací službě a prohlížeč je vypsat nesmí.
+      Navrhuji, aby správcem byl automaticky ten, kdo kampaň zakládá. Pro
+      čtyři lidi to stačí a nevymýšlí se kvůli tomu nová evidence.
+    </p>
+  </section>
+
+  <!-- ══════════════════════════════════════════ 2. území -->
+  <section class="obrazovka">
+    <h2>Krok 2 — Území</h2>
+    <p class="k-cemu">
+      Celá mapa včetně kreslení, přímo v průvodci (rozhodnutí majitele).
+      Mapa se vyřízne do sdílené součástky, kterou použije i obrazovka
+      Oblasti — aby existovala jedna mapa, ne dvě, které se časem rozejdou.
+    </p>
+
+    <div class="ram">
+      <div class="telo">
+        <div class="krokovnik">
+          <span class="krok hotovy"><span class="cislo">✓</span>Založení</span>
+          <span class="krok tady"><span class="cislo">2</span>Území</span>
+          <span class="krok"><span class="cislo">3</span>Průzkum</span>
+          <span class="krok"><span class="cislo">4</span>Seznam firem</span>
+        </div>
+
+        <div class="pole">
+          <label>Hledat obec nebo adresu</label>
+          <div class="vstup placeholder">Zbůch</div>
+        </div>
+
+        <div class="mapa-nahrada"><span class="mapa-popis">mapa s uloženými oblastmi a kreslením</span></div>
+
+        <div class="mrizka2">
+          <div class="sada-udaju">
+            <div class="udaj"><span class="popisek">V území leží</span><span class="vodic"></span><span class="hodnota">41 firem</span></div>
+            <div class="udaj"><span class="popisek">Do kampaně projde</span><span class="vodic"></span><span class="hodnota">38 firem</span></div>
+          </div>
+          <p class="hlaska je-klid">
+            Tři firmy síto nepustí: dvě jsou na blacklistu, jedna má vlastní
+            jídelnu. Důvody uvidíte v kroku 4.
+          </p>
+        </div>
+
+        <div class="tlacitka">
+          <span class="tlacitko tise">Zpět</span>
+          <span class="tlacitko">Pokračovat na průzkum</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="pozn">
+      <b>Dvě čísla místo jednoho.</b> Dnešní mapa ukazuje jen „firem uvnitř“.
+      Od 31. 7. se ale mezi územím a kampaní uplatní síto, takže se počty
+      liší — a kdyby to obrazovka zamlčela, vypadalo by to v kroku 4 jako
+      chyba. Radši rovnou obojí, i s vysvětlením.
+    </p>
+  </section>
+
+  <!-- ══════════════════════════════════════════ 3. průzkum -->
+  <section class="obrazovka">
+    <h2>Krok 3 — Průzkum</h2>
+    <p class="k-cemu">
+      Větví se podle toho, jestli je území prozkoumané. Jediné místo celého
+      průvodce, kde se čeká na agenta.
+    </p>
+
+    <div class="ram">
+      <div class="telo">
+        <div class="krokovnik">
+          <span class="krok hotovy"><span class="cislo">✓</span>Založení</span>
+          <span class="krok hotovy"><span class="cislo">✓</span>Území</span>
+          <span class="krok tady"><span class="cislo">3</span>Průzkum</span>
+          <span class="krok"><span class="cislo">4</span>Seznam firem</span>
+        </div>
+
+        <p class="nadtitul">A · území už prozkoumané</p>
+        <p class="hlaska je-hotovo">
+          Území je prozkoumané. Do kampaně se převezme 38 firem, hledat se
+          nic nemusí.
+        </p>
+        <div class="tlacitka"><span class="tlacitko">Pokračovat na seznam firem</span></div>
+
+        <p class="nadtitul" style="margin-top:var(--o4)">B · nové území, čeká se na Čmuchala</p>
+        <div class="postup">
+          <div class="postup-pruh">
+            <i class="hotovo"></i><i class="hotovo"></i><i class="hotovo"></i><i class="bezi"></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <span class="postup-popis">Hotovo 3 z 12 obcí · odhad zbývá 25 minut</span>
+        </div>
+        <div class="sada-udaju">
+          <div class="udaj"><span class="popisek">Převzato z okolních oblastí</span><span class="vodic"></span><span class="hodnota">12 firem</span></div>
+          <div class="udaj"><span class="popisek">Nově nalezeno</span><span class="vodic"></span><span class="hodnota">26 firem</span></div>
+        </div>
+        <p class="hlaska je-klid">
+          Čmuchal si objednávku vyzvedne sám při nejbližším běhu. Okno můžete
+          zavřít — kampaň zůstane rozdělaná a v seznamu uvidíte, až bude
+          průzkum hotový.
+        </p>
+        <div class="tlacitka">
+          <span class="tlacitko tise">Přeskočit a jít na seznam</span>
+          <span class="duvod-nelze">Schválit kampaň půjde až po dokončení průzkumu.</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="pozn">
+      <b>Postup po obcích je hotový údaj, jen se nikde neukazoval.</b>
+      Průzkum se dělí na úseky po obcích a jejich stav je v databázi — proužek
+      ho jen zobrazí. Čísla „převzato / nově nalezeno“ jsou ta, která dnes
+      ráno přestala počítat firmy dvakrát.
+    </p>
+  </section>
+
+  <!-- ══════════════════════════════════════════ 4. seznam -->
+  <section class="obrazovka">
+    <h2>Krok 4 — Seznam firem</h2>
+    <p class="k-cemu">
+      Nejcennější obrazovka: z čeho se pozná, jestli má smysl kampaň pouštět
+      dál. A proč tam někdo je — i proč tam někdo není.
+    </p>
+
+    <div class="ram">
+      <div class="telo">
+        <div class="krokovnik">
+          <span class="krok hotovy"><span class="cislo">✓</span>Založení</span>
+          <span class="krok hotovy"><span class="cislo">✓</span>Území</span>
+          <span class="krok hotovy"><span class="cislo">✓</span>Průzkum</span>
+          <span class="krok tady"><span class="cislo">4</span>Seznam firem</span>
+        </div>
+
+        <div class="mrizka2">
+          <div class="sada-udaju">
+            <div class="udaj"><span class="popisek">Firem v seznamu</span><span class="vodic"></span><span class="hodnota">38</span></div>
+            <div class="udaj"><span class="popisek">Se spojením</span><span class="vodic"></span><span class="hodnota">26</span></div>
+            <div class="udaj"><span class="popisek">Na jmenovanou osobu</span><span class="vodic"></span><span class="hodnota">11</span></div>
+            <div class="udaj"><span class="popisek">Na adresu pro nabídky</span><span class="vodic"></span><span class="hodnota">7</span></div>
+            <div class="udaj"><span class="popisek">Jen obecná adresa</span><span class="vodic"></span><span class="hodnota">8</span></div>
+          </div>
+          <div class="sada-udaju">
+            <div class="udaj"><span class="popisek">Volná kapacita jídelny</span><span class="vodic"></span><span class="hodnota">20 obědů/den</span></div>
+            <p class="hlaska je-klid">
+              Tři firmy jsou i v kampani „Rokycansko“. Není to překážka —
+              jen ať o tom víte, ať jim nakonec nepíšete dvakrát.
+            </p>
+          </div>
+        </div>
+
+        <p class="hlaska je-klid">
+          <strong>V území leží, ale do kampaně nepatří (3):</strong>
+          KOVO Zbůch — blacklist: jednali jsme loni · SVJ Nádražní 12 —
+          bytový dům · ZŠ Vejprnice — má vlastní jídelnu.
+        </p>
+
+        <div class="obal-tabulky">
+          <table>
+            <thead>
+              <tr><th>Firma</th><th>Obec</th><th>Zam.</th><th>Skóre</th><th>Spojení</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Strojírny Zbůch s.r.o.</td><td>Zbůch</td><td class="cislo">120</td>
+                <td class="cislo">84</td>
+                <td><span class="stav je-schvalena"><span class="znak"></span>Jmenná</span></td>
+                <td><span class="tlacitko tise">Vyřadit</span></td>
+              </tr>
+              <tr>
+                <td>Plast Tlučná a.s.</td><td>Tlučná</td><td class="cislo">65</td>
+                <td class="cislo">71</td>
+                <td><span class="stav je-posouzeni"><span class="znak"></span>Pro nabídky</span></td>
+                <td><span class="tlacitko tise">Vyřadit</span></td>
+              </tr>
+              <tr>
+                <td>Dřevo Líně s.r.o.</td><td>Líně</td><td class="cislo">28</td>
+                <td class="cislo">55</td>
+                <td><span class="stav je-rozpracovana"><span class="znak"></span>Chybí</span></td>
+                <td><span class="tlacitko tise">Vyřadit</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tlacitka">
+          <span class="tlacitko">Schválit kampaň</span>
+          <span class="tlacitko tise">Zrušit kampaň</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mrizka2">
+      <div class="dialog">
+        <h3>Schválit kampaň „Jaro Zbůch“?</h3>
+        <p>
+          Seznam 38 firem se tím uzamkne a nepůjde do něj přidávat. Nic se
+          neodesílá — oslovování přijde na řadu později.
+        </p>
+        <div class="tlacitka">
+          <span class="tlacitko">Schválit</span>
+          <span class="tlacitko tise">Ještě ne</span>
+        </div>
+      </div>
+      <div class="dialog">
+        <h3>Když schválit nejde</h3>
+        <p>
+          <span class="tlacitko nelze">Schválit kampaň</span>
+        </p>
+        <p class="duvod-nelze">
+          Schválit půjde, až bude v seznamu aspoň jedna firma s doloženým
+          spojením. Teď je jich 0 z 38.
+        </p>
+        <p class="duvod-nelze">
+          Druhá podoba: „Nejdřív musí doběhnout průzkum území. Hotovo 3 z 12 obcí.“
+        </p>
+      </div>
+    </div>
+
+    <p class="pozn">
+      <b>Vyřazené firmy s důvodem jsou tu schválně nahoře, ne schované.</b>
+      Kdo nevidí, proč firma v seznamu chybí, přestane pravidlům věřit a začne
+      je obcházet ručně. Zároveň je to nejrychlejší způsob, jak poznat, že je
+      nějaké pravidlo špatně nastavené.
+    </p>
+    <p class="pozn">
+      <b>Tlačítko „Schválit“ vidí jen admin a výš</b> — ostatním se nezobrazí
+      vůbec, aby je aplikace nelákala na něco, co jim databáze stejně zamítne.
+      Zamítnutí ale platí i tak: hlídá to databáze, ne tlačítko.
+    </p>
+  </section>
+
+  <!-- ══════════════════════════════════════════ součástky -->
+  <section class="obrazovka">
+    <h2>Co se musí do designového systému doplnit</h2>
+    <p class="k-cemu">
+      Vše ostatní na obrazovkách výše už aplikace umí. Tohle je nové —
+      a je to napsané tak, aby to šlo rovnou přenést do <code>styl.css</code>.
+    </p>
+    <ul>
+      <li><strong>Krokovník</strong> — tři stavy: hotový, právě zde, čeká.</li>
+      <li><strong>Dialog</strong> — pro schválení a pro zrušení s povinným důvodem.</li>
+      <li><strong>Hláška ve třech podobách</strong> — chyba (dnes), klidná, hotovo.</li>
+      <li><strong>Proužek postupu po obcích</strong> — pro čekání na průzkum.</li>
+      <li><strong>Stupnice odstupů a velikostí písma</strong> — dnes se rozměry píšou od oka.</li>
+      <li><strong>Čtyři chybějící barvy</strong> pojmenovat (dnes psané natvrdo, jedna z nich dvakrát).</li>
+    </ul>
+    <p class="pozn">
+      Nic z toho nemění dnešní vzhled aplikace — jsou to doplňky, ne přestavba.
+      Jediná skutečná přestavba je vyříznutí mapy do sdílené součástky, aby ji
+      mohly používat Oblasti i průvodce.
+    </p>
+  </section>
+
+</div>

@@ -24,7 +24,7 @@ beforeEach(async () => {
   await spustMigrace(db);
   await zalozFirmu(db, zaznam("25232657"));
   await nastavGeo(db, "25232657", {
-    ...STRED, jidelnaId: null as unknown as string, vzdalenostM: 0, vZone: true,
+    ...STRED, jidelnaId: null, vzdalenostM: 0, vZone: true,
   });
   oblastId = await zalozOblast(db, {
     nazev: "Území", oblast: { typ: "kruh", stred: STRED, polomerM: 3000 },

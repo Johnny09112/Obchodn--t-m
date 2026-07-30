@@ -310,3 +310,14 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   funkce**, ne součást průzkumu. Volitelné nastavení; po průzkumu nabídne
   „našlo se X firem blíž k nové jídelně, přesunout?" a člověk zaškrtne které.
   Dostane vlastní zadání.
+- 2026-07-30 · Claude · **`src/cmuchal.ts` se pro oblastní sběr neupravuje**
+  — `zpracujKandidata` je na jídelnu navázaná 18 místy (zóny, `zapisDosah`,
+  vyřazení „mimo zónu"), pro oblast nic z toho neplatí.
+- 2026-07-31 · Claude (po závěrečné revizi) · **Předchozí rozhodnutí bylo
+  jen z poloviny správné a opraveno.** Vedle logiky zón se ve `zpracujKandidata`
+  schovávala i **kvalifikace** (komu chceme psát), která s jídelnou nesouvisí
+  vůbec. Ta se nezkopírovala a vznikly z toho dvě vážné vady: oblastní sběr
+  nefiltroval nic a do kampaně mohla spadnout i naše vlastní partnerská škola.
+  Vyříznuto do `src/kvalifikace.ts` a volá se z obou cest.
+- 2026-07-31 · majitel · **Větev `cmuchal-oblasti` se slučuje a filtrovací
+  díra u kampaní se zavírá hned potom** (varianta 1 ze tří nabídnutých).

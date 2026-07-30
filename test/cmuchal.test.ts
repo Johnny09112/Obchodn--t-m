@@ -60,6 +60,7 @@ const geokoder: Geokoder = {
     if (a.includes("Bezdružice")) return { lat: 49.907, lng: 12.976 };
     return null;
   },
+  zpetne: async () => null,
 };
 
 const mpsv: MpsvKlient = {
@@ -203,6 +204,7 @@ describe("záchrana firem s nezaměřitelnou adresou", () => {
     // Adresu neumí zaměřit, obec ano — přesně stav z ostrého běhu.
     const geoLokal: Geokoder = {
       geokoduj: async (a) => (a === "Bezdružice" ? { lat: 49.9062, lng: 12.9744 } : null),
+      zpetne: async () => null,
     };
 
     const s = await spustCmuchala(
@@ -413,6 +415,7 @@ describe("kompletní registr ČSÚ jako zdroj kandidátů", () => {
     let dostalJednotky: number[] | undefined;
     const registr: RegistrKlient = {
       jednotkyObce: async () => [560740, 560741],
+      jednotkyPodleMist: async () => [],
       zamestnavateleVJednotkach: async (j) => {
         dostalJednotky = j;
         return [zaznam("25242407", agrofarmy.nazev, "130")];
@@ -443,6 +446,7 @@ describe("kompletní registr ČSÚ jako zdroj kandidátů", () => {
     };
     const registr: RegistrKlient = {
       jednotkyObce: async () => [560740],
+      jednotkyPodleMist: async () => [],
       zamestnavateleVJednotkach: async (_j, o) => {
         expect(o?.minZamestnancu).toBe(25); // práh se předává do registru
         return [zaznam("25489631", zinkovna.nazev, "240")];
@@ -460,6 +464,7 @@ describe("kompletní registr ČSÚ jako zdroj kandidátů", () => {
     let dostalJednotky: number[] | undefined;
     const registr: RegistrKlient = {
       jednotkyObce: async () => [],
+      jednotkyPodleMist: async () => [],
       zamestnavateleVJednotkach: async (j) => {
         dostalJednotky = j;
         return [];

@@ -135,9 +135,11 @@ export async function zapisKontakt(
 export interface GeoVstup {
   lat: number;
   lng: number;
-  jidelnaId: string;
-  vzdalenostM: number;
-  vZone: boolean;
+  /** Prázdné u firem z průzkumné oblasti — o přiřazení rozhoduje vzdálenost,
+   *  ne oblast, a řeší se samostatně. */
+  jidelnaId: string | null;
+  vzdalenostM: number | null;
+  vZone: boolean | null;
 }
 
 /**
@@ -216,7 +218,8 @@ export type DuvodVyrazeni =
 
 export interface VyrazeniVstup {
   behId: string;
-  jidelnaId: string;
+  /** Prázdné u vyřazení z průzkumné oblasti — tam žádná jídelna není. */
+  jidelnaId: string | null;
   zdroj: "mpsv" | "osm" | "ares" | "registr";
   nazev: string;
   ico?: string;

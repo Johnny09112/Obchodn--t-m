@@ -42,6 +42,8 @@ import {
 import {
   dalsiPruzkum, dokoncPruzkum, objednejPruzkum, selhalPruzkum, zahajPruzkum,
 } from "./pruzkum.js";
+import { rozhlednuti, vyridPruzkum } from "./cmuchal-oblast.js";
+import type { CmuchalDeps } from "./cmuchal.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -727,6 +729,34 @@ async function cmdKampan(argv: string[]): Promise<void> {
 }
 
 /**
+ * Sestaví závislosti pro rozhlédnutí/vyřízení průzkumu oblasti — stejní
+ * klienti jako u `cmdRun`, jen bez enricheru (rozhlednuti/vyridPruzkum ho
+ * nepoužívají — nic z webu neobohacují).
+ */
+async function vytvorPruzkumDeps(db: Db): Promise<CmuchalDeps> {
+  const kontakt = process.env.NOMINATIM_CONTACT;
+  if (!kontakt) {
+    console.error("Chybí NOMINATIM_CONTACT (kontaktní e-mail pro geocoding, viz .env.example).");
+    process.exit(1);
+  }
+  return {
+    db,
+    ares: vytvorAresKlienta(),
+    res: vytvorResKlienta(),
+    geokoder: vytvorGeokoder({ kontakt }),
+    registr: vytvorRegistrKlienta(),
+  };
+}
+
+/** Odhad doby zaměření adres — jedna adresa cca 1,1 s (limit Nominatim). */
+function odhadCasuZamereni(kandidatu: number): string {
+  const minuty = (kandidatu * 1.1) / 60;
+  if (minuty < 1) return "necelou minutu";
+  const zaokrouhleno = minuty < 10 ? minuty.toFixed(1) : Math.round(minuty).toString();
+  return `přibližně ${zaokrouhleno} min`;
+}
+
+/**
  * Fronta objednávek na průzkum území. Objednávku vyzvedne agent, aplikace
  * ho spustit neumí (běží v Claude Code, ne na serveru — ADR 0001).
  */
@@ -741,6 +771,8 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       prevzato: { type: "string" },
       novych: { type: "string" },
       chyba: { type: "string" },
+      nejvyse: { type: "string" },
+      "i-bez-obci": { type: "boolean", default: false },
     },
   });
   const akce = positionals[0] ?? "fronta";
@@ -831,24 +863,172 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       return;
     }
 
-    // výchozí: fronta — jen čekající, zahájené se už nevydávají znovu.
-    const cekajici = await db.query<{
+    if (akce === "rozhlednuti") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum rozhlednuti <id>");
+        process.exit(1);
+      }
+      const deps = await vytvorPruzkumDeps(db);
+      const r = await rozhlednuti(deps, id);
+      if (r.cekaNaRozhodnuti) {
+        console.log(`Průzkum ${id}: nakreslený tvar nezabírá žádnou obec.`);
+        console.log("  Není z čeho zakládat úseky — musí rozhodnout člověk, sám se to nerozjede.");
+        console.log(`  Pokračovat i tak jde jen výslovně: pruzkum vyrid ${id} --i-bez-obci`);
+        console.log(
+          "  (ten přepínač zatím jen dovolí spuštění — sběr firem podle souřadnic," +
+            " ne podle obcí, je následná práce a zatím nic nenajde navíc)",
+        );
+        return;
+      }
+      console.log(`Průzkum ${id}: rozhlédnutí hotovo.`);
+      console.log(`  obcí v území: ${r.obci}`);
+      console.log(`  založených úseků: ${r.useku}`);
+      console.log(`  odhad firem k prozkoumání: ${r.kandidatu} (zaměřovat se bude ${r.kandidatuKZamereni} — zbytek kartotéka už zná)`);
+      console.log(`  odhad času na zaměření adres: ${odhadCasuZamereni(r.kandidatuKZamereni)}`);
+      if (r.nedohledano > 0) {
+        console.log(`  nedohledaných bodů mřížky: ${r.nedohledano} (u těch se obec zjistit nepovedla)`);
+      }
+      console.log(`  Zpracování spustíš: pruzkum vyrid ${id}`);
+      return;
+    }
+
+    if (akce === "vyrid") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum vyrid <id> [--nejvyse N] [--i-bez-obci]");
+        process.exit(1);
+      }
+      const stavRadky = await db.query<{ stav: string }>(
+        "select stav from pruzkumy where id = $1",
+        [id],
+      );
+      const aktualniStav = stavRadky[0]?.stav;
+      if (!aktualniStav) {
+        console.error(`Objednávka ${id} neexistuje.`);
+        process.exit(1);
+      }
+      if (aktualniStav === "hotovo" || aktualniStav === "selhalo") {
+        console.log(`Průzkum ${id} je už uzavřený (stav ${aktualniStav}) — není co vyřizovat.`);
+        return;
+      }
+      if (aktualniStav === "ceka_na_rozhodnuti" && values["i-bez-obci"] !== true) {
+        console.log(`Průzkum ${id} čeká na rozhodnutí — nakreslený tvar nezabírá žádnou obec.`);
+        console.log("  Sám se nerozjede, ať to nezůstane bez povšimnutí.");
+        console.log(`  Pokračovat i tak jde jen výslovně: pruzkum vyrid ${id} --i-bez-obci`);
+        console.log(
+          "  (ten přepínač zatím jen dovolí spuštění — sběr firem podle souřadnic," +
+            " ne podle obcí, je následná práce a zatím nic nenajde navíc)",
+        );
+        return;
+      }
+      if (aktualniStav === "ceka_na_rozhodnuti") {
+        console.log(
+          `Pokračuji přes --i-bez-obci, i když tvar nezabírá žádnou obec — ` +
+            "přepínač ale zatím nic nesbírá navíc, jen dovolí běh dál.",
+        );
+      }
+      const deps = await vytvorPruzkumDeps(db);
+      const v = await vyridPruzkum(deps, id, {
+        nejvyseUseku: values.nejvyse ? Number(values.nejvyse) : undefined,
+      });
+
+      // Byla-li tohle čerstvá objednávka (bez úseků), `vyridPruzkum` si
+      // rozhlédnutí udělala sama — a když se přitom ukázalo, že tvar
+      // nezabírá žádnou obec, přepnula stav na 'ceka_na_rozhodnuti' a vrátila
+      // jen uzavreno: false. Bez tohohle přečtení by CLI hlásilo „pokračuje
+      // dál“ a radilo spustit `vyrid` znovu bez přepínače — což by napodruhé
+      // vedlo jen k odmítnutí, které tu poprvé nikdo nevysvětlil.
+      if (!v.uzavreno) {
+        const poStavRadky = await db.query<{ stav: string }>(
+          "select stav from pruzkumy where id = $1",
+          [id],
+        );
+        if (poStavRadky[0]?.stav === "ceka_na_rozhodnuti") {
+          console.log(`Průzkum ${id} čeká na rozhodnutí — nakreslený tvar nezabírá žádnou obec.`);
+          console.log("  Sám se nerozjede, ať to nezůstane bez povšimnutí.");
+          console.log(`  Pokračovat i tak jde jen výslovně: pruzkum vyrid ${id} --i-bez-obci`);
+          console.log(
+            "  (ten přepínač zatím jen dovolí spuštění — sběr firem podle souřadnic," +
+              " ne podle obcí, je následná práce a zatím nic nenajde navíc)",
+          );
+          return;
+        }
+      }
+
+      console.log(`Průzkum ${id}: ${v.uzavreno ? "uzavřen (stav hotovo/selhalo)" : "pokračuje dál"}`);
+      console.log(`  úseků hotovo: ${v.usekuHotovo} z ${v.usekuCelkem}`);
+      console.log(`  nových firem: ${v.firemNovych}`);
+      console.log(`  převzato z kartotéky (už tam byly): ${v.firemPrevzato}`);
+      if (!v.uzavreno) {
+        console.log(`  Pro pokračování spusť znovu: pruzkum vyrid ${id}`);
+      }
+      return;
+    }
+
+    if (akce === "useky") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum useky <id>");
+        process.exit(1);
+      }
+      const useky = await db.query<{
+        poradi: number; obec: string; stav: string;
+        firemNovych: number | null; firemMimoTvar: number | null; chyba: string | null;
+      }>(
+        `select poradi, obec, stav, firem_novych as "firemNovych",
+                firem_mimo_tvar as "firemMimoTvar", chyba
+         from pruzkum_useky where pruzkum_id = $1 order by poradi`,
+        [id],
+      );
+      if (useky.length === 0) {
+        console.log(`Průzkum ${id} zatím nemá založené úseky.`);
+        console.log(`  Založí se rozhlédnutím: pruzkum rozhlednuti ${id}`);
+        return;
+      }
+      const hotovo = useky.filter((u) => u.stav === "hotovo").length;
+      console.log(`Úseků v průzkumu ${id}: ${useky.length} (hotovo ${hotovo})\n`);
+      for (const u of useky) {
+        const stavSloupec = u.stav.padEnd(8);
+        let detail: string;
+        if (u.stav === "hotovo") {
+          detail = `${u.firemNovych ?? "neznámo"} nových, ${u.firemMimoTvar ?? "neznámo"} mimo tvar`;
+        } else if (u.stav === "selhalo") {
+          detail = `chyba: ${u.chyba ?? "neznámá"}`;
+        } else {
+          detail = "—";
+        }
+        console.log(`  ${String(u.poradi).padStart(3)}  ${u.obec.padEnd(24)} ${stavSloupec} ${detail}`);
+      }
+      return;
+    }
+
+    // výchozí: fronta — nedokončené objednávky (čekající i rozjeté), s postupem po úsecích.
+    const nedokoncene = await db.query<{
       id: string; oblastId: string; kampanId: string | null;
-      pozadal: string; pozadano: string;
+      pozadal: string; pozadano: string; stav: string;
     }>(
-      `select id, oblast_id as "oblastId", kampan_id as "kampanId", pozadal,
+      `select id, oblast_id as "oblastId", kampan_id as "kampanId", pozadal, stav,
               to_char(pozadano_at, 'YYYY-MM-DD HH24:MI') as pozadano
-       from pruzkumy where stav = 'ceka' order by pozadano_at`,
+       from pruzkumy where stav in ('ceka', 'bezi', 'ceka_na_rozhodnuti') order by pozadano_at`,
     );
-    if (cekajici.length === 0) {
+    if (nedokoncene.length === 0) {
       console.log("Fronta je prázdná.");
       return;
     }
-    console.log(`Čekajících objednávek: ${cekajici.length}\n`);
-    for (const p of cekajici) {
+    console.log(`Nedokončených objednávek: ${nedokoncene.length}\n`);
+    for (const p of nedokoncene) {
+      const useky = await db.query<{ hotovo: number; celkem: number }>(
+        `select count(*) filter (where stav = 'hotovo')::int as hotovo, count(*)::int as celkem
+         from pruzkum_useky where pruzkum_id = $1`,
+        [p.id],
+      );
+      const u = useky[0]!;
+      const postup = u.celkem === 0 ? "úseky ještě nezaloženy" : `úseky ${u.hotovo}/${u.celkem} hotovo`;
       console.log(
         `  ${p.id}  oblast ${p.oblastId}` +
           `${p.kampanId ? `  kampaň ${p.kampanId}` : ""}` +
+          `  stav ${p.stav}  ${postup}` +
           `  požádal ${p.pozadal}  ${p.pozadano}`,
       );
     }
@@ -1320,6 +1500,11 @@ switch (prikaz) {
                                    dokončí běžící průzkum (stav hotovo)
   pruzkum selhal <id> --chyba text
                                    označí běžící průzkum za neúspěšný (stav selhalo)
+  pruzkum rozhlednuti <id>         rozhlédne se po území, založí úseky a odhadne čas
+  pruzkum vyrid <id> [--nejvyse N] zpracuje úseky (naváže tam, kde se skončilo);
+                                   --i-bez-obci jen dovolí běh, když tvar nezabírá
+                                   žádnou obec — sběr podle souřadnic zatím neumí nic navíc
+  pruzkum useky <id>               vypíše úseky průzkumu a jejich stav
   k-obohaceni [--limit N] [--segmenty stredni,korporat] [--bez-spojeni]
                                    vypíše firmy čekající na rešerši (pro agenta);
                                    --bez-spojeni = známe jméno, chybí e-mail i telefon

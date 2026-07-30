@@ -28,7 +28,7 @@ beforeEach(async () => {
     await zalozFirmu(db, firma(ico, nazev));
     const p = severne(metru);
     await nastavGeo(db, ico, {
-      lat: p.lat, lng: p.lng, jidelnaId: null as unknown as string,
+      lat: p.lat, lng: p.lng, jidelnaId: null,
       vzdalenostM: metru, vZone: true,
     });
     await nastavStav(db, ico, "kvalifikovany");

@@ -35,7 +35,7 @@ async function pripravUzemi(): Promise<string> {
     // `jidelnaId` je v GeoVstup povinné, ale tyhle firmy k žádné jídelně
     // nepatří. Stejný obrat používá test/oblast-db.test.ts.
     await nastavGeo(db, ico, {
-      lat: p.lat, lng: p.lng, jidelnaId: null as unknown as string,
+      lat: p.lat, lng: p.lng, jidelnaId: null,
       vzdalenostM: m, vZone: true,
     });
   }

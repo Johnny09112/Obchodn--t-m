@@ -1,18 +1,17 @@
 import type { AresKlient, AresZaznam } from "./ares.js";
 import type { Db } from "./db.js";
 import type { Enricher } from "./enrich.js";
-import { naBlacklistu, nactiBlacklist, type Pravidlo } from "./blacklist.js";
-import { nactiProfil, oborProchazi, type Profil } from "./profil.js";
-import { FORMY_ZAMESTNAVATELU, jeBytovyDum, popisFormy } from "./formy.js";
-import { jeValidniIco } from "./ico.js";
+import { nactiBlacklist, type Pravidlo } from "./blacklist.js";
+import { nactiProfil, type Profil } from "./profil.js";
+import { FORMY_ZAMESTNAVATELU } from "./formy.js";
 import { klasifikujZonu, vzdalenostM, type Bod } from "./geo.js";
 import type { Geokoder } from "./geocode.js";
+import { kvalifikujIdentitu, kvalifikujObor, kvalifikujVelikost } from "./kvalifikace.js";
 import type { MpsvKlient, MpsvKontakt } from "./mpsv.js";
 import type { OsmKlient } from "./osm.js";
 import type { RegistrKlient } from "./registr.js";
 import type { ResKlient } from "./res.js";
 import { spocitejSkore } from "./score.js";
-import { splnujeMinimum } from "./res.js";
 import {
   nastavGeo,
   nastavSkore,
@@ -460,18 +459,18 @@ async function zpracujKandidata(
     }
     ico = shoda.ico;
   }
-  if (!jeValidniIco(ico)) {
-    souhrn.zahozeno++;
-    await vyrad("neplatne_ico", `IČO ${ico} neprošlo kontrolním součtem`, ico);
-    return;
-  }
-
-  // Partnerská jídelna se ze sweepu rejstříku tváří jako běžný zaměstnavatel.
-  // Nabízet obědy tomu, kdo je pro nás vaří, nedává smysl.
-  if (partnerskaIca.has(ico)) {
-    souhrn.partnerskychJidelen++;
-    souhrn.poznamkyProPlaybook.push(`vlastní jídelna mezi kandidáty: ${kandidat.nazev}`);
-    await vyrad("partnerska_jidelna", "je to naše partnerská jídelna, ne zákazník", ico);
+  // Kvalifikace, fáze 1 (src/kvalifikace.ts) — jde posoudit ještě před drahým
+  // dotazem do ARES: je IČO vůbec platné a není to naše vlastní partnerská
+  // jídelna (ta se ze sweepu rejstříku tváří jako běžný zaměstnavatel)?
+  const identita = kvalifikujIdentitu({ ico, partnerskaIca });
+  if (!identita.ok) {
+    if (identita.duvod === "partnerska_jidelna") {
+      souhrn.partnerskychJidelen++;
+      souhrn.poznamkyProPlaybook.push(`vlastní jídelna mezi kandidáty: ${kandidat.nazev}`);
+    } else {
+      souhrn.zahozeno++;
+    }
+    await vyrad(identita.duvod, identita.detail ?? identita.duvod, ico);
     return;
   }
 
@@ -499,54 +498,34 @@ async function zpracujKandidata(
     return;
   }
 
-  // Krok 2 — filtry.
-  // Bytový dům (společenství vlastníků, bytové družstvo) zaměstnance formálně
-  // má — správce, úklid —, ale nikdo tam neobědvá. Živnostníci se naopak
-  // NEVYŘAZUJÍ: majitel je bude oslovovat jinou formou (rozhodnutí 2026-07-27).
-  if (jeBytovyDum(ares.pravniForma)) {
-    souhrn.bytovychDomu++;
-    await vyrad("bytovy_dum", popisFormy(ares.pravniForma) ?? "bytový dům", ico);
+  // Kvalifikace, fáze 2 (src/kvalifikace.ts) — právní forma, ruční blacklist
+  // majitele a obor podle profilu. Až za ověřením v rejstříku, protože
+  // pravidlo může mířit na obor nebo právní formu, které jsou známé teprve
+  // odtud. Živnostníci se NEVYŘAZUJÍ: majitel je bude oslovovat jinou formou
+  // (rozhodnutí 2026-07-27); Cantinero Business míří přesně opačně než
+  // Cantinero, proto obor nesmí být zadrátovaný v kódu.
+  const oborKval = kvalifikujObor({ ico, ares, blacklist: pravidla.blacklist, profil: pravidla.profil });
+  if (!oborKval.ok) {
+    if (oborKval.duvod === "bytovy_dum") souhrn.bytovychDomu++;
+    else if (oborKval.duvod === "blacklist") souhrn.naBlacklistu++;
+    else if (oborKval.duvod === "vylouceny_obor") souhrn.vyloucenyObor++;
+    await vyrad(oborKval.duvod, oborKval.detail ?? oborKval.duvod, ico);
     return;
   }
 
-  // Ruční pravidla majitele. Až za ověřením v rejstříku, protože pravidlo
-  // může mířit na obor nebo právní formu, které jsou známé teprve odtud.
-  const pravidlo = naBlacklistu(pravidla.blacklist, {
-    ico, nazev: ares.nazev, czNace: ares.czNace, pravniForma: ares.pravniForma,
-  });
-  if (pravidlo) {
-    souhrn.naBlacklistu++;
-    await vyrad("blacklist", pravidlo.duvod, ico);
-    return;
-  }
-
-  // Obor podle profilu projektu. Pro Cantinero jsou restaurace ven (vaří si
-  // samy), pro Cantinero Business jsou naopak cílem — proto to nesmí být
-  // zadrátované v kódu.
-  if (!oborProchazi(pravidla.profil, ares.czNace)) {
-    souhrn.vyloucenyObor++;
-    await vyrad("vylouceny_obor", `CZ-NACE ${ares.czNace.join(", ")}`, ico);
-    return;
-  }
-
+  // Kvalifikace, fáze 3 (src/kvalifikace.ts) — velikost podle statistického
+  // registru. Dotaz jde ven jen na kandidáty, co prošly fází 2, ať se
+  // neplýtvá síťovým dotazem na firmu, kterou stejně nechceme.
   const resUdaje = await deps.res.nactiUdaje(ico);
-  if (resUdaje?.bezZamestnancu) {
+  const velikostKval = kvalifikujVelikost({ resUdaje, zdroj: kandidat.zdroj, minZamestnancu });
+  if (!velikostKval.ok) {
     souhrn.bezZamestnancu++;
-    await vyrad("bez_zamestnancu", "statistický registr: bez zaměstnanců", ico);
-    return;
-  }
-  // Sweep rejstříku je hodně zašuměný — z něj bereme jen doložené zaměstnavatele.
-  // (U registru ČSÚ to řešit nemusíme: ten už prahem prošel u zdroje.)
-  if (kandidat.zdroj === "ares" && resUdaje?.segment === null) {
-    souhrn.bezZamestnancu++;
-    await vyrad("neuvedena_velikost", "velikost neuvedena a jediným zdrojem je sweep rejstříku", ico);
+    await vyrad(velikostKval.duvod, velikostKval.detail ?? velikostKval.duvod, ico);
     return;
   }
   // Mikropodniky se UKLÁDAJÍ — cílí se na ně jinou formou reklamy než e-mailem.
   // Práh proto neřídí, co se uloží, ale co se zařadí do fronty na oslovení.
-  const podLimitem =
-    splnujeMinimum(resUdaje?.kategorieKod ?? null, minZamestnancu) === false;
-  if (podLimitem) souhrn.podLimitem++;
+  if (velikostKval.podLimitem) souhrn.podLimitem++;
 
   // Krok 3 — poloha pracoviště.
   // Pořadí důležitosti: přesná poloha z mapy → adresa sídla, leží-li ve stejné

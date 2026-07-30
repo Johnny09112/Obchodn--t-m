@@ -459,6 +459,41 @@ describe("vyridPruzkum", () => {
     expect(useky.map((u) => u.stav)).toEqual(["hotovo", "hotovo"]);
   });
 
+  it("úsek rozdělaný pádem procesu ('bezi') se v dalším běhu dozpracuje, ne navždy uvázne, a objednávka se uzavře až potom", async () => {
+    const { deps } = falesneDeps(db, {
+      jednotky: DVE_JEDNOTKY,
+      firmyPodleJednotky: FIRMY_DVOU_JEDNOTEK,
+    });
+
+    await vyridPruzkum(deps, pruzkumId, { nejvyseUseku: 1 });
+
+    // Simulace pádu procesu uprostřed zpracování druhého úseku — krok 4 ho
+    // nastaví na 'bezi' hned na začátku a teprve pak zpracovává; tady stejný
+    // stav vyrobíme ručně, ať test nezávisí na tom, kdy přesně proces spadl.
+    await db.query(
+      "update pruzkum_useky set stav = 'bezi' where pruzkum_id = $1 and poradi = 2",
+      [pruzkumId],
+    );
+
+    const vysledek = await vyridPruzkum(deps, pruzkumId);
+
+    // Rozdělaný úsek se musí dozpracovat, ne zůstat navždy v 'bezi' —
+    // to byla chyba, kvůli které by se objednávka mylně uzavřela jako
+    // hotová nad neúplně prozkoumaným územím.
+    const useky = await db.query<{ stav: string }>(
+      "select stav from pruzkum_useky where pruzkum_id = $1 order by poradi",
+      [pruzkumId],
+    );
+    expect(useky.map((u) => u.stav)).toEqual(["hotovo", "hotovo"]);
+
+    expect(vysledek.uzavreno).toBe(true);
+    const stavPruzkumu = await db.query<{ stav: string }>(
+      "select stav from pruzkumy where id = $1",
+      [pruzkumId],
+    );
+    expect(stavPruzkumu[0]?.stav).toBe("hotovo");
+  });
+
   it("`nejvyseUseku` zpracuje jen zadaný počet úseků, zbytek nechá čekat a objednávka zůstane běžet", async () => {
     const { deps } = falesneDeps(db, {
       jednotky: DVE_JEDNOTKY,

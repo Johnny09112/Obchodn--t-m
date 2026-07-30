@@ -214,9 +214,11 @@ async function nactiPruzkum(db: CmuchalDeps["db"], id: string) {
 }
 
 export interface VysledekPruzkumu {
-  /** Objednávka je uzavřená (hotovo/selhalo) — nezůstal žádný úsek ve stavu 'ceka'. */
+  /** Objednávka je uzavřená (hotovo/selhalo) — nezůstal žádný úsek ve stavu 'ceka' ani 'bezi'. */
   uzavreno: boolean;
+  /** Kumulativně za celou objednávku (i za dřívější volání), ne jen za toto volání. */
   usekuHotovo: number;
+  /** Počet všech úseků objednávky, bez ohledu na stav. */
   usekuCelkem: number;
   /** Nové firmy nalezené a uložené ve všech dosud hotových úsecích této objednávky. */
   firemNovych: number;
@@ -268,14 +270,27 @@ export async function vyridPruzkum(
   const behId = await zacniBeh(db, "cmuchal-oblast", { pruzkumId, oblastId: p.oblastId });
   const firemPrevzato = await prepocitejOblastFirmy(db, p.oblastId);
 
-  // Krok 4 — úseky ve stavu 'ceka' podle pořadí, nejvýš opts.nejvyseUseku.
+  // Krok 4 — úseky ve stavu 'ceka' i 'bezi', podle pořadí, nejvýš
+  // opts.nejvyseUseku.
+  //
+  // 'bezi' se vyzvedává znovu záměrně: to je přesně stav, ve kterém úsek
+  // zůstane, když proces spadne uprostřed zpracování — a kvůli přerušení
+  // uprostřed se dělení na úseky vůbec dělá. Kdyby se bralo jen 'ceka',
+  // rozdělaný úsek by navždy uvázl v 'bezi' a objednávka by se (protože
+  // nikde nezbývá 'ceka') mylně uzavřela na 'hotovo' nad neúplným územím.
+  // Zpracování znovu je levné — firmy se známými souřadnicemi se v
+  // `zpracujFirmuVOblasti` nezaměřují podruhé.
+  //
+  // Tohle stojí na předpokladu jednoho běhu nad danou objednávkou naráz —
+  // souběžné vyřizování téže objednávky z víc procesů by si úseky rvalo
+  // mezi sebou. To je vědomě mimo rozsah (ADR by řešil zamykání úseku).
   const limit = opts.nejvyseUseku;
   const cekajici = await db.query<{ id: string; jednotka: number; obec: string }>(
     limit == null
       ? `select id, jednotka, obec from pruzkum_useky
-         where pruzkum_id = $1 and stav = 'ceka' order by poradi`
+         where pruzkum_id = $1 and stav in ('ceka', 'bezi') order by poradi`
       : `select id, jednotka, obec from pruzkum_useky
-         where pruzkum_id = $1 and stav = 'ceka' order by poradi limit $2`,
+         where pruzkum_id = $1 and stav in ('ceka', 'bezi') order by poradi limit $2`,
     limit == null ? [pruzkumId] : [pruzkumId, limit],
   );
 
@@ -317,8 +332,10 @@ export async function vyridPruzkum(
   }
 
   // Krok 5/6 — stav objednávky podle toho, co z úseků zbylo. Uzavře se, jen
-  // když žádný nezůstal čekat — jinak by kampaň dostala zelenou nad
-  // neúplným územím.
+  // když žádný nezůstal ve stavu 'ceka' ANI 'bezi' — jinak by kampaň
+  // dostala zelenou nad neúplně prozkoumaným územím (viz komentář ke
+  // kroku 4: 'bezi' může být rozdělaný úsek po pádu procesu, ne úsek, který
+  // se zpracovává právě teď v jiném vlákně).
   const podleStavu = await db.query<{ stav: string; pocet: number }>(
     `select stav, count(*)::int as pocet from pruzkum_useky where pruzkum_id = $1 group by stav`,
     [pruzkumId],
@@ -327,7 +344,7 @@ export async function vyridPruzkum(
   const usekuCelkem = podleStavu.reduce((s, r) => s + r.pocet, 0);
   const usekuHotovo = pocty["hotovo"] ?? 0;
   const usekuSelhalo = pocty["selhalo"] ?? 0;
-  const usekuCeka = pocty["ceka"] ?? 0;
+  const usekuNedokonceno = (pocty["ceka"] ?? 0) + (pocty["bezi"] ?? 0);
 
   const soucetNovych = await db.query<{ soucet: number | null }>(
     `select sum(firem_novych)::int as soucet from pruzkum_useky
@@ -337,7 +354,7 @@ export async function vyridPruzkum(
   const firemNovych = soucetNovych[0]?.soucet ?? 0;
 
   let uzavreno = false;
-  if (usekuCeka === 0) {
+  if (usekuNedokonceno === 0) {
     if (usekuHotovo === 0 && usekuSelhalo > 0) {
       await selhalPruzkum(db, pruzkumId, `Všechny úseky selhaly (${usekuSelhalo}).`);
     } else {

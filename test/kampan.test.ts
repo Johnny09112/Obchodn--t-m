@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { nactiKampan, seznamKampani, zalozKampan } from "../src/kampan.js";
-import { zalozOblast } from "../src/oblast.js";
-import { nastavGeo, zalozFirmu } from "../src/repo.js";
+import { firmyVOblasti, zalozOblast } from "../src/oblast.js";
+import { pridejPravidlo } from "../src/blacklist.js";
+import { nastavGeo, zalozFirmu, zapisAtribut } from "../src/repo.js";
 import { firmyKampane, naplnZOblasti, nastavUzemi, vyradFirmu } from "../src/kampan.js";
 import { prekryvKampani, souhrnKampane } from "../src/kampan.js";
 import { zapisKontakt } from "../src/repo.js";
@@ -83,6 +84,97 @@ describe("firmy v kampani", () => {
     await nastavUzemi(db, id, { oblastId });
     await naplnZOblasti(db, id);
     await expect(vyradFirmu(db, id, "25232657", "  ")).rejects.toThrow();
+  });
+});
+
+describe("kvalifikace při plnění kampaně z oblasti", () => {
+  /** Firma uvnitř oblasti, s možností přepsat pole z rejstříku. */
+  async function firmaUvnitr(ico: string, zmeny: Partial<AresZaznam> = {}): Promise<void> {
+    await zalozFirmu(db, { ...zaznam(ico, `Firma ${ico}`), ...zmeny });
+    const p = severne(1000);
+    await nastavGeo(db, ico, {
+      lat: p.lat, lng: p.lng, jidelnaId: null, vzdalenostM: 1000, vZone: true,
+    });
+  }
+
+  async function kampanNadUzemim(oblastId: string, nazev: string): Promise<string> {
+    const id = await zalozKampan(db, { nazev, spravce: "a@b.cz" });
+    await nastavUzemi(db, id, { oblastId });
+    return id;
+  }
+
+  it("blacklistovaná firma se do kampaně nedoplní", async () => {
+    const oblastId = await pripravUzemi();
+    await pridejPravidlo(db, {
+      typ: "ico", hodnota: "25232657", duvod: "majitel si nepřeje oslovit",
+    });
+
+    const id = await kampanNadUzemim(oblastId, "K-blacklist");
+    await naplnZOblasti(db, id);
+
+    const ica = (await firmyKampane(db, id)).map((f) => f.ico);
+    expect(ica).not.toContain("25232657");
+    expect(ica).toContain("48362956");
+  });
+
+  it("partnerská jídelna se do kampaně nedoplní", async () => {
+    const oblastId = await pripravUzemi();
+    await db.query(
+      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, ico)
+       values ('ZŠ Zbůch','x','Zbůch',$1,$2,559661,$3)`,
+      [STRED.lat, STRED.lng, "25232657"],
+    );
+
+    const id = await kampanNadUzemim(oblastId, "K-partner");
+    await naplnZOblasti(db, id);
+
+    expect((await firmyKampane(db, id)).map((f) => f.ico)).not.toContain("25232657");
+  });
+
+  it("bytový dům se do kampaně nedoplní", async () => {
+    const oblastId = await pripravUzemi();
+    // 145 = společenství vlastníků jednotek; formálně zaměstnavatel, nikdo tam neobědvá.
+    await firmaUvnitr("27604977", { pravniForma: "145" });
+
+    const id = await kampanNadUzemim(oblastId, "K-bytovy");
+    await naplnZOblasti(db, id);
+
+    expect((await firmyKampane(db, id)).map((f) => f.ico)).not.toContain("27604977");
+  });
+
+  it("firma s doloženou vlastní jídelnou se do kampaně nedoplní", async () => {
+    const oblastId = await pripravUzemi();
+    await zapisAtribut(db, "25232657", "ma_vlastni_jidelnu", "true", {
+      zdrojUrl: "https://example.cz/o-nas", citace: "Zaměstnancům vaříme ve vlastní jídelně.",
+    });
+
+    const id = await kampanNadUzemim(oblastId, "K-jidelna");
+    await naplnZOblasti(db, id);
+
+    expect((await firmyKampane(db, id)).map((f) => f.ico)).not.toContain("25232657");
+  });
+
+  it("firma bez doložené jídelny (nevíme) se doplní normálně", async () => {
+    // Regrese: NULL znamená „nevíme", ne „má ji". Vyřadit ji by byl dohad (TP-2).
+    const oblastId = await pripravUzemi();
+    const id = await kampanNadUzemim(oblastId, "K-nevime");
+    await naplnZOblasti(db, id);
+
+    expect((await firmyKampane(db, id)).map((f) => f.ico)).toContain("25232657");
+  });
+
+  it("vyřazená firma zůstane v oblasti — filtr se týká kampaně, ne geometrie", async () => {
+    // `oblast_firmy` odpovídá na otázku „co leží uvnitř tvaru". Blacklist je
+    // otázka „koho oslovit". Kdyby filtr sáhl sem, počet firem na mapě by se
+    // měnil podle blacklistu a nikdo by nepochopil proč.
+    const oblastId = await pripravUzemi();
+    await pridejPravidlo(db, { typ: "ico", hodnota: "25232657", duvod: "test" });
+
+    const id = await kampanNadUzemim(oblastId, "K-geometrie");
+    await naplnZOblasti(db, id);
+
+    const vOblasti = await firmyVOblasti(db, oblastId);
+    expect(vOblasti.map((f) => f.ico)).toContain("25232657");
   });
 });
 

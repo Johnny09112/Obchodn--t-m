@@ -638,3 +638,25 @@ skoro nedá nic.
   prošly do provozu — obejitelnou pojistku schválení, mřížku minoucí
   protáhlé území a úsek, co uvázne po pádu a přesto se tváří jako hotový.
   Každá z nich by stála víc než celý dohled.
+
+## Geometrie a cílení jsou dvě různé otázky (2026-07-31)
+
+Filtrovací díra u kampaní šla zavřít na třech místech. Volba nebyla o kódu,
+ale o tom, na co která tabulka odpovídá:
+
+- `oblast_firmy` = **„co leží uvnitř tvaru"**. Kdyby ji ovlivňoval blacklist,
+  počet firem na mapě by se měnil podle věcí, které s geometrií nesouvisí,
+  a nikdo by nepochopil proč.
+- `kampan_firmy` = **„koho oslovíme"**. Sem síto patří.
+
+Praktický důsledek, který rozhodl: **týž seznam plní i aplikace** při
+kreslení oblasti (`app/src/Oblasti.tsx`, povoleno migrací 0017). Filtr
+v jádru by na ni nedosáhl. Na hranici „oblast → kampaň" pokryje obě cesty
+naráz — a jde přes ni všechno, co míří k oslovení.
+
+**Obecně:** když se táž data plní z víc míst, filtruj na výstupu k rozhodnutí,
+ne na každém vstupu. Vstupů přibývá, výstup je jeden.
+
+**Druhá věc:** vynechané firmy se vracejí i s důvodem a příkaz je vypíše.
+Tiché filtrování je horší než žádné — kdo nevidí, proč firma v kampani chybí,
+přestane pravidlům věřit a začne je obcházet ručně.

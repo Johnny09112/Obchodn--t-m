@@ -321,3 +321,20 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   Vyříznuto do `src/kvalifikace.ts` a volá se z obou cest.
 - 2026-07-31 · majitel · **Větev `cmuchal-oblasti` se slučuje a filtrovací
   díra u kampaní se zavírá hned potom** (varianta 1 ze tří nabídnutých).
+- 2026-07-31 · majitel · **Do kampaně se z oblasti nedoplní: blacklist,
+  partnerská jídelna, bytový dům a firma s doloženou vlastní jídelnou.**
+  Vlastní jídelna je nad rámec původně popsané díry — majitel ji přidal
+  vědomě, protože rešerše ji umí doložit (Zbůch, ZŠ Vejprnice).
+- 2026-07-31 · majitel · **Obor podle profilu se při plnění kampaně
+  neuplatňuje.** Firma posbíraná za starého profilu by po přepnutí profilu
+  z kampaně tiše zmizela a nebylo by vidět proč. Obor a velikost si člověk
+  vybírá při schvalování kampaně.
+- 2026-07-31 · Claude · **Filtr je na hranici „oblast → kampaň"
+  (`naplnZOblasti`), ne v přepočtu oblasti.** `oblast_firmy` odpovídá na
+  otázku „co leží uvnitř tvaru" — kdyby ji ovlivňoval blacklist, měnil by se
+  počet firem na mapě podle věcí, které s geometrií nesouvisí. Navíc týž
+  seznam plní i aplikace při kreslení (`app/src/Oblasti.tsx`) a jádro by na
+  to stejně nedosáhlo; filtr na hranici pokryje obě cesty naráz.
+- 2026-07-31 · Claude · **Vynechané firmy se vracejí i s důvodem** a příkaz
+  je vypíše. Tiché filtrování je horší než žádné — kdo nevidí, proč firma
+  v kampani chybí, přestane pravidlům věřit.

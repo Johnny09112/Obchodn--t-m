@@ -1,9 +1,10 @@
 # Stav projektu
 
-_Aktualizováno: 2026-07-29_
+_Aktualizováno: 2026-07-31_
 
-> **DALŠÍ KROK: mapa a kreslení oblastí v aplikaci.** Kostra aplikace
-> s přihlášením je hotová (`app/`, viz níže). Technické zadání a pasti:
+> **DALŠÍ KROK: průvodce kampaní v aplikaci.** Mapa i kreslení oblastí
+> jsou hotové, větev `cmuchal-oblasti` sloučená, filtrovací díra zavřená.
+> Technické zadání a pasti:
 > **[docs/DALSI-SESSION-FRONTEND.md](../docs/DALSI-SESSION-FRONTEND.md)**
 
 ## Aplikace (`app/`) — kde je
@@ -88,52 +89,56 @@ které si nakreslíš sám. Hotovo a otestované:
 posuzují kandidáty podle týchž pravidel (`src/kvalifikace.ts`): platnost IČO,
 partnerské jídelny, bytové domy, blacklist, obor podle profilu, firmy bez
 zaměstnanců. Kdyby to měla každá po svém, přidání pravidla do blacklistu by
-změnilo jednu a druhou ne — mlčky.
+změnilo jednu a druhou ne — mlčky. Týž soubor drží i síto pro kampaně
+(`duvodNeoslovovat`, viz níž) — jiná otázka, stejná pravidla.
 
 **Co tím zatím nejde:** hledat firmy podle souřadnic tam, kde žádná obec
 není. Stav „čeká na rozhodnutí" existuje a příkaz ho ohlásí, ale samotné
 hledání ze souřadnicových zdrojů je následná práce.
 
-## DALŠÍ KROK: zavřít filtrovací díru u kampaní
+## Větev sloučená a filtrovací díra zavřená (2026-07-31)
 
-**Rozhodnutí majitele 2026-07-31: sloučit větev a díru zavřít hned potom.**
+**Větev `cmuchal-oblasti` je v `main`** (18 commitů + slučovací), odesláno
+na GitHub, 354 testů zelených. Vzdálená větev `origin/cmuchal-oblasti`
+zůstala ležet jako kopie navíc — smazat ji může majitel na GitHubu.
 
-Kvalifikace se uplatní jen na **nově sbírané** firmy. Seznam firem v oblasti
-se ale plní i druhou cestou — `prepocitejOblastFirmy` v `src/oblast.ts` ho
-naplní **čistě podle geometrie, bez ptaní** — a `src/kampan.ts` (funkce
-`naplnZOblasti`) ho pak kopíruje do kampaně **bez filtru**.
+**Filtrovací díra je zavřená.** Do kampaně se z oblasti nedoplní firma,
+která je na blacklistu, je naše partnerská jídelna, je bytový dům, nebo má
+**doloženou vlastní jídelnu**. Vynechané firmy se vypíšou i s důvodem —
+tiché filtrování by bylo horší než žádné.
 
-Prakticky: firmu, kterou Čmuchal posbíral dřív a majitel ji potom dal na
-blacklist, kampaň nabídne dál. Totéž pro školu, která se stala partnerem
-až dodatečně.
+Kde to sedí: na hranici „oblast → kampaň" (`naplnZOblasti` v `src/kampan.ts`),
+pravidlo samo je sdílené v `src/kvalifikace.ts` (`duvodNeoslovovat`).
+`oblast_firmy` zůstává čistě geometrická — odpovídá na otázku „co leží uvnitř
+tvaru", ne „koho oslovíme". Proto to pokryje i oblast nakreslenou v aplikaci,
+i když si aplikace seznam plní sama.
 
-**Je to zděděné z větve kampaní, ne zanesené prací na oblastech**, ale ta
-práce to zpřístupňuje ve velkém, protože oblastí bude přibývat.
+**Obor podle profilu se schválně neuplatňuje** — firma posbíraná za starého
+profilu by po přepnutí profilu z kampaně tiše zmizela. Obor a velikost si
+člověk vybírá při schvalování kampaně (rozhodnutí majitele 2026-07-31).
 
-Nic zatím hrozit nemůže: kampaň ani průzkum nejdou spustit z aplikace,
-v ostré databázi je nula kampaní i objednávek, a odesílat systém neumí.
-
-**Co s tím udělat:** doplnit filtr tam, kde se seznam plní podle geometrie —
-aspoň blacklist a partnerská IČO. Rozmyslet, jestli patří do
-`prepocitejOblastFirmy`, do `naplnZOblasti`, nebo do obou.
-
-## Potom: průvodce kampaní v aplikaci (`app/`)
+## DALŠÍ KROK: průvodce kampaní v aplikaci (`app/`)
 
 Čtyři kroky podle odsouhlaseného návrhu
 `docs/superpowers/specs/2026-07-29-kampane-design.md`.
 
-**Tři věci, které mu podrazí nohy, když se neopraví dřív:**
-- filtrovací díra výše (do pole kampaně doplují nefiltrované firmy),
+**Dvě věci, které mu podrazí nohy, když se neopraví dřív:**
 - firmy z oblasti nemají skóre (chybí vzdálenost k jídelně) — seznam
   nepůjde setřídit podle priority,
 - `firemPrevzato` a `firemNovych` se při opakovaných bězích průzkumu
   sčítají dvakrát, takže postupová čísla nesedí.
 - Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
 
-**Čeká na majitele:** oblast založená v aplikaci má prázdnou `oblast_firmy`,
-protože do ní aplikace podle pravidel nesmí psát. Buď se po založení pustí
-přepočet z příkazové řádky, nebo se pravidla změní tak, aby směla. Detail
-v `rozhodnuti.md` (2026-07-29).
+**Zůstává otevřené:** firma, která v kampani **už je** a teprve potom se
+dostane na blacklist, v ní zůstane — filtr se uplatní při doplňování, ne
+zpětně. Není to nebezpečné (kampaň prochází schválením člověkem a nic se
+neodesílá), ale před fází 3 to chce buď zpětnou kontrolu, nebo upozornění
+v seznamu kampaně.
+
+**Vyřešeno (byl tu zastaralý zápis):** oblast založená v aplikaci má
+`oblast_firmy` naplněnou. Majitel 2026-07-29 rozhodl, že aplikace do ní psát
+smí (migrace 0017 — není to údaj o firmě, jen odvozenina z tvaru), a
+`app/src/Oblasti.tsx` to dělá. Přepočet z příkazové řádky už není potřeba.
 
 ## Kde jsme
 

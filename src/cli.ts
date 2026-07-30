@@ -44,6 +44,7 @@ import {
 } from "./pruzkum.js";
 import { rozhlednuti, vyridPruzkum } from "./cmuchal-oblast.js";
 import type { CmuchalDeps } from "./cmuchal.js";
+import type { DuvodNeoslovovat } from "./kvalifikace.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -55,6 +56,14 @@ async function pripojDb(): Promise<Db> {
   const dir = process.env.CANTINERO_DATA_DIR ?? "data/pgdata";
   return pripojPglite(dir);
 }
+
+/** Důvody vynechání z kampaně česky — majitel čte výstup, ne číselník. */
+const POPIS_NEOSLOVOVAT: Record<DuvodNeoslovovat, string> = {
+  partnerska_jidelna: "partnerská jídelna",
+  bytovy_dum: "bytový dům",
+  blacklist: "blacklist",
+  vlastni_jidelna: "vlastní jídelna",
+};
 
 function kdeBeziDb(): string {
   return process.env.DATABASE_URL
@@ -607,6 +616,13 @@ async function cmdKampan(argv: string[]): Promise<void> {
       const v = await naplnZOblasti(db, kampanId);
       console.log(`Doplněno firem: ${v.pridano}`);
       if (v.jizBylo > 0) console.log(`  (v kampani už bylo: ${v.jizBylo})`);
+      if (v.vynechano.length > 0) {
+        // Vypsat, ne jen spočítat: kdo nevidí důvod, pravidlům přestane věřit.
+        console.log(`\nV oblasti leží, ale do kampaně nepatří (${v.vynechano.length}):`);
+        for (const f of v.vynechano) {
+          console.log(`  ${f.ico}  ${f.nazev} — ${POPIS_NEOSLOVOVAT[f.duvod]}: ${f.detail}`);
+        }
+      }
       return;
     }
 

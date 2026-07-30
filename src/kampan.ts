@@ -5,7 +5,9 @@
  * seznam práce, ze kterého ve fázi 3 odchází oslovení po jedné firmě.
  * V tomto modulu proto nikdy nesmí přibýt nic, co skládá nebo odesílá zprávy.
  */
+import { nactiBlacklist } from "./blacklist.js";
 import type { Db } from "./db.js";
+import { duvodNeoslovovat, type DuvodNeoslovovat } from "./kvalifikace.js";
 import { prepocitejOblastFirmy } from "./oblast.js";
 
 export type StavKampane =
@@ -81,8 +83,26 @@ export interface FirmaVKampani {
   skore: number | null;
 }
 
+/** Firma, která v oblasti leží, ale do kampaně nepatří — i s důvodem. */
+export interface VynechanaFirma {
+  ico: string;
+  nazev: string;
+  duvod: DuvodNeoslovovat;
+  detail: string;
+}
+
 /**
- * Doplní do kampaně firmy, které leží v její oblasti.
+ * Doplní do kampaně firmy, které leží v její oblasti — a projdou kvalifikací.
+ *
+ * **Geometrie sama nestačí.** `oblast_firmy` odpovídá na otázku „co leží
+ * uvnitř tvaru" a plní se bez ptaní (`prepocitejOblastFirmy`, a stejně tak
+ * aplikace při kreslení oblasti). Kdyby se odsud kopírovalo rovnou, kampaň by
+ * nabídla i firmu, kterou majitel mezitím dal na blacklist, nebo školu, která
+ * se stala partnerskou jídelnou až potom. Síto je proto tady, na hranici mezi
+ * „kde firma je" a „koho oslovíme" — viz `duvodNeoslovovat`.
+ *
+ * Vynechané firmy se vracejí i s důvodem. Tiché filtrování je horší než žádné:
+ * kdo nevidí, proč firma v kampani chybí, začne pravidlům nedůvěřovat.
  *
  * **Ručně vyřazené firmy se nevzkřísí** — `on conflict do nothing`. Bez toho
  * by každé doplnění vrátilo zpátky všechno, co člověk vyhodil, a rozhodnutí
@@ -94,21 +114,53 @@ export interface FirmaVKampani {
 export async function naplnZOblasti(
   db: Db,
   kampanId: string,
-): Promise<{ pridano: number; jizBylo: number }> {
+): Promise<{ pridano: number; jizBylo: number; vynechano: VynechanaFirma[] }> {
   const k = await nactiKampan(db, kampanId);
-  if (!k?.oblastId) return { pridano: 0, jizBylo: 0 };
+  if (!k?.oblastId) return { pridano: 0, jizBylo: 0, vynechano: [] };
 
   await prepocitejOblastFirmy(db, k.oblastId);
 
-  const pred = await pocetRadku(db, kampanId);
-  await db.query(
-    `insert into kampan_firmy (kampan_id, ico)
-     select $1, of.ico from oblast_firmy of where of.oblast_id = $2
-     on conflict (kampan_id, ico) do nothing`,
-    [kampanId, k.oblastId],
+  // Pravidla se načtou jednou pro celé doplnění — stejně jako u sběru.
+  const blacklist = await nactiBlacklist(db);
+  const partnerskaIca = new Set(
+    (await db.query<{ ico: string }>("select ico from jidelny where ico is not null")).map(
+      (j) => j.ico,
+    ),
   );
+
+  const kandidati = await db.query<{
+    ico: string;
+    nazev: string;
+    czNace: string[];
+    pravniForma: string | null;
+    maVlastniJidelnu: boolean | null;
+  }>(
+    `select c.ico, c.nazev, c.cz_nace as "czNace", c.pravni_forma as "pravniForma",
+            c.ma_vlastni_jidelnu as "maVlastniJidelnu"
+     from oblast_firmy of
+     join companies c on c.ico = of.ico
+     where of.oblast_id = $1`,
+    [k.oblastId],
+  );
+
+  const pred = await pocetRadku(db, kampanId);
+  const vynechano: VynechanaFirma[] = [];
+
+  for (const f of kandidati) {
+    const duvod = duvodNeoslovovat({ ...f, partnerskaIca, blacklist });
+    if (duvod) {
+      vynechano.push({ ico: f.ico, nazev: f.nazev, ...duvod });
+      continue;
+    }
+    await db.query(
+      `insert into kampan_firmy (kampan_id, ico) values ($1,$2)
+       on conflict (kampan_id, ico) do nothing`,
+      [kampanId, f.ico],
+    );
+  }
+
   const po = await pocetRadku(db, kampanId);
-  return { pridano: po - pred, jizBylo: pred };
+  return { pridano: po - pred, jizBylo: pred, vynechano };
 }
 
 async function pocetRadku(db: Db, kampanId: string): Promise<number> {

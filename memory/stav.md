@@ -138,14 +138,28 @@ neměřil**. Teď je typ `number | null` a null se počítá jako „nevíme".
 
 Test to hlídá rovnicí `nové + převzaté = počet firem v oblasti`.
 
-## DALŠÍ KROK: průvodce kampaní v aplikaci (`app/`)
+## Průvodce kampaní: etapa A hotová, čeká na schválení (2026-07-31)
 
-Čtyři kroky podle odsouhlaseného návrhu
-`docs/superpowers/specs/2026-07-29-kampane-design.md`.
-Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
+Návrh pěti obrazovek (seznam kampaní + čtyři kroky), textů a doplňků
+designového systému: **`docs/superpowers/specs/2026-07-31-pruvodce-kampani-obrazovky-design.md`**,
+vizuálně `docs/vizualizace/pruvodce-kampani-navrh.html`.
+Postup celé práce: `docs/PRUVODCE-KAMPANI-POSTUP.md`.
 
-**Do návrhu obrazovek se má zapojit design** (rozhodnutí majitele
-2026-07-31) — postup a role viz `docs/PRUVODCE-KAMPANI-POSTUP.md`.
+**Nic se nestaví, dokud majitel návrh neschválí.**
+
+Tři zjištění, která zadání z 29. 7. znát nemohlo:
+- kap. 12 (Čmuchal neumí oblasti) neplatí, kap. 8 (žádné plánované
+  spouštění agenta) majitel otočil,
+- mezi územím a kampaní je síto, takže se počty firem liší — krok 2 musí
+  ukázat obě čísla, jinak vypadá krok 4 jako chyba,
+- **správce kampaně nejde vybrat ze seznamu uživatelů: žádná evidence
+  uživatelů neexistuje.** Návrh je, že správcem je zakladatel kampaně;
+  čeká na potvrzení majitele.
+
+Audit designového systému: 10 barev, 3 role písma, stav kódovaný tvarem
+i barvou, prázdný stav i zaostření klávesnicí — základ je v pořádku.
+Chybí krokovník, dialog, klidná a úspěšná hláška, proužek postupu,
+stupnice odstupů a jména pro 4 natvrdo psané barvy.
 
 **Zůstává otevřené:** firma, která v kampani **už je** a teprve potom se
 dostane na blacklist, v ní zůstane — filtr se uplatní při doplňování, ne

@@ -1,0 +1,191 @@
+<title>Cantinero — jádro kampaní hotové</title>
+<style>
+  :root {
+    --papir: #e9ebe3; --karta: #fcfcf9; --inkoust: #1a211c; --slaby: #5f6b62;
+    --linka: #ced4c6; --razitko: #2e4a7d; --zelen: #3f6b3a; --horcice: #8a6209;
+    --cihla: #8e3b2c;
+    --pismo: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+    --data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --papir:#141815; --karta:#1c221e; --inkoust:#e4e8de; --slaby:#97a396;
+      --linka:#333c35; --razitko:#8fb2e6; --zelen:#79b56f; --horcice:#d3a63f; --cihla:#d98474; }
+  }
+  :root[data-theme="dark"] {
+    --papir:#141815; --karta:#1c221e; --inkoust:#e4e8de; --slaby:#97a396;
+    --linka:#333c35; --razitko:#8fb2e6; --zelen:#79b56f; --horcice:#d3a63f; --cihla:#d98474;
+  }
+  :root[data-theme="light"] {
+    --papir:#e9ebe3; --karta:#fcfcf9; --inkoust:#1a211c; --slaby:#5f6b62;
+    --linka:#ced4c6; --razitko:#2e4a7d; --zelen:#3f6b3a; --horcice:#8a6209; --cihla:#8e3b2c;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--papir); color:var(--inkoust);
+    font-family:var(--pismo); font-size:16px; line-height:1.55; }
+  .stranka { max-width:54rem; margin:0 auto; padding:3rem 1.25rem 5rem;
+    display:flex; flex-direction:column; gap:2.25rem; }
+  .eyebrow { font-family:var(--data); font-size:0.75rem; letter-spacing:0.16em;
+    text-transform:uppercase; color:var(--slaby); margin:0 0 0.4rem; }
+  h1 { font-size:clamp(1.9rem,5vw,2.6rem); font-weight:650; letter-spacing:-0.025em;
+    text-wrap:balance; margin:0; }
+  h1 + p { margin:0.6rem 0 0; color:var(--slaby); max-width:42rem; }
+  h2 { font-size:1.15rem; font-weight:650; margin:0 0 1rem; }
+
+  .udaj { display:flex; align-items:baseline; gap:0.5rem; margin:0; padding:0.25rem 0; }
+  .udaj .popisek { color:var(--slaby); white-space:nowrap; }
+  .udaj::after { content:""; order:1; flex:1; height:0;
+    border-bottom:1px dotted var(--linka); transform:translateY(-0.25em); }
+  .udaj .hodnota { order:2; font-family:var(--data); font-weight:500;
+    font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .souhrn { display:grid; grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));
+    gap:0 2rem; background:var(--karta); border:1px solid var(--linka);
+    border-radius:3px; padding:1rem 1.2rem; }
+
+  ul.seznam { list-style:none; margin:0; padding:0; display:flex;
+    flex-direction:column; gap:0.7rem; }
+  ul.seznam li { display:grid; grid-template-columns:auto 1fr; gap:0.75rem;
+    align-items:start; background:var(--karta); border:1px solid var(--linka);
+    border-left-width:3px; border-radius:3px; padding:0.7rem 0.9rem; }
+  li .co { font-weight:600; }
+  li .proc { color:var(--slaby); font-size:0.9375rem; }
+  .znak { width:0.7rem; height:0.7rem; margin-top:0.45rem; background:currentColor; flex:none; }
+  li.hotovo { border-left-color:var(--zelen); } li.hotovo .znak { color:var(--zelen); }
+  li.ceka { border-left-color:var(--horcice); }
+  li.ceka .znak { color:var(--horcice); clip-path:polygon(50% 0,100% 100%,0 100%); }
+  li.pojistka { border-left-color:var(--razitko); }
+  li.pojistka .znak { color:var(--razitko); border-radius:50%; }
+  li.chyba { border-left-color:var(--cihla); }
+  li.chyba .znak { color:var(--cihla); clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%); }
+
+  pre { font-family:var(--data); font-size:0.8125rem; background:var(--karta);
+    border:1px solid var(--linka); border-radius:3px; padding:0.8rem 0.9rem;
+    overflow-x:auto; margin:0; }
+  code { font-family:var(--data); font-size:0.9em; }
+  footer { color:var(--slaby); font-size:0.875rem; border-top:1px dotted var(--linka);
+    padding-top:1.25rem; }
+</style>
+
+<div class="stranka">
+  <header>
+    <p class="eyebrow">Cantinero · krok 5, první dávka · 30. července 2026</p>
+    <h1>Jádro kampaní stojí</h1>
+    <p>
+      Kampaň je pojmenovaný seznam firem s vlastním kontextem. Umí vzniknout,
+      naplnit se firmami z území, projít stavy a nechat se schválit — ale jen
+      když k tomu má podklady. Zatím se ovládá z příkazové řádky; obrazovka
+      přijde později.
+    </p>
+  </header>
+
+  <section class="souhrn">
+    <p class="udaj"><span class="popisek">Testů</span><span class="hodnota">300 zelených</span></p>
+    <p class="udaj"><span class="popisek">Nové tabulky</span><span class="hodnota">3</span></p>
+    <p class="udaj"><span class="popisek">Bezpečnostní nálezy</span><span class="hodnota">0 nových</span></p>
+    <p class="udaj"><span class="popisek">Náklady</span><span class="hodnota">0 Kč</span></p>
+  </section>
+
+  <section>
+    <h2>Co kampaň umí</h2>
+    <ul class="seznam">
+      <li class="hotovo"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Vznikne a drží se svého jména</span><br />
+        <span class="proc">Název, popis, kontext („jídelna ve Varech nabízí 30 obědů od srpna") a odpovědná osoba. Dvě kampaně stejného jména databáze nepustí, ani když se liší velikostí písmen.</span>
+      </span></li>
+      <li class="hotovo"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Naplní se firmami z území</span><br />
+        <span class="proc">Vezme firmy z vybrané oblasti. Firmu jde ručně vyřadit — vždy s důvodem — a další doplnění ji už nevzkřísí.</span>
+      </span></li>
+      <li class="hotovo"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Ukáže souhrn a překryv</span><br />
+        <span class="proc">Kolik firem, kolik z nich má doložené spojení, jaké úrovně adres — a ve kterých jiných kampaních tytéž firmy leží.</span>
+      </span></li>
+      <li class="hotovo"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Umí si objednat průzkum</span><br />
+        <span class="proc">Aplikace agenta spustit neumí, tak si o práci požádá zápisem do fronty. Agent si ji vyzvedne, až poběží.</span>
+      </span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Pojistky, které hlídá databáze — ne formulář</h2>
+    <ul class="seznam">
+      <li class="pojistka"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Bez firmy s kontaktem se kampaň neschválí</span><br />
+        <span class="proc">Komu bys taky psal. Ověřeno i pokusem o ruční zápis přímo do databáze.</span>
+      </span></li>
+      <li class="pojistka"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Nedoběhlý ani neúspěšný průzkum schválení zastaví</span><br />
+        <span class="proc">Rozhoduje ta nejnovější objednávka, takže zopakovaný a úspěšný průzkum kampaň zase odblokuje.</span>
+      </span></li>
+      <li class="pojistka"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Schválit smí jen admin a ty</span><br />
+        <span class="proc">Připravit kampaň smí kdokoli z týmu. Schválení je brána, za kterou jednou začne odcházet komunikace ven.</span>
+      </span></li>
+      <li class="pojistka"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Do stavů „běží" a „uzavřená" se nedá dostat vůbec</span><br />
+        <span class="proc">Ty patří až fázi s odesíláním. Zábrana je v databázi a ve fázi 3 se vědomě odstraní.</span>
+      </span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Co se cestou našlo a opravilo</h2>
+    <ul class="seznam">
+      <li class="chyba"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Pojistka schválení hlídala jen úpravu, ne vklad</span><br />
+        <span class="proc">Kampaň šlo založit rovnou jako schválenou. Moje chyba v plánu; opraveno hned v prvním kroku.</span>
+      </span></li>
+      <li class="chyba"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Průzkum šlo „dokončit", i když vůbec neběžel</span><br />
+        <span class="proc">Tiše to přepsalo výsledek. Teď to jde jedině u rozběhnuté objednávky a jinak se ozve.</span>
+      </span></li>
+      <li class="chyba"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Kampaň se dala zablokovat natrvalo</span><br />
+        <span class="proc">Když průzkum selhal, nic ji už nepustilo dál. Odhalila to až závěrečná revize.</span>
+      </span></li>
+      <li class="chyba"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Migrace omylem přistála v ostré databázi</span><br />
+        <span class="proc">Nastavení „pracuj lokálně" se neuplatní, když je v <code>.env</code> vyplněné připojení ke sdílené databázi. Škoda žádná — tabulky zůstaly prázdné, ověřeno. Past je zapsaná do poznatků.</span>
+      </span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Ověřeno na ostré databázi</h2>
+    <pre>nepřihlášený vidí kampaní                            0
+uživatel kampaň upraví                             ano
+uživatel kampaň schválí                             ne
+admin kampaň schválí                               ano
+vložení rovnou schválené kampaně               odmítnuto
+přechod do stavu „běží"                        odmítnuto
+schválení po neúspěšném průzkumu               odmítnuto
+schválení po zopakovaném úspěšném              povoleno</pre>
+    <p class="proc" style="color:var(--slaby); margin-top:0.8rem">
+      Každá zkouška se po sobě sama uklidila — v tabulkách kampaní zůstalo
+      nula řádků.
+    </p>
+  </section>
+
+  <section>
+    <h2>Co bude dál</h2>
+    <ul class="seznam">
+      <li class="ceka"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Napojit Čmuchala na oblasti</span><br />
+        <span class="proc">Dnes umí sbírat jen kolem jídelny, ne v nakresleném tvaru. Bez toho by průvodce sliboval průzkum, který nikdo neudělá — proto to jde první.</span>
+      </span></li>
+      <li class="ceka"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Průvodce kampaní v aplikaci</span><br />
+        <span class="proc">Čtyři kroky podle odsouhlaseného návrhu.</span>
+      </span></li>
+      <li class="ceka"><span class="znak" aria-hidden="true"></span><span>
+        <span class="co">Odesílání zůstává zavřené</span><br />
+        <span class="proc">Nic z toho, co teď vzniklo, neumí odeslat zprávu ani ji složit. Fáze 3 čeká na tvrzení, šablony a právníka.</span>
+      </span></li>
+    </ul>
+  </section>
+
+  <footer>
+    Stav k 30. 7. 2026, větev <code>kampane-jadro</code>. Všechna čísla v tomto
+    dokumentu jsou změřená, ne odhadnutá.
+  </footer>
+</div>

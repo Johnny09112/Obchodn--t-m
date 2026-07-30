@@ -578,3 +578,40 @@ před napojením ho bude potřeba někam vystavit.
 druhé v jednom volání. Při prvním pokusu jsem šest souborů vynechal a build
 se rozbil. Ke kompletnímu seznamu patří i sdílené `src/geo.ts`
 a `src/oblast-tvar.ts`, které si aplikace bere o adresář výš.
+
+## `CANTINERO_DATA_DIR` se neuplatní, když je v `.env` vyplněná `DATABASE_URL` (2026-07-30)
+
+`pripojDb()` (`src/cli.ts`) dá vždycky přednost `DATABASE_URL` — teprve
+když chybí, sáhne na `CANTINERO_DATA_DIR`. Jenže `.env` má `DATABASE_URL`
+vyplněnou natrvalo (míří na sdílenou databázi), takže příkaz, který má podle
+zadání jet „na lokální databázi", ve skutečnosti tiše skončí na sdílené.
+Přesně tohle se stalo při práci na migraci 0019 — `migrate` spuštěný
+s dočasným adresářem se aplikoval na ostrou databázi místo lokální zkoušky.
+
+**Jak to obejít:** pro daný běh `DATABASE_URL` vyprázdnit, ne jen nastavit
+`CANTINERO_DATA_DIR` vedle ní:
+
+```bash
+DATABASE_URL= CANTINERO_DATA_DIR=data/pgdata-v5 npm run cli -- migrate
+```
+
+**Obecné poučení:** dřív, než se pustí cokoli „lokálně", ověřit, že `.env`
+zrovna nemá vyplněnou proměnnou, která má přednost. Testy (`npm test`,
+`npx vitest`) tohle riziko nemají — jedou nad PGlite přímo přes
+`pripojPglite()`, ne přes `pripojDb()`, takže `.env` na ně nemá vliv.
+
+## Funkce v databázi potřebují pevnou `search_path` (2026-07-30)
+
+Bez `set search_path = ''` u funkce v `public` schématu hlásí bezpečnostní
+kontrola Supabase nález „Function Search Path Mutable" — narazilo se na to
+u `public.kampan_pred_schvalenim()` (migrace 0018), opraveno migrací 0019
+po vzoru `public.role_uzivatele()` (migrace 0016).
+
+Důsledek: s prázdnou `search_path` funkce nenajde žádnou tabulku podle
+holého jména — uvnitř musí být všechny tabulky psané i se schématem
+(`public.pruzkumy`, ne `pruzkumy`). Bez toho by po nastavení prázdné cesty
+funkce přestala tabulky nacházet a spadla by za běhu, ne při nasazení.
+
+**Tohle se má hlídat u každé nové funkce hned při psaní, ne až podle
+nálezu bezpečnostní kontroly** — je to jednodušší než k ní psát opravnou
+migraci zpětně.

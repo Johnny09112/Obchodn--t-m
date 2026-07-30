@@ -34,6 +34,14 @@ import {
   type Oblast,
 } from "./oblast.js";
 import { vzdalenostM } from "./geo.js";
+import {
+  firmyKampane, nactiKampan, naplnZOblasti, nastavUzemi, prekryvKampani,
+  PRECHODY, seznamKampani, souhrnKampane, vyradFirmu, zalozKampan, zmenStav,
+  type StavKampane,
+} from "./kampan.js";
+import {
+  dalsiPruzkum, dokoncPruzkum, objednejPruzkum, selhalPruzkum, zahajPruzkum,
+} from "./pruzkum.js";
 
 /**
  * Výchozí je LOKÁLNÍ databáze v `data/` (žádný cloud, žádné náklady).
@@ -530,6 +538,326 @@ async function cmdOblast(argv: string[]): Promise<void> {
 }
 
 /**
+ * Kampaň — pojmenovaný seznam firem s vlastním kontextem (SPEC kap. 10.2).
+ * Není to rozesílka: nic tady neodesílá ani neskládá zprávu (TP-8).
+ */
+async function cmdKampan(argv: string[]): Promise<void> {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    options: {
+      spravce: { type: "string" },
+      kontext: { type: "string" },
+      jidelna: { type: "string" },
+      duvod: { type: "string" },
+    },
+  });
+  const akce = positionals[0] ?? "seznam";
+  const db = await pripojDb();
+  try {
+    if (akce === "nova") {
+      const nazev = positionals[1];
+      if (!nazev) {
+        console.error("Chybí <název>");
+        process.exit(1);
+      }
+      if (!values.spravce) {
+        console.error("Chybí --spravce <e-mail>");
+        process.exit(1);
+      }
+      const id = await zalozKampan(db, {
+        nazev, spravce: values.spravce, kontext: values.kontext,
+      });
+      console.log(`Kampaň založena: ${id}`);
+      console.log("  stav: rozpracovana");
+      console.log(`  Přiřaď území: kampan uzemi ${id} <id oblasti>`);
+      return;
+    }
+
+    if (akce === "uzemi") {
+      const kampanId = positionals[1];
+      const oblastId = positionals[2];
+      if (!kampanId || !oblastId) {
+        console.error("Použití: kampan uzemi <id kampaně> <id oblasti> [--jidelna <id>]");
+        process.exit(1);
+      }
+      await nastavUzemi(db, kampanId, { oblastId, jidelnaId: values.jidelna });
+      console.log("Území nastaveno.");
+      console.log(`  Doplň firmy: kampan napln ${kampanId}`);
+      return;
+    }
+
+    if (akce === "napln") {
+      const kampanId = positionals[1];
+      if (!kampanId) {
+        console.error("Chybí <id kampaně>");
+        process.exit(1);
+      }
+      const k = await nactiKampan(db, kampanId);
+      if (!k) {
+        console.error(`Kampaň ${kampanId} neexistuje`);
+        process.exit(1);
+      }
+      if (!k.oblastId) {
+        console.error(`Kampaň nemá přiřazené území. Nejdřív: kampan uzemi ${kampanId} <id oblasti>`);
+        process.exit(1);
+      }
+      const v = await naplnZOblasti(db, kampanId);
+      console.log(`Doplněno firem: ${v.pridano}`);
+      if (v.jizBylo > 0) console.log(`  (v kampani už bylo: ${v.jizBylo})`);
+      return;
+    }
+
+    if (akce === "firmy") {
+      const kampanId = positionals[1];
+      if (!kampanId) {
+        console.error("Chybí <id kampaně>");
+        process.exit(1);
+      }
+      const firmy = await firmyKampane(db, kampanId);
+      console.log(`Firem v kampani: ${firmy.length}\n`);
+      for (const f of firmy) {
+        const skore = f.skore != null ? `${String(f.skore).padStart(3)} b` : "  ? b";
+        const stav = f.stav === "vyrazena" ? "VYŘAZENA" : "vybrána ";
+        console.log(
+          `  ${skore}  ${stav}  ${String(f.kontaktu).padStart(2)} kontaktů  ` +
+            `${f.nazev}${f.obec ? ` (${f.obec})` : ""}` +
+            `${f.duvodVyrazeni ? ` — ${f.duvodVyrazeni}` : ""}`,
+        );
+      }
+      return;
+    }
+
+    if (akce === "vyrad") {
+      const kampanId = positionals[1];
+      const ico = positionals[2];
+      if (!kampanId || !ico) {
+        console.error("Použití: kampan vyrad <id kampaně> <ičo> --duvod <text>");
+        process.exit(1);
+      }
+      if (!values.duvod) {
+        console.error("Chybí --duvod");
+        process.exit(1);
+      }
+      await vyradFirmu(db, kampanId, ico, values.duvod);
+      console.log(`Firma ${ico} vyřazena z kampaně.`);
+      return;
+    }
+
+    if (akce === "souhrn") {
+      const kampanId = positionals[1];
+      if (!kampanId) {
+        console.error("Chybí <id kampaně>");
+        process.exit(1);
+      }
+      const k = await nactiKampan(db, kampanId);
+      if (!k) {
+        console.error(`Kampaň ${kampanId} neexistuje`);
+        process.exit(1);
+      }
+      const s = await souhrnKampane(db, kampanId);
+      console.log(`${k.nazev} — souhrn (stav: ${k.stav})`);
+      console.log(`  firem vybraných: ${s.firem}, vyřazených: ${s.vyrazenych}`);
+      console.log(`  se spojením na kontakt: ${s.seSpojenim}`);
+      if (s.podleUrovne.length > 0) {
+        console.log("  podle úrovně adresy kontaktu:");
+        for (const u of s.podleUrovne) {
+          console.log(`    úroveň ${u.uroven ?? "neurčena"}: ${u.pocet}`);
+        }
+      }
+      // Neznámá kapacita se nesmí ukázat jako 0 — to by vypadalo jako změřený údaj.
+      console.log(
+        `  volná kapacita jídelny: ${
+          s.kapacitaVolna === null ? "neznámá" : `${s.kapacitaVolna} obědů/den`
+        }`,
+      );
+
+      const prekryv = await prekryvKampani(db, kampanId);
+      if (prekryv.length === 0) {
+        console.log("  překryv s jinými kampaněmi: žádný");
+      } else {
+        // TP-5: firma smí dostat jen jedno oslovení. Souběh v kampaních je
+        // chyba, kterou musí vidět člověk, ne jen tichá pojistka u odesílání.
+        console.log("  POZOR — tyto firmy jsou i v jiných kampaních:");
+        for (const p of prekryv) console.log(`    ${p.nazev}: ${p.pocet} firem`);
+      }
+      return;
+    }
+
+    if (akce === "stav") {
+      const kampanId = positionals[1];
+      const novy = positionals[2];
+      if (!kampanId || !novy) {
+        console.error("Použití: kampan stav <id kampaně> <nový stav> [--duvod <text>]");
+        process.exit(1);
+      }
+      // Jen stavy, do kterých se dá skutečně přejít (mají příchozí přechod).
+      // `bezi` a `uzavrena` v číselníku jsou, ale patří až do fáze 3 —
+      // nabízet je tady by matlo, protože přejít do nich stejně nejde.
+      const povolene = [...new Set(Object.values(PRECHODY).flat())] as StavKampane[];
+      if (!povolene.includes(novy as StavKampane)) {
+        console.error(`Neznámý stav „${novy}". Povolené: ${povolene.join(", ")}`);
+        process.exit(1);
+      }
+      await zmenStav(db, kampanId, novy as StavKampane, values.duvod);
+      console.log(`Stav kampaně: ${novy}`);
+      return;
+    }
+
+    // výchozí: seznam
+    const kampane = await seznamKampani(db);
+    if (kampane.length === 0) {
+      console.log('Zatím žádné kampaně. Založ: kampan nova "<název>" --spravce <e-mail>');
+      return;
+    }
+    for (const k of kampane) {
+      const pocet = await db.query<{ n: string }>(
+        "select count(*)::text as n from kampan_firmy where kampan_id = $1 and stav = 'vybrana'",
+        [k.id],
+      );
+      console.log(
+        `${k.id}  ${k.nazev.padEnd(24)} ${k.stav.padEnd(17)} krok ${k.krok}  ` +
+          `${String(pocet[0]!.n).padStart(4)} firem  ` +
+          `${k.oblastId ? "území přiřazeno" : "BEZ ÚZEMÍ"}`,
+      );
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
+ * Fronta objednávek na průzkum území. Objednávku vyzvedne agent, aplikace
+ * ho spustit neumí (běží v Claude Code, ne na serveru — ADR 0001).
+ */
+async function cmdPruzkum(argv: string[]): Promise<void> {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    options: {
+      kampan: { type: "string" },
+      pozadal: { type: "string" },
+      run: { type: "string" },
+      prevzato: { type: "string" },
+      novych: { type: "string" },
+      chyba: { type: "string" },
+    },
+  });
+  const akce = positionals[0] ?? "fronta";
+  const db = await pripojDb();
+  try {
+    if (akce === "objednej") {
+      const oblastId = positionals[1];
+      if (!oblastId) {
+        console.error("Chybí <id oblasti>");
+        process.exit(1);
+      }
+      if (!values.pozadal) {
+        console.error("Chybí --pozadal <e-mail>");
+        process.exit(1);
+      }
+      const id = await objednejPruzkum(db, {
+        oblastId, kampanId: values.kampan, pozadal: values.pozadal,
+      });
+      console.log(`Průzkum objednán: ${id}`);
+      console.log("  Vyzvedne se příkazem: pruzkum dalsi");
+      return;
+    }
+
+    if (akce === "dalsi") {
+      const p = await dalsiPruzkum(db);
+      if (!p) {
+        console.log("Fronta je prázdná — žádná objednávka nečeká.");
+        return;
+      }
+      console.log(`Další v pořadí: ${p.id}`);
+      console.log(`  oblast: ${p.oblastId}`);
+      if (p.kampanId) console.log(`  kampaň: ${p.kampanId}`);
+      console.log(`  požádal: ${p.pozadal}`);
+      return;
+    }
+
+    if (akce === "zahaj") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum zahaj <id> [--run <id běhu>]");
+        process.exit(1);
+      }
+      await zahajPruzkum(db, id, values.run);
+      console.log(`Průzkum ${id}: zahájen (stav bezi).`);
+      return;
+    }
+
+    if (akce === "dokonc") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum dokonc <id> --prevzato <číslo> --novych <číslo>");
+        process.exit(1);
+      }
+      if (!values.prevzato || !values.novych) {
+        console.error("Chybí --prevzato <číslo> nebo --novych <číslo>");
+        process.exit(1);
+      }
+      try {
+        await dokoncPruzkum(db, id, {
+          firemPrevzato: Number(values.prevzato),
+          firemNovych: Number(values.novych),
+        });
+      } catch (e) {
+        console.error((e as Error).message);
+        process.exit(1);
+      }
+      console.log(`Průzkum ${id}: dokončen (stav hotovo).`);
+      return;
+    }
+
+    if (akce === "selhal") {
+      const id = positionals[1];
+      if (!id) {
+        console.error("Použití: pruzkum selhal <id> --chyba <text>");
+        process.exit(1);
+      }
+      if (!values.chyba) {
+        console.error("Chybí --chyba <text>");
+        process.exit(1);
+      }
+      try {
+        await selhalPruzkum(db, id, values.chyba);
+      } catch (e) {
+        console.error((e as Error).message);
+        process.exit(1);
+      }
+      console.log(`Průzkum ${id}: označen jako neúspěšný (stav selhalo).`);
+      return;
+    }
+
+    // výchozí: fronta — jen čekající, zahájené se už nevydávají znovu.
+    const cekajici = await db.query<{
+      id: string; oblastId: string; kampanId: string | null;
+      pozadal: string; pozadano: string;
+    }>(
+      `select id, oblast_id as "oblastId", kampan_id as "kampanId", pozadal,
+              to_char(pozadano_at, 'YYYY-MM-DD HH24:MI') as pozadano
+       from pruzkumy where stav = 'ceka' order by pozadano_at`,
+    );
+    if (cekajici.length === 0) {
+      console.log("Fronta je prázdná.");
+      return;
+    }
+    console.log(`Čekajících objednávek: ${cekajici.length}\n`);
+    for (const p of cekajici) {
+      console.log(
+        `  ${p.id}  oblast ${p.oblastId}` +
+          `${p.kampanId ? `  kampaň ${p.kampanId}` : ""}` +
+          `  požádal ${p.pozadal}  ${p.pozadano}`,
+      );
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
  * Přenos lokálních dat do sdílené databáze. Jednorázový krok při přechodu
  * na provoz pro víc uživatelů.
  */
@@ -926,6 +1254,12 @@ switch (prikaz) {
   case "doplnit-kontakty":
     await cmdDoplnitKontakty(zbytek);
     break;
+  case "kampan":
+    await cmdKampan(zbytek);
+    break;
+  case "pruzkum":
+    await cmdPruzkum(zbytek);
+    break;
   case "k-obohaceni":
     await cmdKObohaceni(zbytek);
     break;
@@ -964,6 +1298,28 @@ switch (prikaz) {
   dosah [--jidelna <id>]           přepočte, které jídelny mají kterou firmu v dosahu
   doplnit-kontakty [--limit N] [--jidelna id]
                                    doplní kontakty u firem, které už v kartotéce jsou
+  kampan [seznam]                  vypíše kampaně (pojmenované seznamy firem)
+  kampan nova <název> --spravce <e-mail> [--kontext text]
+                                   založí kampaň (stav rozpracovana)
+  kampan uzemi <id kampaně> <id oblasti> [--jidelna <id>]
+                                   přiřadí kampani území
+  kampan napln <id kampaně>        doplní do kampaně firmy z jejího území
+  kampan firmy <id kampaně>        vypíše firmy v kampani
+  kampan vyrad <id kampaně> <ičo> --duvod text
+                                   ručně vyřadí firmu z kampaně
+  kampan souhrn <id kampaně>       podklad k posouzení (firmy, kontakty, kapacita, překryv)
+  kampan stav <id kampaně> <nový stav> [--duvod text]
+                                   změní stav kampaně (důvod povinný u zrušení)
+  pruzkum objednej <id oblasti> [--kampan <id>] --pozadal <e-mail>
+                                   objedná průzkum území pro agenta
+  pruzkum fronta                   vypíše čekající objednávky průzkumu
+  pruzkum dalsi                    vypíše nejstarší čekající objednávku
+  pruzkum zahaj <id> [--run <id běhu>]
+                                   označí objednávku jako běžící (stav bezi)
+  pruzkum dokonc <id> --prevzato N --novych N
+                                   dokončí běžící průzkum (stav hotovo)
+  pruzkum selhal <id> --chyba text
+                                   označí běžící průzkum za neúspěšný (stav selhalo)
   k-obohaceni [--limit N] [--segmenty stredni,korporat] [--bez-spojeni]
                                    vypíše firmy čekající na rešerši (pro agenta);
                                    --bez-spojeni = známe jméno, chybí e-mail i telefon

@@ -192,7 +192,11 @@ create or replace function public.kampan_pred_schvalenim() returns trigger
 language plpgsql
 as $$
 begin
-  if new.stav = 'schvalena' and old.stav is distinct from 'schvalena' then
+  -- Pojistky pro schválení platí na INSERT i UPDATE
+  -- Na INSERT: rozlišit TG_OP, protože old není přiřazeno
+  if new.stav = 'schvalena' and (
+    TG_OP = 'INSERT' or (TG_OP = 'UPDATE' and old.stav is distinct from 'schvalena')
+  ) then
     if exists (
       select 1 from pruzkumy p
       where p.kampan_id = new.id and p.stav in ('ceka', 'bezi')
@@ -211,7 +215,7 @@ begin
   return new;
 end $$;
 
-create trigger kampan_schvaleni before update on kampane
+create trigger kampan_schvaleni before insert or update on kampane
   for each row execute function public.kampan_pred_schvalenim();
 
 -- ─────────────────────────────────────────── kdo co smí
@@ -756,26 +760,40 @@ export async function zahajPruzkum(db: Db, id: string, runId?: string): Promise<
   );
 }
 
+/** Dokončit se dá jen průzkum, který opravdu běží — jinak by se tiše přepsal. */
 export async function dokoncPruzkum(
   db: Db,
   id: string,
   v: { firemPrevzato: number; firemNovych: number },
 ): Promise<void> {
-  await db.query(
+  const r = await db.query<{ id: string }>(
     `update pruzkumy set stav = 'hotovo', dokonceno_at = now(),
             firem_prevzato = $1, firem_novych = $2
-     where id = $3`,
+     where id = $3 and stav = 'bezi'
+     returning id`,
     [v.firemPrevzato, v.firemNovych, id],
   );
+  if (r.length === 0) {
+    throw new Error("Průzkum nejde dokončit — není ve stavu 'bezi' (nebyl zahájen, nebo už je hotový/selhaný).");
+  }
 }
 
-/** Selhání se zapisuje s popisem — bez něj se nedá poznat, co opravit. */
+/**
+ * Selhání se zapisuje s popisem — bez něj se nedá poznat, co opravit.
+ * Prohlásit za neúspěšný jde jen průzkum, který opravdu běží, ze stejného
+ * důvodu jako u `dokoncPruzkum`.
+ */
 export async function selhalPruzkum(db: Db, id: string, chyba: string): Promise<void> {
   if (!chyba.trim()) throw new Error("Neúspěšný průzkum potřebuje popis chyby.");
-  await db.query(
-    `update pruzkumy set stav = 'selhalo', dokonceno_at = now(), chyba = $1 where id = $2`,
+  const r = await db.query<{ id: string }>(
+    `update pruzkumy set stav = 'selhalo', dokonceno_at = now(), chyba = $1
+     where id = $2 and stav = 'bezi'
+     returning id`,
     [chyba.trim(), id],
   );
+  if (r.length === 0) {
+    throw new Error("Průzkum nejde označit za neúspěšný — není ve stavu 'bezi' (nebyl zahájen, nebo je už uzavřený).");
+  }
 }
 
 export async function nedokonceneProKampan(db: Db, kampanId: string): Promise<number> {

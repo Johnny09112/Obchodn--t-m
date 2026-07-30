@@ -1,0 +1,518 @@
+<meta charset="utf-8">
+<title>Sloučeno a díra zavřená — 31. 7. 2026</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --papir:      #f1f3ef;
+    --papir-2:    #e6eae4;
+    --inkoust:    #14262c;
+    --inkoust-2:  #2c4149;
+    --tlumene:    #5c7178;
+    --linka:      #c8d2cc;
+    --zelena:     #1f6f5c;
+    --zelena-tl:  #e2ece7;
+    --jantar:     #9a5c14;
+    --jantar-tl:  #f4ead9;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text:   "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj:   ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs:  .72rem;
+    --fs-sm:  .84rem;
+    --fs-b:   1.0625rem;
+    --fs-lg:  1.3rem;
+    --fs-xl:  1.9rem;
+    --fs-2xl: 2.6rem;
+
+    --sirka: 43rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir:     #101c21;
+      --papir-2:   #16262c;
+      --inkoust:   #e7ede9;
+      --inkoust-2: #b9c8c9;
+      --tlumene:   #8ba0a4;
+      --linka:     #2b3f46;
+      --zelena:    #6cc4a5;
+      --zelena-tl: #16302b;
+      --jantar:    #d9a05a;
+      --jantar-tl: #2f2415;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir:     #101c21;
+    --papir-2:   #16262c;
+    --inkoust:   #e7ede9;
+    --inkoust-2: #b9c8c9;
+    --tlumene:   #8ba0a4;
+    --linka:     #2b3f46;
+    --zelena:    #6cc4a5;
+    --zelena-tl: #16302b;
+    --jantar:    #d9a05a;
+    --jantar-tl: #2f2415;
+  }
+  :root[data-theme="light"] {
+    --papir:     #f1f3ef;
+    --papir-2:   #e6eae4;
+    --inkoust:   #14262c;
+    --inkoust-2: #2c4149;
+    --tlumene:   #5c7178;
+    --linka:     #c8d2cc;
+    --zelena:    #1f6f5c;
+    --zelena-tl: #e2ece7;
+    --jantar:    #9a5c14;
+    --jantar-tl: #f4ead9;
+  }
+
+  body {
+    margin: 0;
+    background: var(--papir);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    font-size: var(--fs-b);
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .stranka {
+    max-width: var(--sirka);
+    margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  /* ── hlavička ─────────────────────────────────────────────── */
+
+  .hlavicka { display: flex; flex-direction: column; gap: .9rem; }
+
+  .datum {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--tlumene);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-2xl);
+    font-weight: 660;
+    letter-spacing: -.025em;
+    line-height: 1.08;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .podtitul {
+    font-size: var(--fs-lg);
+    color: var(--inkoust-2);
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  /* ── sekce ────────────────────────────────────────────────── */
+
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-xl);
+    font-weight: 620;
+    letter-spacing: -.018em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--linka);
+  }
+
+  .sekce p { margin: 0; text-wrap: pretty; }
+
+  strong { font-weight: 600; }
+
+  code {
+    font-family: var(--pismo-udaj);
+    font-size: .86em;
+    background: var(--papir-2);
+    padding: .1em .35em;
+    border-radius: 3px;
+  }
+
+  /* ── stavové štítky (tvar i barva, ne jen barva) ──────────── */
+
+  .stavy { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+  .stav {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .34rem .7rem;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+  .stav::before {
+    content: "";
+    width: .55em; height: .55em;
+    flex: none;
+  }
+  .stav-hotovo {
+    color: var(--zelena);
+    background: var(--zelena-tl);
+    border-color: color-mix(in srgb, var(--zelena) 35%, transparent);
+  }
+  .stav-hotovo::before { background: var(--zelena); }
+  .stav-otevrene {
+    color: var(--jantar);
+    background: var(--jantar-tl);
+    border-color: color-mix(in srgb, var(--jantar) 40%, transparent);
+  }
+  .stav-otevrene::before {
+    border: 1.5px solid var(--jantar);
+    transform: rotate(45deg);
+  }
+
+  /* ── schéma toku ──────────────────────────────────────────── */
+
+  .schema {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    padding: 1.5rem 1.25rem;
+    background: var(--papir-2);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+
+  .tok { display: flex; flex-direction: column; gap: .75rem; }
+
+  .tok-popis {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--tlumene);
+  }
+
+  /* Svisle je výchozí stav: zalamovaná vodorovná řada rozhází pořadí kroků,
+     a pořadí je tu ta informace. Do řady se srovná, až když se opravdu vejde. */
+  .rada {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .55rem;
+  }
+
+  .uzel {
+    padding: .6rem .75rem;
+    background: var(--papir);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-sm);
+    line-height: 1.35;
+  }
+  .uzel small {
+    display: block;
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    color: var(--tlumene);
+    margin-top: .15rem;
+  }
+
+  .sipka {
+    color: var(--tlumene);
+    font-size: var(--fs-sm);
+    flex: none;
+    align-self: flex-start;
+    margin-left: .9rem;
+    transform: rotate(90deg);
+  }
+
+  .uzel-sito {
+    background: var(--zelena-tl);
+    border: 1.5px solid var(--zelena);
+    color: var(--zelena);
+    font-weight: 620;
+  }
+  .uzel-sito small { color: var(--zelena); opacity: .85; }
+
+  .uzel-diry {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--jantar) 55%, transparent);
+  }
+
+  .zdroje {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+  }
+
+  /* ── tabulka pravidel ─────────────────────────────────────── */
+
+  .obal-tabulky { overflow-x: auto; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: var(--fs-sm);
+    font-family: var(--pismo-nadpis);
+  }
+  th, td {
+    text-align: left;
+    vertical-align: top;
+    padding: .65rem .7rem;
+    border-bottom: 1px solid var(--linka);
+  }
+  th {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tlumene);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+
+  /* ── seznamy ──────────────────────────────────────────────── */
+
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .5rem; }
+  li { text-wrap: pretty; }
+  li::marker { color: var(--tlumene); }
+
+  /* ── poznámka na okraj ────────────────────────────────────── */
+
+  .poznamka {
+    border-left: 2px solid var(--jantar);
+    padding: .15rem 0 .15rem 1rem;
+    color: var(--inkoust-2);
+    font-size: var(--fs-sm);
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .patka {
+    border-top: 1px solid var(--linka);
+    padding-top: 1.25rem;
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    line-height: 1.7;
+    color: var(--tlumene);
+    letter-spacing: .02em;
+  }
+
+  @media (min-width: 56rem) {
+    .rada { flex-direction: row; flex-wrap: nowrap; align-items: center; }
+    .sipka { transform: none; margin-left: 0; align-self: center; }
+    .uzel { flex: 1 1 0; min-width: 7rem; }
+    .zdroje { flex: 1 1 0; }
+    .zdroje .uzel { flex: none; }
+  }
+</style>
+
+<article class="stranka">
+
+  <header class="hlavicka">
+    <p class="datum">Cantinero · 31. července 2026</p>
+    <h1>Sloučeno a filtrovací díra zavřená</h1>
+    <p class="podtitul">
+      Práce na průzkumu nakreslených oblastí je v hlavní větvi. A kampaň už
+      nenabídne firmu, kterou oslovit nechceme.
+    </p>
+    <div class="stavy">
+      <span class="stav stav-hotovo">Větev sloučená</span>
+      <span class="stav stav-hotovo">Filtr hotový</span>
+      <span class="stav stav-hotovo">354 testů zelených</span>
+      <span class="stav stav-otevrene">1 věc zůstává otevřená</span>
+    </div>
+  </header>
+
+  <section class="sekce">
+    <h2>Co se stalo</h2>
+    <p>
+      Osmnáct commitů práce na Čmuchalovi nad nakreslenými oblastmi je
+      v hlavní větvi a na GitHubu. Aplikace na Vercelu se podle toho sama
+      přesestaví.
+    </p>
+    <p>
+      Hned potom jsem zavřel díru, na kterou jsme narazili při závěrečné
+      revizi: <strong>seznam firem pro kampaň se plnil čistě podle toho, co
+      leží uvnitř nakresleného tvaru</strong> — bez ohledu na to, jestli tu
+      firmu vůbec chceme oslovit.
+    </p>
+    <p>
+      Prakticky: firma, kterou jsi dal na blacklist, se do kampaně vrátila.
+      Škola, která se mezitím stala naší partnerskou jídelnou, taky.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Kde přesně to teklo</h2>
+    <p>
+      Seznam „které firmy leží v oblasti“ plní <strong>tři různá
+      místa</strong> — a dvě z nich se neptají na nic než na geometrii.
+      Proto nešlo záplatovat jedno z nich.
+    </p>
+
+    <div class="schema">
+      <div class="tok">
+        <p class="tok-popis">Dřív</p>
+        <div class="rada">
+          <div class="zdroje">
+            <div class="uzel">Sběr Čmuchala<small>ptá se na pravidla</small></div>
+            <div class="uzel uzel-diry">Přepočet oblasti<small>jen geometrie</small></div>
+            <div class="uzel uzel-diry">Kreslení v aplikaci<small>jen geometrie</small></div>
+          </div>
+          <span class="sipka" aria-hidden="true">→</span>
+          <div class="uzel">Firmy v oblasti<small>co leží uvnitř tvaru</small></div>
+          <span class="sipka" aria-hidden="true">→</span>
+          <div class="uzel uzel-diry">Kampaň<small>bez ptaní, všechno</small></div>
+        </div>
+      </div>
+
+      <div class="tok">
+        <p class="tok-popis">Teď</p>
+        <div class="rada">
+          <div class="zdroje">
+            <div class="uzel">Sběr Čmuchala<small>ptá se na pravidla</small></div>
+            <div class="uzel">Přepočet oblasti<small>jen geometrie</small></div>
+            <div class="uzel">Kreslení v aplikaci<small>jen geometrie</small></div>
+          </div>
+          <span class="sipka" aria-hidden="true">→</span>
+          <div class="uzel">Firmy v oblasti<small>co leží uvnitř tvaru</small></div>
+          <span class="sipka" aria-hidden="true">→</span>
+          <div class="uzel uzel-sito">Síto<small>koho oslovit</small></div>
+          <span class="sipka" aria-hidden="true">→</span>
+          <div class="uzel">Kampaň<small>jen prověřené</small></div>
+        </div>
+      </div>
+    </div>
+
+    <p>
+      Síto sedí <strong>na hranici mezi „kde firma je“ a „koho oslovíme“</strong>.
+      Tím pokryje všechny tři cesty naráz — včetně oblasti, kterou si
+      nakreslíš přímo v aplikaci.
+    </p>
+    <p>
+      Seznam firem v oblasti zůstává schválně nedotčený. Odpovídá na otázku
+      „co leží uvnitř tvaru“, a kdyby ho ovlivňoval blacklist, měnil by se
+      počet firem na mapě podle věcí, které s mapou nesouvisí.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Koho síto nepustí</h2>
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Důvod</th>
+            <th scope="col">Proč</th>
+            <th scope="col">Kde na to došlo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Blacklist</td>
+            <td>Řekl jsi, že tuhle firmu oslovovat nechceme.</td>
+            <td>Pravidlo má povinný důvod, ten se vypíše.</td>
+          </tr>
+          <tr>
+            <td>Partnerská jídelna</td>
+            <td>Vaří nám. Není to zákazník.</td>
+            <td>Škola se může stát partnerem až potom, co ji Čmuchal posbíral.</td>
+          </tr>
+          <tr>
+            <td>Bytový dům</td>
+            <td>Zaměstnance má formálně (správce, úklid), obědvat tam nikdo nechodí.</td>
+            <td>V Hrádku jich je přes patnáct.</td>
+          </tr>
+          <tr>
+            <td>Vlastní jídelna</td>
+            <td>Doloženo rešerší — vaří si sami.</td>
+            <td>Zbůch a ZŠ Vejprnice, oboje doložené z jejich webu.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>Vynechané firmy se vypíšou i s důvodem.</strong> Tiché
+      filtrování by bylo horší než žádné — kdo nevidí, proč firma v kampani
+      chybí, přestane pravidlům věřit a začne je obcházet ručně.
+    </p>
+    <p>
+      Naopak firma, u které <em>nevíme</em>, jestli má vlastní jídelnu,
+      projde. Nevíme není totéž co má, a na dohad se nikdo nevyřazuje.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co jsem schválně neudělal</h2>
+    <p>
+      <strong>Obor podle profilu síto neřeší.</strong> Zvažoval jsem to a ptal
+      se tě na to — správně jsi to odmítl. Firma posbíraná za jednoho profilu
+      by po přepnutí profilu z kampaně tiše zmizela a nebylo by na první pohled
+      vidět proč. Obor a velikost si vybíráš sám při schvalování kampaně.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co zůstává otevřené</h2>
+    <div class="poznamka">
+      <p>
+        <strong>Firma, která v kampani už je</strong> a teprve potom se dostane
+        na blacklist, v ní zůstane. Síto se uplatní při doplňování, ne zpětně.
+      </p>
+      <p>
+        Nebezpečné to není: kampaň prochází tvým schválením a systém pořád nic
+        neodesílá. Před fází 3 to ale bude chtít buď zpětnou kontrolu, nebo
+        upozornění přímo v seznamu kampaně. Je to zapsané v paměti.
+      </p>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Další krok</h2>
+    <p>
+      <strong>Průvodce kampaní v aplikaci</strong> — čtyři kroky podle návrhu,
+      který jsi odsouhlasil. Jádro je hotové, chybí obrazovky.
+    </p>
+    <p>Dvě věci, které mu podrazí nohy, když se neopraví dřív:</p>
+    <ul>
+      <li>
+        Firmy z oblasti nemají skóre, protože k nim není jídelna a vzdálenost.
+        Seznam proto nepůjde setřídit podle priority.
+      </li>
+      <li>
+        Postupová čísla průzkumu se při opakovaných bězích sčítají dvakrát,
+        takže neukazují pravdu.
+      </li>
+    </ul>
+  </section>
+
+  <footer class="patka">
+    <p>
+      Ověřeno: 354 testů zelených (6 nových), kontrola typů čistá, sloučeno
+      i s opravou odesláno na GitHub.<br>
+      Nic se neodesílá — odesílání je zakázané až do fáze 3 a žádný kód ho
+      neumí zapnout.<br>
+      Podrobnosti v <code>memory/stav.md</code>, důvody v
+      <code>memory/rozhodnuti.md</code>, poučení v <code>memory/poznatky.md</code>.
+    </p>
+  </footer>
+
+</article>

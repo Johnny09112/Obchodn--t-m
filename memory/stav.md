@@ -287,6 +287,7 @@ vlastní jídelnou si drží původní skóre z doby sběru. Před frontou na os
 | Postřehy z rešerší | `playbook-cmuchal.md` |
 | Vizuální výstupy | `docs/vizualizace/` (mapa a kartotéka se generují) |
 | Výsledek první rešerše | `docs/vizualizace/reserse-2026-07-27.html` |
+| Sloučení + filtr kampaní | `docs/vizualizace/kampan-filtr-2026-07-31.html` |
 
 ## Příkazy
 

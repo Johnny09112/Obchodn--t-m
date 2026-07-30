@@ -10,11 +10,18 @@
 import type { AresZaznam } from "./ares.js";
 import type { CmuchalDeps } from "./cmuchal.js";
 import type { Bod } from "./geo.js";
-import { nactiOblast } from "./oblast.js";
+import { nactiOblast, prepocitejOblastFirmy } from "./oblast.js";
 import { bodVOblasti, type Oblast } from "./oblast-tvar.js";
-import { selhalPruzkum, zahajPruzkum } from "./pruzkum.js";
+import { dokoncPruzkum, selhalPruzkum, zahajPruzkum } from "./pruzkum.js";
 import type { RegistrZaznam } from "./registr.js";
-import { nastavGeo, zalozFirmu, zaznamVyrazeni, type DuvodVyrazeni } from "./repo.js";
+import {
+  nastavGeo,
+  ukonciBeh,
+  zacniBeh,
+  zalozFirmu,
+  zaznamVyrazeni,
+  type DuvodVyrazeni,
+} from "./repo.js";
 import { obceVOblasti, KROK_MRIZKY_M } from "./uzemi.js";
 
 export interface Rozhled {
@@ -204,4 +211,149 @@ async function nactiPruzkum(db: CmuchalDeps["db"], id: string) {
   const p = r[0];
   if (!p) throw new Error("Objednávka průzkumu neexistuje.");
   return p;
+}
+
+export interface VysledekPruzkumu {
+  /** Objednávka je uzavřená (hotovo/selhalo) — nezůstal žádný úsek ve stavu 'ceka'. */
+  uzavreno: boolean;
+  usekuHotovo: number;
+  usekuCelkem: number;
+  /** Nové firmy nalezené a uložené ve všech dosud hotových úsecích této objednávky. */
+  firemNovych: number;
+  /** Firmy, které v tvaru leží a v kartotéce už byly — zjištěno přepočtem, ne hledáním. */
+  firemPrevzato: number;
+}
+
+/**
+ * Vyřídí (nebo pokračuje ve vyřizování) objednávky průzkumu — po úsecích,
+ * aby šel běh přerušit a bez ztráty práce navázat.
+ *
+ * Úsek jednou hotový (nebo neúspěšný) se už znovu nezpracovává — celý smysl
+ * dělení na úseky je, aby výpadek uprostřed neznamenal začínat od nuly.
+ */
+export async function vyridPruzkum(
+  deps: CmuchalDeps,
+  pruzkumId: string,
+  opts: { nejvyseUseku?: number } = {},
+): Promise<VysledekPruzkumu> {
+  const { db } = deps;
+  if (!deps.registr) throw new Error("Průzkum oblasti se bez registru ČSÚ neobejde.");
+  const registr = deps.registr;
+
+  // Krok 1 — bez úseků není co navazovat, teprve se rozhlédneme. Vrátí-li
+  // se to s tím, že tvar nezabírá žádnou obec, není co sbírat — čeká se na
+  // člověka, ne na další volání tohohle běhu.
+  const existujici = await db.query<{ pocet: number }>(
+    "select count(*)::int as pocet from pruzkum_useky where pruzkum_id = $1",
+    [pruzkumId],
+  );
+  if ((existujici[0]?.pocet ?? 0) === 0) {
+    const rozhled = await rozhlednuti(deps, pruzkumId);
+    if (rozhled.cekaNaRozhodnuti) {
+      return { uzavreno: false, usekuHotovo: 0, usekuCelkem: 0, firemNovych: 0, firemPrevzato: 0 };
+    }
+  }
+
+  // Krok 2 — objednávka musí běžet. `rozhlednuti` ji sama zahajuje, ale při
+  // navazujícím volání (úseky už existují) se přes něj nejde, takže tady je
+  // to potřeba zopakovat — na už běžící objednávce nedělá `zahajPruzkum` nic.
+  await zahajPruzkum(db, pruzkumId);
+
+  const p = await nactiPruzkum(db, pruzkumId);
+  const oblast = await nactiOblast(db, p.oblastId);
+  if (!oblast) throw new Error("Oblast průzkumu neexistuje.");
+
+  // Krok 3 — záznam běhu a přepočet už známých firem. Nic se přitom
+  // nehledá ani nezaměřuje, jen se sáhne do kartotéky.
+  const behId = await zacniBeh(db, "cmuchal-oblast", { pruzkumId, oblastId: p.oblastId });
+  const firemPrevzato = await prepocitejOblastFirmy(db, p.oblastId);
+
+  // Krok 4 — úseky ve stavu 'ceka' podle pořadí, nejvýš opts.nejvyseUseku.
+  const limit = opts.nejvyseUseku;
+  const cekajici = await db.query<{ id: string; jednotka: number; obec: string }>(
+    limit == null
+      ? `select id, jednotka, obec from pruzkum_useky
+         where pruzkum_id = $1 and stav = 'ceka' order by poradi`
+      : `select id, jednotka, obec from pruzkum_useky
+         where pruzkum_id = $1 and stav = 'ceka' order by poradi limit $2`,
+    limit == null ? [pruzkumId] : [pruzkumId, limit],
+  );
+
+  const chybyBehu: unknown[] = [];
+
+  for (const usek of cekajici) {
+    await db.query("update pruzkum_useky set stav = 'bezi' where id = $1", [usek.id]);
+    try {
+      const zaznamy = await registr.zamestnavateleVJednotkach([usek.jednotka]);
+      let novych = 0;
+      let mimoTvar = 0;
+      for (const zaznam of zaznamy) {
+        const vysledek = await zpracujFirmuVOblasti(deps, {
+          zaznam,
+          oblast: oblast.oblast,
+          oblastId: p.oblastId,
+          behId,
+        });
+        if (vysledek.stav === "ulozena") novych++;
+        else if (vysledek.stav === "mimo_tvar") mimoTvar++;
+      }
+      await db.query(
+        `update pruzkum_useky
+         set stav = 'hotovo', firem_novych = $1, firem_mimo_tvar = $2, dokonceno_at = now()
+         where id = $3`,
+        [novych, mimoTvar, usek.id],
+      );
+    } catch (chyba) {
+      // Chyba v jednom úseku nesmí zablokovat zbytek — dílčí výsledek je
+      // lepší než žádný, další úsek se přesto zkusí.
+      const popis = chyba instanceof Error ? chyba.message : String(chyba);
+      await db.query(
+        `update pruzkum_useky set stav = 'selhalo', chyba = $1, dokonceno_at = now()
+         where id = $2`,
+        [popis, usek.id],
+      );
+      chybyBehu.push({ usek: usek.obec, jednotka: usek.jednotka, chyba: popis });
+    }
+  }
+
+  // Krok 5/6 — stav objednávky podle toho, co z úseků zbylo. Uzavře se, jen
+  // když žádný nezůstal čekat — jinak by kampaň dostala zelenou nad
+  // neúplným územím.
+  const podleStavu = await db.query<{ stav: string; pocet: number }>(
+    `select stav, count(*)::int as pocet from pruzkum_useky where pruzkum_id = $1 group by stav`,
+    [pruzkumId],
+  );
+  const pocty = Object.fromEntries(podleStavu.map((r) => [r.stav, r.pocet]));
+  const usekuCelkem = podleStavu.reduce((s, r) => s + r.pocet, 0);
+  const usekuHotovo = pocty["hotovo"] ?? 0;
+  const usekuSelhalo = pocty["selhalo"] ?? 0;
+  const usekuCeka = pocty["ceka"] ?? 0;
+
+  const soucetNovych = await db.query<{ soucet: number | null }>(
+    `select sum(firem_novych)::int as soucet from pruzkum_useky
+     where pruzkum_id = $1 and stav = 'hotovo'`,
+    [pruzkumId],
+  );
+  const firemNovych = soucetNovych[0]?.soucet ?? 0;
+
+  let uzavreno = false;
+  if (usekuCeka === 0) {
+    if (usekuHotovo === 0 && usekuSelhalo > 0) {
+      await selhalPruzkum(db, pruzkumId, `Všechny úseky selhaly (${usekuSelhalo}).`);
+    } else {
+      await dokoncPruzkum(db, pruzkumId, { firemPrevzato, firemNovych });
+    }
+    uzavreno = true;
+  }
+
+  // Krok 7 — záznam běhu se uzavírá vždy, ať objednávka skončila nebo ne.
+  await ukonciBeh(
+    db,
+    behId,
+    { firemPrevzato, firemNovych, usekuHotovo, usekuCelkem },
+    chybyBehu.length > 0 ? chybyBehu : undefined,
+  );
+  await db.query("update pruzkumy set run_id = $1 where id = $2", [behId, pruzkumId]);
+
+  return { uzavreno, usekuHotovo, usekuCelkem, firemNovych, firemPrevzato };
 }

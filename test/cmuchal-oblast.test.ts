@@ -2,14 +2,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { zalozOblast } from "../src/oblast.js";
 import { objednejPruzkum } from "../src/pruzkum.js";
-import { rozhlednuti, zpracujFirmuVOblasti } from "../src/cmuchal-oblast.js";
+import { rozhlednuti, vyridPruzkum, zpracujFirmuVOblasti } from "../src/cmuchal-oblast.js";
 import type { AresKlient, AresZaznam } from "../src/ares.js";
 import type { Geokoder, Misto } from "../src/geocode.js";
 import type { Oblast } from "../src/oblast-tvar.js";
 import type { RegistrKlient, RegistrZaznam } from "../src/registr.js";
 import type { ResKlient } from "../src/res.js";
 import type { CmuchalDeps } from "../src/cmuchal.js";
-import { zacniBeh } from "../src/repo.js";
+import { nastavGeo, zacniBeh, zalozFirmu } from "../src/repo.js";
 
 let db: Db;
 let pruzkumId: string;
@@ -76,44 +76,79 @@ const mimo: AresZaznam = {
   ico: "17439523", nazev: "Daleká s.r.o.", adresa: "Kraj 9", obec: "Zbůch",
   czNace: ["25610"], velikostKategorie: "stredni", kodObce: 559661, pravniForma: "112",
 };
+/** Firma z druhé územní jednotky — pro testy, které potřebují víc úseků. */
+const uvnitrDruhy: AresZaznam = {
+  ico: "60193531", nazev: "Druhá s.r.o.", adresa: "Hlavní 2", obec: "Druhá obec",
+  czNace: ["25610"], velikostKategorie: "stredni", kodObce: 559662, pravniForma: "112",
+};
+const JEDNOTKA_B = uvnitrDruhy.kodObce!;
+
+const VSECHNY_ARES = [uvnitr, mimo, uvnitrDruhy];
 
 const souradnice: Record<string, { lat: number; lng: number }> = {
   "25232657": severne(500),
   "17439523": severne(9000),
+  "60193531": severne(700),
+};
+
+/** Výchozí rozdělení firem podle jednotky — jedna jednotka, dvě firmy (uvnitř/mimo). */
+const VYCHOZI_JEDNOTKA = 559661;
+const VYCHOZI_FIRMY_PODLE_JEDNOTKY: Record<number, AresZaznam[]> = {
+  [VYCHOZI_JEDNOTKA]: [uvnitr, mimo],
 };
 
 /** Počítá volání, aby šlo ověřit, že se nezaměřuje ani nehledá dvakrát. */
-function falesneDeps(db: Db, opts: { mista?: Misto[] } = {}) {
+function falesneDeps(
+  db: Db,
+  opts: {
+    mista?: Misto[];
+    /** Jednotky, které vrátí `jednotkyPodleMist` — víc jednotek znamená víc úseků. */
+    jednotky?: Array<{ jednotka: number; obec: string }>;
+    /** Které firmy `zamestnavateleVJednotkach` vrátí pro kterou jednotku. */
+    firmyPodleJednotky?: Record<number, AresZaznam[]>;
+    /** Jednotky, u kterých má sweep vyhodit chybu (simulace selhání registru). */
+    jednotkySeSelhanim?: number[];
+  } = {},
+) {
   const pocty = { zamereni: 0, sweepu: 0 };
   const mista = opts.mista ?? [{ obec: "Zbůch", psc: "330 22" }];
+  const jednotky = opts.jednotky ?? [{ jednotka: VYCHOZI_JEDNOTKA, obec: "Zbůch" }];
+  const firmyPodleJednotky = opts.firmyPodleJednotky ?? VYCHOZI_FIRMY_PODLE_JEDNOTKY;
+  const selhavajiciJednotky = new Set(opts.jednotkySeSelhanim ?? []);
 
   const geokoder: Geokoder = {
     geokoduj: async (adresa) => {
       pocty.zamereni++;
-      const zaznam = [uvnitr, mimo].find((z) => z.adresa !== null && adresa.includes(z.adresa));
+      const zaznam = VSECHNY_ARES.find((z) => z.adresa !== null && adresa.includes(z.adresa));
       return zaznam ? souradnice[zaznam.ico]! : null;
     },
     zpetne: async () => mista[0] ?? null,
   };
 
   const registr: RegistrKlient = {
-    zamestnavateleVJednotkach: async () => {
+    zamestnavateleVJednotkach: async (js) => {
       pocty.sweepu++;
-      return [uvnitr, mimo].map(
+      // Selhání se simuluje jen pro dotaz na jeden konkrétní úsek (délka 1) —
+      // souhrnný odhad kandidátů v `rozhlednuti` se ptá na všechny jednotky
+      // naráz a ten selhat nemá, testuje se jím jiná věc.
+      if (js.length === 1 && selhavajiciJednotky.has(js[0]!)) {
+        throw new Error("Registr ČSÚ selhal");
+      }
+      return js.flatMap((j) => firmyPodleJednotky[j] ?? []).map(
         (z): RegistrZaznam => ({
           ico: z.ico, nazev: z.nazev, pravniForma: "112", kategorieKod: "330",
           nace: z.czNace, adresa: z.adresa, obec: z.obec, psc: "330 22",
-          jednotka: 559661, zdrojUrl: "https://csu.gov.cz/registr",
+          jednotka: z.kodObce ?? VYCHOZI_JEDNOTKA, zdrojUrl: "https://csu.gov.cz/registr",
         }),
       );
     },
-    jednotkyObce: async () => [559661],
-    jednotkyPodleMist: async () => [{ jednotka: 559661, obec: "Zbůch" }],
+    jednotkyObce: async () => jednotky.map((j) => j.jednotka),
+    jednotkyPodleMist: async () => jednotky,
   };
 
   const ares: AresKlient = {
-    overFirmu: async (ico) => [uvnitr, mimo].find((z) => z.ico === ico) ?? null,
-    najdiFirmyVObci: async () => [uvnitr, mimo],
+    overFirmu: async (ico) => VSECHNY_ARES.find((z) => z.ico === ico) ?? null,
+    najdiFirmyVObci: async () => VSECHNY_ARES,
     najdiPodleJmena: async () => null,
     najdiStatutarniOrgany: async () => [],
   };
@@ -359,5 +394,134 @@ describe("zpracujFirmuVOblasti", () => {
     );
     expect(vyrazeniRadky.length).toBe(1);
     expect(vyrazeniRadky[0]?.duvod).toBe("nesparovano");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Úkol 8b — přerušitelný běh přes úseky.
+
+/** Dvě jednotky = dva úseky, aby šlo testovat dělení a navazování. */
+const DVE_JEDNOTKY = [
+  { jednotka: VYCHOZI_JEDNOTKA, obec: "Zbůch" },
+  { jednotka: JEDNOTKA_B, obec: "Druhá obec" },
+];
+const FIRMY_DVOU_JEDNOTEK: Record<number, AresZaznam[]> = {
+  [VYCHOZI_JEDNOTKA]: [uvnitr, mimo],
+  [JEDNOTKA_B]: [uvnitrDruhy],
+};
+
+describe("vyridPruzkum", () => {
+  let oblastId: string;
+
+  beforeEach(async () => {
+    oblastId = await zalozOblast(db, { nazev: "Území", oblast: OBLAST });
+    pruzkumId = await objednejPruzkum(db, { oblastId, pozadal: "a@b.cz" });
+  });
+
+  it("před prvním úsekem se převezmou už známé firmy z kartotéky, bez jediného zaměření", async () => {
+    const { deps, pocty } = falesneDeps(db);
+    // Firma uvnitř tvaru, kterou už evidujeme z dřívějška (jiný zdroj, jiný běh).
+    await zalozFirmu(db, uvnitr);
+    await nastavGeo(db, uvnitr.ico, {
+      ...souradnice[uvnitr.ico]!,
+      jidelnaId: null,
+      vzdalenostM: null,
+      vZone: null,
+    });
+
+    // nejvyseUseku: 0 — žádný úsek se nezpracuje, ověřuje se jen přepočet.
+    const vysledek = await vyridPruzkum(deps, pruzkumId, { nejvyseUseku: 0 });
+
+    expect(vysledek.firemPrevzato).toBeGreaterThan(0);
+    expect(pocty.zamereni).toBe(0);
+  });
+
+  it("hotový úsek se v dalším běhu nezpracuje podruhé", async () => {
+    const { deps, pocty } = falesneDeps(db, {
+      jednotky: DVE_JEDNOTKY,
+      firmyPodleJednotky: FIRMY_DVOU_JEDNOTEK,
+    });
+
+    await vyridPruzkum(deps, pruzkumId, { nejvyseUseku: 1 });
+    const sweepuPoPrvnim = pocty.sweepu;
+
+    await vyridPruzkum(deps, pruzkumId);
+
+    // Kdyby se hotový úsek zpracoval znovu, sweepu (počet dotazů na registr
+    // po jedné jednotce) by vzrostl o víc než 1 — druhé volání smí zpracovat
+    // jen ten úsek, co zbyl.
+    expect(pocty.sweepu).toBe(sweepuPoPrvnim + 1);
+
+    const useky = await db.query<{ stav: string }>(
+      "select stav from pruzkum_useky where pruzkum_id = $1 order by poradi",
+      [pruzkumId],
+    );
+    expect(useky.map((u) => u.stav)).toEqual(["hotovo", "hotovo"]);
+  });
+
+  it("`nejvyseUseku` zpracuje jen zadaný počet úseků, zbytek nechá čekat a objednávka zůstane běžet", async () => {
+    const { deps } = falesneDeps(db, {
+      jednotky: DVE_JEDNOTKY,
+      firmyPodleJednotky: FIRMY_DVOU_JEDNOTEK,
+    });
+
+    const vysledek = await vyridPruzkum(deps, pruzkumId, { nejvyseUseku: 1 });
+
+    expect(vysledek.uzavreno).toBe(false);
+    const useky = await db.query<{ stav: string }>(
+      "select stav from pruzkum_useky where pruzkum_id = $1 order by poradi",
+      [pruzkumId],
+    );
+    expect(useky.map((u) => u.stav)).toEqual(["hotovo", "ceka"]);
+
+    const stavPruzkumu = await db.query<{ stav: string }>(
+      "select stav from pruzkumy where id = $1",
+      [pruzkumId],
+    );
+    expect(stavPruzkumu[0]?.stav).toBe("bezi");
+  });
+
+  it("po posledním úseku se objednávka uzavře na 'hotovo'", async () => {
+    const { deps } = falesneDeps(db, {
+      jednotky: DVE_JEDNOTKY,
+      firmyPodleJednotky: FIRMY_DVOU_JEDNOTEK,
+    });
+
+    await vyridPruzkum(deps, pruzkumId, { nejvyseUseku: 1 });
+    const vysledek = await vyridPruzkum(deps, pruzkumId);
+
+    expect(vysledek.uzavreno).toBe(true);
+    const stavPruzkumu = await db.query<{ stav: string }>(
+      "select stav from pruzkumy where id = $1",
+      [pruzkumId],
+    );
+    expect(stavPruzkumu[0]?.stav).toBe("hotovo");
+  });
+
+  it("chyba v úseku ho označí 'selhalo' s popisem, ale běh pokračuje dalším úsekem", async () => {
+    const { deps } = falesneDeps(db, {
+      jednotky: DVE_JEDNOTKY,
+      firmyPodleJednotky: FIRMY_DVOU_JEDNOTEK,
+      jednotkySeSelhanim: [VYCHOZI_JEDNOTKA],
+    });
+
+    const vysledek = await vyridPruzkum(deps, pruzkumId);
+
+    const useky = await db.query<{ jednotka: number; stav: string; chyba: string | null }>(
+      "select jednotka, stav, chyba from pruzkum_useky where pruzkum_id = $1 order by poradi",
+      [pruzkumId],
+    );
+    expect(useky[0]?.stav).toBe("selhalo");
+    expect(useky[0]?.chyba).toBeTruthy();
+    expect(useky[1]?.stav).toBe("hotovo");
+
+    // Aspoň jeden úsek vyšel, takže objednávka skončí jako hotová, ne
+    // selhaná — částečný výsledek je lepší než žádný.
+    expect(vysledek.uzavreno).toBe(true);
+    const stavPruzkumu = await db.query<{ stav: string }>(
+      "select stav from pruzkumy where id = $1",
+      [pruzkumId],
+    );
+    expect(stavPruzkumu[0]?.stav).toBe("hotovo");
   });
 });

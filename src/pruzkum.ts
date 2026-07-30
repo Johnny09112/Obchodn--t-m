@@ -10,7 +10,7 @@
  */
 import type { Db } from "./db.js";
 
-export type StavPruzkumu = "ceka" | "bezi" | "hotovo" | "selhalo";
+export type StavPruzkumu = "ceka" | "bezi" | "hotovo" | "selhalo" | "ceka_na_rozhodnuti";
 
 export interface Pruzkum {
   id: string;

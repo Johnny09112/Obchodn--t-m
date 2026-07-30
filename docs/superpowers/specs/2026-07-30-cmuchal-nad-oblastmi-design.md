@@ -30,6 +30,25 @@ nestačí, Hrádek je v ČR šestkrát. Kdyby se to i tak spletlo, nic zlého se
 nestane — na konci se každá firma testuje proti tvaru, takže z omylu vzejde
 zbytečná práce, ne špatná data.
 
+## 2.1 K čemu oblast slouží a k čemu ne
+
+Upřesnil majitel 2026-07-30 a opírá se o to celý zbytek zadání:
+
+> **Oblast neurčuje, ke které jídelně firma patří. O tom rozhoduje
+> vzdálenost.** Oblast dělá dvě věci: vymezuje pole pro kampaň a ukazuje,
+> které části republiky jsou už prohledané — „odkrývá mapu".
+
+Z toho plyne:
+
+- Sběr nad oblastí **nepřiřazuje firmy k jídelnám**. Ukládá je bez jídelny
+  a zapisuje do `oblast_firmy`, což je záznam o pokrytí, ne o příslušnosti.
+- **Přiřazování firem k provozům je samostatná funkce** s vlastním zadáním:
+  volitelné nastavení, po průzkumu nabídne „našlo se X firem blíž k nové
+  jídelně, přesunout?" a člověk zaškrtne které. V téhle práci není.
+- Firma smí být v dosahu víc jídelen — tabulka `dosah` to umí od migrace
+  0010 a **není to problém**. Omezení se týká odesílání, ne dosahu:
+  podle TP-5 na firmu odejde jedno oslovení, ať je v dosahu jídelen kolik chce.
+
 ## 3. Rozhodnutí majitele (2026-07-30)
 
 1. **Obce si systém najde sám z tvaru.** Člověk kreslí, nic nevypisuje.
@@ -59,10 +78,17 @@ Odhad času vychází z toho, kolik firem ještě nemá zaměřenou adresu,
 násobeno prodlevou geokodéru (dnes 1,1 s na dotaz). Nic jiného v běhu
 znatelně netrvá.
 
-**Když tvar nezabírá žádnou obec** (les, voda, tvar mimo ČR), rozhlédnutí
-to řekne, žádné úseky nezaloží a objednávka se rovnou uzavře jako `hotovo`
-s nulou nalezených firem. Bez toho by kampaň čekala navždy na průzkum,
-který nemá co dělat.
+**Když tvar nezabírá žádnou obec, průzkum se sám neuzavře — zeptá se.**
+Prázdno v obcích totiž neznamená prázdno ve firmách: registr se prohledává
+po obcích, ale OpenStreetMap hledá fyzická pracoviště podle souřadnic,
+takže odloučenou fabriku uprostřed pole najde i tam, kde žádná obec není.
+
+Objednávka proto přejde do stavu `ceka_na_rozhodnuti` a člověk odpoví, jestli
+se má hledat i tak. Odpoví-li ano, proběhne sběr jen ze souřadnicových zdrojů
+(OpenStreetMap); odpoví-li ne, objednávka se uzavře jako `hotovo` s nulou.
+
+Ptá se se **jen u tvaru, který nakreslil člověk**. Vnitřní úseky velké
+oblasti se na nic neptají — tam je prázdná obec běžný jev.
 
 **Když se zpětné dohledání u některého bodu nepovede**, bod se přeskočí
 a poznamená. Když se nepovede u **všech**, objednávka skončí `selhalo`
@@ -78,9 +104,14 @@ rozpadne bez další práce.
 nejsou, rozhlédnutí se provede samo** — samostatný příkaz je jen pro toho,
 kdo chce napřed vidět odhad.
 
-Ještě před prvním úsekem se **převezmou už známé firmy**: `prepocitejOblastFirmy`
-zapíše do oblasti ty, které v tvaru leží a v kartotéce už jsou. Ty se
-nehledají ani nezaměřují znovu — jejich počet je `firemPrevzato`.
+Ještě před prvním úsekem se **do oblasti zapíšou už známé firmy**:
+`prepocitejOblastFirmy` doplní ty, které v tvaru leží a v kartotéce už jsou.
+Nehledají se ani nezaměřují znovu — jejich počet je `firemPrevzato`.
+
+**Pozor na slovo „převzetí".** Znamená jen „tuhle firmu už známe, nebudeme
+ji hledat podruhé" — čistá úspora, u překryvu s Plzní desítky minut
+zaměřování. **Nemá to nic společného s přiřazováním firem k jídelnám**
+(viz kap. 2.1); nic se tím nikomu nepřepisuje.
 
 Vyřízení začíná voláním `zahajPruzkum` (objednávka přejde do `bezi`);
 `dokoncPruzkum` totiž jinou než běžící objednávku odmítne.
@@ -130,6 +161,18 @@ Migrace `0022_pruzkum_useky.sql`.
 
 Dvojice `(pruzkum_id, jednotka)` je jedinečná — tatáž jednotka se do jedné
 objednávky nesmí dostat dvakrát.
+
+### Změna v `pruzkumy`
+
+Přibývá stav **`ceka_na_rozhodnuti`** (tvar nezabírá žádnou obec, čeká se na
+odpověď člověka). Číselník stavů v migraci 0018 ho nezná, takže se v migraci
+0022 rozšíří.
+
+Dopad na pojistku schválení kampaně: spoušť z migrace 0021 pouští schválení
+jen tehdy, když je **nejnovější** objednávka ve stavu `hotovo`. Nový stav
+tedy schválení blokuje stejně jako `ceka` nebo `bezi` — a je to správně,
+protože se čeká na člověka. **Spoušť se kvůli tomu nemusí měnit**, jen se
+to tu říká nahlas, aby to nikoho nepřekvapilo.
 
 Pravidla přístupu ve stylu migrace 0016: čtení kdokoli přihlášený, zápis
 role `super-admin`, `admin`, `uzivatel`. Po nasazení se pustí kontrola

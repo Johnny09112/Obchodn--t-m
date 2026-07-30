@@ -292,3 +292,21 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   do fáze 4.** Tam se poprvé měří, co funguje, takže se teprve pak pozná,
   jestli je návrh tvaru k něčemu, nebo ho člověk stejně překreslí.
   V první verzi kreslí tvar člověk.
+- 2026-07-30 · majitel · **Oblast neurčuje, ke které jídelně firma patří.**
+  O přiřazení rozhoduje vzdálenost. Oblast slouží ke dvěma věcem: vymezit
+  pole pro kampaň a ukázat, které části republiky jsou už prohledané —
+  „odkrývá mapu". Opírá se o to zadání Čmuchala nad oblastmi.
+- 2026-07-30 · majitel · **TP-5 platí beze změny.** Bez reakce firmy se
+  neposílá častěji než jednou za rok. Navázat po odpovědi zadání výslovně
+  dovoluje. Pravidelné zprávy (2–3× ročně) ale podle SPEC kap. 13 vyžadují
+  souhlas, ne jen kladnou odpověď — souhlas se musí vyžádat zvlášť.
+- 2026-07-30 · Claude (doporučení, majitel souhlasil) · **Kladnou odpověď
+  smí agent navrhnout, ale přepnutí firmy do režimu „komunikujeme" potvrzuje
+  člověk.** Omyl agenta by tu udělal z právně čisté věci nečistou.
+- 2026-07-30 · majitel · **Záměr na později: ukazatel zahlcení firmy
+  zprávami**, aby bylo hned vidět, že už toho firma dostala moc. Metrika se
+  navrhne samostatně.
+- 2026-07-30 · majitel · **Přiřazování firem k provozům je samostatná
+  funkce**, ne součást průzkumu. Volitelné nastavení; po průzkumu nabídne
+  „našlo se X firem blíž k nové jídelně, přesunout?" a člověk zaškrtne které.
+  Dostane vlastní zadání.

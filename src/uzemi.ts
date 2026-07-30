@@ -7,6 +7,7 @@
  */
 import { bodVOblasti, type Oblast } from "./oblast-tvar.js";
 import type { Bod } from "./geo.js";
+import type { Geokoder, Misto } from "./geocode.js";
 
 /** Stupeň zeměpisné šířky má zhruba tolik metrů, všude stejně. */
 const METRU_NA_STUPEN = 111_320;
@@ -95,4 +96,44 @@ function posbirej(oblast: Oblast, obal: Obal, krokM: number): Bod[] {
     }
   }
   return body;
+}
+
+/** Výchozí hustota mřížky. Odhad, ne měření — proto je to přepínač. */
+export const KROK_MRIZKY_M = 3000;
+
+export interface VysledekObci {
+  mista: Misto[];
+  /** Kolik bodů mřížky se dohledávalo. */
+  bodu: number;
+  /** U kolika z nich služba nic nevrátila. */
+  nedohledano: number;
+}
+
+/**
+ * Obce, které tvar zabírá.
+ *
+ * Rozdíl mezi „nedohledáno u některých bodů" a „nedohledáno u všech" je
+ * podstatný: první je prázdné místo v krajině, druhé znamená nedostupnou
+ * službu. Volající se podle toho rozhoduje, proto se počty vracejí.
+ */
+export async function obceVOblasti(
+  geokoder: Geokoder,
+  oblast: Oblast,
+  opts: { krokM?: number } = {},
+): Promise<VysledekObci> {
+  const body = mrizkaVOblasti(oblast, opts.krokM ?? KROK_MRIZKY_M);
+  const podleKlice = new Map<string, Misto>();
+  let nedohledano = 0;
+
+  for (const bod of body) {
+    const misto = await geokoder.zpetne(bod);
+    if (!misto) {
+      nedohledano++;
+      continue;
+    }
+    // Klíčem je obec i PSČ — „Hrádek" je v ČR šestkrát.
+    podleKlice.set(`${misto.obec}|${misto.psc ?? ""}`, misto);
+  }
+
+  return { mista: [...podleKlice.values()], bodu: body.length, nedohledano };
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { mrizkaVOblasti } from "../src/uzemi.js";
+import { mrizkaVOblasti, obceVOblasti } from "../src/uzemi.js";
 import { bodVOblasti, type Oblast } from "../src/oblast-tvar.js";
+import type { Geokoder, Misto } from "../src/geocode.js";
 
 const STRED = { lat: 49.6, lng: 13.2 };
 const kruh: Oblast = { typ: "kruh", stred: STRED, polomerM: 12_000 };
@@ -76,5 +77,47 @@ describe("mřížka bodů uvnitř tvaru", () => {
     const velkyKruh: Oblast = { typ: "kruh", stred: STRED, polomerM: 50_000 };
     const body = mrizkaVOblasti(velkyKruh, 3000);
     expect(body.length).toBe(874);
+  });
+});
+
+/** Falešný geokodér: vrací obec podle zeměpisné šířky. */
+function falesny(mapa: (b: { lat: number; lng: number }) => Misto | null): Geokoder {
+  return {
+    geokoduj: async () => null,
+    zpetne: async (b) => mapa(b),
+  };
+}
+
+describe("obce, které tvar zabírá", () => {
+  it("stejnou obec vrátí jednou, i když ji trefí víc bodů", async () => {
+    const g = falesny(() => ({ obec: "Zbůch", psc: "330 22" }));
+    const v = await obceVOblasti(g, kruh, { krokM: 3000 });
+    expect(v.mista).toEqual([{ obec: "Zbůch", psc: "330 22" }]);
+    expect(v.bodu).toBeGreaterThan(1);
+    expect(v.nedohledano).toBe(0);
+  });
+
+  it("stejná obec s jiným PSČ je jiné místo", async () => {
+    // Hrádek je v ČR šestkrát; PSČ je to, co je rozliší.
+    const g = falesny((b) =>
+      b.lat > 49.6 ? { obec: "Hrádek", psc: "330 01" } : { obec: "Hrádek", psc: "338 42" },
+    );
+    const v = await obceVOblasti(g, kruh, { krokM: 3000 });
+    expect(v.mista).toHaveLength(2);
+  });
+
+  it("nedohledané body spočítá a nespadne", async () => {
+    const g = falesny((b) => (b.lat > 49.6 ? { obec: "Zbůch", psc: null } : null));
+    const v = await obceVOblasti(g, kruh, { krokM: 3000 });
+    expect(v.mista).toEqual([{ obec: "Zbůch", psc: null }]);
+    expect(v.nedohledano).toBeGreaterThan(0);
+  });
+
+  it("když nevyjde ani jeden bod, řekne to zvlášť", async () => {
+    // Rozdíl mezi „tady nic není" a „služba neodpovídá" je podstatný.
+    const g = falesny(() => null);
+    const v = await obceVOblasti(g, kruh, { krokM: 3000 });
+    expect(v.mista).toEqual([]);
+    expect(v.nedohledano).toBe(v.bodu);
   });
 });

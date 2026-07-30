@@ -932,6 +932,30 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       const v = await vyridPruzkum(deps, id, {
         nejvyseUseku: values.nejvyse ? Number(values.nejvyse) : undefined,
       });
+
+      // Byla-li tohle čerstvá objednávka (bez úseků), `vyridPruzkum` si
+      // rozhlédnutí udělala sama — a když se přitom ukázalo, že tvar
+      // nezabírá žádnou obec, přepnula stav na 'ceka_na_rozhodnuti' a vrátila
+      // jen uzavreno: false. Bez tohohle přečtení by CLI hlásilo „pokračuje
+      // dál“ a radilo spustit `vyrid` znovu bez přepínače — což by napodruhé
+      // vedlo jen k odmítnutí, které tu poprvé nikdo nevysvětlil.
+      if (!v.uzavreno) {
+        const poStavRadky = await db.query<{ stav: string }>(
+          "select stav from pruzkumy where id = $1",
+          [id],
+        );
+        if (poStavRadky[0]?.stav === "ceka_na_rozhodnuti") {
+          console.log(`Průzkum ${id} čeká na rozhodnutí — nakreslený tvar nezabírá žádnou obec.`);
+          console.log("  Sám se nerozjede, ať to nezůstane bez povšimnutí.");
+          console.log(`  Pokračovat i tak jde jen výslovně: pruzkum vyrid ${id} --i-bez-obci`);
+          console.log(
+            "  (ten přepínač zatím jen dovolí spuštění — sběr firem podle souřadnic," +
+              " ne podle obcí, je následná práce a zatím nic nenajde navíc)",
+          );
+          return;
+        }
+      }
+
       console.log(`Průzkum ${id}: ${v.uzavreno ? "uzavřen (stav hotovo/selhalo)" : "pokračuje dál"}`);
       console.log(`  úseků hotovo: ${v.usekuHotovo} z ${v.usekuCelkem}`);
       console.log(`  nových firem: ${v.firemNovych}`);

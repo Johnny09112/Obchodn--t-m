@@ -415,6 +415,7 @@ describe("kompletní registr ČSÚ jako zdroj kandidátů", () => {
     let dostalJednotky: number[] | undefined;
     const registr: RegistrKlient = {
       jednotkyObce: async () => [560740, 560741],
+      jednotkyPodleMist: async () => [],
       zamestnavateleVJednotkach: async (j) => {
         dostalJednotky = j;
         return [zaznam("25242407", agrofarmy.nazev, "130")];
@@ -445,6 +446,7 @@ describe("kompletní registr ČSÚ jako zdroj kandidátů", () => {
     };
     const registr: RegistrKlient = {
       jednotkyObce: async () => [560740],
+      jednotkyPodleMist: async () => [],
       zamestnavateleVJednotkach: async (_j, o) => {
         expect(o?.minZamestnancu).toBe(25); // práh se předává do registru
         return [zaznam("25489631", zinkovna.nazev, "240")];
@@ -462,6 +464,7 @@ describe("kompletní registr ČSÚ jako zdroj kandidátů", () => {
     let dostalJednotky: number[] | undefined;
     const registr: RegistrKlient = {
       jednotkyObce: async () => [],
+      jednotkyPodleMist: async () => [],
       zamestnavateleVJednotkach: async (j) => {
         dostalJednotky = j;
         return [];

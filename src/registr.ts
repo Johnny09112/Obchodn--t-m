@@ -24,6 +24,7 @@ import { mkdir, stat, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createInterface } from "node:readline";
 import { FORMY_ZAMESTNAVATELU } from "./formy.js";
+import type { Misto } from "./geocode.js";
 import { splnujeMinimum } from "./res.js";
 
 const ZDROJ = "https://opendata.csu.gov.cz/soubory/od/od_org03/res_data.csv";
@@ -69,6 +70,20 @@ export interface RegistrKlient {
    * na hranici obvodu.
    */
   jednotkyObce(ico: string): Promise<number[]>;
+
+  /**
+   * Územní jednotky odpovídající zadaným místům.
+   *
+   * Hledá podle názvu obce **a PSČ** — samotný název nestačí, „Hrádek" je
+   * v ČR šestkrát a podle jména by se natáhly firmy z cizích obcí. Místo
+   * bez PSČ vrátí všechny jednotky toho jména; raději víc práce než minout
+   * tu správnou, protože tvar stejně na konci firmy ořeže.
+   *
+   * Jedním průchodem souboru pro všechna místa naráz.
+   */
+  jednotkyPodleMist(
+    mista: readonly Misto[],
+  ): Promise<Array<{ jednotka: number; obec: string }>>;
 }
 
 export interface RegistrKlientOpts {
@@ -99,6 +114,12 @@ export function rozdelRadek(radek: string): string[] {
 }
 
 const FORMY = new Set(FORMY_ZAMESTNAVATELU);
+
+/** Porovnání bez ohledu na velikost písmen a okolní/vnitřní mezery. */
+const normalizujNazev = (s: string): string => s.trim().toLowerCase().replace(/\s+/g, " ");
+
+/** „330 22" a „33022" musí vyjít jako totéž PSČ. */
+const normalizujPsc = (s: string): string => s.replace(/\s+/g, "");
 
 /** Pohled na jeden řádek podle jmen sloupců — pořadí se může časem změnit. */
 class Radek {
@@ -214,6 +235,35 @@ export function vytvorRegistrKlienta(opts: RegistrKlientOpts = {}): RegistrKlien
       });
 
       return klicJidelny ? [...(podleObce.get(klicJidelny) ?? [])] : [];
+    },
+
+    async jednotkyPodleMist(mista) {
+      if (mista.length === 0) return [];
+
+      const hledana = mista.map((m) => ({
+        obec: normalizujNazev(m.obec),
+        psc: m.psc === null ? null : normalizujPsc(m.psc),
+      }));
+
+      // Klíč je ICZUJ — jedna jednotka smí do výsledku jen jednou, i když
+      // do ní patří víc míst nebo víc řádků (firem) registru.
+      const nalezene = new Map<number, string>();
+
+      await projdi((r) => {
+        const obecRadku = r.hodnota("OBEC_TEXT");
+        if (!obecRadku) return;
+        const j = Number(r.hodnota("ICZUJ"));
+        if (!Number.isFinite(j) || nalezene.has(j)) return;
+
+        const obecNorm = normalizujNazev(obecRadku);
+        const pscNorm = normalizujPsc(r.hodnota("PSC"));
+        const shoda = hledana.some(
+          (m) => m.obec === obecNorm && (m.psc === null || m.psc === pscNorm),
+        );
+        if (shoda) nalezene.set(j, obecRadku);
+      });
+
+      return [...nalezene].map(([jednotka, obec]) => ({ jednotka, obec }));
     },
   };
 }

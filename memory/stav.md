@@ -84,12 +84,50 @@ které si nakreslíš sám. Hotovo a otestované:
   Odloučená fabrika uprostřed pole je pořád firma.
 - Ovládání z příkazové řádky: `cli pruzkum rozhlednuti | vyrid | useky`.
 
+**Kvalifikace je sdílená.** Obě cesty sběru — kolem jídelny i nad oblastí —
+posuzují kandidáty podle týchž pravidel (`src/kvalifikace.ts`): platnost IČO,
+partnerské jídelny, bytové domy, blacklist, obor podle profilu, firmy bez
+zaměstnanců. Kdyby to měla každá po svém, přidání pravidla do blacklistu by
+změnilo jednu a druhou ne — mlčky.
+
 **Co tím zatím nejde:** hledat firmy podle souřadnic tam, kde žádná obec
 není. Stav „čeká na rozhodnutí" existuje a příkaz ho ohlásí, ale samotné
 hledání ze souřadnicových zdrojů je následná práce.
 
-**Co zbývá, než tohle uvidí i majitel v aplikaci:** postavit průvodce
-kampaní v samotné aplikaci (`app/`).
+## DALŠÍ KROK: zavřít filtrovací díru u kampaní
+
+**Rozhodnutí majitele 2026-07-31: sloučit větev a díru zavřít hned potom.**
+
+Kvalifikace se uplatní jen na **nově sbírané** firmy. Seznam firem v oblasti
+se ale plní i druhou cestou — `prepocitejOblastFirmy` v `src/oblast.ts` ho
+naplní **čistě podle geometrie, bez ptaní** — a `src/kampan.ts` (funkce
+`naplnZOblasti`) ho pak kopíruje do kampaně **bez filtru**.
+
+Prakticky: firmu, kterou Čmuchal posbíral dřív a majitel ji potom dal na
+blacklist, kampaň nabídne dál. Totéž pro školu, která se stala partnerem
+až dodatečně.
+
+**Je to zděděné z větve kampaní, ne zanesené prací na oblastech**, ale ta
+práce to zpřístupňuje ve velkém, protože oblastí bude přibývat.
+
+Nic zatím hrozit nemůže: kampaň ani průzkum nejdou spustit z aplikace,
+v ostré databázi je nula kampaní i objednávek, a odesílat systém neumí.
+
+**Co s tím udělat:** doplnit filtr tam, kde se seznam plní podle geometrie —
+aspoň blacklist a partnerská IČO. Rozmyslet, jestli patří do
+`prepocitejOblastFirmy`, do `naplnZOblasti`, nebo do obou.
+
+## Potom: průvodce kampaní v aplikaci (`app/`)
+
+Čtyři kroky podle odsouhlaseného návrhu
+`docs/superpowers/specs/2026-07-29-kampane-design.md`.
+
+**Tři věci, které mu podrazí nohy, když se neopraví dřív:**
+- filtrovací díra výše (do pole kampaně doplují nefiltrované firmy),
+- firmy z oblasti nemají skóre (chybí vzdálenost k jídelně) — seznam
+  nepůjde setřídit podle priority,
+- `firemPrevzato` a `firemNovych` se při opakovaných bězích průzkumu
+  sčítají dvakrát, takže postupová čísla nesedí.
 - Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
 
 **Čeká na majitele:** oblast založená v aplikaci má prázdnou `oblast_firmy`,

@@ -615,3 +615,26 @@ funkce přestala tabulky nacházet a spadla by za běhu, ne při nasazení.
 **Tohle se má hlídat u každé nové funkce hned při psaní, ne až podle
 nálezu bezpečnostní kontroly** — je to jednodušší než k ní psát opravnou
 migraci zpětně.
+
+## Jak psát zadání pro agenty, aby nespálili rozpočet (2026-07-31)
+
+Nejdražší úkol celé práce spálil **168 tisíc tokenů a nenapsal ani řádek** —
+agent umřel na limitu uprostřed čtení cizího kódu.
+
+**Příčina byla v zadání, ne v agentovi.** Napsal jsem mu „vytáhni z
+`cmuchal.ts` to, co se dá sdílet" místo hotového kódu. Musel tedy prozkoumat
+sedmisetřádkový soubor, aby zjistil, co vlastně jde sdílet. Když jsem to
+prozkoumal sám, trvalo to desetinu ceny — a odpověď zněla, že se sdílet
+skoro nedá nic.
+
+**Pravidla, která z toho plynou:**
+
+- **Než napíšeš „vytáhni, co se dá sdílet", ověř si sám, jestli se to sdílet
+  dá.** A když ne, napiš to rovnou.
+- **Hledání v cizím kódu je nejdražší činnost vůbec.** Dej agentovi čísla
+  řádků, ne směr.
+- **Velký úkol rozděl.** Když se týž úkol rozpadl na dva, prošly oba napoprvé.
+- **Recenze nešetři.** Za tuhle práci našly tři vážné vady, které by jinak
+  prošly do provozu — obejitelnou pojistku schválení, mřížku minoucí
+  protáhlé území a úsek, co uvázne po pádu a přesto se tváří jako hotový.
+  Každá z nich by stála víc než celý dohled.

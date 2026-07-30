@@ -1,0 +1,409 @@
+<meta charset="utf-8">
+<title>Průvodce kampaní — postup</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --papir:      #f1f3ef;
+    --papir-2:    #e6eae4;
+    --inkoust:    #14262c;
+    --inkoust-2:  #2c4149;
+    --tlumene:    #5c7178;
+    --linka:      #c8d2cc;
+    --zelena:     #1f6f5c;
+    --zelena-tl:  #e2ece7;
+    --jantar:     #9a5c14;
+    --jantar-tl:  #f4ead9;
+    --cihla:      #8e3b2c;
+    --cihla-tl:   #f6e6e2;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text:   "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj:   ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs:  .72rem;
+    --fs-sm:  .84rem;
+    --fs-b:   1.0625rem;
+    --fs-lg:  1.3rem;
+    --fs-xl:  1.9rem;
+    --fs-2xl: 2.6rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir:     #101c21;
+      --papir-2:   #16262c;
+      --inkoust:   #e7ede9;
+      --inkoust-2: #b9c8c9;
+      --tlumene:   #8ba0a4;
+      --linka:     #2b3f46;
+      --zelena:    #6cc4a5;
+      --zelena-tl: #16302b;
+      --jantar:    #d9a05a;
+      --jantar-tl: #2f2415;
+      --cihla:     #e08975;
+      --cihla-tl:  #331d18;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir:     #101c21;
+    --papir-2:   #16262c;
+    --inkoust:   #e7ede9;
+    --inkoust-2: #b9c8c9;
+    --tlumene:   #8ba0a4;
+    --linka:     #2b3f46;
+    --zelena:    #6cc4a5;
+    --zelena-tl: #16302b;
+    --jantar:    #d9a05a;
+    --jantar-tl: #2f2415;
+    --cihla:     #e08975;
+    --cihla-tl:  #331d18;
+  }
+  :root[data-theme="light"] {
+    --papir:     #f1f3ef;
+    --papir-2:   #e6eae4;
+    --inkoust:   #14262c;
+    --inkoust-2: #2c4149;
+    --tlumene:   #5c7178;
+    --linka:     #c8d2cc;
+    --zelena:    #1f6f5c;
+    --zelena-tl: #e2ece7;
+    --jantar:    #9a5c14;
+    --jantar-tl: #f4ead9;
+    --cihla:     #8e3b2c;
+    --cihla-tl:  #f6e6e2;
+  }
+
+  body {
+    margin: 0;
+    background: var(--papir);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    font-size: var(--fs-b);
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .stranka {
+    max-width: 43rem;
+    margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .hlavicka { display: flex; flex-direction: column; gap: .9rem; }
+
+  .datum {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--tlumene);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-2xl);
+    font-weight: 660;
+    letter-spacing: -.025em;
+    line-height: 1.08;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .podtitul { font-size: var(--fs-lg); color: var(--inkoust-2); margin: 0; text-wrap: pretty; }
+
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-xl);
+    font-weight: 620;
+    letter-spacing: -.018em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--linka);
+  }
+
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+
+  code {
+    font-family: var(--pismo-udaj);
+    font-size: .86em;
+    background: var(--papir-2);
+    padding: .1em .35em;
+    border-radius: 3px;
+  }
+
+  /* ── varování: to, co může celou práci zastavit ───────────── */
+
+  .zed {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    padding: 1.25rem 1.35rem;
+    background: var(--cihla-tl);
+    border: 1px solid color-mix(in srgb, var(--cihla) 40%, transparent);
+    border-left: 4px solid var(--cihla);
+    border-radius: 4px;
+  }
+  .zed-stitek {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--cihla);
+    font-weight: 600;
+  }
+  .zed p { font-size: var(--fs-sm); }
+
+  /* ── etapy: pořadí je informace, proto číslované ──────────── */
+
+  .etapy { display: flex; flex-direction: column; gap: .8rem; }
+
+  .etapa {
+    display: grid;
+    grid-template-columns: 2.4rem 1fr;
+    gap: 0 1rem;
+    padding: 1rem 1.15rem;
+    background: var(--papir-2);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+  }
+
+  .etapa-znak {
+    grid-row: 1 / span 2;
+    font-family: var(--pismo-udaj);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--tlumene);
+    padding-top: .1rem;
+  }
+
+  .etapa-nazev {
+    font-family: var(--pismo-nadpis);
+    font-size: 1.05rem;
+    font-weight: 620;
+    margin: 0 0 .35rem;
+    line-height: 1.3;
+  }
+
+  .etapa-telo { font-size: var(--fs-sm); margin: 0; color: var(--inkoust-2); }
+
+  .etapa-nastroje {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: .6rem;
+  }
+  .nastroj {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    padding: .18rem .5rem;
+    border-radius: 2px;
+    background: var(--zelena-tl);
+    color: var(--zelena);
+    border: 1px solid color-mix(in srgb, var(--zelena) 30%, transparent);
+  }
+
+  .etapa-blokovana { border-style: dashed; }
+
+  /* ── varianty rozhodnutí ──────────────────────────────────── */
+
+  .varianty { display: flex; flex-direction: column; gap: .6rem; }
+
+  .varianta {
+    padding: .8rem 1rem;
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    font-size: var(--fs-sm);
+  }
+  .varianta-doporucena {
+    background: var(--zelena-tl);
+    border-color: var(--zelena);
+    border-width: 1.5px;
+  }
+  .varianta-nazev {
+    font-family: var(--pismo-nadpis);
+    font-weight: 620;
+    display: block;
+    margin-bottom: .2rem;
+  }
+  .varianta-doporucena .varianta-nazev { color: var(--zelena); }
+
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .45rem; }
+  li { text-wrap: pretty; }
+  li::marker { color: var(--tlumene); }
+
+  .nestavi li { font-size: var(--fs-sm); }
+
+  .patka {
+    border-top: 1px solid var(--linka);
+    padding-top: 1.25rem;
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    line-height: 1.7;
+    color: var(--tlumene);
+  }
+</style>
+
+<article class="stranka">
+
+  <header class="hlavicka">
+    <p class="datum">Cantinero · návrh postupu · 31. července 2026</p>
+    <h1>Průvodce kampaní: jak na to</h1>
+    <p class="podtitul">
+      Obě překážky jsou opravené, cesta je volná. Než se začne stavět, je
+      potřeba rozhodnout jednu věc — a ta není technická.
+    </p>
+  </header>
+
+  <section class="sekce">
+    <h2>Nejdřív: kdo pustí Čmuchala</h2>
+    <div class="zed">
+      <p class="zed-stitek">Tohle může práci zastavit v půlce</p>
+      <p>
+        Aplikace agenta spustit neumí — podle pravidel si o průzkum jen
+        <em>požádá</em>. Čmuchala ale dnes pouští člověk z příkazové řádky.
+      </p>
+      <p>
+        Krok 3 průvodce tedy skončí obrazovkou „čeká na průzkum“, která bude
+        čekat, dokud si někdo nevzpomene spustit příkaz. Kolega příkazovou
+        řádku u sebe nemá.
+      </p>
+      <p>
+        Postavit se to dá i tak. Ale byla by to krásná cesta, která v půlce
+        končí u zdi — a to bych ti radši řekl teď než potom.
+      </p>
+    </div>
+
+    <div class="varianty">
+      <div class="varianta varianta-doporucena">
+        <span class="varianta-nazev">Naplánovaný běh — doporučuji</span>
+        Čmuchal se sám podívá na frontu objednávek každých pár hodin.
+        Odemkne to kolegu, nemění to žádné tvrdé pravidlo a pořád nic
+        neodesílá.
+      </div>
+      <div class="varianta">
+        <span class="varianta-nazev">Zůstane to ruční</span>
+        Aplikace ukáže „objednáno“, ty průzkum pustíš z příkazové řádky.
+        Nejlevnější, ale kolega je odkázaný na tebe.
+      </div>
+      <div class="varianta">
+        <span class="varianta-nazev">Spuštění přímo z aplikace</span>
+        Nejpohodlnější, ale znamená dát webu právo pustit agenta. To je
+        změna pravidel a zaslouží si vlastní rozvahu.
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Etapy</h2>
+    <p>
+      Pořadí je dané tím, co komu odemyká práci. Po etapě B je aplikace
+      použitelná, i kdyby se dál nepokračovalo.
+    </p>
+
+    <div class="etapy">
+      <div class="etapa">
+        <span class="etapa-znak" aria-hidden="true">A</span>
+        <div>
+          <p class="etapa-nazev">Design napřed, bez psaní kódu</p>
+          <p class="etapa-telo">
+            Dosud se obrazovky stavěly rovnou z kódu. U čtyř obrazovek
+            s jedním průběžným stavem se tím snadno vyrobí čtyři dialekty
+            téhož. Nejdřív se tedy doplní chybějící součástky
+            (krokovník, štítek stavu, prázdný stav), navrhnou se obrazovky
+            a napíšou texty — česky a lidsky. <strong>Nic se nestaví, dokud
+            to neodsouhlasíš.</strong>
+          </p>
+          <div class="etapa-nastroje">
+            <span class="nastroj">design-system</span>
+            <span class="nastroj">frontend-design</span>
+            <span class="nastroj">ux-copy</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="etapa">
+        <span class="etapa-znak" aria-hidden="true">B</span>
+        <div>
+          <p class="etapa-nazev">Založení a území</p>
+          <p class="etapa-telo">
+            Kroky 1 a 2 průvodce. Kampaň jde založit, pojmenovat, dát jí
+            správce a nakreslené území — napojí se na hotovou mapu.
+            Nejmenší riziko a hned použitelné.
+          </p>
+        </div>
+      </div>
+
+      <div class="etapa etapa-blokovana">
+        <span class="etapa-znak" aria-hidden="true">C</span>
+        <div>
+          <p class="etapa-nazev">Průzkum a posouzení seznamu</p>
+          <p class="etapa-telo">
+            Kroky 3 a 4. Nejvíc logiky a jediné místo, kde se čeká na agenta —
+            <strong>závisí na rozhodnutí výše</strong>. Krok 4 je ten cenný:
+            seznam firem s důvody, proč tam kdo je a proč tam někdo není.
+          </p>
+        </div>
+      </div>
+
+      <div class="etapa">
+        <span class="etapa-znak" aria-hidden="true">D</span>
+        <div>
+          <p class="etapa-nazev">Kritika, přístupnost, předávka</p>
+          <p class="etapa-telo">
+            Nezávislá kritika hotových obrazovek, kontrola ovládání
+            klávesnicí a kontrastu (u formulářů se vyplácí nejvíc)
+            a shrnutí pro tebe.
+          </p>
+          <div class="etapa-nastroje">
+            <span class="nastroj">design-critique</span>
+            <span class="nastroj">accessibility-review</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co se v této práci nestaví</h2>
+    <ul class="nestavi">
+      <li><strong>Odesílání čehokoli.</strong> Zůstává zakázané až do fáze 3.</li>
+      <li><strong>Spouštění agenta z aplikace</strong>, dokud o tom nerozhodneš.</li>
+      <li><strong>Mazání kampaní.</strong> Mazání dat rozhoduješ ty.</li>
+      <li><strong>Přiřazování firem k jídelnám.</strong> Samostatná funkce.</li>
+    </ul>
+  </section>
+
+  <section class="sekce">
+    <h2>Co od tebe potřebuji</h2>
+    <ul>
+      <li><strong>Kdo pustí Čmuchala</strong> — tři varianty výše, doporučuji naplánovaný běh.</li>
+      <li>
+        <strong>Má průvodce fungovat na mobilu?</strong> Kreslení oblastí na
+        telefonu je nepraktické, ale prohlédnout a schválit seznam firem
+        cestou dává smysl. Navrhuji: kroky 1–2 na počítači, krok 4 čitelný
+        i na mobilu.
+      </li>
+      <li><strong>Kdo smí kampaň schválit?</strong> Dnes admin a výš — zůstává to tak?</li>
+    </ul>
+  </section>
+
+  <footer class="patka">
+    <p>
+      Stav: 360 testů zelených, kontrola typů čistá, vše na GitHubu.<br>
+      Podrobný postup: <code>docs/PRUVODCE-KAMPANI-POSTUP.md</code><br>
+      Zadání obrazovek: <code>docs/superpowers/specs/2026-07-29-kampane-design.md</code>
+    </p>
+  </footer>
+
+</article>

@@ -63,9 +63,33 @@ nic se neodesílá (to zůstává zakázané až do fáze 3). Hotovo a otestovan
 - Kdo co smí: nepřihlášený nevidí nic, tým kampaň připraví a upraví,
   schválit smí jen admin a výš — ověřeno.
 
-**Co zbývá, než tohle uvidí i majitel v aplikaci:** napojit Čmuchala na
-oblasti (aby uměl kampani firmy sám nabídnout, ne jen na příkaz z terminálu),
-a teprve pak postavit průvodce kampaní v samotné aplikaci (`app/`).
+## Čmuchal umí prozkoumat nakreslenou oblast (2026-07-30)
+
+Dřív uměl sbírat firmy jen v kruhu kolem jídelny. Teď zvládne i území,
+které si nakreslíš sám. Hotovo a otestované:
+
+- **Z tvaru si sám zjistí, které obce zabírá.** Rozseje do něj mřížku bodů
+  a u každého se zeptá mapy, jaká obec na něm leží. Ty pak přeloží na obce
+  v registru — podle jména **a PSČ**, protože Hrádek je v ČR šestkrát.
+- **Rozhlédnutí napřed.** Než začne sbírat, spočítá kolik obcí a firem
+  ho čeká a odhadne čas. Nic při tom nezaměřuje, takže je to rychlé.
+- **Velké území se dělí na úseky po obcích.** Když běh spadne nebo ho
+  zastavíš, hotové obce zůstanou hotové a další běh naváže. Rozdělaná obec
+  se udělá znovu, ale levněji — firmy, které už mají zaměřenou adresu, se
+  nezaměřují podruhé. Přepínačem jde říct „dnes zpracuj nejvýš pět obcí".
+- **Firma mimo nakreslený tvar se neuloží** a důvod se zapíše do deníku
+  vyřazení. Firmy uvnitř se ukládají **bez jídelny** — o přiřazení
+  rozhoduje vzdálenost, ne oblast, a je to samostatná funkce.
+- **Když tvar nezabírá žádnou obec, průzkum se sám neuzavře — zeptá se.**
+  Odloučená fabrika uprostřed pole je pořád firma.
+- Ovládání z příkazové řádky: `cli pruzkum rozhlednuti | vyrid | useky`.
+
+**Co tím zatím nejde:** hledat firmy podle souřadnic tam, kde žádná obec
+není. Stav „čeká na rozhodnutí" existuje a příkaz ho ohlásí, ale samotné
+hledání ze souřadnicových zdrojů je následná práce.
+
+**Co zbývá, než tohle uvidí i majitel v aplikaci:** postavit průvodce
+kampaní v samotné aplikaci (`app/`).
 - Shrnutí pro majitele: `docs/vizualizace/aplikace-stav.html`
 
 **Čeká na majitele:** oblast založená v aplikaci má prázdnou `oblast_firmy`,

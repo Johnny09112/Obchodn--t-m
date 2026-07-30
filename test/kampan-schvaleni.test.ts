@@ -99,6 +99,43 @@ describe("pojistky u schválení", () => {
     await zmenStav(db, kampanId, "k_posouzeni");
     await expect(zmenStav(db, kampanId, "schvalena")).rejects.toThrow(/průzkum/);
   });
+
+  it("první průzkum selhal, opakovaný doběhl do hotovo — schválit jde (migrace 0021)", async () => {
+    // Past z migrace 0020: podmínka „existuje nehotový" by tohle pořád
+    // blokovala kvůli tomu prvnímu, selhanému záznamu. Rozhoduje jen
+    // nejnovější objednávka.
+    await zapisKontakt(db, "25232657", {
+      email: "info@firma.cz", urovenAdresy: 2,
+      zdrojUrl: "https://firma.cz/kontakt", citace: "info@firma.cz",
+    });
+    const prvni = await objednejPruzkum(db, { oblastId, kampanId, pozadal: "a@b.cz" });
+    await zahajPruzkum(db, prvni);
+    await selhalPruzkum(db, prvni, "zdroj nedostupný");
+
+    const druhy = await objednejPruzkum(db, { oblastId, kampanId, pozadal: "a@b.cz" });
+    await zahajPruzkum(db, druhy);
+    await dokoncPruzkum(db, druhy, { firemPrevzato: 1, firemNovych: 0 });
+
+    await zmenStav(db, kampanId, "k_posouzeni");
+    await expect(zmenStav(db, kampanId, "schvalena")).resolves.toBeUndefined();
+  });
+
+  it("nejnovější objednávka selhala, i když starší byla hotovo — schválit nejde (migrace 0021)", async () => {
+    await zapisKontakt(db, "25232657", {
+      email: "info@firma.cz", urovenAdresy: 2,
+      zdrojUrl: "https://firma.cz/kontakt", citace: "info@firma.cz",
+    });
+    const prvni = await objednejPruzkum(db, { oblastId, kampanId, pozadal: "a@b.cz" });
+    await zahajPruzkum(db, prvni);
+    await dokoncPruzkum(db, prvni, { firemPrevzato: 1, firemNovych: 0 });
+
+    const druhy = await objednejPruzkum(db, { oblastId, kampanId, pozadal: "a@b.cz" });
+    await zahajPruzkum(db, druhy);
+    await selhalPruzkum(db, druhy, "zdroj podruhé nedostupný");
+
+    await zmenStav(db, kampanId, "k_posouzeni");
+    await expect(zmenStav(db, kampanId, "schvalena")).rejects.toThrow(/průzkum/);
+  });
 });
 
 describe("databázová zábrana proti stavům bezi/uzavrena (migrace 0020)", () => {

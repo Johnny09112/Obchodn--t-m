@@ -2,6 +2,12 @@
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 
+- 2026-07-30 · majitel (recenze) + Claude · **O schválení kampaně rozhoduje
+  jen nejnovější objednávka průzkumu** (`pozadano_at desc`, migrace 0021),
+  ne existence jakékoli nehotové. Oprava pasti z migrace 0020: podmínka
+  „existuje nehotový průzkum" blokovala schválení navždy, jakmile jednou
+  selhal — i po úspěšném opakování. Kampaň musí jít po neúspěchu zopakovat,
+  jinak se zablokuje natrvalo a ven vede jen ruční zásah do databáze.
 - 2026-07-30 · Claude · **Zábrana proti stavům `bezi`/`uzavrena` je teď i
   v databázi** (trigger `kampan_faze3_zabrana`, migrace 0020), nejen v kódu
   `src/kampan.ts`. Důvod: webová aplikace (`app/src/data.ts`) zapisuje do

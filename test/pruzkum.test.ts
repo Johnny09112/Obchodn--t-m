@@ -76,6 +76,29 @@ describe("fronta průzkumů", () => {
     await expect(selhalPruzkum(db, id, "chyba sítě")).rejects.toThrow();
   });
 
+  it("objednávka čekající na rozhodnutí (--i-bez-obci) jde rozběhnout i dokončit", async () => {
+    // Dřívější chyba: `zahajPruzkum` reagovala jen na stav 'ceka', takže
+    // objednávka v 'ceka_na_rozhodnuti' (tvar bez obce, člověk se rozhodl
+    // pokračovat přes --i-bez-obci) zůstala stát — úseky se zpracovaly, ale
+    // `dokoncPruzkum` pak vyhodil výjimku, že objednávka není 'bezi', a
+    // odvedená práce se zahodila.
+    const id = await objednejPruzkum(db, { oblastId, pozadal: "a@b.cz" });
+    await db.query("update pruzkumy set stav = 'ceka_na_rozhodnuti' where id = $1", [id]);
+
+    await zahajPruzkum(db, id);
+
+    const rozbehnuto = await db.query<{ stav: string }>(
+      "select stav from pruzkumy where id = $1", [id],
+    );
+    expect(rozbehnuto[0]?.stav).toBe("bezi");
+
+    await dokoncPruzkum(db, id, { firemPrevzato: 0, firemNovych: 0 });
+    const dokonceno = await db.query<{ stav: string }>(
+      "select stav from pruzkumy where id = $1", [id],
+    );
+    expect(dokonceno[0]?.stav).toBe("hotovo");
+  });
+
   it("spočítá nedokončené objednávky kampaně", async () => {
     const kampanId = await zalozKampan(db, { nazev: "K", spravce: "a@b.cz" });
     await objednejPruzkum(db, { oblastId, kampanId, pozadal: "a@b.cz" });

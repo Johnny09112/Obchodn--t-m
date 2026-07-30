@@ -215,6 +215,44 @@ describe("rozhlednuti", () => {
     expect(r.kandidatu).toBe(2); // registr zná uvnitr i mimo v té jednotce
   });
 
+  it("kandidatuKZamereni počítá jen firmy bez známých souřadnic — o firmy, které kartotéka už zná, se odhad času nemá opírat", async () => {
+    const { deps } = falesneDeps(db);
+    // `uvnitr` už v kartotéce je se souřadnicemi (z dřívějšího prozkoumání
+    // překrývajícího se území) — `mimo` kartotéka nezná vůbec.
+    await zalozFirmu(db, uvnitr);
+    await nastavGeo(db, uvnitr.ico, {
+      ...souradnice[uvnitr.ico]!,
+      jidelnaId: null,
+      vzdalenostM: null,
+      vZone: null,
+    });
+
+    const r = await rozhlednuti(deps, pruzkumId);
+
+    expect(r.kandidatu).toBe(2);
+    // Zaměřovat se bude jen `mimo` — `uvnitr` souřadnice už má.
+    expect(r.kandidatuKZamereni).toBe(1);
+  });
+
+  it("zapíše běh agenta a jeho id do pruzkumy.run_id — rozhlédnutí taky sahá na mapovou službu a na registr (TP-13)", async () => {
+    const { deps } = falesneDeps(db);
+
+    const r = await rozhlednuti(deps, pruzkumId);
+    expect(r.cekaNaRozhodnuti).toBe(false);
+
+    const pruzkum = await db.query<{ run_id: string | null }>(
+      "select run_id from pruzkumy where id = $1", [pruzkumId],
+    );
+    const runId = pruzkum[0]?.run_id;
+    expect(runId).toBeTruthy();
+
+    const beh = await db.query<{ agent: string; konec: string | null }>(
+      "select agent, konec from agent_runs where id = $1", [runId],
+    );
+    expect(beh).toHaveLength(1);
+    expect(beh[0]?.konec).toBeTruthy();
+  });
+
   it("opakované rozhlédnutí úseky nezdvojí — přeskočí, ne spadne", async () => {
     const { deps } = falesneDeps(db);
 
@@ -388,6 +426,57 @@ describe("zpracujFirmuVOblasti", () => {
     });
     expect(druhy.stav).toBe("ulozena");
     expect(pocty.zamereni).toBe(1);
+  });
+
+  it("firma, která už má jídelnu a souřadnice, si jídelnu podrží po průzkumu oblasti — nastavGeo se pro ni nevolá", async () => {
+    // Tohle je nejdůležitější test v souboru: dřívější chyba volala
+    // `nastavGeo` i pro firmu se známými souřadnicemi a předávala
+    // `jidelnaId: null, vzdalenostM: null, vZone: null` — protože `nastavGeo`
+    // v repo.ts je bezpodmínečný update, tiše to odstřihlo firmu od její
+    // jídelny (a vyhodilo ji z fronty na oslovení, ta filtruje na
+    // v_zone is true). Test si firmu s jídelnou zakládá sám, ne přebírá z
+    // jiného testu o řádek výš — přesně tenhle detail chybu předtím skryl.
+    const { deps, pocty } = falesneDeps(db);
+    const jidelny = await db.query<{ id: string }>(
+      `insert into jidelny (nazev, adresa, obec, lat, lng, kod_obce, zona_metru)
+       values ('ZŠ Zbůch','x','Zbůch',49.6000,13.2000,559661,3000) returning id`,
+    );
+    const jidelnaId = jidelny[0]!.id;
+
+    await zalozFirmu(db, uvnitr);
+    await nastavGeo(db, uvnitr.ico, {
+      ...souradnice[uvnitr.ico]!,
+      jidelnaId,
+      vzdalenostM: 1234,
+      vZone: true,
+    });
+
+    const zaznamy = await deps.registr!.zamestnavateleVJednotkach([559661]);
+    const zaznamUvnitr = zaznamy.find((z) => z.ico === uvnitr.ico)!;
+
+    const vysledek = await zpracujFirmuVOblasti(deps, {
+      zaznam: zaznamUvnitr,
+      oblast: OBLAST,
+      oblastId,
+      behId,
+      ...pravidla,
+    });
+
+    expect(vysledek.stav).toBe("ulozena");
+    // Firma měla souřadnice, takže se nesmí zaměřovat znovu.
+    expect(pocty.zamereni).toBe(0);
+
+    const firma = await db.query<{
+      nejblizsi_jidelna_id: string | null;
+      vzdalenost_m: number | null;
+      v_zone: boolean | null;
+    }>(
+      "select nejblizsi_jidelna_id, vzdalenost_m::float8 as vzdalenost_m, v_zone from companies where ico = $1",
+      [uvnitr.ico],
+    );
+    expect(firma[0]?.nejblizsi_jidelna_id).toBe(jidelnaId);
+    expect(firma[0]?.vzdalenost_m).toBe(1234);
+    expect(firma[0]?.v_zone).toBe(true);
   });
 
   it("firma, kterou ARES nezná, se neuloží a zapíše se vyřazení", async () => {

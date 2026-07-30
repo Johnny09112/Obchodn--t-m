@@ -35,6 +35,13 @@ export interface Rozhled {
   useku: number;
   /** Kolik firem v těch jednotkách registr zná. */
   kandidatu: number;
+  /**
+   * Kolik z `kandidatu` kartotéka ještě nezná (nebo je zná bez souřadnic) —
+   * jen ty se budou při zpracování úseků skutečně zaměřovat
+   * (`zpracujFirmuVOblasti` firmu se známými souřadnicemi přeskakuje).
+   * Odhad času v CLI se počítá z tohohle čísla, ne z `kandidatu`.
+   */
+  kandidatuKZamereni: number;
   /** Kolik bodů mřížky se nepodařilo dohledat. */
   nedohledano: number;
   /** Objednávka čeká na rozhodnutí člověka (tvar nezabírá žádnou obec). */
@@ -52,9 +59,20 @@ export async function rozhlednuti(
   const registr = deps.registr;
   if (!registr) throw new Error("Průzkum oblasti se bez registru ČSÚ neobejde.");
 
+  // TP-13 — i rozhlédnutí je běh agenta: sahá na mapovou službu (Nominatim)
+  // i na registr ČSÚ, ne jen na databázi. Vlastní běh, oddělený od toho,
+  // který později zpracuje úseky (`vyridPruzkum` si zakládá svůj) — obě fáze
+  // stojí za samostatný záznam v `agent_runs`.
+  const behId = await zacniBeh(deps.db, "cmuchal-oblast-rozhlednuti", {
+    pruzkumId, oblastId: p.oblastId,
+  });
+
   // Objednávku je potřeba rozběhnout hned: `selhalPruzkum` i `dokoncPruzkum`
   // přijmou jen tu, která běží, a bez toho by se neúspěch neměl kam zapsat.
-  await zahajPruzkum(deps.db, pruzkumId);
+  // `behId` se zapisuje rovnou do `pruzkumy.run_id` — další volání
+  // `zahajPruzkum` (bez runId, z `vyridPruzkum`) na už běžící objednávce nic
+  // nedělá, takže ho nepřepíše zpátky na prázdno.
+  await zahajPruzkum(deps.db, pruzkumId, behId);
 
   try {
     const nalez = await obceVOblasti(deps.geokoder, o.oblast, {
@@ -72,10 +90,12 @@ export async function rozhlednuti(
       await deps.db.query("update pruzkumy set stav = 'ceka_na_rozhodnuti' where id = $1", [
         pruzkumId,
       ]);
-      return {
-        obci: 0, useku: 0, kandidatu: 0,
+      const vysledek: Rozhled = {
+        obci: 0, useku: 0, kandidatu: 0, kandidatuKZamereni: 0,
         nedohledano: nalez.nedohledano, cekaNaRozhodnuti: true,
       };
+      await ukonciBeh(deps.db, behId, vysledek);
+      return vysledek;
     }
 
     const jednotky = await registr.jednotkyPodleMist(nalez.mista);
@@ -98,13 +118,31 @@ export async function rozhlednuti(
       jednotky.map((j) => j.jednotka),
     );
 
-    return {
+    // Kolik z kandidátů kartotéka už zná se souřadnicemi — ty se při
+    // zpracování úseků nezaměřují znovu (`zpracujFirmuVOblasti`, krok 1).
+    // Nad územím, které se překrývá s dřív prozkoumaným, jich může být
+    // většina — proto odhad času v CLI stojí na rozdílu, ne na `kandidatu`.
+    const ica = [...new Set(kandidati.map((k) => k.ico))];
+    let znamychSeSouradnicemi = 0;
+    if (ica.length > 0) {
+      const znami = await deps.db.query<{ pocet: number }>(
+        `select count(*)::int as pocet from companies
+         where ico = any($1) and lat is not null and lng is not null`,
+        [ica],
+      );
+      znamychSeSouradnicemi = znami[0]?.pocet ?? 0;
+    }
+
+    const vysledek: Rozhled = {
       obci: nalez.mista.length,
       useku: jednotky.length,
       kandidatu: kandidati.length,
+      kandidatuKZamereni: Math.max(0, kandidati.length - znamychSeSouradnicemi),
       nedohledano: nalez.nedohledano,
       cekaNaRozhodnuti: false,
     };
+    await ukonciBeh(deps.db, behId, vysledek);
+    return vysledek;
   } catch (chyba) {
     // Výjimka odsud znamená selhání služby (Nominatim nebo registr ČSÚ), ne
     // prázdnou krajinu — tu ohlašuje `mista.length === 0` výš, ne throw. Bez
@@ -112,6 +150,7 @@ export async function rozhlednuti(
     // a kampaň, která na ni čeká, by se nedala nikdy schválit.
     const popis = chyba instanceof Error ? chyba.message : String(chyba);
     await selhalPruzkum(deps.db, pruzkumId, `Rozhlédnutí selhalo: ${popis}`);
+    await ukonciBeh(deps.db, behId, null, [popis]);
     throw chyba;
   }
 }
@@ -230,13 +269,23 @@ export async function zpracujFirmuVOblasti(
   // Krok 5 — zápis. Vše přes repository vrstvu (TP-1). Oblast nepřiřazuje
   // firmu k jídelně — o to se stará vzdálenost, samostatná funkce.
   if (ares) await zalozFirmu(db, ares);
-  await nastavGeo(db, ico, {
-    lat: bod.lat,
-    lng: bod.lng,
-    jidelnaId: null,
-    vzdalenostM: null,
-    vZone: null,
-  });
+  // `nastavGeo` se volá JEN pro nově zaměřenou firmu (ares truthy — krok 2/3
+  // výš). Pro firmu, která souřadnice už měla (`zname`), se nevolá vůbec:
+  // `nastavGeo` v repo.ts je bezpodmínečný `update` bez podmínky, takže by
+  // těmhle firmám přepsal `jidelnaId`/`vzdalenostM`/`vZone` na null — tiše by
+  // je odstřihl od jejich jídelny a vyhodil z fronty na oslovení (ta filtruje
+  // na v_zone is true). Souřadnice se nezměnily a přiřazení k jídelně
+  // průzkumu oblasti nepřísluší (rozhoduje o něm vzdálenost, samostatná
+  // funkce) — NEOPRAVUJ tohle voláním nastavGeo zpátky pro obě větve.
+  if (ares) {
+    await nastavGeo(db, ico, {
+      lat: bod.lat,
+      lng: bod.lng,
+      jidelnaId: null,
+      vzdalenostM: null,
+      vZone: null,
+    });
+  }
   await db.query(
     `insert into oblast_firmy (oblast_id, ico) values ($1,$2)
      on conflict (oblast_id, ico) do nothing`,

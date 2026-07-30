@@ -42,10 +42,18 @@ export async function dalsiPruzkum(db: Db): Promise<Pruzkum | null> {
   return r[0] ?? null;
 }
 
+/**
+ * Rozběhne objednávku, která ještě čeká — ať už normálně (`ceka`), nebo po
+ * vědomém rozhodnutí člověka pokračovat i bez zabraných obcí
+ * (`ceka_na_rozhodnuti`, viz `--i-bez-obci` v CLI). Na objednávce, která už
+ * běží (nebo je uzavřená), nedělá nic — díky tomu opakované volání
+ * (`vyridPruzkum` ho volá při každém navazujícím běhu) nepřepíše `run_id`
+ * zpátky na prázdno.
+ */
 export async function zahajPruzkum(db: Db, id: string, runId?: string): Promise<void> {
   await db.query(
     `update pruzkumy set stav = 'bezi', zahajeno_at = now(), run_id = $1
-     where id = $2 and stav = 'ceka'`,
+     where id = $2 and stav in ('ceka', 'ceka_na_rozhodnuti')`,
     [runId ?? null, id],
   );
 }

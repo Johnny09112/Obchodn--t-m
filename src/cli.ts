@@ -884,8 +884,8 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       console.log(`Průzkum ${id}: rozhlédnutí hotovo.`);
       console.log(`  obcí v území: ${r.obci}`);
       console.log(`  založených úseků: ${r.useku}`);
-      console.log(`  odhad firem k prozkoumání: ${r.kandidatu}`);
-      console.log(`  odhad času na zaměření adres: ${odhadCasuZamereni(r.kandidatu)}`);
+      console.log(`  odhad firem k prozkoumání: ${r.kandidatu} (zaměřovat se bude ${r.kandidatuKZamereni} — zbytek kartotéka už zná)`);
+      console.log(`  odhad času na zaměření adres: ${odhadCasuZamereni(r.kandidatuKZamereni)}`);
       if (r.nedohledano > 0) {
         console.log(`  nedohledaných bodů mřížky: ${r.nedohledano} (u těch se obec zjistit nepovedla)`);
       }

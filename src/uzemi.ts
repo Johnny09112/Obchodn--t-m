@@ -11,6 +11,16 @@ import type { Bod } from "./geo.js";
 /** Stupeň zeměpisné šířky má zhruba tolik metrů, všude stejně. */
 const METRU_NA_STUPEN = 111_320;
 
+/**
+ * Kolik bodů musí mřížka aspoň chytit, než se přestane zjemňovat.
+ *
+ * Míň by neovzorkovalo úzký protáhlý tvar (třeba údolí nebo koridor podél
+ * silnice) — spadl by na hrstku bodů namačkaných na jednom místě místo
+ * pokrytí celé délky. Víc by zase zbytečně násobilo dotazy na mapovou
+ * službu — každý bod je jeden dotaz a ta snese jeden za sekundu.
+ */
+const MIN_BODU = 12;
+
 interface Obal {
   jih: number;
   sever: number;
@@ -46,20 +56,29 @@ function obalTvaru(oblast: Oblast): Obal {
 /**
  * Body pravidelné mřížky, které leží uvnitř tvaru.
  *
- * Když mřížka nechytí ani jeden bod, krok se opakovaně půlí. Malý tvar —
- * třeba jedna průmyslová zóna — by se jinak tvářil jako prázdné území
- * a průzkum by nenašel nic.
+ * Dokud mřížka nechytí aspoň `MIN_BODU` bodů, krok se opakovaně půlí. Nestačí
+ * zastavit se u prvního nalezeného bodu — obal tvaru (obdélník) neprozradí,
+ * že je tvar úzký a protáhlý (diagonální pruh má obal skoro čtvercový), takže
+ * hrubý krok by z celého území vytáhl jen jeden dva náhodné body a zbytek by
+ * se nikdy neprohledal. Naopak velký tvar, který má dost bodů hned napoprvé,
+ * se dál nezjemňuje — nechceme násobit dotazy na mapovou službu zbytečně.
+ *
+ * Po vyčerpání pokusů se vrátí nejlepší dosud nalezený výsledek, i kdyby byl
+ * pod `MIN_BODU` — prázdné pole je vyhrazené jen pro tvar, kde opravdu neleží
+ * žádný bod mřížky ani při nejjemnějším kroku.
  */
 export function mrizkaVOblasti(oblast: Oblast, krokM: number): Bod[] {
   if (!(krokM > 0)) throw new Error("Krok mřížky musí být kladný.");
 
   const obal = obalTvaru(oblast);
+  let nejlepsi: Bod[] = [];
   // Pět zjemnění stačí: z 3 km se dostaneme pod 100 m.
   for (let pokus = 0, krok = krokM; pokus < 6; pokus++, krok /= 2) {
     const body = posbirej(oblast, obal, krok);
-    if (body.length > 0) return body;
+    if (body.length > nejlepsi.length) nejlepsi = body;
+    if (body.length >= MIN_BODU) return body;
   }
-  return [];
+  return nejlepsi;
 }
 
 function posbirej(oblast: Oblast, obal: Obal, krokM: number): Bod[] {

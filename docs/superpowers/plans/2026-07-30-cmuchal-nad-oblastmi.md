@@ -174,23 +174,34 @@ function obalTvaru(oblast: Oblast): Obal {
   };
 }
 
+/** Kolik vzorků stačí, aby se tvar dal považovat za ovzorkovaný. */
+const MIN_BODU = 12;
+
 /**
  * Body pravidelné mřížky, které leží uvnitř tvaru.
  *
- * Když mřížka nechytí ani jeden bod, krok se opakovaně půlí. Malý tvar —
- * třeba jedna průmyslová zóna — by se jinak tvářil jako prázdné území
- * a průzkum by nenašel nic.
+ * Dokud mřížka nechytí aspoň `MIN_BODU` bodů, krok se opakovaně půlí.
+ * **Nestačí zastavit se u prvního nalezeného bodu** — obal tvaru neprozradí,
+ * že je tvar úzký a protáhlý (diagonální pruh má obal skoro čtvercový),
+ * takže hrubý krok by z celého území vytáhl jeden dva náhodné body a zbytek
+ * by se nikdy neprohledal. Naopak velký tvar, který má dost bodů hned
+ * napoprvé, se dál nezjemňuje — každý bod je jeden dotaz na mapovou službu.
+ *
+ * Po vyčerpání pokusů se vrátí nejlepší dosud nalezený výsledek. Prázdné
+ * pole je vyhrazené jen pro tvar, kde ani při nejjemnějším kroku neleží nic.
  */
 export function mrizkaVOblasti(oblast: Oblast, krokM: number): Bod[] {
   if (!(krokM > 0)) throw new Error("Krok mřížky musí být kladný.");
 
   const obal = obalTvaru(oblast);
+  let nejlepsi: Bod[] = [];
   // Pět zjemnění stačí: z 3 km se dostaneme pod 100 m.
   for (let pokus = 0, krok = krokM; pokus < 6; pokus++, krok /= 2) {
     const body = posbirej(oblast, obal, krok);
-    if (body.length > 0) return body;
+    if (body.length > nejlepsi.length) nejlepsi = body;
+    if (body.length >= MIN_BODU) return body;
   }
-  return [];
+  return nejlepsi;
 }
 
 function posbirej(oblast: Oblast, obal: Obal, krokM: number): Bod[] {

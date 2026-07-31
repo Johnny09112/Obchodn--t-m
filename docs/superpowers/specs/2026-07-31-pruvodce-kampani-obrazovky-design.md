@@ -31,6 +31,10 @@ v kampani se proto liší a obrazovky s tím musí počítat.
    rozešly a to je horší než ta práce navíc.
 2. **Mobil částečně** — kroky 1–2 na počítači, krok 4 čitelný i na telefonu.
 3. **Schvalovat smí jen admin a výš**, beze změny.
+4. **Správcem je zakladatel kampaně** a smí pověřit **zástup** — druhou
+   osobu, která kampaň upraví, když on nemůže. Úpravy se tím zamykají na
+   správce, zástup a admina; dnes do nich smí kdokoli přihlášený. Zástup
+   **neschvaluje** — schválení zůstává na adminovi. Podrobně v 3.5.
 
 ## 3. Obrazovky
 
@@ -66,16 +70,18 @@ Popis a kontext ze schématu se v rozhraní slučují do jednoho pole
 prázdný. Dvě volná textová pole vedle sebe nikdo nerozliší a jedno z nich
 zůstane vždy nevyplněné.
 
-**Odchylka od zadání z 29. 7. — správce se nevybírá ze seznamu.**
-Zadání říká „správce je vybraný ze seznamu uživatelů", jenže **žádná tabulka
-uživatelů neexistuje** — lidé žijí v Supabase Auth a prohlížeč je vypsat
-nesmí (potřeboval by k tomu servisní klíč, který do aplikace nepatří).
+**Správcem je automaticky ten, kdo kampaň zakládá** (rozhodnuto 31. 7.).
+Jeho e-mail se jen ukáže, nevybírá se. Vynucuje to i databáze — viz 3.5.
 
-Návrh: **správcem je automaticky ten, kdo kampaň zakládá**, a jeho e-mail se
-jen ukáže. Pro čtyři lidi je to přirozené a nevymýšlí se kvůli tomu žádná
-nová evidence. Kdyby bylo potřeba správce měnit, přidá se později pohled nad
-`auth.users` — je to práce na samostatné zadání, ne součást průvodce.
-**Vyžaduje potvrzení majitele.**
+**Zástup (nepovinné).** Druhá osoba, která smí kampaň upravovat, když
+správce není k dispozici (nemoc, dovolená). Vybírá se z evidence lidí
+(3.5). Výchozí hodnota „nikdo".
+
+Zástup jde změnit **kdykoli později**, nejen při zakládání — nemoc se
+dopředu neplánuje. Pole je proto i na kartě kampaně, nejen v kroku 1.
+
+Popisek: „Zástup (nepovinné) — kdo smí kampaň upravovat, když nebudete
+k dispozici. Schvalovat kampaň může dál jen admin."
 
 Chyba u jména: „Kampaň s tímhle názvem už existuje. Zvolte jiný — na
 velikosti písmen nezáleží."
@@ -141,6 +147,63 @@ Tlačítko se **nezobrazí vůbec** roli `uzivatel` — ať aplikace neláká na
 něco, co databáze stejně zamítne. Zamítnutí platí i tak: hlídá ho databáze,
 ne tlačítko.
 
+### 3.5 Evidence lidí a kdo smí do kampaně sáhnout
+
+Rozhodnuto majitelem 31. 7. Je to **zpřísnění dnešního stavu**, ne kosmetika.
+
+#### Jak je to dnes
+
+`kampane_zapis` (migrace 0018) pouští k zápisu **kohokoli s rolí `uzivatel`
+a výš, do kterékoli kampaně**. Sloupec `spravce` je čistě informativní
+cedulka — neváže na sebe žádné právo. Jediné omezení je přechod do
+`schvalena`, ten smí admin a výš.
+
+Zástup by tedy dnes nedával smysl: není koho zastupovat, když můžou všichni.
+
+#### Evidence lidí (`uzivatele`)
+
+Aby šlo zástup vybrat, potřebuje aplikace seznam lidí. **Vypsat přihlašovací
+účty prohlížeč nesmí** — šlo by to jen servisním klíčem, který obchází
+všechna pravidla přístupu, a ten do programu běžícího v prohlížeči nepatří
+(kdokoli si ho tam přečte a získá plný přístup k celé databázi).
+
+Řešení je vlastní malá tabulka: `uzivatele (id uuid, email text)`, plněná
+spouští při vzniku účtu, čitelná pro přihlášené. **Žádné tajemství v ní
+není** — jen e-maily lidí, kteří už tak jeden druhého vidí v kartotéce.
+
+Role se sem **nekopíruje**. Mění se příkazem `cli uzivatel role` do
+`app_metadata` a druhý opis by se dřív nebo později rozešel s pravdou.
+
+#### Nová pravidla přístupu
+
+| Co | Kdo smí |
+|---|---|
+| Číst kampaně | kdokoli přihlášený (beze změny) |
+| Založit kampaň | `uzivatel` a výš, a **musí se zapsat jako správce** |
+| Upravit kampaň | správce · zástup · admin a výš |
+| Schválit kampaň | **admin a výš** (beze změny) |
+| Upravit seznam firem kampaně | stejné jako úprava kampaně |
+
+**Admin má přístup vždycky.** Bez toho by kampaň po odchodu správce
+osiřela a šla opravit jen ručním zásahem do databáze.
+
+**Seznam firem se musí zamknout taky** (`kampan_firmy`, přes rodičovskou
+kampaň). Zamknout kampaň a nechat její seznam firem otevřený by byl zámek
+na dveřích vedle otevřeného okna. Totéž platí pro objednávky průzkumu
+(`pruzkumy`) navázané na kampaň.
+
+#### Co se schválně nedělá
+
+- **Žádný cizí klíč na `uzivatele`** u sloupců `spravce` a `zastupce`.
+  Bezpečnost stojí na pravidle přístupu (`zastupce = auth.email()`);
+  překlep tedy znamená jen nefunkční zástup, ne díru. Cizí klíč by naopak
+  vynutil evidenci lidí i ve všech testech a v příkazové řádce, kde se
+  dnes používají volně psané e-maily.
+- **Zástup neschvaluje.** Zastupitelnost u schvalování už existuje —
+  admini jsou dva.
+- **Není nová role „editor".** Zástup je pověření ke konkrétní kampani,
+  ne další stupeň v žebříčku rolí.
+
 ## 4. Doplňky designového systému
 
 Audit současného stavu: 10 pojmenovaných barev, 3 role písma, jeden poloměr
@@ -186,4 +249,7 @@ Kontroluje se až v etapě D, ale návrh s tím počítá od začátku:
   potom.
 - **Odhad zbývajícího času** v kroku 3 předpokládá, že se dá spočítat
   z hotových úseků. Ověřit při stavbě; když ne, zůstane jen počet obcí.
-- **Správce kampaně** — viz odchylka v 3.1, čeká na potvrzení majitele.
+- **Naplnění `uzivatele` pro už existující účty.** Spoušť zachytí nově
+  vzniklé; čtyři dnešní účty se doplní jednorázově při migraci.
+- **Zamčení `pruzkumy`** na správce a zástup — ověřit, že to nerozbije
+  objednávku průzkumu z příkazové řádky, kde žádný přihlášený člověk není.

@@ -462,6 +462,15 @@
           <span class="napoveda">Kdo za kampaň odpovídá. Doplní se sám podle přihlášení.</span>
         </div>
 
+        <div class="pole">
+          <label>Zástup <span style="opacity:.7">(nepovinné)</span></label>
+          <div class="vstup">sasek@cantinero.cz ⌄</div>
+          <span class="napoveda">
+            Kdo smí kampaň upravovat, když nebudete k dispozici.
+            Schvalovat kampaň může dál jen admin. Změnit jde kdykoli později.
+          </span>
+        </div>
+
         <div class="tlacitka">
           <span class="tlacitko tise">Zrušit</span>
           <span class="tlacitko">Pokračovat na území</span>
@@ -474,11 +483,12 @@
       zavřít a vrátit se k ní ze seznamu — proto tu není žádné „uložit“.
     </p>
     <p class="pozn">
-      <b>Správce se nevybírá ze seznamu — potřebuji tvoje potvrzení.</b>
-      Zadání z 29. 7. slibovalo výběr z lidí, jenže žádná evidence uživatelů
-      neexistuje; lidé žijí v přihlašovací službě a prohlížeč je vypsat nesmí.
-      Navrhuji, aby správcem byl automaticky ten, kdo kampaň zakládá. Pro
-      čtyři lidi to stačí a nevymýšlí se kvůli tomu nová evidence.
+      <b>Správce se nevybírá — je jím ten, kdo kampaň zakládá.</b> Hlídá to
+      i databáze, ne jen formulář. Zástup se naopak vybírá ze seznamu lidí,
+      a proto k tomu patří jedna nová věc: malá evidence lidí v databázi
+      (e-mail a nic víc). Vypsat rovnou přihlašovací účty by šlo jen klíčem,
+      který obchází všechna pravidla přístupu — a ten do programu běžícího
+      v prohlížeči nepatří, protože si ho tam kdokoli přečte.
     </p>
   </section>
 
@@ -701,6 +711,50 @@
       <b>Tlačítko „Schválit“ vidí jen admin a výš</b> — ostatním se nezobrazí
       vůbec, aby je aplikace nelákala na něco, co jim databáze stejně zamítne.
       Zamítnutí ale platí i tak: hlídá to databáze, ne tlačítko.
+    </p>
+  </section>
+
+  <!-- ══════════════════════════════════════════ práva -->
+  <section class="obrazovka">
+    <h2>Kdo smí do kampaně sáhnout</h2>
+    <p class="k-cemu">
+      Největší změna, kterou návrh přináší — a není vidět na žádné obrazovce.
+    </p>
+
+    <p class="hlaska je-chyba">
+      <strong>Dnes může každý přihlášený upravit každou kampaň.</strong>
+      Pole „správce“ je jen cedulka, nic nehlídá. Zástup by tak neměl koho
+      zastupovat.
+    </p>
+
+    <div class="ram">
+      <div class="telo">
+        <div class="obal-tabulky">
+          <table>
+            <thead><tr><th>Co</th><th>Dnes</th><th>Nově</th></tr></thead>
+            <tbody>
+              <tr><td>Číst kampaně</td><td>kdokoli přihlášený</td><td>beze změny</td></tr>
+              <tr><td>Založit kampaň</td><td>kdokoli přihlášený</td><td>kdokoli přihlášený — a stane se správcem</td></tr>
+              <tr><td>Upravit kampaň</td><td>kdokoli přihlášený</td><td><strong>správce · zástup · admin</strong></td></tr>
+              <tr><td>Upravit seznam firem</td><td>kdokoli přihlášený</td><td><strong>stejné jako úprava kampaně</strong></td></tr>
+              <tr><td>Schválit kampaň</td><td>admin a výš</td><td>beze změny</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p class="pozn">
+      <b>Admin má přístup vždycky.</b> Bez toho by kampaň po odchodu správce
+      osiřela a spravit by ji šlo jen ručním zásahem do databáze.
+    </p>
+    <p class="pozn">
+      <b>Seznam firem se zamyká taky.</b> Zamknout kampaň a nechat její
+      seznam firem otevřený by byl zámek na dveřích vedle otevřeného okna.
+    </p>
+    <p class="pozn">
+      <b>Nevzniká nová role „editor“.</b> Zástup je pověření ke konkrétní
+      kampani, ne další stupeň v žebříčku rolí — role zůstávají tři.
     </p>
   </section>
 

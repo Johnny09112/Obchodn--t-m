@@ -371,3 +371,20 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   lidé jsou v Supabase Auth a prohlížeč je vypsat nesmí (chtělo by to
   servisní klíč, který do aplikace nepatří). Návrh: správcem je automaticky
   ten, kdo kampaň zakládá. Odchylka od zadání z 29. 7., kap. 4 krok 1.
+- 2026-07-31 · majitel · **Správce kampaně = ten, kdo ji zakládá** (potvrzeno),
+  a smí pověřit **zástup** — druhou osobu, která kampaň upraví, když on
+  nemůže (nemoc, dovolená). **Úpravy se tím zamykají** na správce, zástup
+  a admina; dosud do každé kampaně směl kdokoli přihlášený (`kampane_zapis`,
+  migrace 0018) a pole `spravce` bylo jen informativní cedulka.
+- 2026-07-31 · majitel · **Zástup kampaň neschvaluje** — schválení zůstává
+  na adminovi a výš. Zastupitelnost u schvalování už existuje, admini jsou
+  dva. Zástup také NENÍ nová role „editor": je to pověření ke konkrétní
+  kampani, role zůstávají tři.
+- 2026-07-31 · Claude · **Vznikne malá evidence lidí (`uzivatele`: id, e-mail)**
+  plněná spouští při vzniku účtu. Důvod: vypsat přihlašovací účty umí jen
+  servisní klíč, který obchází všechna pravidla přístupu — a ten nesmí do
+  programu běžícího v prohlížeči, protože si ho tam kdokoli přečte. Role se
+  do tabulky NEKOPÍRUJE (mění se v `app_metadata` a druhý opis by se rozešel).
+- 2026-07-31 · Claude · **Zamyká se i `kampan_firmy` a `pruzkumy`**, ne jen
+  `kampane`. Zamknout kampaň a nechat její seznam firem otevřený by byl
+  zámek na dveřích vedle otevřeného okna.

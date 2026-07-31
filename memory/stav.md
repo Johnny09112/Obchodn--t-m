@@ -174,14 +174,32 @@ nic z toho, co majitel našel za pět minut — nenasazené migrace, neuložené
 41 firem. Frontendovou práci **nelze prohlásit za hotovou bez proklikání**;
 detaily v `poznatky.md`.
 
-## DALŠÍ KROK: etapa B+ — naplánovaný běh Čmuchala
+## Etapa B+ hotová — čeká na zapnutí úloh (2026-07-31)
 
-Bez ní krok 3 průvodce čeká na průzkum, který nikdo nespustí. Serverová
-práce, žádné obrazovky. Teprve potom mají smysl kroky 3 a 4.
-Postup: `docs/PRUVODCE-KAMPANI-POSTUP.md`.
+**402 testů zelených**, migrace 0026–0027 nasazené. `cli pruzkum obsluz`
+si vezme objednávky z fronty sám; zámek (`zamky`) hlídá jeden běh naráz
+a spadlý běh se po 15 minutách dá převzít.
 
-**Otevřené:** interval plánovače a kde poběží. Pozor — dva běhy nad toutéž
-objednávkou by si rvaly úseky, plánovač musí zaručit jeden naráz.
+Běží **u majitele na počítači** — Čmuchal potřebuje 521 MB registru ČSÚ,
+který je jen na jeho disku, takže server by znamenal ten soubor někam
+dostávat a udržovat. Cena: běží, jen když je počítač zapnutý.
+
+**ZBÝVÁ MAJITELI:** založit naplánované úlohy podle
+`skripty/NAPLANOVANI.md` (3× denně + hlídka urgentů po 10 min).
+Do nastavení systému nesahám.
+
+**Urgentní objednávky:** databázová i agentní část hotová
+(`pruzkumy.urgentni`, `cli pruzkum obsluz --jen-urgentni`). **Tlačítko
+v aplikaci zatím není** — patří ke kroku 3 průvodce, kde se průzkum
+objednává, tedy do etapy C. Tlačítko agenta nespustí, jen objednávku
+označí; víc z prohlížeče udělat nejde.
+
+## DALŠÍ KROK: kroky 3 a 4 průvodce (etapa C)
+
+Krok 3 — průzkum (včetně tlačítka „spěchá"), krok 4 — seznam firem
+s důvody vyřazení a schválení. Návrh obrazovek je hotový a odsouhlasený:
+`docs/superpowers/specs/2026-07-31-pruvodce-kampani-obrazovky-design.md`.
+Chybí v něm doplnit dialog a proužek postupu, které etapa B odložila.
 
 ## Průvodce kampaní: etapa A — návrh (2026-07-31)
 

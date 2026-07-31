@@ -17,7 +17,7 @@ export function Oblasti({ role }: { role: Role }) {
           když usekne sousední město v půlce, obkreslete tvar ručně.
         </p>
       </div>
-      <MapaOblasti role={role} />
+      <MapaOblasti role={role} dovolUklid />
     </>
   );
 }

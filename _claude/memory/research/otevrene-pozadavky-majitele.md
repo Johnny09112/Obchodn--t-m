@@ -12,10 +12,9 @@ Seřazeno podle souvislostí, ne podle důležitosti.
 
 ## 1. Oblasti: úklid, výběr, více oblastí na kampaň
 
-1. **Mazání nepoužitých oblastí.** Oblast je jen plocha — smazat nepoužitou
-   riziko není. **ALE `pruzkumy.oblast_id` je `on delete cascade`**, takže by
-   se smazal i záznam průzkumu. Srovnat na `restrict` a mazání povolit jen
-   u oblasti bez kampaně i průzkumu. Vyhradit adminovi.
+1. ~~**Mazání nepoužitých oblastí.**~~ **HOTOVO 1. 8.** (migrace 0028) —
+   `restrict` na průzkumu, mazání vyhrazené adminovi, hláška jménem kampaně.
+   Viz [[mazani-oblasti]]. Past byla horší, než se čekalo: mazat směl celý tým.
 2. **Seznam oblastí s detailem** místo klikání do mapy — kdy naposled
    prozkoumaná, kolik firem, v jakých kampaních je.
 3. **Kampaň nad více oblastmi** (`kampan_oblasti`, mnoho k mnoha). Skutečné

@@ -8,6 +8,7 @@
 
 ## Decisions
 - [[hlidka-cmuchala-u-majitele]] — Naplánovaný běh Čmuchala je ikona u hodin na majitelově počítači · active · 2026-08-01
+- [[mazani-oblasti]] — Kdo smí mazat oblasti a co jim v tom brání — kampaň a průzkum, ne firmy · active · 2026-08-01
 - [[odesilani-zakazano-jen-docasne]] — Zákaz odesílání je bezpečnostní pojistka do fáze 3, ne trvalá zásada · active · 2026-08-01
 - [[pamet-projektu-ve-vaultu]] — Paměť projektu se přestěhovala z memory/ do vaultu _claude/ · active · 2026-08-01
 - [[sito-mezi-oblasti-a-kampani]] — Síto koho neoslovovat sedí na hranici oblast → kampaň, ne v přepočtu oblasti · active · 2026-08-01

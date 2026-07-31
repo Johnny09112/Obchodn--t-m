@@ -7,21 +7,29 @@ import { najdiPrekryv, naOblast, spoctiVrstvy } from "./vrstvy";
 import { najdiMisto, type Misto } from "./hledaniMista";
 import { bodVOblasti, type Oblast } from "../../src/oblast-tvar";
 import { vzdalenostM, type Bod } from "../../src/geo";
+import { drziOblast } from "../../src/oblast-vyuziti";
 import {
   nactiFirmy,
   nactiJidelny,
   nactiKategorie,
   nactiOblasti,
+  smazOblast,
+  zjistiVyuzitiOblasti,
   type Firma,
   type Jidelna,
   type Kategorie,
   type RadekOblasti,
+  type VyuzitiOblasti,
 } from "./data";
 
 /** Když ještě nejsou data, dívej se na Plzeňsko — tam jsou všechny jídelny. */
 const VYCHOZI = { stred: { lat: 49.7475, lng: 13.3776 }, zoom: 10 };
 
 const SMI_ZAPISOVAT: Role[] = ["super-admin", "admin", "uzivatel"];
+
+// Mazání dat rozhoduje majitel — stejné pravidlo jako u kampaní. Vynucuje
+// ho databáze (`oblasti_mazani`), tady se podle něj jen skrývá tlačítko.
+const SMI_MAZAT: Role[] = ["super-admin", "admin"];
 
 export interface MapaOblastiProps {
   /** Kdo se dívá — kreslit smí jen tým, host jen prohlíží. */
@@ -33,6 +41,11 @@ export interface MapaOblastiProps {
    * načtení — kdyby se hlídala trvale, prala by se s výběrem v mapě.
    */
   vybranaId?: string | null;
+  /**
+   * Nabídnout mazání oblastí. Jen na obrazovce Oblasti — v průvodci kampaní
+   * se území vybírá, ne uklízí, a tlačítko Smazat by tam byla past.
+   */
+  dovolUklid?: boolean;
 }
 
 /**
@@ -41,7 +54,12 @@ export interface MapaOblastiProps {
  * Sdílená obrazovkou Oblasti a průvodcem kampaní. Dvě samostatné mapy by se
  * časem rozešly — oprava v jedné by tu druhou minula.
  */
-export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
+export function MapaOblasti({
+  role,
+  onVyber,
+  vybranaId,
+  dovolUklid = false,
+}: MapaOblastiProps) {
   const [firmy, setFirmy] = useState<Firma[]>([]);
   const [jidelny, setJidelny] = useState<Jidelna[]>([]);
   const [kategorie, setKategorie] = useState<Kategorie[]>([]);
@@ -57,6 +75,10 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
   const [uklada, setUklada] = useState(false);
   const [hlaska, setHlaska] = useState<string | null>(null);
   const [zobrazene, setZobrazene] = useState<ReadonlySet<string>>(new Set());
+
+  const [vyuziti, setVyuziti] = useState<VyuzitiOblasti | null>(null);
+  const [keSmazani, setKeSmazani] = useState(false);
+  const [maze, setMaze] = useState(false);
 
   const [dotazMista, setDotazMista] = useState("");
   const [nalezena, setNalezena] = useState<Misto[]>([]);
@@ -108,6 +130,27 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
     }, 600);
     return () => clearTimeout(casovac);
   }, [dotazMista]);
+
+  // Co otevřenou oblast drží naživu. Zjišťuje se dopředu, aby šlo říct
+  // „používá ji kampaň Plzeň", a ne až po neúspěšném smazání.
+  useEffect(() => {
+    if (!dovolUklid || !upravovanaId) {
+      setVyuziti(null);
+      return;
+    }
+    let platne = true;
+    setVyuziti(null);
+    zjistiVyuzitiOblasti(upravovanaId)
+      .then((v) => {
+        if (platne) setVyuziti(v);
+      })
+      .catch(() => {
+        if (platne) setVyuziti(null);
+      });
+    return () => {
+      platne = false;
+    };
+  }, [upravovanaId, dovolUklid]);
 
   function prepniVrstvu(id: string) {
     setZobrazene((p) => {
@@ -311,6 +354,24 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
     );
   }
 
+  async function potvrdSmazani() {
+    if (!upravovanaId) return;
+    setMaze(true);
+    try {
+      await smazOblast(upravovanaId);
+      setKeSmazani(false);
+      setOblasti((p) => p.filter((o) => o.id !== upravovanaId));
+      const smazana = nazev;
+      zahod();
+      setHlaska(`Oblast „${smazana}“ je smazaná.`);
+    } catch (e) {
+      setKeSmazani(false);
+      setHlaska((e as Error).message);
+    } finally {
+      setMaze(false);
+    }
+  }
+
   if (chyba) {
     return (
       <p className="hlaska" role="alert">
@@ -481,6 +542,32 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
               )}
             </>
 
+            {dovolUklid && upravovanaId && SMI_MAZAT.includes(role) && (
+              <div className="uklid-oblasti">
+                {vyuziti === null ? (
+                  <p className="poznamka">Zjišťuji, jestli oblast někde nefiguruje…</p>
+                ) : drziOblast(vyuziti) ? (
+                  <p className="poznamka">
+                    <strong>Smazat nejde.</strong> {drziOblast(vyuziti)}
+                  </p>
+                ) : (
+                  <>
+                    <p className="poznamka">
+                      Oblast nikdo nepoužívá — nedrží ji kampaň ani průzkum.
+                    </p>
+                    <div className="tlacitka vlevo">
+                      <button
+                        className="tlacitko tise nebezpecne"
+                        onClick={() => setKeSmazani(true)}
+                      >
+                        Smazat oblast
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {hlaska && <p className="poznamka zvyraznena">{hlaska}</p>}
           </div>
         )}
@@ -525,6 +612,37 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
           bezSouradnic={navrh ? bezSouradnic : 0}
         />
       </div>
+
+      {keSmazani && (
+        <div className="zaclona" role="dialog" aria-modal="true" aria-label="Smazat oblast">
+          <div className="dialog">
+            <h3>Smazat oblast „{nazev}“?</h3>
+            <p>
+              {vyuziti && vyuziti.firem > 0
+                ? `Zmizí nakreslený tvar a s ním i seznam ${vyuziti.firem.toLocaleString("cs")} firem uvnitř. Vrátit to nepůjde.`
+                : "Zmizí nakreslený tvar. Vrátit to nepůjde."}
+            </p>
+            {vyuziti && vyuziti.firem > 0 && (
+              <p className="poznamka">
+                Firmy samotné zůstanou — mizí jen údaj o tom, že spadly do téhle
+                plochy. Kdykoli nakreslíte oblast znovu, spočítá se znovu i on.
+              </p>
+            )}
+            <div className="tlacitka vlevo">
+              <button
+                className="tlacitko tise"
+                onClick={() => setKeSmazani(false)}
+                disabled={maze}
+              >
+                Nechat být
+              </button>
+              <button className="tlacitko nebezpecne" onClick={potvrdSmazani} disabled={maze}>
+                {maze ? "Mažu…" : "Smazat nadobro"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

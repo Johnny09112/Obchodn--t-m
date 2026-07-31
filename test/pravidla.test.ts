@@ -36,10 +36,13 @@ describe("role a pravidla přístupu", () => {
   });
 
   it("oblasti smí tým i zakládat — kvůli tomu aplikace vzniká", async () => {
+    // Zakládat a upravovat smí celý tým, mazat jen správce (migrace 0028).
+    // Dřív to bylo jedno pravidlo pro ALL, které mazání pouštělo taky —
+    // podrobnosti v test/oblast-uklid.test.ts.
     const p = await db.query<{ policyname: string; cmd: string }>(
       `select policyname, cmd from pg_policies where tablename = 'oblasti' order by policyname`,
     );
-    expect(p.map((x) => x.cmd).sort()).toEqual(["ALL", "SELECT"]);
+    expect(p.map((x) => x.cmd).sort()).toEqual(["DELETE", "INSERT", "SELECT", "UPDATE"]);
   });
 
   it("blacklist a jídelny mění jen správci", async () => {

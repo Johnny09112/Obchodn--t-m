@@ -1,6 +1,9 @@
 import { supabase } from "./supabase";
 import type { Pravidlo } from "../../src/sito";
 import { duvodNeoslovovat } from "../../src/sito";
+import type { VyuzitiOblasti } from "../../src/oblast-vyuziti";
+
+export type { VyuzitiOblasti };
 
 export interface Firma {
   ico: string;
@@ -108,6 +111,51 @@ export async function nactiOblasti(): Promise<RadekOblasti[]> {
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as RadekOblasti[];
+}
+
+/**
+ * Zjistí, co oblast drží naživu — kvůli hlášce dřív, než se maže.
+ *
+ * Kampaně se berou včetně archivovaných: archiv je jen úklid z přehledu,
+ * kampaň pořád existuje a na oblast se odkazuje.
+ */
+export async function zjistiVyuzitiOblasti(id: string): Promise<VyuzitiOblasti> {
+  const [k, p, f] = await Promise.all([
+    supabase.from("kampane").select("nazev").eq("oblast_id", id),
+    supabase.from("pruzkumy").select("id", { count: "exact", head: true }).eq("oblast_id", id),
+    supabase
+      .from("oblast_firmy")
+      .select("ico", { count: "exact", head: true })
+      .eq("oblast_id", id),
+  ]);
+  const chyba = k.error ?? p.error ?? f.error;
+  if (chyba) throw new Error(chyba.message);
+  return {
+    kampane: (k.data ?? []).map((x) => x.nazev as string),
+    pruzkumu: p.count ?? 0,
+    firem: f.count ?? 0,
+  };
+}
+
+/**
+ * Smaže oblast i s jejím seznamem firem.
+ *
+ * Databáze to pustí jen adminovi (pravidlo `oblasti_mazani`) a jen u oblasti,
+ * kterou nedrží kampaň ani průzkum (cizí klíče, migrace 0028). Obojí se tedy
+ * nedá obejít z prohlížeče; tady se to jen převádí na větu pro člověka.
+ */
+export async function smazOblast(id: string): Promise<void> {
+  const { data, error } = await supabase.from("oblasti").delete().eq("id", id).select("id");
+  if (error) {
+    // Hláška Postgresu o porušení cizího klíče nikomu nic neřekne.
+    throw new Error(
+      "Oblast se smazat nedá — drží ji kampaň nebo objednaný průzkum. " +
+        "Zmizel by s ní i doklad o tom, jaké území se kdy analyzovalo.",
+    );
+  }
+  if (!data || data.length === 0) {
+    throw new Error("Smazání neprošlo. Mazat oblasti smí jen správce.");
+  }
 }
 
 export function maSpojeni(f: Firma): boolean {

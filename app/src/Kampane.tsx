@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { PruvodceKampani } from "./PruvodceKampani";
 import {
   archivujKampan,
+  dalsiBehZa,
   nactiKampane,
+  nactiPruzkumKampane,
   smazKampan,
   POPIS_STAVU_KAMPANE,
   type RadekKampane,
 } from "./data";
 import type { Role } from "./supabase";
+import { postupPruzkumu, type Postup } from "../../src/pruzkum-postup";
 
 /** Datum bez času — v seznamu jde o „kdy naposled", ne o minuty. */
 function den(iso: string): string {
@@ -25,12 +28,48 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
   /** Kampaň čekající na potvrzení smazání. */
   const [keSmazani, setKeSmazani] = useState<RadekKampane | null>(null);
   const [pracuje, setPracuje] = useState(false);
+  const [postupy, setPostupy] = useState<Map<string, Postup>>(new Map());
 
   const jeAdmin = role === "admin" || role === "super-admin";
 
+  /**
+   * Postup průzkumu u kampaní, které na něj čekají.
+   *
+   * Načítá se zvlášť a jen pro ně — stav „čeká na průzkum" sám o sobě
+   * neříká, jestli se něco děje, nebo objednávka stojí ve frontě za jinou.
+   */
+  async function nactiPostupy(radky: RadekKampane[]) {
+    const cekajici = radky.filter((k) => k.stav === "ceka_na_pruzkum");
+    const dvojice = await Promise.all(
+      cekajici.map(async (k) => {
+        try {
+          const p = await nactiPruzkumKampane(k.id);
+          if (!p) return null;
+          return [
+            k.id,
+            postupPruzkumu({
+              stav: p.stav,
+              useky: p.useky,
+              bezPredMinutami: p.bezPredMinutami,
+              bezicíObec: p.bezicíObec,
+              blokujeJiny: p.blokujeJiny,
+              dalsiBehZa: dalsiBehZa(p.urgentni),
+            }),
+          ] as const;
+        } catch {
+          return null;
+        }
+      }),
+    );
+    setPostupy(new Map(dvojice.filter((d): d is readonly [string, Postup] => d !== null)));
+  }
+
   function obnov() {
     return nactiKampane()
-      .then(setKampane)
+      .then((radky) => {
+        setKampane(radky);
+        void nactiPostupy(radky);
+      })
       .catch((e: Error) => setChyba(e.message));
   }
 
@@ -147,6 +186,12 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
                           <span className="znak" />
                           {s.popis}
                         </span>
+                        {/* Stav sám o sobě neříká, na co se čeká. Tohle ano. */}
+                        {postupy.get(k.id) && (
+                          <span className="postup-popis na-radek">
+                            {postupy.get(k.id)!.popis}
+                          </span>
+                        )}
                       </td>
                       <td>{k.oblast_id ? "vybrané" : "—"}</td>
                       <td>{k.spravce}</td>

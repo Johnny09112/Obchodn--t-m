@@ -244,23 +244,81 @@ export interface StavPruzkumu {
   id: string;
   stav: string;
   urgentni: boolean;
-  useky: { stav: string }[];
+  useky: { stav: string; obec: string }[];
+  /** Jak dlouho objednávka běží nebo čeká, v minutách. */
+  bezPredMinutami: number;
+  /** Obec, která se právě zpracovává. */
+  bezicíObec: string | null;
+  /** Oblast jiného průzkumu, který drží frontu — běží jen jeden naráz. */
+  blokujeJiny: string | null;
 }
+
+type RadekPruzkumu = {
+  id: string;
+  stav: string;
+  urgentni: boolean;
+  pozadano_at: string;
+  pruzkum_useky: { stav: string; obec: string }[];
+};
 
 export async function nactiPruzkumKampane(kampanId: string): Promise<StavPruzkumu | null> {
   const { data, error } = await supabase
     .from("pruzkumy")
-    .select("id,stav,urgentni,pruzkum_useky(stav)")
+    .select("id,stav,urgentni,pozadano_at,pruzkum_useky(stav,obec)")
     .eq("kampan_id", kampanId)
     .order("pozadano_at", { ascending: false })
     .limit(1);
   if (error) throw new Error(error.message);
 
-  const r = data?.[0] as
-    | { id: string; stav: string; urgentni: boolean; pruzkum_useky: { stav: string }[] }
-    | undefined;
+  const r = (data?.[0] as RadekPruzkumu | undefined) ?? null;
   if (!r) return null;
-  return { id: r.id, stav: r.stav, urgentni: r.urgentni, useky: r.pruzkum_useky ?? [] };
+
+  const useky = r.pruzkum_useky ?? [];
+  const minuty = Math.max(
+    0,
+    Math.round((Date.now() - new Date(r.pozadano_at).getTime()) / 60000),
+  );
+
+  // Když objednávka ještě nezačala, zjisti, jestli frontu nedrží jiná.
+  // Bez toho člověk kouká na „čeká" a netuší, na co se vlastně čeká.
+  let blokujeJiny: string | null = null;
+  if (useky.length === 0 && (r.stav === "ceka" || r.stav === "bezi")) {
+    const jine = await supabase
+      .from("pruzkumy")
+      .select("oblasti(nazev)")
+      .eq("stav", "bezi")
+      .neq("id", r.id)
+      .limit(1);
+    const prvni = jine.data?.[0] as { oblasti: { nazev: string } | null } | undefined;
+    blokujeJiny = prvni?.oblasti?.nazev ?? null;
+  }
+
+  return {
+    id: r.id,
+    stav: r.stav,
+    urgentni: r.urgentni,
+    useky,
+    bezPredMinutami: minuty,
+    bezicíObec: useky.find((u) => u.stav === "bezi")?.obec ?? null,
+    blokujeJiny,
+  };
+}
+
+/**
+ * Za kolik minut se hlídka podívá do fronty.
+ *
+ * Řádné běhy v 8:00, 13:00 a 19:00; urgentní objednávky každých 10 minut
+ * (viz `skripty/cmuchal-hlidka.ps1`). Je to odhad podle rozvrhu, ne dotaz
+ * na hlídku — ta o sobě nedává vědět a při vypnutém počítači neběží vůbec.
+ */
+export function dalsiBehZa(urgentni: boolean, ted: Date = new Date()): number {
+  if (urgentni) return 10 - (ted.getMinutes() % 10);
+  const okna = [8, 13, 19];
+  const minutyDne = ted.getHours() * 60 + ted.getMinutes();
+  for (const h of okna) {
+    if (h * 60 > minutyDne) return h * 60 - minutyDne;
+  }
+  return 24 * 60 - minutyDne + okna[0]! * 60;
 }
 
 /**

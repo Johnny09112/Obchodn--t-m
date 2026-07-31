@@ -1086,3 +1086,12 @@ input[type="range"] {
   font-size: var(--t-maly);
   color: var(--inkoust-slaby);
 }
+
+/* Postup pod stavem v seznamu kampaní — druhá věta, ne druhý sloupec. */
+.postup-popis.na-radek {
+  display: block;
+  margin-top: 0.25rem;
+  max-width: 26rem;
+  white-space: normal;
+  line-height: 1.4;
+}

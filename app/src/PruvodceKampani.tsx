@@ -9,6 +9,7 @@ import {
   nactiPruzkumKampane,
   objednejPruzkumZAplikace,
   oznacUrgentni,
+  dalsiBehZa,
   nactiFirmyKampane,
   naplnKampanZOblasti,
   nejlepsiUroven,
@@ -24,6 +25,7 @@ import { naOblast } from "./vrstvy";
 import { supabase, type Role } from "./supabase";
 import { duvodNeoslovovat } from "../../src/sito";
 import { bodVOblasti } from "../../src/oblast-tvar";
+import { postupPruzkumu } from "../../src/pruzkum-postup";
 
 /** Kdo smí kampaň upravovat. Totéž hlídá databáze — tohle je jen pohodlí. */
 function smiUpravovat(kampan: RadekKampane | null, role: Role, email: string): boolean {
@@ -377,9 +379,18 @@ export function PruvodceKampani({
   // ── krok 3: průzkum
 
   if (krok === 3) {
-    const hotovo = pruzkum?.useky.filter((u) => u.stav === "hotovo").length ?? 0;
     const celkem = pruzkum?.useky.length ?? 0;
     const bezi = pruzkum?.stav === "ceka" || pruzkum?.stav === "bezi";
+    const postup = pruzkum
+      ? postupPruzkumu({
+          stav: pruzkum.stav,
+          useky: pruzkum.useky,
+          bezPredMinutami: pruzkum.bezPredMinutami,
+          bezicíObec: pruzkum.bezicíObec,
+          blokujeJiny: pruzkum.blokujeJiny,
+          dalsiBehZa: dalsiBehZa(pruzkum.urgentni),
+        })
+      : null;
 
     return (
       <div className="sloupec">
@@ -443,9 +454,7 @@ export function PruvodceKampani({
                   ))
                 )}
               </div>
-              <span className="postup-popis">
-                {celkem === 0 ? "čeká na vyzvednutí" : `hotovo ${hotovo} z ${celkem} obcí`}
-              </span>
+              <span className="postup-popis">{postup?.popis}</span>
             </div>
 
             <p className="hlaska je-klid">

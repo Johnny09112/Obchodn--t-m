@@ -19,6 +19,27 @@
   --cihla: #8e3b2c;
   --zelen: #3f6b3a;
 
+  /* Dosud psané natvrdo na šesti místech. */
+  --bila: #fff;
+  --razitko-tmave: #243c67;
+  --cihla-svetle: #f7ecea;
+  --zelen-svetle: #e6efe4;
+
+  /* Stupnice odstupů a velikostí. Bez nich se rozměry píšou od oka
+     a se čtyřmi novými obrazovkami se to rozjede. */
+  --o1: 0.25rem;
+  --o2: 0.5rem;
+  --o3: 0.75rem;
+  --o4: 1rem;
+  --o5: 1.5rem;
+  --o6: 2rem;
+  --t-mikro: 0.75rem;
+  --t-maly: 0.8125rem;
+  --t-drobny: 0.875rem;
+  --t-zaklad: 0.9375rem;
+  --t-nadpis: 1.25rem;
+  --t-velky: 1.75rem;
+
   --pismo-display: "Familjen Grotesk", system-ui, sans-serif;
   --pismo-text: "IBM Plex Sans", system-ui, sans-serif;
   --pismo-data: "IBM Plex Mono", ui-monospace, monospace;
@@ -140,7 +161,7 @@ select {
 .pole > input {
   width: 100%;
   padding: 0.55rem 0.65rem;
-  background: #fff;
+  background: var(--bila);
   border: 1px solid var(--linka);
   border-radius: var(--r);
 }
@@ -154,7 +175,7 @@ select {
   padding: 0.6rem 1rem;
   margin-top: 0.4rem;
   background: var(--razitko);
-  color: #fff;
+  color: var(--bila);
   border: 1px solid var(--razitko);
   border-radius: var(--r);
   font-weight: 600;
@@ -162,7 +183,7 @@ select {
 }
 
 .tlacitko:hover:not(:disabled) {
-  background: #243c67;
+  background: var(--razitko-tmave);
 }
 
 .tlacitko:disabled {
@@ -191,8 +212,24 @@ select {
   border-radius: var(--r);
   font-size: 0.875rem;
   border-left: 3px solid var(--cihla);
-  background: #f7ecea;
+  background: var(--cihla-svetle);
   color: var(--cihla);
+}
+
+/*
+ * Hláška má tři podoby. Dosud existovala jen chybová (cihlová), takže
+ * „objednáno, čeká se" by se tvářilo jako chyba.
+ */
+.hlaska.je-klid {
+  border-left-color: var(--razitko);
+  background: var(--razitko-svetle);
+  color: var(--razitko);
+}
+
+.hlaska.je-hotovo {
+  border-left-color: var(--zelen);
+  background: var(--zelen-svetle);
+  color: var(--zelen);
 }
 
 .patka {
@@ -641,7 +678,7 @@ h2 {
   margin-top: 0.9rem;
   padding: 0.6rem 0.7rem;
   border-left: 3px solid var(--cihla);
-  background: #f7ecea;
+  background: var(--cihla-svetle);
   border-radius: var(--r);
 }
 
@@ -824,7 +861,7 @@ input[type="range"] {
 .pole > select {
   width: 100%;
   padding: 0.5rem 0.6rem;
-  background: #fff;
+  background: var(--bila);
   border: 1px solid var(--linka);
   border-radius: var(--r);
 }
@@ -880,4 +917,61 @@ input[type="range"] {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ────────────────────────────────────────────────────────────── krokovník */
+
+/*
+ * Ukazatel kroku průvodce. Je to seznam, ne obrázek — čtečka obrazovky
+ * pak přečte „krok 2 ze 4, Území".
+ */
+.krokovnik {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--o1) var(--o3);
+  padding: 0 0 var(--o3);
+  margin: 0 0 var(--o4);
+  border-bottom: 1px solid var(--linka);
+  font-size: var(--t-drobny);
+  list-style: none;
+}
+
+.krok {
+  display: flex;
+  align-items: center;
+  gap: var(--o2);
+  color: var(--inkoust-slaby);
+}
+
+.krok > .cislo {
+  width: 1.35rem;
+  height: 1.35rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--linka);
+  border-radius: 50%;
+  font-family: var(--pismo-data);
+  font-size: var(--t-mikro);
+  flex: none;
+}
+
+.krok.hotovy {
+  color: var(--zelen);
+}
+
+.krok.hotovy > .cislo {
+  border-color: var(--zelen);
+  background: var(--zelen);
+  color: var(--bila);
+}
+
+.krok.tady {
+  color: var(--razitko);
+  font-weight: 600;
+}
+
+.krok.tady > .cislo {
+  border-color: var(--razitko);
+  border-width: 2px;
+  color: var(--razitko);
 }

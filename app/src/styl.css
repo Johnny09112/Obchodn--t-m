@@ -1043,3 +1043,46 @@ input[type="range"] {
 .tlacitko.nebezpecne:hover:not(:disabled) {
   background: #7a3226;
 }
+
+/* ──────────────────────────────────────────────── postup po obcích */
+
+/*
+ * Průzkum se dělí na úseky po obcích a jejich stav je v databázi — proužek
+ * ho jen ukazuje, nic se nepočítá znovu. Stav nese barva i výplň.
+ */
+.postup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--o2);
+  margin: var(--o3) 0;
+}
+
+.postup-pruh {
+  display: flex;
+  gap: 2px;
+}
+
+.postup-pruh > i {
+  flex: 1;
+  height: 0.5rem;
+  background: var(--linka);
+  border-radius: 1px;
+}
+
+.postup-pruh > i.hotovo {
+  background: var(--zelen);
+}
+
+.postup-pruh > i.bezi {
+  background: var(--horcice);
+}
+
+.postup-pruh > i.selhalo {
+  background: var(--cihla);
+}
+
+.postup-popis {
+  font-family: var(--pismo-data);
+  font-size: var(--t-maly);
+  color: var(--inkoust-slaby);
+}

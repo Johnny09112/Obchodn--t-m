@@ -834,3 +834,13 @@ Uvěřil jsem výpisu.
 **Pravidlo:** u každé automatické úpravy textu porovnat před a po, a když se
 nic nezměnilo, KŘIČET. Používám to už jinde (`if(d===pred) console.log('POZOR…')`)
 — chyba byla, že ne pokaždé.
+
+## Velký seznam v kampani se vykresluje celý (2026-07-31, k dořešení)
+
+Krok 4 průvodce vypsal 532 firem naráz a prohlížeč to zvládl. U kampaně nad
+celým krajem to ale poroste — Karlovarsko samo má 71 obcí a průzkum ještě
+neskončil. Až seznam přeroste řádově tisíce, bude potřeba stránkování nebo
+virtuální seznam.
+
+Není to dnešní problém a schválně se to nestaví dopředu; zapsáno, aby se na
+to přišlo dřív, než to začne vadit uživateli.

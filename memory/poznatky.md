@@ -844,3 +844,26 @@ virtuální seznam.
 
 Není to dnešní problém a schválně se to nestaví dopředu; zapsáno, aby se na
 to přišlo dřív, než to začne vadit uživateli.
+
+## Aplikace má vlastní seznam závislostí — Vercel kořenové neinstaluje (2026-07-31)
+
+`vercel.json` má `installCommand: "npm install --prefix app"`. Nainstalují se
+tedy **jen** závislosti z `app/package.json`; kořenové `node_modules` na
+Vercelu vůbec nevzniknou. Lokálně to nepoznáš, protože tady kořenové
+závislosti jsou a rozlišování jde nahoru.
+
+Konkrétně: `app/tsconfig.json` potřebuje `@types/node` (aplikace si přes
+`src/kvalifikace.ts` → `blacklist.ts` přitáhne `db.ts`). V kořeni byl,
+v `app/package.json` ne → sestavení na Vercelu by spadlo, doma prošlo.
+
+**Horší zjištění:** sestavení aplikace padalo **od etapy B**, kdy si krok 2
+začal tahat sdílené síto. Chyby na `db.ts` (`process`, `node:fs`) tam byly
+celou dobu a nikdo si jich nevšiml, protože jsem pouštěl jen kořenový
+typecheck, který do `app/` nesahá. Nasazená verze na Vercelu tak byla
+zastaralá o celou etapu B.
+
+**Pravidla:**
+- Před tvrzením „nasadí se to samo" pustit **přesně ten příkaz, který pouští
+  Vercel**: `npm run build --prefix app`. Ne kořenový typecheck.
+- Co potřebuje typová kontrola aplikace, musí být v `app/package.json`,
+  ne jen v kořeni.

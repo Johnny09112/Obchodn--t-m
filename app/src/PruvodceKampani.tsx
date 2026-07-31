@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { Krokovnik } from "./Krokovnik";
-import { nactiLidi, type Clovek } from "./data";
+import { MapaOblasti } from "./MapaOblasti";
+import {
+  nactiFirmy,
+  nactiLidi,
+  nactiOblasti,
+  nactiPravidlaSita,
+  type Clovek,
+} from "./data";
+import { naOblast } from "./vrstvy";
 import { supabase, type Role } from "./supabase";
+import { duvodNeoslovovat } from "../../src/kvalifikace";
+import { bodVOblasti } from "../../src/oblast-tvar";
 
 /**
  * Průvodce kampaní, kroky 1 a 2.
@@ -28,6 +38,8 @@ export function PruvodceKampani({
   const [lide, setLide] = useState<Clovek[]>([]);
   const [uklada, setUklada] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
+  const [oblastId, setOblastId] = useState<string | null>(null);
+  const [pocty, setPocty] = useState<{ uvnitr: number; projde: number } | null>(null);
 
   useEffect(() => {
     // Seznam lidí je pro výběr zástupu. Když se nenačte, průvodce funguje
@@ -36,6 +48,54 @@ export function PruvodceKampani({
       .then(setLide)
       .catch(() => setLide([]));
   }, []);
+
+  // Kolik firem v území leží a kolik jich projde sítem. Dvě čísla, ne jedno:
+  // mezi územím a kampaní je síto, takže se liší — a kdyby to obrazovka
+  // zamlčela, vypadal by rozdíl v posledním kroku jako chyba.
+  useEffect(() => {
+    if (!oblastId) {
+      setPocty(null);
+      return;
+    }
+    let platne = true;
+
+    Promise.all([nactiFirmy(), nactiOblasti(), nactiPravidlaSita()])
+      .then(([firmy, oblasti, sito]) => {
+        if (!platne) return;
+        const radek = oblasti.find((o) => o.id === oblastId);
+        if (!radek) {
+          setPocty(null);
+          return;
+        }
+        const tvar = naOblast(radek);
+
+        const uvnitr = firmy.filter(
+          (f) =>
+            f.lat !== null &&
+            f.lng !== null &&
+            bodVOblasti(tvar, { lat: f.lat, lng: f.lng }),
+        );
+        const projde = uvnitr.filter(
+          (f) =>
+            duvodNeoslovovat({
+              ico: f.ico,
+              nazev: f.nazev,
+              czNace: f.cz_nace,
+              pravniForma: f.pravni_forma,
+              maVlastniJidelnu: f.ma_vlastni_jidelnu,
+              partnerskaIca: sito.partnerskaIca,
+              blacklist: sito.blacklist,
+            }) === null,
+        );
+
+        setPocty({ uvnitr: uvnitr.length, projde: projde.length });
+      })
+      .catch(() => setPocty(null));
+
+    return () => {
+      platne = false;
+    };
+  }, [oblastId]);
 
   async function zaloz() {
     if (!nazev.trim()) {
@@ -67,17 +127,58 @@ export function PruvodceKampani({
   }
 
   if (krok === 2) {
+    const vyrazeno = pocty ? pocty.uvnitr - pocty.projde : 0;
     return (
-      <div className="sloupec">
-        <h2>Nová kampaň</h2>
-        <Krokovnik krok={2} />
-        <p className="hlaska je-klid">Území se vybírá v mapě — přijde vzápětí.</p>
-        <div className="tlacitka">
-          <button className="tlacitko tise" onClick={onHotovo}>
-            Zpět na kampaně
-          </button>
+      <>
+        <div className="sloupec">
+          <h2>Nová kampaň</h2>
+          <Krokovnik krok={2} />
+          <p className="podnadpis">
+            Vyberte v mapě území, ze kterého se kampaň naplní — nebo nakreslete
+            nové.
+          </p>
         </div>
-      </div>
+
+        <MapaOblasti role={role} vybranaId={oblastId} onVyber={setOblastId} />
+
+        <div className="sloupec">
+          {pocty && (
+            <>
+              <p className="udaj">
+                <span className="popisek">V území leží</span>
+                <span className="hodnota">{pocty.uvnitr}</span>
+              </p>
+              <p className="udaj">
+                <span className="popisek">Do kampaně projde</span>
+                <span className="hodnota">{pocty.projde}</span>
+              </p>
+              {vyrazeno > 0 && (
+                <p className="hlaska je-klid">
+                  {vyrazeno === 1 ? "Jednu firmu" : `${vyrazeno} firem`} síto
+                  nepustí — je na blacklistu, je to bytový dům, naše partnerská
+                  jídelna, nebo má vlastní jídelnu. Důvod u každé uvidíte
+                  v posledním kroku.
+                </p>
+              )}
+            </>
+          )}
+
+          {!oblastId && (
+            <p className="poznamka">
+              Nejdřív vyberte v mapě oblast, nebo nakreslete novou.
+            </p>
+          )}
+
+          <div className="tlacitka">
+            <button className="tlacitko tise" onClick={onHotovo}>
+              Zpět na kampaně
+            </button>
+            <button className="tlacitko tise" disabled={!oblastId} onClick={onHotovo}>
+              Pokračovat na průzkum
+            </button>
+          </div>
+        </div>
+      </>
     );
   }
 

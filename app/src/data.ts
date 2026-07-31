@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { Pravidlo } from "../../src/blacklist";
 
 export interface Firma {
   ico: string;
@@ -11,6 +12,9 @@ export interface Firma {
   kategorie: string | null;
   skore: number | null;
   stav: string;
+  cz_nace: string[];
+  pravni_forma: string | null;
+  ma_vlastni_jidelnu: boolean | null;
   contacts: { count: number }[];
 }
 
@@ -42,8 +46,11 @@ export interface RadekOblasti {
   poznamka: string | null;
 }
 
+// `cz_nace`, `pravni_forma` a `ma_vlastni_jidelnu` potřebuje síto
+// „koho vůbec chceme oslovit" (src/kvalifikace.ts) v kroku 2 průvodce.
 const SLOUPCE_FIRMY =
-  "ico,nazev,obec,lat,lng,velikost_kategorie,zamestnanci_odhad,kategorie,skore,stav,contacts(count)";
+  "ico,nazev,obec,lat,lng,velikost_kategorie,zamestnanci_odhad,kategorie,skore,stav," +
+  "cz_nace,pravni_forma,ma_vlastni_jidelnu,contacts(count)";
 
 /**
  * Načte všechny firmy najednou.
@@ -161,4 +168,31 @@ export async function nactiLidi(): Promise<Clovek[]> {
   const { data, error } = await supabase.from("uzivatele").select("id,email").order("email");
   if (error) throw new Error(error.message);
   return (data ?? []) as Clovek[];
+}
+
+/**
+ * Podklady pro síto „koho vůbec chceme oslovit" (`duvodNeoslovovat`).
+ *
+ * Blacklist i partnerská IČO se načtou jednou pro celý přepočet — stejně
+ * jako je načítá sběr Čmuchala.
+ */
+export async function nactiPravidlaSita(): Promise<{
+  blacklist: Pravidlo[];
+  partnerskaIca: Set<string>;
+}> {
+  const [b, j] = await Promise.all([
+    supabase.from("blacklist").select("typ,hodnota,duvod"),
+    supabase.from("jidelny").select("ico"),
+  ]);
+  if (b.error) throw new Error(b.error.message);
+  if (j.error) throw new Error(j.error.message);
+
+  return {
+    blacklist: (b.data ?? []) as Pravidlo[],
+    partnerskaIca: new Set(
+      (j.data ?? [])
+        .map((x) => (x as { ico: string | null }).ico)
+        .filter((x): x is string => !!x),
+    ),
+  };
 }

@@ -335,7 +335,7 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
           />
         </label>
         {nalezena.length > 0 && (
-          <div className="tlacitka">
+          <div className="tlacitka vlevo">
             {nalezena.map((m) => (
               <button
                 key={`${m.lat},${m.lng}`}
@@ -353,7 +353,7 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
         )}
 
         {smiZapisovat && (
-          <div className="tlacitka">
+          <div className="tlacitka vlevo">
             <button className="tlacitko tise" onClick={zacniKruh}>
               Nový kruh
             </button>

@@ -54,8 +54,8 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
           Kampaň je pojmenovaný seznam firem, které chcete oslovit. Nic se z ní
           neodesílá.
         </p>
-        <div className="tlacitka">
-          <button className="tlacitko tise" onClick={() => setPruvodce(true)}>
+        <div className="tlacitka vlevo">
+          <button className="tlacitko" onClick={() => setPruvodce(true)}>
             Nová kampaň
           </button>
         </div>

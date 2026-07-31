@@ -158,7 +158,10 @@ select {
   margin-bottom: 0.3rem;
 }
 
-.pole > input {
+/* Víceřádkové pole se chová jako jednořádkové — bez toho zůstane scvrklé
+   na výchozích 20 znacích a vypadá jako chyba. */
+.pole > input,
+.pole > textarea {
   width: 100%;
   padding: 0.55rem 0.65rem;
   background: var(--bila);
@@ -166,7 +169,13 @@ select {
   border-radius: var(--r);
 }
 
-.pole > input:focus {
+.pole > textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.pole > input:focus,
+.pole > textarea:focus {
   border-color: var(--razitko);
 }
 
@@ -579,9 +588,7 @@ h2 {
   margin-top: 0;
 }
 
-.pas-oblasti .tlacitka .tlacitko {
-  flex: 0 0 auto;
-}
+/* Šířku si tlačítka v pásu drží přes `.tlacitka.vlevo` v MapaOblasti.tsx. */
 
 /* ────────────────────────────────────────────────── panel vrstev v mapě */
 
@@ -765,6 +772,15 @@ h2 {
   width: auto;
   margin-top: 0;
   flex: 1 1 auto;
+}
+
+/*
+ * Řada tlačítek, která si drží svoji šířku a stojí vlevo — lišta nástrojů,
+ * ne formulářové potvrzení. Bez toho jediné tlačítko v řadě vyroste přes
+ * celou šířku, protože výchozí chování je „rozdělte si místo".
+ */
+.tlacitka.vlevo .tlacitko {
+  flex: 0 0 auto;
 }
 
 .seznam-oblasti {

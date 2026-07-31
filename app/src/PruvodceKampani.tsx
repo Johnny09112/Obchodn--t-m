@@ -139,8 +139,9 @@ export function PruvodceKampani({
           </p>
         </div>
 
-        <MapaOblasti role={role} vybranaId={oblastId} onVyber={setOblastId} />
-
+        {/* Souhrn a tlačítka patří NAD mapu: mapa pod sebou vypisuje všechny
+            firmy v oblasti, takže by se rozhodnutí ocitlo až za tabulkou
+            o desítkách řádků a nikdo by ho nenašel. */}
         <div className="sloupec">
           {pocty && (
             <>
@@ -169,15 +170,17 @@ export function PruvodceKampani({
             </p>
           )}
 
-          <div className="tlacitka">
+          <div className="tlacitka vlevo">
             <button className="tlacitko tise" onClick={onHotovo}>
               Zpět na kampaně
             </button>
-            <button className="tlacitko tise" disabled={!oblastId} onClick={onHotovo}>
+            <button className="tlacitko" disabled={!oblastId} onClick={onHotovo}>
               Pokračovat na průzkum
             </button>
           </div>
         </div>
+
+        <MapaOblasti role={role} vybranaId={oblastId} onVyber={setOblastId} />
       </>
     );
   }
@@ -235,11 +238,11 @@ export function PruvodceKampani({
         </p>
       )}
 
-      <div className="tlacitka">
+      <div className="tlacitka vlevo">
         <button className="tlacitko tise" onClick={onHotovo}>
           Zrušit
         </button>
-        <button className="tlacitko tise" onClick={zaloz} disabled={uklada}>
+        <button className="tlacitko" onClick={zaloz} disabled={uklada}>
           {uklada ? "Zakládám…" : "Pokračovat na území"}
         </button>
       </div>

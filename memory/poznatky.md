@@ -770,3 +770,18 @@ ne logiky.
   výslovně jako mezeru, ne jako splněnou položku.
 - **U vloženého celku (mapa, seznam) ověřit, kam se posune to, co je pod
   ním.** Sdílená součástka si nese vlastní výšku.
+
+## CANTINERO_DATA_DIR neplatí, když je nastavené DATABASE_URL (2026-07-31)
+
+Chtěl jsem vyzkoušet nový příkaz na odkládací databázi
+(`CANTINERO_DATA_DIR=data/pgdata-test-…`) a spustilo se to **na ostré**.
+`pripojDb()` v `src/cli.ts` se dívá na `DATABASE_URL` první a lokální cestu
+pak ignoruje úplně.
+
+Škoda tentokrát nevznikla (migrace byla stejně ke schválení a fronta byla
+prázdná), ale příště nemusí být takové štěstí.
+
+**Jak si vynutit lokální běh:** proměnnou dočasně vyprázdnit, ne jen
+nastavit tu druhou — `DATABASE_URL= CANTINERO_DATA_DIR=… npm run cli -- …`.
+A výstup příkazu první řádek říká, kam je připojený („Databáze: vzdálený
+Postgres" vs „lokální databáze") — přečíst si ho DŘÍV, než se něco stane.

@@ -43,6 +43,11 @@ import {
   dalsiPruzkum, dokoncPruzkum, objednejPruzkum, selhalPruzkum, zahajPruzkum,
 } from "./pruzkum.js";
 import { rozhlednuti, vyridPruzkum } from "./cmuchal-oblast.js";
+import { dalsiKVyrizeni, odemkni, tep, zamkni } from "./fronta.js";
+import { hostname } from "node:os";
+
+/** Jméno zámku na běh Čmuchala nad frontou objednávek. */
+const ZAMEK_CMUCHAL = "cmuchal-fronta";
 import type { CmuchalDeps } from "./cmuchal.js";
 import type { DuvodNeoslovovat } from "./kvalifikace.js";
 
@@ -789,6 +794,7 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       chyba: { type: "string" },
       nejvyse: { type: "string" },
       "i-bez-obci": { type: "boolean", default: false },
+      "nejvyse-objednavek": { type: "string" },
     },
   });
   const akce = positionals[0] ?? "fronta";
@@ -809,6 +815,65 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       });
       console.log(`Průzkum objednán: ${id}`);
       console.log("  Vyzvedne se příkazem: pruzkum dalsi");
+      return;
+    }
+
+    if (akce === "obsluz") {
+      // Naplánovaný běh: Čmuchal si objednávky vezme sám. Rozhodnutí
+      // majitele 2026-07-31 — bez toho by krok 3 průvodce čekal na člověka
+      // s příkazovou řádkou, kterého kolega nemá.
+      const drzitel = `${hostname()}:${process.pid}`;
+      const nejvyseObjednavek = Number(values["nejvyse-objednavek"] ?? 3);
+
+      if (!(await zamkni(db, ZAMEK_CMUCHAL, drzitel))) {
+        const kdo = await db.query<{ drzitel: string; srdce_at: string }>(
+          "select drzitel, srdce_at::text from zamky where jmeno = $1",
+          [ZAMEK_CMUCHAL],
+        );
+        console.log("Průzkum už běží jinde — tenhle běh nic nedělá.");
+        if (kdo[0]) console.log(`  drží: ${kdo[0].drzitel}, naposled se ozval ${kdo[0].srdce_at}`);
+        console.log("  Dva běhy naráz by si braly rozdělané úseky navzájem.");
+        return;
+      }
+
+      try {
+        let vyrizeno = 0;
+        for (let i = 0; i < nejvyseObjednavek; i++) {
+          const p = await dalsiKVyrizeni(db);
+          if (!p) break;
+
+          console.log(`Objednávka ${p.id} (oblast ${p.oblastId})…`);
+          const deps = await vytvorPruzkumDeps(db);
+          try {
+            const v = await vyridPruzkum(deps, p.id, {
+              nejvyseUseku: values.nejvyse ? Number(values.nejvyse) : undefined,
+            });
+            console.log(
+              `  úseků ${v.usekuHotovo}/${v.usekuCelkem} · nových firem ${v.firemNovych}` +
+                ` · převzatých ${v.firemPrevzato}${v.uzavreno ? " · uzavřeno" : ""}`,
+            );
+            // Když objednávka není uzavřená a nezbyl žádný úsek k zpracování
+            // (typicky `ceka_na_rozhodnuti`), další kolo by se točilo nad
+            // toutéž objednávkou donekonečna.
+            if (!v.uzavreno && v.usekuCelkem === 0) {
+              console.log("  čeká na rozhodnutí člověka — fronta jde dál");
+              break;
+            }
+          } catch (e) {
+            // Jedna vadná objednávka nesmí zastavit celou frontu.
+            const popis = e instanceof Error ? e.message : String(e);
+            console.error(`  selhalo: ${popis}`);
+            await selhalPruzkum(db, p.id, popis).catch(() => undefined);
+          }
+          vyrizeno++;
+          await tep(db, ZAMEK_CMUCHAL, drzitel);
+        }
+        console.log(
+          vyrizeno === 0 ? "Fronta je prázdná — nebylo co dělat." : `Hotovo, objednávek: ${vyrizeno}`,
+        );
+      } finally {
+        await odemkni(db, ZAMEK_CMUCHAL, drzitel);
+      }
       return;
     }
 
@@ -1508,6 +1573,11 @@ switch (prikaz) {
                                    změní stav kampaně (důvod povinný u zrušení)
   pruzkum objednej <id oblasti> [--kampan <id>] --pozadal <e-mail>
                                    objedná průzkum území pro agenta
+  pruzkum obsluz [--nejvyse-objednavek 3] [--nejvyse N]
+                                   NAPLÁNOVANÝ BĚH — vezme si objednávky
+                                   z fronty sám a vyřídí je. Jeden běh naráz
+                                   (hlídá zámek), spadlý běh se po 15 min
+                                   dá převzít.
   pruzkum fronta                   vypíše čekající objednávky průzkumu
   pruzkum dalsi                    vypíše nejstarší čekající objednávku
   pruzkum zahaj <id> [--run <id běhu>]

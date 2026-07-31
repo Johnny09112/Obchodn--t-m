@@ -867,3 +867,29 @@ zastaralá o celou etapu B.
   Vercel**: `npm run build --prefix app`. Ne kořenový typecheck.
 - Co potřebuje typová kontrola aplikace, musí být v `app/package.json`,
   ne jen v kořeni.
+
+## Vercel padal na ovladači databáze, ne na typech (2026-07-31, dořešeno)
+
+Předchozí poznatek o `@types/node` byl **správně, ale nestačil**. Skutečná
+příčina: aplikace si přes `kvalifikace.ts` → `blacklist.ts` → `db.ts`
+přitáhla `@electric-sql/pglite` a `postgres`. Ty jsou kořenové závislosti,
+Vercel je neinstaluje a prohlížeč je nepotřebuje.
+
+**Jak se to konečně zjistilo:** reprodukcí. Kopie `src/` a `app/` do
+prázdné složky, `npm install --prefix app`, `npm run build --prefix app` —
+a chyba vypadla přesně jako na Vercelu. Do té doby jsem dvakrát tvrdil, že
+je to opravené, na základě sestavení doma, kde kořenové závislosti existují.
+
+**Řešení:** čistý modul `src/sito.ts` (+ `src/nace.ts`) bez jediné vazby na
+databázi. `blacklist.ts` i `kvalifikace.ts` z něj jen propouštějí dál, takže
+zbytek jádra se měnit nemusel. Aplikace sahá už jen na `sito`, `oblast-tvar`
+a `geo`.
+
+**Hlídá to `test/hranice-aplikace.test.ts`** — projde importy aplikace do
+jádra a přes další moduly ověří, že se nedá dojít na `db` ani `repo`.
+Ověřeno, že test opravdu spadne, když se import vrátí zpátky na
+`kvalifikace`.
+
+**Pravidlo:** když něco selhává jen v cizím prostředí, nehádej — postav si
+to prostředí. Kopie do prázdné složky stála pár minut a ušetřila třetí
+špatnou opravu.

@@ -22,7 +22,7 @@ import {
 } from "./data";
 import { naOblast } from "./vrstvy";
 import { supabase, type Role } from "./supabase";
-import { duvodNeoslovovat } from "../../src/kvalifikace";
+import { duvodNeoslovovat } from "../../src/sito";
 import { bodVOblasti } from "../../src/oblast-tvar";
 
 /** Kdo smí kampaň upravovat. Totéž hlídá databáze — tohle je jen pohodlí. */

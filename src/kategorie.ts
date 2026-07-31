@@ -35,11 +35,15 @@ export async function nactiPrevod(db: Db): Promise<PrevodNace> {
   };
 }
 
-/** Dvoumístný oddíl z kódu libovolné délky. Písmeno sekce oddíl nemá. */
-export function oddilZNace(nace: string): string | null {
-  const cislice = nace.trim().replace(/\D/g, "");
-  return cislice.length >= 2 ? cislice.slice(0, 2) : null;
-}
+/**
+ * Dvoumístný oddíl z kódu libovolné délky. Písmeno sekce oddíl nemá.
+ *
+ * Bydlí v `nace.ts`, protože ho potřebuje i síto sdílené s webovou aplikací —
+ * a ta si přes tenhle soubor nesmí přitáhnout databázi. Odsud se jen
+ * propouští dál, ať se nemusí měnit volající.
+ */
+export { oddilZNace } from "./nace.js";
+import { oddilZNace } from "./nace.js";
 
 /**
  * Kategorie pro firmu.

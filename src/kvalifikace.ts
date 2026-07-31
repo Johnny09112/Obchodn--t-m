@@ -20,7 +20,7 @@
  * a chce vědět rovnou všechno).
  */
 import type { AresZaznam } from "./ares.js";
-import { naBlacklistu, type Pravidlo } from "./blacklist.js";
+import { naBlacklistu, type Pravidlo } from "./sito.js";
 import { jeBytovyDum, popisFormy } from "./formy.js";
 import { jeValidniIco } from "./ico.js";
 import { oborProchazi, type Profil } from "./profil.js";
@@ -114,68 +114,10 @@ export function kvalifikujVelikost(v: {
   return { ok: true, podLimitem };
 }
 
-/** Proč firmu neoslovovat, i když v území leží. */
-export type DuvodNeoslovovat =
-  | "partnerska_jidelna"
-  | "bytovy_dum"
-  | "blacklist"
-  | "vlastni_jidelna";
-
-export interface Neoslovovat {
-  duvod: DuvodNeoslovovat;
-  detail: string;
-}
-
-/**
- * Důvody „tuhle firmu neoslovovat", které platí **trvale** — nezávisle na
- * profilu projektu i na tom, odkud se firma vzala — a dají se posoudit rovnou
- * z kartotéky, bez jediného dotazu ven.
- *
- * K čemu to je: seznam firem v oblasti (`oblast_firmy`) se plní podle
- * geometrie, tedy bez ptaní. Cesta z něj do kampaně (`naplnZOblasti`) proto
- * potřebuje vlastní síto — jinak by kampaň nabídla firmu, kterou majitel
- * mezitím dal na blacklist, nebo školu, která se stala partnerem až potom.
- *
- * Proč to není `kvalifikujFirmu`: ta odpovídá na otázku „přijmout kandidáta
- * do kartotéky?" a její součástí je obor podle profilu a velikost. Tady jde
- * o jinou otázku — „vložit už přijatou firmu do seznamu k oslovení?" —
- * a obor ani velikost do ní schválně nepatří: firma posbíraná za jednoho
- * profilu by po přepnutí profilu z kampaně tiše zmizela. Co komu vyhovuje
- * velikostí a oborem, si člověk vybere při schvalování kampaně; tyhle čtyři
- * důvody vybírat nejde, ty platí vždycky.
- *
- * Vrací `null`, když firmě nic nebrání.
- */
-export function duvodNeoslovovat(v: {
-  ico: string;
-  nazev: string;
-  czNace: readonly string[];
-  pravniForma: string | null;
-  /** `null` znamená „nevíme", ne „nemá" — na dohad se firma nevyřazuje (TP-2). */
-  maVlastniJidelnu: boolean | null;
-  partnerskaIca: ReadonlySet<string>;
-  blacklist: readonly Pravidlo[];
-}): Neoslovovat | null {
-  if (v.partnerskaIca.has(v.ico)) {
-    return { duvod: "partnerska_jidelna", detail: "je to naše partnerská jídelna, ne zákazník" };
-  }
-  if (jeBytovyDum(v.pravniForma)) {
-    return { duvod: "bytovy_dum", detail: popisFormy(v.pravniForma) ?? "bytový dům" };
-  }
-  const pravidlo = naBlacklistu(v.blacklist, {
-    ico: v.ico,
-    nazev: v.nazev,
-    czNace: v.czNace,
-    pravniForma: v.pravniForma,
-  });
-  if (pravidlo) {
-    return { duvod: "blacklist", detail: pravidlo.duvod };
-  }
-  if (v.maVlastniJidelnu === true) {
-    return { duvod: "vlastni_jidelna", detail: "má doloženou vlastní jídelnu" };
-  }
-  return null;
-}
+// Síto pro kampaně bydlí v sito.ts — je čisté a sdílí ho webová aplikace,
+// která si přes tenhle soubor nesmí přitáhnout databázi. Odsud se jen
+// propouští dál, ať pravidlo zůstane na jednom místě.
+export { duvodNeoslovovat, type DuvodNeoslovovat, type Neoslovovat } from "./sito.js";
 
 /**
  * Chceme tuhle firmu vůbec oslovit?

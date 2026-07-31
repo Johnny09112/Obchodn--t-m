@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
-import type { Pravidlo } from "../../src/blacklist";
-import { duvodNeoslovovat } from "../../src/kvalifikace";
+import type { Pravidlo } from "../../src/sito";
+import { duvodNeoslovovat } from "../../src/sito";
 
 export interface Firma {
   ico: string;

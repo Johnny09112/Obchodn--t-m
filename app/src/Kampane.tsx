@@ -13,7 +13,8 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
   const [kampane, setKampane] = useState<RadekKampane[]>([]);
   const [nacita, setNacita] = useState(true);
   const [chyba, setChyba] = useState<string | null>(null);
-  const [pruvodce, setPruvodce] = useState(false);
+  /** `false` = seznam · `null` = nová kampaň · řádek = pokračování v rozdělané. */
+  const [pruvodce, setPruvodce] = useState<false | null | RadekKampane>(false);
 
   useEffect(() => {
     nactiKampane()
@@ -22,11 +23,12 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
       .finally(() => setNacita(false));
   }, []);
 
-  if (pruvodce) {
+  if (pruvodce !== false) {
     return (
       <PruvodceKampani
         role={role}
         email={email}
+        kampan={pruvodce}
         onHotovo={() => {
           setPruvodce(false);
           nactiKampane()
@@ -55,7 +57,7 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
           neodesílá.
         </p>
         <div className="tlacitka vlevo">
-          <button className="tlacitko" onClick={() => setPruvodce(true)}>
+          <button className="tlacitko" onClick={() => setPruvodce(null)}>
             Nová kampaň
           </button>
         </div>
@@ -73,6 +75,7 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
                 <tr>
                   <th>Název</th>
                   <th>Stav</th>
+                  <th>Území</th>
                   <th>Správce</th>
                   <th>Zástup</th>
                   <th>Změněno</th>
@@ -83,13 +86,18 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
                   const s = POPIS_STAVU_KAMPANE[k.stav] ?? { popis: k.stav, trida: "je-novy" };
                   return (
                     <tr key={k.id}>
-                      <td>{k.nazev}</td>
+                      <td>
+                        <button className="odkaz" onClick={() => setPruvodce(k)}>
+                          {k.nazev}
+                        </button>
+                      </td>
                       <td>
                         <span className={`stav ${s.trida}`}>
                           <span className="znak" />
                           {s.popis}
                         </span>
                       </td>
+                      <td>{k.oblast_id ? "vybrané" : "—"}</td>
                       <td>{k.spravce}</td>
                       <td>{k.zastupce ?? "—"}</td>
                       <td>{den(k.updated_at)}</td>

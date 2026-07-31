@@ -7,39 +7,51 @@ import {
   nactiOblasti,
   nactiPravidlaSita,
   type Clovek,
+  type RadekKampane,
 } from "./data";
 import { naOblast } from "./vrstvy";
 import { supabase, type Role } from "./supabase";
 import { duvodNeoslovovat } from "../../src/kvalifikace";
 import { bodVOblasti } from "../../src/oblast-tvar";
 
+/** Kdo smí kampaň upravovat. Totéž hlídá databáze — tohle je jen pohodlí. */
+function smiUpravovat(kampan: RadekKampane | null, role: Role, email: string): boolean {
+  if (role === "admin" || role === "super-admin") return true;
+  if (!kampan) return true; // novou zakládá kdokoli z týmu
+  return kampan.spravce === email || kampan.zastupce === email;
+}
+
 /**
  * Průvodce kampaní, kroky 1 a 2.
  *
  * Rozdělaná kampaň se ukládá po každém kroku (`stav = rozpracovana`,
- * `krok` = kde se skončilo), takže tu není žádné tlačítko „uložit" —
- * okno jde kdykoli zavřít a vrátit se ze seznamu.
- *
- * `role` se v kroku 1 nepoužije; předává se dál mapě v kroku 2.
+ * `krok` = kde se skončilo), takže tu není tlačítko „uložit" — okno jde
+ * zavřít a vrátit se k ní ze seznamu.
  */
 export function PruvodceKampani({
   role,
   email,
+  kampan,
   onHotovo,
 }: {
   role: Role;
   email: string;
+  /** Rozdělaná kampaň k pokračování, nebo `null` pro novou. */
+  kampan: RadekKampane | null;
   onHotovo: () => void;
 }) {
-  const [krok, setKrok] = useState<1 | 2>(1);
-  const [nazev, setNazev] = useState("");
+  const [id, setId] = useState<string | null>(kampan?.id ?? null);
+  const [krok, setKrok] = useState<1 | 2>(kampan && kampan.krok >= 2 ? 2 : 1);
+  const [nazev, setNazev] = useState(kampan?.nazev ?? "");
   const [kontext, setKontext] = useState("");
-  const [zastupce, setZastupce] = useState("");
+  const [zastupce, setZastupce] = useState(kampan?.zastupce ?? "");
+  const [oblastId, setOblastId] = useState<string | null>(kampan?.oblast_id ?? null);
   const [lide, setLide] = useState<Clovek[]>([]);
   const [uklada, setUklada] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
-  const [oblastId, setOblastId] = useState<string | null>(null);
   const [pocty, setPocty] = useState<{ uvnitr: number; projde: number } | null>(null);
+
+  const smi = smiUpravovat(kampan, role, email);
 
   useEffect(() => {
     // Seznam lidí je pro výběr zástupu. Když se nenačte, průvodce funguje
@@ -71,9 +83,7 @@ export function PruvodceKampani({
 
         const uvnitr = firmy.filter(
           (f) =>
-            f.lat !== null &&
-            f.lng !== null &&
-            bodVOblasti(tvar, { lat: f.lat, lng: f.lng }),
+            f.lat !== null && f.lng !== null && bodVOblasti(tvar, { lat: f.lat, lng: f.lng }),
         );
         const projde = uvnitr.filter(
           (f) =>
@@ -97,7 +107,8 @@ export function PruvodceKampani({
     };
   }, [oblastId]);
 
-  async function zaloz() {
+  /** Krok 1 — založí novou kampaň, nebo uloží změny do rozdělané. */
+  async function ulozZalozeni() {
     if (!nazev.trim()) {
       setChyba("Kampaň potřebuje název — podle něj ji poznáte v seznamu.");
       return;
@@ -105,12 +116,21 @@ export function PruvodceKampani({
     setUklada(true);
     setChyba(null);
 
-    const { error } = await supabase.from("kampane").insert({
+    const hodnoty = {
       nazev: nazev.trim(),
       kontext: kontext.trim() || null,
-      spravce: email,
       zastupce: zastupce || null,
-    });
+    };
+
+    // `select("id")` je tu podstatné: bez zapamatovaného id by druhý krok
+    // neměl co doplnit a vybrané území by se zahodilo.
+    const { data, error } = id
+      ? await supabase.from("kampane").update(hodnoty).eq("id", id).select("id").single()
+      : await supabase
+          .from("kampane")
+          .insert({ ...hodnoty, spravce: email })
+          .select("id")
+          .single();
 
     setUklada(false);
     if (error) {
@@ -119,19 +139,59 @@ export function PruvodceKampani({
       setChyba(
         error.code === "23505"
           ? "Kampaň s tímhle názvem už existuje. Zvolte jiný — na velikosti písmen nezáleží."
-          : `Kampaň se nepodařilo založit: ${error.message}`,
+          : `Kampaň se nepodařilo uložit: ${error.message}`,
       );
       return;
     }
+
+    setId((data?.id as string | undefined) ?? id);
     setKrok(2);
   }
+
+  /** Krok 2 — uloží vybrané území a zavře průvodce. */
+  async function ulozUzemi() {
+    if (!id || !oblastId) return;
+    setUklada(true);
+    setChyba(null);
+
+    const { error } = await supabase
+      .from("kampane")
+      .update({ oblast_id: oblastId, krok: 2 })
+      .eq("id", id);
+
+    setUklada(false);
+    if (error) {
+      setChyba(`Území se nepodařilo uložit: ${error.message}`);
+      return;
+    }
+    onHotovo();
+  }
+
+  if (!smi) {
+    return (
+      <div className="sloupec">
+        <h2>{kampan?.nazev}</h2>
+        <p className="hlaska" role="alert">
+          Tuhle kampaň upravovat nemůžete — patří pod {kampan?.spravce}. Požádejte
+          o zástup, nebo ať ji upraví správce či admin.
+        </p>
+        <div className="tlacitka vlevo">
+          <button className="tlacitko tise" onClick={onHotovo}>
+            Zpět na kampaně
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── krok 2: území
 
   if (krok === 2) {
     const vyrazeno = pocty ? pocty.uvnitr - pocty.projde : 0;
     return (
       <>
         <div className="sloupec">
-          <h2>Nová kampaň</h2>
+          <h2>{nazev || "Nová kampaň"}</h2>
           <Krokovnik krok={2} />
           <p className="podnadpis">
             Vyberte v mapě území, ze kterého se kampaň naplní — nebo nakreslete
@@ -164,18 +224,28 @@ export function PruvodceKampani({
             </>
           )}
 
-          {!oblastId && (
-            <p className="poznamka">
-              Nejdřív vyberte v mapě oblast, nebo nakreslete novou.
+          {chyba && (
+            <p className="hlaska" role="alert">
+              {chyba}
             </p>
           )}
 
+          <p className="poznamka">
+            {oblastId
+              ? "Území se uloží ke kampani. Průzkum a seznam firem (kroky 3 a 4) se teprve staví — kampaň zůstane rozpracovaná a vrátíte se k ní ze seznamu."
+              : "Nejdřív vyberte v mapě oblast, nebo nakreslete novou."}
+          </p>
+
           <div className="tlacitka vlevo">
-            <button className="tlacitko tise" onClick={onHotovo}>
-              Zpět na kampaně
+            <button className="tlacitko tise" onClick={() => setKrok(1)}>
+              Zpět na založení
             </button>
-            <button className="tlacitko" disabled={!oblastId} onClick={onHotovo}>
-              Pokračovat na průzkum
+            <button
+              className="tlacitko"
+              disabled={!oblastId || uklada}
+              onClick={ulozUzemi}
+            >
+              {uklada ? "Ukládám…" : "Uložit území a zavřít"}
             </button>
           </div>
         </div>
@@ -185,9 +255,11 @@ export function PruvodceKampani({
     );
   }
 
+  // ── krok 1: založení
+
   return (
     <div className="sloupec">
-      <h2>Nová kampaň</h2>
+      <h2>{kampan ? nazev : "Nová kampaň"}</h2>
       <Krokovnik krok={1} />
 
       <label className="pole">
@@ -198,9 +270,7 @@ export function PruvodceKampani({
           placeholder="Jaro Zbůch"
         />
       </label>
-      <p className="poznamka">
-        Podle názvu kampaň poznáte v seznamu. Musí být jedinečný.
-      </p>
+      <p className="poznamka">Podle názvu kampaň poznáte v seznamu. Musí být jedinečný.</p>
 
       <label className="pole">
         <span>K čemu kampaň je (nepovinné)</span>
@@ -210,16 +280,18 @@ export function PruvodceKampani({
 
       <p className="udaj">
         <span className="popisek">Správce kampaně</span>
-        <span className="hodnota">{email}</span>
+        <span className="hodnota">{kampan?.spravce ?? email}</span>
       </p>
-      <p className="poznamka">Doplní se sám podle přihlášení — kampaň je vaše.</p>
+      <p className="poznamka">
+        {kampan ? "Kampaň založil tenhle člověk." : "Doplní se sám podle přihlášení — kampaň je vaše."}
+      </p>
 
       <label className="pole">
         <span>Zástup (nepovinné)</span>
         <select value={zastupce} onChange={(e) => setZastupce(e.target.value)}>
           <option value="">nikdo</option>
           {lide
-            .filter((c) => c.email !== email)
+            .filter((c) => c.email !== (kampan?.spravce ?? email))
             .map((c) => (
               <option key={c.id} value={c.email}>
                 {c.email}
@@ -240,10 +312,10 @@ export function PruvodceKampani({
 
       <div className="tlacitka vlevo">
         <button className="tlacitko tise" onClick={onHotovo}>
-          Zrušit
+          Zpět na kampaně
         </button>
-        <button className="tlacitko" onClick={zaloz} disabled={uklada}>
-          {uklada ? "Zakládám…" : "Pokračovat na území"}
+        <button className="tlacitko" onClick={ulozZalozeni} disabled={uklada}>
+          {uklada ? "Ukládám…" : "Pokračovat na území"}
         </button>
       </div>
     </div>

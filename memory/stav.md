@@ -1,11 +1,34 @@
 # Stav projektu
 
-_Aktualizováno: 2026-07-31_
+_Aktualizováno: 2026-07-31 (konec dlouhé session)_
 
-> **DALŠÍ KROK: průvodce kampaní v aplikaci.** Mapa i kreslení oblastí
-> jsou hotové, větev `cmuchal-oblasti` sloučená, filtrovací díra zavřená.
-> Technické zadání a pasti:
-> **[docs/DALSI-SESSION-FRONTEND.md](../docs/DALSI-SESSION-FRONTEND.md)**
+> **ZAČNI TADY: [docs/PREDAVKA.md](../docs/PREDAVKA.md)** — co je hotové,
+> co majitel vyžádal a nestaví se, a pasti, které dnes stály čas.
+
+## Čísla teď (ostrá databáze)
+
+| Údaj | Hodnota |
+|---|---|
+| Firem | **13 767** (ráno 167 — doběhl průzkum Plzně a Klatov) |
+| Se spojením | 104 |
+| Vyřazených s důvodem | 4 044 |
+| Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
+| Náklady na API | **0 USD**, nikdy neběželo placené |
+| Migrace | po `0027_pruzkum_urgentni.sql`, nasazeno |
+| Testy | 416 zelených |
+| Odesílání | vypnuté, a žádný kód ho neumí zapnout |
+
+## Další krok
+
+Oblasti: **úklid (mazání nepoužitých), seznam s detailem, kampaň nad více
+oblastmi**. Podrobně i s pastí u `pruzkumy.oblast_id` v předávce.
+
+Před tím nebo vedle toho: **uložit tvar oblasti k průzkumu** (odsouhlaseno,
+nepostaveno) a odpověď majitele na **oznámení Windows místo e-mailu**.
+
+---
+
+# Historie (nejnovější nahoře)
 
 ## Aplikace (`app/`) — kde je
 

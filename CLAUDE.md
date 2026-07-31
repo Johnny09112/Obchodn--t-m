@@ -12,10 +12,12 @@ se jen na to, co ví jenom majitel (jestli tam máme partnera, kapacita).
 
 ## Start každé session (povinné, v tomto pořadí)
 
-1. Přečti `memory/MEMORY.md` a `memory/stav.md` — kde jsme a co je další krok.
-2. Podle tématu práce přečti `memory/rozhodnuti.md` / `memory/poznatky.md`
+1. Přečti `docs/PREDAVKA.md` — co je hotové, co majitel vyžádal a čeká,
+   a pasti, které už někoho stály čas.
+2. Přečti `memory/MEMORY.md` a `memory/stav.md` — kde jsme a co je další krok.
+3. Podle tématu práce přečti `memory/rozhodnuti.md` / `memory/poznatky.md`
    a příslušný dokument v `docs/` (fáze 0: `docs/FAZE-0.md`).
-3. Nezačínej práci, která je v rozporu se zapsaným rozhodnutím — pokud
+4. Nezačínej práci, která je v rozporu se zapsaným rozhodnutím — pokud
    nesouhlasíš, navrhni změnu rozhodnutí, nerozhoduj mlčky jinak.
 
 ## Co je tento projekt
@@ -113,7 +115,7 @@ zdůvodněním; pokud se dá pokračovat na jiné části práce, neblokuj se č
 ## Struktura
 
 - `SPEC.md` — závazné zadání (v2)
-- `docs/DALSI-SESSION-FRONTEND.md` — **předávka: co stavět dál**
+- `docs/PREDAVKA.md` — **předávka: začni tady**
 - `docs/NOVA-OBLAST.md` — **postup pro zpracování nové oblasti od A do Z**
 - `docs/FAZE-0.md` — orchestrace přípravné fáze; `docs/adr/` — rozhodnutí
 - `src/` — jádro (deterministická logika + repository + enrichment)

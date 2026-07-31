@@ -435,3 +435,17 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   vrátit neúspěšný průzkum do fronty. Důvod: „kvůli automatizaci bude
   absolutně nutný". Vidí ho admin a výš; běžnému uživateli by k ničemu nebyl.
   Data existovala už dřív (`agent_runs` podle TP-13), chyběla jen obrazovka.
+- 2026-07-31 · majitel · **Odesílání e-mailů: zákaz je dočasný a je kvůli
+  bezpečnosti, ne navždy.** Majitel upřesnil, proč ho chtěl: „nyní to nesmí
+  realizovat především kvůli případné chybě a nechtěnému odeslání,
+  následně v další fázi budu určitě chtít e-maily povolit — a to i s ohledem
+  na tyto notifikace." Ve fázi 3 se tedy počítá jak s oslovováním firem, tak
+  s provozními upozorněními (hotový průzkum, smazaná kampaň). Do té doby
+  platí TP-8 beze změny: nesmí vzniknout ani kód, který by odesílat uměl.
+- 2026-07-31 · Claude (návrh, čeká na odpověď) · Jako náhradu za e-mail
+  o dokončení průzkumu nabídnuto **oznámení Windows z hlídky u hodin** —
+  běží u majitele na počítači, takže nic neodesílá a TP-8 neporušuje.
+  Majitel na to zatím neodpověděl.
+- 2026-07-31 · majitel · **Seznam firem v kampani má mít detaily, filtry
+  a fulltext podle názvu.** Vyřešeno použitím téhož seznamu jako v kartotéce
+  (`SeznamFirem`) místo vlastní tabulky; přibyl jen sloupec s akcí.

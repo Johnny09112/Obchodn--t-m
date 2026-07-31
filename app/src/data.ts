@@ -112,3 +112,53 @@ export const POPIS_STAVU: Record<string, { popis: string; trida: string }> = {
   jednani: { popis: "jednání", trida: "je-jinak" },
   zakaznik: { popis: "zákazník", trida: "je-kvalifikovany" },
 };
+
+// ─────────────────────────────────────────────────────────────── kampaně
+
+/** Řádek tabulky `kampane` tak, jak chodí z databáze. */
+export interface RadekKampane {
+  id: string;
+  nazev: string;
+  stav: string;
+  spravce: string;
+  zastupce: string | null;
+  krok: number;
+  oblast_id: string | null;
+  updated_at: string;
+}
+
+/** Člověk s přístupem do aplikace — pro výběr zástupu. */
+export interface Clovek {
+  id: string;
+  email: string;
+}
+
+/**
+ * Stavy kampaně pro člověka.
+ *
+ * Třídy jsou schválně ty, které už aplikace má: každý stav se liší tvarem
+ * značky i barvou, ne jen barvou. Vymýšlet pro kampaně vlastní sadu by
+ * znamenalo dva slovníky tvarů v jedné aplikaci.
+ */
+export const POPIS_STAVU_KAMPANE: Record<string, { popis: string; trida: string }> = {
+  rozpracovana: { popis: "rozpracovaná", trida: "je-novy" },
+  ceka_na_pruzkum: { popis: "čeká na průzkum", trida: "je-ceka" },
+  k_posouzeni: { popis: "k posouzení", trida: "je-jinak" },
+  schvalena: { popis: "schválená", trida: "je-kvalifikovany" },
+  zrusena: { popis: "zrušená", trida: "je-zamitnuty" },
+};
+
+export async function nactiKampane(): Promise<RadekKampane[]> {
+  const { data, error } = await supabase
+    .from("kampane")
+    .select("id,nazev,stav,spravce,zastupce,krok,oblast_id,updated_at")
+    .order("updated_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as RadekKampane[];
+}
+
+export async function nactiLidi(): Promise<Clovek[]> {
+  const { data, error } = await supabase.from("uzivatele").select("id,email").order("email");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Clovek[];
+}

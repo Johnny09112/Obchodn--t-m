@@ -2,10 +2,11 @@ import { useState } from "react";
 import { usePrihlaseni } from "./auth";
 import { Prihlaseni } from "./Prihlaseni";
 import { Kartoteka } from "./Kartoteka";
+import { Kampane } from "./Kampane";
 import { Oblasti } from "./Oblasti";
 import { POPIS_ROLE, roleZeSession, supabase } from "./supabase";
 
-type Pohled = "oblasti" | "kartoteka";
+type Pohled = "oblasti" | "kartoteka" | "kampane";
 
 export function App() {
   const { session, nacita } = usePrihlaseni();
@@ -36,6 +37,12 @@ export function App() {
           >
             Kartotéka
           </button>
+          <button
+            className={pohled === "kampane" ? "aktivni" : ""}
+            onClick={() => setPohled("kampane")}
+          >
+            Kampaně
+          </button>
         </nav>
         <span className="odsazovac" />
         <span className="kdo">{session.user.email}</span>
@@ -44,7 +51,13 @@ export function App() {
           Odhlásit
         </button>
       </header>
-      <main>{pohled === "oblasti" ? <Oblasti role={role} /> : <Kartoteka />}</main>
+      <main>
+        {pohled === "oblasti" && <Oblasti role={role} />}
+        {pohled === "kartoteka" && <Kartoteka />}
+        {pohled === "kampane" && (
+          <Kampane role={role} email={session.user.email ?? ""} />
+        )}
+      </main>
     </>
   );
 }

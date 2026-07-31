@@ -532,3 +532,102 @@ export async function schvalKampan(kampanId: string): Promise<void> {
     );
   }
 }
+
+// ────────────────────────────────────────────────────────── provoz
+
+/** Jeden průzkum tak, jak ho potřebuje vidět provozní přehled. */
+export interface PruzkumVProvozu {
+  id: string;
+  stav: string;
+  urgentni: boolean;
+  pozadal: string;
+  pozadano_at: string;
+  chyba: string | null;
+  oblast: string;
+  kampan: string | null;
+  useky: { stav: string; obec: string; chyba: string | null }[];
+  bezPredMinutami: number;
+  bezicíObec: string | null;
+}
+
+/** Jeden běh agenta ze záznamu `agent_runs` (TP-13). */
+export interface BehAgenta {
+  id: string;
+  agent: string;
+  zacatek: string;
+  konec: string | null;
+  vystup: unknown;
+  chyby: unknown;
+}
+
+export async function nactiPruzkumyProvoz(): Promise<PruzkumVProvozu[]> {
+  const { data, error } = await supabase
+    .from("pruzkumy")
+    .select(
+      "id,stav,urgentni,pozadal,pozadano_at,chyba,oblasti(nazev),kampane(nazev)," +
+        "pruzkum_useky(stav,obec,chyba)",
+    )
+    .order("pozadano_at", { ascending: false })
+    .limit(50);
+  if (error) throw new Error(error.message);
+
+  type Radek = {
+    id: string;
+    stav: string;
+    urgentni: boolean;
+    pozadal: string;
+    pozadano_at: string;
+    chyba: string | null;
+    oblasti: { nazev: string } | null;
+    kampane: { nazev: string } | null;
+    pruzkum_useky: { stav: string; obec: string; chyba: string | null }[];
+  };
+
+  return ((data ?? []) as unknown as Radek[]).map((r) => {
+    const useky = r.pruzkum_useky ?? [];
+    return {
+      id: r.id,
+      stav: r.stav,
+      urgentni: r.urgentni,
+      pozadal: r.pozadal,
+      pozadano_at: r.pozadano_at,
+      chyba: r.chyba,
+      oblast: r.oblasti?.nazev ?? "—",
+      kampan: r.kampane?.nazev ?? null,
+      useky,
+      bezPredMinutami: Math.max(
+        0,
+        Math.round((Date.now() - new Date(r.pozadano_at).getTime()) / 60000),
+      ),
+      bezicíObec: useky.find((u) => u.stav === "bezi")?.obec ?? null,
+    };
+  });
+}
+
+export async function nactiBehyAgentu(): Promise<BehAgenta[]> {
+  const { data, error } = await supabase
+    .from("agent_runs")
+    .select("id,agent,zacatek,konec,vystup,chyby")
+    .order("zacatek", { ascending: false })
+    .limit(40);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as BehAgenta[];
+}
+
+/**
+ * Vrátí neúspěšný průzkum zpátky do fronty.
+ *
+ * Nezakládá nový — objednávka i její hotové úseky zůstávají, takže se
+ * nezačíná od nuly. Hotové obce se znovu nezpracovávají.
+ */
+export async function zkusPruzkumZnovu(pruzkumId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("pruzkumy")
+    .update({ stav: "ceka", chyba: null, urgentni: true })
+    .eq("id", pruzkumId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Nepovedlo se vrátit do fronty — chybí oprávnění ke kampani.");
+  }
+}

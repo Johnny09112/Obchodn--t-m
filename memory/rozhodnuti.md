@@ -425,3 +425,13 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   `Cmuchal.vbs`. Zvoleno proto, že je to ve Windows už nainstalované —
   Electron by kvůli jedné ikoně přitáhl přes 100 MB závislostí.
   Správce úloh zůstává jako záložní cesta pro běh bez přihlášeného člověka.
+- 2026-07-31 · majitel · **K průzkumu se bude ukládat tvar oblasti, jaký měl
+  v době spuštění.** Oblast se časem překresluje (Plzeň se rozšiřuje), takže
+  starý záznam by jinak tvrdil „analyzovali jsme Plzeň", ale ta Plzeň by
+  mezitím znamenala něco jiného. Souhlas majitele 2026-07-31; ještě není
+  postavené.
+- 2026-07-31 · majitel · **Provozní deník v aplikaci** — přehled všech
+  průzkumů (hotové, čekající, běžící) i běhů agenta, včetně chyb a možnosti
+  vrátit neúspěšný průzkum do fronty. Důvod: „kvůli automatizaci bude
+  absolutně nutný". Vidí ho admin a výš; běžnému uživateli by k ničemu nebyl.
+  Data existovala už dřív (`agent_runs` podle TP-13), chyběla jen obrazovka.

@@ -1095,3 +1095,16 @@ input[type="range"] {
   white-space: normal;
   line-height: 1.4;
 }
+
+/* Chybová řádka v provozním deníku — cihlová, ať se nepřehlédne. */
+.postup-popis.je-chybny {
+  color: var(--cihla);
+}
+
+/* Nadpis oddílu uvnitř obrazovky. */
+h3 {
+  font-family: var(--pismo-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}

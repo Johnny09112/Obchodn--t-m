@@ -4,9 +4,10 @@ import { Prihlaseni } from "./Prihlaseni";
 import { Kartoteka } from "./Kartoteka";
 import { Kampane } from "./Kampane";
 import { Oblasti } from "./Oblasti";
+import { Provoz } from "./Provoz";
 import { POPIS_ROLE, roleZeSession, supabase } from "./supabase";
 
-type Pohled = "oblasti" | "kartoteka" | "kampane";
+type Pohled = "oblasti" | "kartoteka" | "kampane" | "provoz";
 
 export function App() {
   const { session, nacita } = usePrihlaseni();
@@ -43,6 +44,15 @@ export function App() {
           >
             Kampaně
           </button>
+          {/* Provozní deník je technický — běžnému uživateli by k ničemu nebyl. */}
+          {(role === "admin" || role === "super-admin") && (
+            <button
+              className={pohled === "provoz" ? "aktivni" : ""}
+              onClick={() => setPohled("provoz")}
+            >
+              Provoz
+            </button>
+          )}
         </nav>
         <span className="odsazovac" />
         <span className="kdo">{session.user.email}</span>
@@ -57,6 +67,7 @@ export function App() {
         {pohled === "kampane" && (
           <Kampane role={role} email={session.user.email ?? ""} />
         )}
+        {pohled === "provoz" && (role === "admin" || role === "super-admin") && <Provoz />}
       </main>
     </>
   );

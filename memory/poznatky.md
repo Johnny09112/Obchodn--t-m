@@ -785,3 +785,19 @@ prázdná), ale příště nemusí být takové štěstí.
 nastavit tu druhou — `DATABASE_URL= CANTINERO_DATA_DIR=… npm run cli -- …`.
 A výstup příkazu první řádek říká, kam je připojený („Databáze: vzdálený
 Postgres" vs „lokální databáze") — přečíst si ho DŘÍV, než se něco stane.
+
+## Windows PowerShell 5.1 čte .ps1 jako ANSI, dokud tam není BOM (2026-07-31)
+
+Skript pro hlídku Čmuchala jsem napsal v UTF-8 bez BOM — jak je zvykem
+všude jinde. PowerShell 5.1 ho ale přečetl jako ANSI, česká písmena se
+rozsypala (`podĂ­vej`) a **rozbila i řetězce**: parser hlásil devět chyb
+včetně chybějících závorek. Skript by spadl hned při spuštění.
+
+**Pravidlo:** `.ps1` s diakritikou ukládat **s UTF-8 BOM**. `.cmd` a `.vbs`
+se čtou jako ANSI vždycky, tam diakritiku vůbec nepoužívat.
+
+**A hlavně:** skript, který nejde spustit z prostředí (GUI, tray, instalace),
+aspoň nechat přeložit —
+`[System.Management.Automation.PSParser]::Tokenize($obsah, [ref]$chyby)`
+odhalí syntaxi i rozsypané kódování bez toho, aby se cokoli spustilo.
+Bez téhle kontroly bych majiteli dal soubor, který spadne na první závorce.

@@ -418,3 +418,10 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   vědomě odmítl. Označení je jediné, co jde z prohlížeče udělat.
   Samotné tlačítko patří ke kroku 3 průvodce (etapa C), kde se průzkum
   objednává — zatím je hotová jen jeho databázová a agentní část.
+- 2026-07-31 · majitel · **Hlídka Čmuchala je aplikace s ikonou u hodin,
+  ne úloha ve Správci úloh.** Důvod: Správce úloh není vidět a nedá se z něj
+  poznat, jestli něco běží ani to snadno vypnout. Provedení: PowerShell
+  s WinForms (`skripty/cmuchal-hlidka.ps1`), spouští se dvojklikem na
+  `Cmuchal.vbs`. Zvoleno proto, že je to ve Windows už nainstalované —
+  Electron by kvůli jedné ikoně přitáhl přes 100 MB závislostí.
+  Správce úloh zůstává jako záložní cesta pro běh bez přihlášeného člověka.

@@ -1,85 +1,91 @@
-# Naplánovaný běh Čmuchala — jak ho zapnout
+# Hlídka Čmuchala — ikona u hodin
 
-> Rozhodnutí majitele 2026-07-31: běží **u majitele na počítači**, třikrát
-> denně, plus drobná hlídka na urgentní objednávky.
->
-> Naplánované úlohy zakládá **majitel**, ne Claude — je to zásah do
-> nastavení systému.
-
-## Co to dělá
-
-Čmuchal si sám vezme objednávky průzkumu z fronty a vyřídí je. Bez toho by
-krok 3 průvodce kampaní čekal na někoho s příkazovou řádkou.
-
-Dvě úlohy, obě volají týž skript `skripty\cmuchal-fronta.cmd`:
-
-| Úloha | Kdy | Co dělá |
-|---|---|---|
-| **Denní běh** | 8:00, 13:00, 19:00 | vyřídí až 3 běžné objednávky |
-| **Hlídka urgentů** | každých 10 minut | vyřídí 1 objednávku označenou jako urgentní; jinak hned skončí |
-
-Prázdná fronta stojí jeden dotaz do databáze — hlídka tedy nic nestojí.
-
-## Než to zapneš
-
-1. **Počítač musí být zapnutý.** Když spí, objednávka počká do dalšího
-   zapnutí. To je vědomá cena za to, že se nekupuje server.
-2. **Soubor `.env` musí mít `DATABASE_URL`** — bez něj by Čmuchal sbíral
-   do lokální databáze místo do sdílené.
-3. **Registr ČSÚ (`data/cache/res_data.csv`, 521 MB) musí existovat.**
-   Bez něj průzkum oblasti nenajde firmy.
+> Rozhodnutí majitele 2026-07-31: běží **u majitele na počítači**. Nejdřív
+> to bylo přes Správce úloh, ale ten není vidět a nedá se z něj poznat, jestli
+> něco běží — majitel si vyžádal aplikaci s ikonou, kterou jde kdykoli vypnout.
 
 ## Zapnutí
 
-Otevři **PowerShell jako správce** a spusť:
+**Dvojklik na `skripty\Cmuchal.vbs`.** To je celé — u hodin naskočí kolečko.
 
-```powershell
-$slozka = "C:\Projekty\Obchodní-tým\skripty"
+Žádná instalace, žádné příkazy. Hlídka používá jen to, co ve Windows už je.
 
-schtasks /Create /TN "Cantinero - Cmuchal denni" /SC DAILY /ST 08:00 `
-  /TR "`"$slozka\cmuchal-fronta.cmd`"" /RL LIMITED /F
+## Co ikona říká
 
-schtasks /Create /TN "Cantinero - Cmuchal poledne" /SC DAILY /ST 13:00 `
-  /TR "`"$slozka\cmuchal-fronta.cmd`"" /RL LIMITED /F
+Stav se pozná barvou i tvarem, ne jen barvou:
 
-schtasks /Create /TN "Cantinero - Cmuchal vecer" /SC DAILY /ST 19:00 `
-  /TR "`"$slozka\cmuchal-fronta.cmd`"" /RL LIMITED /F
+| Ikona | Znamená |
+|---|---|
+| **Plné zelené kolečko** | Hlídám frontu, nic se právě neděje |
+| **Plné modré kolečko** | Právě prozkoumávám území |
+| **Prázdné šedé kolečko** | Pozastaveno — nic se dít nebude |
 
-schtasks /Create /TN "Cantinero - Cmuchal urgenty" /SC MINUTE /MO 10 `
-  /TR "`"$slozka\cmuchal-fronta.cmd`" urgent" /RL LIMITED /F
-```
+Když na ikonu najedeš myší, řekne totéž slovy.
 
-## Kontrola
+## Co umí (pravé tlačítko na ikoně)
 
-Že to běží, poznáš z deníku:
+- **Prozkoumat frontu teď** — nečeká se na řádný čas. Totéž udělá dvojklik na ikonu.
+- **Pozastavit / Spustit hlídku** — vypne a zapne, aniž bys hlídku ukončil.
+- **Otevřít deník** — co se kdy dělo.
+- **Ukončit hlídku** — ikona zmizí, nic dalšího neběží.
 
-```powershell
-Get-Content "C:\Projekty\Obchodní-tým\data\cmuchal-fronta.log" -Tail 20
-```
+## Kdy sama něco udělá
 
-Ruční spuštění bez čekání na plán:
+| Kdy | Co |
+|---|---|
+| **8:00, 13:00, 19:00** | Řádný běh — vyřídí až 3 objednávky |
+| **Každých 10 minut** | Kouká, jestli nečeká objednávka označená jako **urgentní** |
 
-```bash
-npm run cli -- pruzkum obsluz
-```
+Prázdná fronta stojí jeden dotaz do databáze, takže častá kontrola urgentů
+nic nestojí. Velký průzkum se **mimo řádná okna sám nerozjede** — na to je
+potřeba buď urgentní označení, nebo „Prozkoumat frontu teď".
 
-## Vypnutí
+Průzkum běží jako samostatný proces, takže hlídka po celou dobu reaguje
+a jde kdykoli ukončit.
 
-```powershell
-schtasks /Delete /TN "Cantinero - Cmuchal denni" /F
-schtasks /Delete /TN "Cantinero - Cmuchal poledne" /F
-schtasks /Delete /TN "Cantinero - Cmuchal vecer" /F
-schtasks /Delete /TN "Cantinero - Cmuchal urgenty" /F
-```
+## Než to zapneš
+
+1. **Počítač musí být zapnutý.** Když spí, objednávka počká. To je vědomá
+   cena za to, že se nekupuje server.
+2. **`.env` musí mít `DATABASE_URL`** — jinak by Čmuchal sbíral do lokální
+   databáze místo do sdílené.
+3. **Registr ČSÚ** (`data/cache/res_data.csv`, 521 MB) musí existovat.
+
+## Ať naskočí sama po zapnutí počítače (nepovinné)
+
+Zástupce do složky po spuštění — otevři **Spustit** (Win+R), napiš
+`shell:startup`, a do složky, která se otevře, dej zástupce na
+`skripty\Cmuchal.vbs`.
 
 ## Když se něco pokazí
 
-**„Průzkum už běží jinde"** — normální hlášení, ne chyba. Dva běhy naráz by
-si braly rozdělané úseky navzájem, takže druhý slušně skončí. Výpis říká,
-kdo běh drží a kdy se naposled ozval.
+**„Průzkum už běží jinde"** v deníku — není to chyba. Dva běhy naráz by si
+braly rozdělané úseky navzájem, takže druhý slušně skončí.
+
+**Hlídka zmizela z ikon** — nejspíš se ukončila s odhlášením. Znovu
+dvojklikem na `Cmuchal.vbs`.
 
 **Běh spadl a zámek zůstal** — po 15 minutách bez známky života si ho vezme
 další běh sám. Ručně zasahovat netřeba.
 
-**Objednávka se označila jako neúspěšná** — jedna vadná objednávka frontu
-nezastaví, důvod je u ní zapsaný. `npm run cli -- pruzkum fronta` je vypíše.
+**Objednávka se označila jako neúspěšná** — jedna vadná frontu nezastaví,
+důvod je u ní zapsaný: `npm run cli -- pruzkum fronta`.
+
+---
+
+## Záložní cesta: Správce úloh
+
+Hodí se, jen když by hlídka měla běžet **i bez přihlášeného člověka**.
+Skript `cmuchal-fronta.cmd` na to zůstává; úlohy se zakládají takto
+(PowerShell jako správce):
+
+```powershell
+$slozka = "C:\Projekty\Obchodní-tým\skripty"
+schtasks /Create /TN "Cantinero - Cmuchal denni" /SC DAILY /ST 08:00 /TR "`"$slozka\cmuchal-fronta.cmd`"" /RL LIMITED /F
+schtasks /Create /TN "Cantinero - Cmuchal urgenty" /SC MINUTE /MO 10 /TR "`"$slozka\cmuchal-fronta.cmd`" urgent" /RL LIMITED /F
+```
+
+Zrušení: `schtasks /Delete /TN "Cantinero - Cmuchal denni" /F` (a stejně pro urgenty).
+
+**Nekombinuj obojí naráz** — nerozbije se to (zámek to ohlídá), ale v deníku
+pak přibývají hlášky „už běží jinde" a hůř se v něm čte.

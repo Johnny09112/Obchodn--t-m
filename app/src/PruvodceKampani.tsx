@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Krokovnik } from "./Krokovnik";
 import { MapaOblasti } from "./MapaOblasti";
 import {
@@ -41,7 +41,9 @@ export function PruvodceKampani({
   onHotovo: () => void;
 }) {
   const [id, setId] = useState<string | null>(kampan?.id ?? null);
-  const [krok, setKrok] = useState<1 | 2>(kampan && kampan.krok >= 2 ? 2 : 1);
+  const [krok, setKrok] = useState<1 | 2 | 3 | 4>(
+    kampan ? (Math.min(Math.max(kampan.krok, 1), 4) as 1 | 2 | 3 | 4) : 1,
+  );
   const [nazev, setNazev] = useState(kampan?.nazev ?? "");
   const [kontext, setKontext] = useState("");
   const [zastupce, setZastupce] = useState(kampan?.zastupce ?? "");
@@ -50,6 +52,7 @@ export function PruvodceKampani({
   const [uklada, setUklada] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
   const [pocty, setPocty] = useState<{ uvnitr: number; projde: number } | null>(null);
+  const [pruzkum, setPruzkum] = useState<StavPruzkumu | null>(null);
 
   const smi = smiUpravovat(kampan, role, email);
 
@@ -107,6 +110,47 @@ export function PruvodceKampani({
     };
   }, [oblastId]);
 
+  // Stav objednávky průzkumu. Načítá se při vstupu do kroku 3 a po každé
+  // akci — hlídka běží na pozadí, takže se postup mění bez našeho přičinění.
+  const nactiPruzkum = useCallback(() => {
+    if (!id) return;
+    nactiPruzkumKampane(id)
+      .then(setPruzkum)
+      .catch(() => setPruzkum(null));
+  }, [id]);
+
+  useEffect(() => {
+    if (krok === 3) nactiPruzkum();
+  }, [krok, nactiPruzkum]);
+
+  async function objednej() {
+    if (!id || !oblastId) return;
+    setUklada(true);
+    setChyba(null);
+    try {
+      await objednejPruzkumZAplikace(id, oblastId, email);
+      nactiPruzkum();
+    } catch (e) {
+      setChyba((e as Error).message);
+    } finally {
+      setUklada(false);
+    }
+  }
+
+  async function spechaj() {
+    if (!pruzkum) return;
+    setUklada(true);
+    setChyba(null);
+    try {
+      await oznacUrgentni(pruzkum.id);
+      nactiPruzkum();
+    } catch (e) {
+      setChyba((e as Error).message);
+    } finally {
+      setUklada(false);
+    }
+  }
+
   /** Krok 1 — založí novou kampaň, nebo uloží změny do rozdělané. */
   async function ulozZalozeni() {
     if (!nazev.trim()) {
@@ -156,7 +200,7 @@ export function PruvodceKampani({
 
     const { error } = await supabase
       .from("kampane")
-      .update({ oblast_id: oblastId, krok: 2 })
+      .update({ oblast_id: oblastId, krok: 3 })
       .eq("id", id);
 
     setUklada(false);
@@ -164,7 +208,7 @@ export function PruvodceKampani({
       setChyba(`Území se nepodařilo uložit: ${error.message}`);
       return;
     }
-    onHotovo();
+    setKrok(3);
   }
 
   if (!smi) {
@@ -232,7 +276,7 @@ export function PruvodceKampani({
 
           <p className="poznamka">
             {oblastId
-              ? "Území se uloží ke kampani. Průzkum a seznam firem (kroky 3 a 4) se teprve staví — kampaň zůstane rozpracovaná a vrátíte se k ní ze seznamu."
+              ? "Území se uloží ke kampani a půjdeme na průzkum."
               : "Nejdřív vyberte v mapě oblast, nebo nakreslete novou."}
           </p>
 
@@ -245,13 +289,134 @@ export function PruvodceKampani({
               disabled={!oblastId || uklada}
               onClick={ulozUzemi}
             >
-              {uklada ? "Ukládám…" : "Uložit území a zavřít"}
+              {uklada ? "Ukládám…" : "Pokračovat na průzkum"}
             </button>
           </div>
         </div>
 
         <MapaOblasti role={role} vybranaId={oblastId} onVyber={setOblastId} />
       </>
+    );
+  }
+
+  // ── krok 3: průzkum
+
+  if (krok === 3) {
+    const hotovo = pruzkum?.useky.filter((u) => u.stav === "hotovo").length ?? 0;
+    const celkem = pruzkum?.useky.length ?? 0;
+    const bezi = pruzkum?.stav === "ceka" || pruzkum?.stav === "bezi";
+
+    return (
+      <div className="sloupec">
+        <h2>{nazev}</h2>
+        <Krokovnik krok={3} />
+
+        {!pruzkum && (
+          <>
+            <p className="hlaska je-klid">
+              Území ještě prozkoumané není. Objednávku si Čmuchal vyzvedne sám —
+              hlídka u hodin se do fronty dívá třikrát denně.
+            </p>
+            <div className="tlacitka vlevo">
+              <button className="tlacitko" onClick={objednej} disabled={uklada || !oblastId}>
+                {uklada ? "Objednávám…" : "Objednat průzkum"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {pruzkum?.stav === "hotovo" && (
+          <p className="hlaska je-hotovo">
+            Průzkum je hotový. Můžete pokračovat na seznam firem.
+          </p>
+        )}
+
+        {pruzkum?.stav === "selhalo" && (
+          <p className="hlaska" role="alert">
+            Průzkum se nepovedl. Důvod je u objednávky zapsaný — po opravě jde
+            objednat znovu.
+          </p>
+        )}
+
+        {pruzkum?.stav === "ceka_na_rozhodnuti" && (
+          <p className="hlaska">
+            Nakreslený tvar nezabírá žádnou obec, takže není z čeho hledat.
+            Tohle musí rozhodnout člověk — ozvěte se, prosím.
+          </p>
+        )}
+
+        {bezi && (
+          <>
+            <div className="postup">
+              <div className="postup-pruh">
+                {celkem === 0 ? (
+                  <i />
+                ) : (
+                  pruzkum!.useky.map((u, i) => (
+                    <i
+                      key={i}
+                      className={
+                        u.stav === "hotovo"
+                          ? "hotovo"
+                          : u.stav === "bezi"
+                            ? "bezi"
+                            : u.stav === "selhalo"
+                              ? "selhalo"
+                              : ""
+                      }
+                    />
+                  ))
+                )}
+              </div>
+              <span className="postup-popis">
+                {celkem === 0 ? "čeká na vyzvednutí" : `hotovo ${hotovo} z ${celkem} obcí`}
+              </span>
+            </div>
+
+            <p className="hlaska je-klid">
+              Okno můžete zavřít — kampaň zůstane rozpracovaná a v seznamu
+              uvidíte, až bude průzkum hotový.
+            </p>
+
+            {pruzkum!.urgentni ? (
+              <p className="poznamka">
+                Označeno jako spěchající — hlídka se na frontu dívá každých deset
+                minut. Tlačítko Čmuchala nespustí, jen ho navede.
+              </p>
+            ) : (
+              <div className="tlacitka vlevo">
+                <button className="tlacitko tise" onClick={spechaj} disabled={uklada}>
+                  Spěchá — vyřídit přednostně
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {chyba && (
+          <p className="hlaska" role="alert">
+            {chyba}
+          </p>
+        )}
+
+        <div className="tlacitka vlevo">
+          <button className="tlacitko tise" onClick={() => setKrok(2)}>
+            Zpět na území
+          </button>
+          <button className="tlacitko tise" onClick={nactiPruzkum}>
+            Načíst znovu
+          </button>
+          <button className="tlacitko" onClick={() => setKrok(4)}>
+            {pruzkum?.stav === "hotovo" ? "Pokračovat na seznam firem" : "Přeskočit na seznam firem"}
+          </button>
+        </div>
+        {pruzkum?.stav !== "hotovo" && (
+          <p className="poznamka">
+            Přeskočit jde vždycky, ale <strong>schválit kampaň půjde až po
+            dokončení průzkumu</strong> — hlídá to databáze, ne tlačítko.
+          </p>
+        )}
+      </div>
     );
   }
 

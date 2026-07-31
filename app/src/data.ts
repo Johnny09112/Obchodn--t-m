@@ -235,3 +235,64 @@ export async function smazKampan(id: string): Promise<void> {
     );
   }
 }
+
+// ────────────────────────────────────────────────── průzkum pro kampaň
+
+/** Objednávka průzkumu pro kampaň i s postupem po obcích. */
+export interface StavPruzkumu {
+  id: string;
+  stav: string;
+  urgentni: boolean;
+  useky: { stav: string }[];
+}
+
+export async function nactiPruzkumKampane(kampanId: string): Promise<StavPruzkumu | null> {
+  const { data, error } = await supabase
+    .from("pruzkumy")
+    .select("id,stav,urgentni,pruzkum_useky(stav)")
+    .eq("kampan_id", kampanId)
+    .order("pozadano_at", { ascending: false })
+    .limit(1);
+  if (error) throw new Error(error.message);
+
+  const r = data?.[0] as
+    | { id: string; stav: string; urgentni: boolean; pruzkum_useky: { stav: string }[] }
+    | undefined;
+  if (!r) return null;
+  return { id: r.id, stav: r.stav, urgentni: r.urgentni, useky: r.pruzkum_useky ?? [] };
+}
+
+/**
+ * Objedná průzkum. **Agenta to nespustí** — aplikace na počítač, kde Čmuchal
+ * běží, nedosáhne. Objednávka jen čeká ve frontě, kterou si hlídka vyzvedne.
+ */
+export async function objednejPruzkumZAplikace(
+  kampanId: string,
+  oblastId: string,
+  pozadal: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("pruzkumy")
+    .insert({ kampan_id: kampanId, oblast_id: oblastId, pozadal })
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Průzkum se nepodařilo objednat — kampaň patří někomu jinému.");
+  }
+
+  // Kampaň čeká na průzkum; schválit ji do té doby nejde (hlídá databáze).
+  await supabase.from("kampane").update({ stav: "ceka_na_pruzkum", krok: 3 }).eq("id", kampanId);
+}
+
+/** Označí objednávku jako spěchající. Agenta to NESPUSTÍ — jen ho navede. */
+export async function oznacUrgentni(pruzkumId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("pruzkumy")
+    .update({ urgentni: true })
+    .eq("id", pruzkumId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Označit nešlo — objednávka patří ke kampani někoho jiného.");
+  }
+}

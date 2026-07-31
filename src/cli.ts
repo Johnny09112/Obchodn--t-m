@@ -795,6 +795,7 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       nejvyse: { type: "string" },
       "i-bez-obci": { type: "boolean", default: false },
       "nejvyse-objednavek": { type: "string" },
+      "jen-urgentni": { type: "boolean", default: false },
     },
   });
   const akce = positionals[0] ?? "fronta";
@@ -839,7 +840,7 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
       try {
         let vyrizeno = 0;
         for (let i = 0; i < nejvyseObjednavek; i++) {
-          const p = await dalsiKVyrizeni(db);
+          const p = await dalsiKVyrizeni(db, { jenUrgentni: values["jen-urgentni"] });
           if (!p) break;
 
           console.log(`Objednávka ${p.id} (oblast ${p.oblastId})…`);

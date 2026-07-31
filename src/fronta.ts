@@ -58,10 +58,11 @@ export async function odemkni(db: Db, jmeno: string, drzitel: string): Promise<v
 
 const SLOUPCE = `id, kampan_id as "kampanId", oblast_id as "oblastId",
   pozadal, stav, pozadano_at as "pozadanoAt", run_id as "runId",
-  firem_prevzato as "firemPrevzato", firem_novych as "firemNovych", chyba`;
+  firem_prevzato as "firemPrevzato", firem_novych as "firemNovych", chyba,
+  urgentni`;
 
 /**
- * Co si má agent z fronty vzít. Nejstarší objednávka první.
+ * Co si má agent z fronty vzít. Urgentní napřed, jinak nejstarší.
  *
  * Bere i objednávky ve stavu 'bezi': v tom stavu zůstane objednávka po pádu
  * procesu a nikdo ji nečeká — kdyby si ji fronta nevzala, visela by navždy
@@ -69,12 +70,21 @@ const SLOUPCE = `id, kampan_id as "kampanId", oblast_id as "oblastId",
  *
  * Schválně NEBERE 'ceka_na_rozhodnuti'. Tam se čeká na člověka (tvar
  * nezabírá žádnou obec) a rozhodovat za něj agent nesmí.
+ *
+ * `jenUrgentni` je pro drobnou hlídku, která běží často. Kdyby brala i
+ * běžné objednávky, rozjela by velký průzkum mimo dohodnuté denní okno.
  */
-export async function dalsiKVyrizeni(db: Db): Promise<Pruzkum | null> {
+export async function dalsiKVyrizeni(
+  db: Db,
+  opts: { jenUrgentni?: boolean } = {},
+): Promise<Pruzkum | null> {
   const r = await db.query<Pruzkum>(
     `select ${SLOUPCE} from pruzkumy
      where stav in ('ceka', 'bezi')
-     order by pozadano_at limit 1`,
+       and ($1::boolean is not true or urgentni)
+     order by urgentni desc, pozadano_at
+     limit 1`,
+    [opts.jenUrgentni ?? false],
   );
   return r[0] ?? null;
 }

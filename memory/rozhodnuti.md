@@ -406,3 +406,15 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
   (`smazane_kampane`: název, správce, kdo a kdy smazal). Projekt jinde trvá
   na doložitelnosti a mazání beze stopy by z toho vybočovalo; stojí to
   spoušť o deseti řádcích.
+- 2026-07-31 · majitel · **Naplánovaný běh Čmuchala běží u majitele na
+  počítači** (Správce úloh), třikrát denně — 8:00, 13:00, 19:00. Server se
+  nekupuje: Čmuchal potřebuje 521 MB registru ČSÚ, který je jen na jeho
+  disku, takže cloud by znamenal ten soubor někam dostávat a udržovat.
+  Cena: běží, jen když je počítač zapnutý.
+- 2026-07-31 · majitel · **Urgentní objednávka** — tlačítko v aplikaci
+  označí objednávku jako spěchající a drobná hlídka (každých 10 min) ji
+  vyzvedne mimo denní okno. **Tlačítko agenta NESPUSTÍ** — aplikace běží
+  v prohlížeči a na majitelův počítač nedosáhne; to je totéž, co majitel
+  vědomě odmítl. Označení je jediné, co jde z prohlížeče udělat.
+  Samotné tlačítko patří ke kroku 3 průvodce (etapa C), kde se průzkum
+  objednává — zatím je hotová jen jeho databázová a agentní část.

@@ -13,6 +13,8 @@ import type { Db } from "./db.js";
 export type StavPruzkumu = "ceka" | "bezi" | "hotovo" | "selhalo" | "ceka_na_rozhodnuti";
 
 export interface Pruzkum {
+  /** Spěchá — hlídka ji vyzvedne mimo řádné denní okno. */
+  urgentni?: boolean;
   id: string;
   oblastId: string;
   kampanId: string | null;

@@ -109,3 +109,39 @@ describe("co si má agent z fronty vzít", () => {
     expect((await dalsiKVyrizeni(db))?.id).toBe(prvni);
   });
 });
+
+describe("urgentní objednávka", () => {
+  it("předběhne starší běžné", async () => {
+    const stara = await objednavka();
+    await db.query(
+      "update pruzkumy set pozadano_at = now() - interval '2 hours' where id = $1",
+      [stara],
+    );
+    const urgentni = await objednavka();
+    await db.query("update pruzkumy set urgentni = true where id = $1", [urgentni]);
+
+    expect((await dalsiKVyrizeni(db))?.id).toBe(urgentni);
+  });
+
+  it("hlídka urgentů si běžné objednávky nevšímá", async () => {
+    // Drobná hlídka běží často. Kdyby brala i běžné objednávky, rozjela by
+    // velký průzkum mimo dohodnuté denní okno.
+    await objednavka();
+    expect(await dalsiKVyrizeni(db, { jenUrgentni: true })).toBeNull();
+  });
+
+  it("hlídka urgentů urgentní objednávku vezme", async () => {
+    const id = await objednavka();
+    await db.query("update pruzkumy set urgentni = true where id = $1", [id]);
+    expect((await dalsiKVyrizeni(db, { jenUrgentni: true }))?.id).toBe(id);
+  });
+
+  it("urgentní příznak smí nastavit i aplikace", async () => {
+    // Tlačítko v aplikaci agenta nespustí — jen objednávku označí.
+    // Zápis proto musí projít pravidly přístupu pro `pruzkumy`.
+    const p = await db.query<{ cmd: string }>(
+      `select cmd from pg_policies where tablename = 'pruzkumy' and cmd = 'ALL'`,
+    );
+    expect(p).toHaveLength(1);
+  });
+});

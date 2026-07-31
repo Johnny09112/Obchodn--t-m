@@ -322,3 +322,48 @@ export async function prekryvKampani(
     [kampanId],
   );
 }
+
+/** Rozpad firem v kampani podle nejlepší doložené úrovně adresy (TP-6). */
+export interface RozpadKontaktu {
+  /** Úroveň 1 — konkrétní jmenovaná osoba. */
+  jmenna: number;
+  /** Úroveň 2 — adresa určená pro obchodní nabídky. */
+  proNabidky: number;
+  /** Úroveň 3 — obecná adresa typu info@. */
+  obecna: number;
+  /** Firma bez doloženého spojení. */
+  zadny: number;
+}
+
+/**
+ * Kolik firem v kampani má jaké spojení.
+ *
+ * Firma se počítá podle NEJLEPŠÍHO kontaktu, který má — jinak by jedna firma
+ * přispěla do dvou sloupců a součet by nesouhlasil s počtem firem v kampani.
+ * Nejlepší je nejnižší úroveň: 1 je jmenovaná osoba, 3 obecná adresa.
+ *
+ * Ručně vyřazené firmy se nepočítají vůbec; ty už v kampani nejsou.
+ */
+export async function rozpadKontaktuKampane(
+  db: Db,
+  kampanId: string,
+): Promise<RozpadKontaktu> {
+  const r = await db.query<{ uroven: number | null; pocet: number }>(
+    `select nejlepsi as uroven, count(*)::int as pocet from (
+       select kf.ico, min(k.uroven_adresy) as nejlepsi
+       from kampan_firmy kf
+       left join contacts k on k.ico = kf.ico
+       where kf.kampan_id = $1 and kf.stav = 'vybrana'
+       group by kf.ico
+     ) t group by nejlepsi`,
+    [kampanId],
+  );
+
+  const podle = new Map(r.map((x) => [x.uroven, x.pocet]));
+  return {
+    jmenna: podle.get(1) ?? 0,
+    proNabidky: podle.get(2) ?? 0,
+    obecna: podle.get(3) ?? 0,
+    zadny: podle.get(null) ?? 0,
+  };
+}

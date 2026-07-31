@@ -801,3 +801,46 @@ aspoň nechat přeložit —
 `[System.Management.Automation.PSParser]::Tokenize($obsah, [ref]$chyby)`
 odhalí syntaxi i rozsypané kódování bez toho, aby se cokoli spustilo.
 Bez téhle kontroly bych majiteli dal soubor, který spadne na první závorce.
+
+## Kořenový `npm run typecheck` nikdy nekontroloval aplikaci (2026-07-31)
+
+Celou etapu B i kus etapy C jsem se odvolával na „kontrola typů čistá" jako
+na důkaz, že frontend je v pořádku. **Nebyl to důkaz.** Kořenový
+`tsconfig.json` má `include: ["src/**/*.ts", "test/**/*.ts"]` — složka `app/`
+v něm není vůbec. Aplikace má vlastní `app/tsconfig.json` a vlastní skript
+`npm --prefix app run typecheck`, který jsem ani jednou nespustil.
+
+Přišlo se na to, až když se v prohlížeči rozsypala celá obrazovka:
+`ReferenceError: nactiPruzkumKampane is not defined`. Chybějící import,
+který by kontrola typů zachytila na první pokus. Spuštění té správné
+kontroly odhalilo rovnou sedm chyb.
+
+**Opraveno u příčiny:** kořenový skript teď pouští obojí —
+`tsc --noEmit && tsc --noEmit -p app/tsconfig.json`. Aby to prošlo, dostala
+`app/tsconfig.json` mezi `types` i `node`: aplikace si přes
+`src/kvalifikace.ts` → `blacklist.ts` přitáhne `db.ts`, a ten sahá na uzly
+Node. Do balíčku se z toho nic nedostane, jsou to jen deklarace typů.
+
+**Poučení obecně:** než se odvolám na nějakou kontrolu jako na důkaz,
+ověřit, co doopravdy kontroluje. „Prošlo to" u nástroje, který se na daný
+soubor vůbec nedívá, je horší než žádná kontrola — vzbudí to falešnou jistotu.
+
+## Skript, který jen vypíše „hotovo", nic nedokazuje (2026-07-31)
+
+Import jsem doplňoval uzlovým skriptem s `s.replace(...)`. Vzor se netrefil,
+`replace` tiše vrátil původní text a skript přesto vypsal „importy doplněny".
+Uvěřil jsem výpisu.
+
+**Pravidlo:** u každé automatické úpravy textu porovnat před a po, a když se
+nic nezměnilo, KŘIČET. Používám to už jinde (`if(d===pred) console.log('POZOR…')`)
+— chyba byla, že ne pokaždé.
+
+## Velký seznam v kampani se vykresluje celý (2026-07-31, k dořešení)
+
+Krok 4 průvodce vypsal 532 firem naráz a prohlížeč to zvládl. U kampaně nad
+celým krajem to ale poroste — Karlovarsko samo má 71 obcí a průzkum ještě
+neskončil. Až seznam přeroste řádově tisíce, bude potřeba stránkování nebo
+virtuální seznam.
+
+Není to dnešní problém a schválně se to nestaví dopředu; zapsáno, aby se na
+to přišlo dřív, než to začne vadit uživateli.

@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Pravidlo } from "../../src/blacklist";
+import { duvodNeoslovovat } from "../../src/kvalifikace";
 
 export interface Firma {
   ico: string;
@@ -66,7 +67,7 @@ export async function nactiFirmy(): Promise<Firma[]> {
     .order("skore", { ascending: false, nullsFirst: false })
     .limit(50_000);
   if (error) throw new Error(error.message);
-  return (data ?? []) as Firma[];
+  return (data ?? []) as unknown as Firma[];
 }
 
 export async function nactiJidelny(): Promise<Jidelna[]> {
@@ -232,6 +233,244 @@ export async function smazKampan(id: string): Promise<void> {
   if (!data || data.length === 0) {
     throw new Error(
       "Smazání neprošlo. Mazat smí jen admin, a jen kampaň, ze které ještě nic neodešlo.",
+    );
+  }
+}
+
+// ────────────────────────────────────────────────── průzkum pro kampaň
+
+/** Objednávka průzkumu pro kampaň i s postupem po obcích. */
+export interface StavPruzkumu {
+  id: string;
+  stav: string;
+  urgentni: boolean;
+  useky: { stav: string }[];
+}
+
+export async function nactiPruzkumKampane(kampanId: string): Promise<StavPruzkumu | null> {
+  const { data, error } = await supabase
+    .from("pruzkumy")
+    .select("id,stav,urgentni,pruzkum_useky(stav)")
+    .eq("kampan_id", kampanId)
+    .order("pozadano_at", { ascending: false })
+    .limit(1);
+  if (error) throw new Error(error.message);
+
+  const r = data?.[0] as
+    | { id: string; stav: string; urgentni: boolean; pruzkum_useky: { stav: string }[] }
+    | undefined;
+  if (!r) return null;
+  return { id: r.id, stav: r.stav, urgentni: r.urgentni, useky: r.pruzkum_useky ?? [] };
+}
+
+/**
+ * Objedná průzkum. **Agenta to nespustí** — aplikace na počítač, kde Čmuchal
+ * běží, nedosáhne. Objednávka jen čeká ve frontě, kterou si hlídka vyzvedne.
+ */
+export async function objednejPruzkumZAplikace(
+  kampanId: string,
+  oblastId: string,
+  pozadal: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("pruzkumy")
+    .insert({ kampan_id: kampanId, oblast_id: oblastId, pozadal })
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Průzkum se nepodařilo objednat — kampaň patří někomu jinému.");
+  }
+
+  // Kampaň čeká na průzkum; schválit ji do té doby nejde (hlídá databáze).
+  await supabase.from("kampane").update({ stav: "ceka_na_pruzkum", krok: 3 }).eq("id", kampanId);
+}
+
+/** Označí objednávku jako spěchající. Agenta to NESPUSTÍ — jen ho navede. */
+export async function oznacUrgentni(pruzkumId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("pruzkumy")
+    .update({ urgentni: true })
+    .eq("id", pruzkumId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Označit nešlo — objednávka patří ke kampani někoho jiného.");
+  }
+}
+
+// ─────────────────────────────────────────────── firmy v kampani
+
+/** Firma v seznamu kampaně i s tím, jaké má spojení. */
+export interface FirmaKampane {
+  ico: string;
+  nazev: string;
+  obec: string | null;
+  skore: number | null;
+  stav: "vybrana" | "vyrazena";
+  duvod_vyrazeni: string | null;
+  /** Úrovně adres všech kontaktů firmy. Nejlepší je nejnižší číslo (TP-6). */
+  urovne: number[];
+}
+
+export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[]> {
+  const { data, error } = await supabase
+    .from("kampan_firmy")
+    .select("ico,stav,duvod_vyrazeni,companies(nazev,obec,skore),contacts:companies(contacts(uroven_adresy))")
+    .eq("kampan_id", kampanId);
+  if (error) throw new Error(error.message);
+
+  type Radek = {
+    ico: string;
+    stav: "vybrana" | "vyrazena";
+    duvod_vyrazeni: string | null;
+    companies: { nazev: string; obec: string | null; skore: number | null } | null;
+    contacts: { contacts: { uroven_adresy: number | null }[] } | null;
+  };
+
+  return ((data ?? []) as unknown as Radek[])
+    .map((r) => ({
+      ico: r.ico,
+      nazev: r.companies?.nazev ?? r.ico,
+      obec: r.companies?.obec ?? null,
+      skore: r.companies?.skore ?? null,
+      stav: r.stav,
+      duvod_vyrazeni: r.duvod_vyrazeni,
+      urovne: (r.contacts?.contacts ?? [])
+        .map((k) => k.uroven_adresy)
+        .filter((u): u is number => u !== null),
+    }))
+    // Nejlepší napřed — u firem z oblasti skóre funguje od 31. 7.
+    .sort((a, b) => (b.skore ?? -1) - (a.skore ?? -1));
+}
+
+/**
+ * Nejlepší doložená úroveň adresy, nebo `null` když firma spojení nemá.
+ *
+ * Nejlepší je nejnižší číslo: 1 je jmenovaná osoba, 3 obecná adresa.
+ * Firma se počítá jen jednou — jinak by přispěla do dvou sloupců a součet
+ * by nesouhlasil s počtem firem. Totéž dělá `rozpadKontaktuKampane`
+ * v `src/kampan.ts` pro příkazovou řádku.
+ */
+export function nejlepsiUroven(f: FirmaKampane): number | null {
+  return f.urovne.length === 0 ? null : Math.min(...f.urovne);
+}
+
+const POPIS_DUVODU: Record<string, string> = {
+  partnerska_jidelna: "naše partnerská jídelna",
+  bytovy_dum: "bytový dům",
+  blacklist: "blacklist",
+  vlastni_jidelna: "má vlastní jídelnu",
+};
+
+export interface NaplneniKampane {
+  pridano: number;
+  vynechano: { ico: string; nazev: string; duvod: string; detail: string }[];
+}
+
+/**
+ * Naplní kampaň firmami z jejího území.
+ *
+ * Aplikace nemůže zavolat `naplnZOblasti` z jádra (běží v Node), takže dělá
+ * totéž sama — ale sítem `duvodNeoslovovat`, které je SDÍLENÉ. Pravidlo tedy
+ * zůstává jedno, jen ho volají dvě místa.
+ *
+ * Ručně vyřazené firmy se nevzkřísí — vkládá se `on conflict do nothing`.
+ */
+export async function naplnKampanZOblasti(
+  kampanId: string,
+  oblastId: string,
+): Promise<NaplneniKampane> {
+  const [firmy, sito, vOblasti] = await Promise.all([
+    nactiFirmy(),
+    nactiPravidlaSita(),
+    supabase.from("oblast_firmy").select("ico").eq("oblast_id", oblastId),
+  ]);
+  if (vOblasti.error) throw new Error(vOblasti.error.message);
+
+  const uvnitr = new Set((vOblasti.data ?? []).map((x) => (x as { ico: string }).ico));
+  const podleIco = new Map(firmy.map((f) => [f.ico, f]));
+
+  const vynechano: NaplneniKampane["vynechano"] = [];
+  const kVlozeni: { kampan_id: string; ico: string }[] = [];
+
+  for (const ico of uvnitr) {
+    const f = podleIco.get(ico);
+    if (!f) continue;
+    const duvod = duvodNeoslovovat({
+      ico: f.ico,
+      nazev: f.nazev,
+      czNace: f.cz_nace,
+      pravniForma: f.pravni_forma,
+      maVlastniJidelnu: f.ma_vlastni_jidelnu,
+      partnerskaIca: sito.partnerskaIca,
+      blacklist: sito.blacklist,
+    });
+    if (duvod) {
+      vynechano.push({
+        ico: f.ico,
+        nazev: f.nazev,
+        duvod: POPIS_DUVODU[duvod.duvod] ?? duvod.duvod,
+        detail: duvod.detail,
+      });
+    } else {
+      kVlozeni.push({ kampan_id: kampanId, ico: f.ico });
+    }
+  }
+
+  let pridano = 0;
+  for (let i = 0; i < kVlozeni.length; i += 500) {
+    const { data, error } = await supabase
+      .from("kampan_firmy")
+      .upsert(kVlozeni.slice(i, i + 500), {
+        onConflict: "kampan_id,ico",
+        ignoreDuplicates: true,
+      })
+      .select("ico");
+    if (error) throw new Error(error.message);
+    pridano += data?.length ?? 0;
+  }
+
+  return { pridano, vynechano };
+}
+
+export async function vyradZKampane(
+  kampanId: string,
+  ico: string,
+  duvod: string,
+): Promise<void> {
+  if (!duvod.trim()) {
+    throw new Error("Vyřazení potřebuje důvod — bez něj se pravidla nebrousí.");
+  }
+  const { data, error } = await supabase
+    .from("kampan_firmy")
+    .update({ stav: "vyrazena", duvod_vyrazeni: duvod.trim() })
+    .eq("kampan_id", kampanId)
+    .eq("ico", ico)
+    .select("ico");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Vyřazení neprošlo — kampaň patří někomu jinému.");
+  }
+}
+
+/**
+ * Schválí kampaň.
+ *
+ * Podmínky (aspoň jedna firma s doloženým spojením, dokončený průzkum, role
+ * admin a výš) hlídá DATABÁZE. Tohle je jen cesta, jak se jí zeptat —
+ * a přeložit její „ne" do lidské věty.
+ */
+export async function schvalKampan(kampanId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("kampane")
+    .update({ stav: "schvalena", krok: 4 })
+    .eq("id", kampanId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Schválení neprošlo. Schvalovat smí jen admin, a kampaň musí mít aspoň " +
+        "jednu firmu s doloženým spojením a dokončený průzkum.",
     );
   }
 }

@@ -138,10 +138,21 @@ neměřil**. Teď je typ `number | null` a null se počítá jako „nevíme".
 
 Test to hlídá rovnicí `nové + převzaté = počet firem v oblasti`.
 
-## Etapa B hotová — čeká na ruční ověření a sloučení (2026-07-31)
+## Etapa B SLOUČENÁ do main (2026-07-31)
 
-Větev **`kampan-pruvodce-b`**, 8 commitů, 381 testů zelených, typy čisté.
+12 commitů, **387 testů zelených**, typy čisté, migrace 0023–0025 nasazené
+v ostré databázi (`cli migrate`, ne přes konektor — projekt si vede vlastní
+evidenci `_migrace`).
 Plán: `docs/superpowers/plans/2026-07-31-pruvodce-kampani-etapa-b.md`.
+
+**Ověřeno naostro majitelovým přihlášením jako `sasek@` (role uživatel):**
+cizí kampaň neupraví (0 řádků) ani nearchivuje, kampaň, kde je zástup, ano.
+Zámek i zástup fungují v produkci.
+
+**Navíc oproti plánu: archivace a mazání kampaní** (migrace 0025) —
+majitel si je vyžádal při zkoušení. Archivace skryje z přehledu a jde
+vrátit; mazat smí jen admin, ostatní archivují. Po smazané kampani zůstane
+záznam v `smazane_kampane`.
 
 Hotovo:
 - **Evidence lidí** (`uzivatele`, migrace 0023) plněná spouští z `auth.users`,
@@ -157,15 +168,20 @@ Hotovo:
   území se dvěma počty firem: kolik leží uvnitř a kolik projde sítem).
 - **Hledání obce v mapě** (Nominatim, dotaz až po 600 ms odmlky).
 
-**POZOR — co ověřené NENÍ:** obrazovky jsou za přihlášením, a heslo zadávat
-nesmím. Ověřená je kontrola typů, překlad a to, že server ani prohlížeč
-nehlásí chybu; **klikání po aplikaci ne**. Před sloučením to chce projít
-ručně, hlavně:
-1. Přihlásit se jako `sasek@cantinero.cz` a zkusit upravit kampaň, kterou
-   založil někdo jiný — **nesmí to projít**. Pravidla přístupu se lokálně
-   testují čtením jejich textu, ne chováním (PGlite nemá přihlašování).
-2. Projít Oblasti — mapa, kreslení kruhu i tvaru, uložení. Kód se stěhoval.
-3. Založit kampaň, vybrat území, ověřit obě čísla firem.
+**Poučení z prvního proklikání:** kontrola typů a zelené testy neodhalily
+nic z toho, co majitel našel za pět minut — nenasazené migrace, neuložené
+území, chybějící cestu k úpravě kampaně, rozhodovací tlačítko pod tabulkou
+41 firem. Frontendovou práci **nelze prohlásit za hotovou bez proklikání**;
+detaily v `poznatky.md`.
+
+## DALŠÍ KROK: etapa B+ — naplánovaný běh Čmuchala
+
+Bez ní krok 3 průvodce čeká na průzkum, který nikdo nespustí. Serverová
+práce, žádné obrazovky. Teprve potom mají smysl kroky 3 a 4.
+Postup: `docs/PRUVODCE-KAMPANI-POSTUP.md`.
+
+**Otevřené:** interval plánovače a kde poběží. Pozor — dva běhy nad toutéž
+objednávkou by si rvaly úseky, plánovač musí zaručit jeden naráz.
 
 ## Průvodce kampaní: etapa A — návrh (2026-07-31)
 

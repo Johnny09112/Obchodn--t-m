@@ -743,3 +743,30 @@ někomu jinému, mazat smí jen admin…).
 
 Ověřeno naostro: `sasek@` archivoval kampaň, kde je zástup (prošlo), a dvě
 cizí (odmítnuto).
+
+## Zelené testy nejsou hotová obrazovka (2026-07-31)
+
+U etapy B jsem prohlásil práci za hotovou s 381 zelenými testy a čistou
+kontrolou typů. Majitel při prvním proklikání našel do pěti minut:
+
+1. **Migrace nebyly v ostré databázi** — aplikace se ptala na sloupec, který
+   existoval jen v testech. Tohle jsem měl uvést jako první, a neuvedl.
+2. **Vybrané území se neukládalo.** Průzkum si po založení nezapamatoval id
+   kampaně. Všechny tři kampaně měly `oblast_id` prázdné.
+3. **Kampaň nešla ze seznamu otevřít**, ačkoli to specifikace slibuje.
+4. **Rozhodovací tlačítko skončilo na 4180 px ze 4271** — pod tabulkou
+   41 firem, protože sdílená mapa pod sebou vypisuje firmy.
+5. Hlavní tlačítka tichá, osamělé tlačítko roztažené, víceřádkové pole
+   scvrklé.
+
+**Žádnou z nich nemohl chytit test ani typ.** Byly to vady toku a pořadí,
+ne logiky.
+
+**Pravidla, která z toho plynou:**
+- **Do předávky patří „co je nasazené", ne jen „co je otestované".** Migrace
+  v ostré databázi jsou součást hotového, ne administrativa navíc.
+- **Než prohlásím frontend za hotový, projít celou cestou, kterou půjde
+  člověk** — ne jen ověřit, že se to přeloží. Kde nemám heslo, říct to
+  výslovně jako mezeru, ne jako splněnou položku.
+- **U vloženého celku (mapa, seznam) ověřit, kam se posune to, co je pod
+  ním.** Sdílená součástka si nese vlastní výšku.

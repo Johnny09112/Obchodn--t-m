@@ -60,14 +60,30 @@ const SLOUPCE_FIRMY =
  * a při kreslení oblasti se pak počítá bez dalšího dotazu do databáze,
  * takže počet firem ve tvaru naskakuje okamžitě.
  */
+/** Po kolika řádcích se čte. Server stejně víc než tisíc najednou nedá. */
+const STRANKA = 1000;
+
 export async function nactiFirmy(): Promise<Firma[]> {
-  const { data, error } = await supabase
-    .from("companies")
-    .select(SLOUPCE_FIRMY)
-    .order("skore", { ascending: false, nullsFirst: false })
-    .limit(50_000);
-  if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as Firma[];
+  // POZOR: `.limit()` tu nestačí. Server má vlastní strop na počet řádků
+  // (výchozí tisíc) a ten klientský limit přebije — MLČKY, bez chyby.
+  // Kartotéka pak tiše ukazovala 1 000 firem z 13 767 a počty v mapě
+  // i v kampani byly nižší, než měly být. Proto se čte po stránkách.
+  const vse: Firma[] = [];
+  for (let od = 0; ; od += STRANKA) {
+    const { data, error } = await supabase
+      .from("companies")
+      .select(SLOUPCE_FIRMY)
+      .order("ico")
+      .range(od, od + STRANKA - 1);
+    if (error) throw new Error(error.message);
+
+    const davka = (data ?? []) as unknown as Firma[];
+    vse.push(...davka);
+    if (davka.length < STRANKA) break;
+  }
+
+  // Třídění až tady: přes stránky by ho server stejně neudržel.
+  return vse.sort((a, b) => (b.skore ?? -1) - (a.skore ?? -1));
 }
 
 export async function nactiJidelny(): Promise<Jidelna[]> {

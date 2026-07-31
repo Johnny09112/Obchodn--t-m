@@ -11,16 +11,20 @@ import {
   oznacUrgentni,
   dalsiBehZa,
   nactiFirmyKampane,
+  nactiKategorie,
   naplnKampanZOblasti,
   nejlepsiUroven,
   schvalKampan,
   vyradZKampane,
   type Clovek,
+  type Firma,
   type FirmaKampane,
+  type Kategorie,
   type NaplneniKampane,
   type RadekKampane,
   type StavPruzkumu,
 } from "./data";
+import { SeznamFirem } from "./SeznamFirem";
 import { naOblast } from "./vrstvy";
 import { supabase, type Role } from "./supabase";
 import { duvodNeoslovovat } from "../../src/sito";
@@ -71,6 +75,8 @@ export function PruvodceKampani({
   const [kVyrazeni, setKVyrazeni] = useState<FirmaKampane | null>(null);
   const [duvodVyrazeni, setDuvodVyrazeni] = useState("");
   const [schvalit, setSchvalit] = useState(false);
+  const [udajeFirem, setUdajeFirem] = useState<Firma[]>([]);
+  const [kategorie, setKategorie] = useState<Kategorie[]>([]);
 
   const smi = smiUpravovat(kampan, role, email);
 
@@ -169,11 +175,25 @@ export function PruvodceKampani({
     }
   }
 
+  // Seznam kampaně se skládá ze dvou zdrojů: členství (kdo v kampani je
+  // a s jakým stavem) a plné údaje o firmě (velikost, zaměření, spojení).
+  // Díky tomu jde použít tentýž seznam jako v kartotéce — i s filtry
+  // a hledáním, které by vlastní tabulka neměla.
   const nactiSeznam = useCallback(() => {
     if (!id) return;
-    nactiFirmyKampane(id)
-      .then(setFirmy)
-      .catch(() => setFirmy([]));
+    Promise.all([nactiFirmyKampane(id), nactiFirmy(), nactiKategorie()])
+      .then(([vKampani, vsechny, kat]) => {
+        setFirmy(vKampani);
+        const podleIco = new Map(vsechny.map((f) => [f.ico, f]));
+        setUdajeFirem(
+          vKampani.map((k) => podleIco.get(k.ico)).filter((f): f is Firma => f !== undefined),
+        );
+        setKategorie(kat);
+      })
+      .catch(() => {
+        setFirmy([]);
+        setUdajeFirem([]);
+      });
   }, [id]);
 
   useEffect(() => {
@@ -586,69 +606,35 @@ export function PruvodceKampani({
         </div>
 
         <div className="sloupec">
-          {firmy.length === 0 ? (
-            <div className="prazdno">
-              Seznam je zatím prázdný. Naplňte ho z území tlačítkem výš.
-            </div>
-          ) : (
-            <div className="obal-tabulky">
-              <table className="tabulka">
-                <thead>
-                  <tr>
-                    <th>Firma</th>
-                    <th>Obec</th>
-                    <th>Skóre</th>
-                    <th>Spojení</th>
-                    <th>Stav</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {firmy.map((f) => {
-                    const u = nejlepsiUroven(f);
-                    const popisSpojeni =
-                      u === 1 ? "jmenná" : u === 2 ? "pro nabídky" : u === 3 ? "obecná" : "chybí";
-                    const tridaSpojeni =
-                      u === 1 ? "je-kvalifikovany" : u === 2 ? "je-jinak" : u === 3 ? "je-ceka" : "je-novy";
-                    return (
-                      <tr key={f.ico}>
-                        <td>{f.nazev}</td>
-                        <td>{f.obec ?? "—"}</td>
-                        <td>{f.skore ?? "—"}</td>
-                        <td>
-                          <span className={`stav ${tridaSpojeni}`}>
-                            <span className="znak" />
-                            {popisSpojeni}
-                          </span>
-                        </td>
-                        <td>
-                          {f.stav === "vyrazena" ? (
-                            <span className="stav je-zamitnuty">
-                              <span className="znak" />
-                              vyřazena: {f.duvod_vyrazeni}
-                            </span>
-                          ) : (
-                            "v seznamu"
-                          )}
-                        </td>
-                        <td>
-                          {f.stav === "vybrana" && (
-                            <button
-                              className="tlacitko tise"
-                              disabled={uklada}
-                              onClick={() => setKVyrazeni(f)}
-                            >
-                              Vyřadit
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {/* Tentýž seznam jako v kartotéce — hledání podle názvu, obce
+              i IČO a filtry na velikost, zaměření a spojení. Vlastní
+              tabulka by o to všechno přišla. */}
+          <SeznamFirem
+            firmy={udajeFirem}
+            kategorie={kategorie}
+            nadpis="Firmy v kampani"
+            popisAkce="V kampani"
+            akce={(f) => {
+              const v = firmy.find((x) => x.ico === f.ico);
+              if (v?.stav === "vyrazena") {
+                return (
+                  <span className="stav je-zamitnuty">
+                    <span className="znak" />
+                    vyřazena: {v.duvod_vyrazeni}
+                  </span>
+                );
+              }
+              return (
+                <button
+                  className="tlacitko tise"
+                  disabled={uklada}
+                  onClick={() => v && setKVyrazeni(v)}
+                >
+                  Vyřadit
+                </button>
+              );
+            }}
+          />
         </div>
 
         <div className="sloupec">

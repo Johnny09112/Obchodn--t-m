@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   maSpojeni,
   POPIS_STAVU,
@@ -14,6 +14,14 @@ interface Props {
   nadpis: string;
   /** Kolik firem se do mapy vůbec nedostane, protože nemá souřadnice. */
   bezSouradnic?: number;
+  /**
+   * Poslední sloupec navíc — používá ho seznam firem v kampani, aby šlo
+   * firmu rovnou vyřadit. Bez toho by kampaň potřebovala vlastní tabulku
+   * a přišla by o filtry a hledání, které tenhle seznam už umí.
+   */
+  akce?: (f: Firma) => ReactNode;
+  /** Nadpis sloupce s akcí. */
+  popisAkce?: string;
 }
 
 function Stav({ stav }: { stav: string }) {
@@ -26,7 +34,14 @@ function Stav({ stav }: { stav: string }) {
   );
 }
 
-export function SeznamFirem({ firmy, kategorie, nadpis, bezSouradnic = 0 }: Props) {
+export function SeznamFirem({
+  firmy,
+  kategorie,
+  nadpis,
+  bezSouradnic = 0,
+  akce,
+  popisAkce = "",
+}: Props) {
   const [hledani, setHledani] = useState("");
   const [velikost, setVelikost] = useState("");
   const [obor, setObor] = useState("");
@@ -164,6 +179,7 @@ export function SeznamFirem({ firmy, kategorie, nadpis, bezSouradnic = 0 }: Prop
                 <th className="cislo">Spojení</th>
                 <th className="cislo">Skóre</th>
                 <th>Stav</th>
+                {akce && <th>{popisAkce}</th>}
               </tr>
             </thead>
             <tbody>
@@ -184,6 +200,7 @@ export function SeznamFirem({ firmy, kategorie, nadpis, bezSouradnic = 0 }: Prop
                   <td>
                     <Stav stav={f.stav} />
                   </td>
+                  {akce && <td>{akce(f)}</td>}
                 </tr>
               ))}
             </tbody>

@@ -893,3 +893,21 @@ Ověřeno, že test opravdu spadne, když se import vrátí zpátky na
 **Pravidlo:** když něco selhává jen v cizím prostředí, nehádej — postav si
 to prostředí. Kopie do prázdné složky stála pár minut a ušetřila třetí
 špatnou opravu.
+
+## Server má vlastní strop na počet řádků a klientský limit ho nepřebije (2026-07-31)
+
+`nactiFirmy` měla `.limit(50_000)` a přesto vracela **1 000 firem z 13 767**.
+PostgREST (Supabase) má vlastní strop na počet vrácených řádků a ten
+klientský limit **mlčky přebije** — žádná chyba, jen kratší odpověď.
+
+Projevovalo se to jako drobné podivnosti, kterých si nikdo nevšiml:
+kartotéka „1 000 firem", počet v oblasti přesně 1 000, seznam kampaně
+ukazoval 156 z 532 firem. Nic z toho nevypadalo jako chyba načítání.
+
+**Opraveno čtením po stránkách** (`.range(od, od+999)`, dokud přijde plná
+dávka). 13 767 firem se načte za 4,3 s. Třídění se dělá až v prohlížeči —
+přes stránky by ho server neudržel.
+
+**Pravidlo:** u každého hromadného čtení ověřit počet proti `count: 'exact'`,
+ne věřit tomu, že `.limit()` platí. Zaokrouhlené číslo v přehledu (přesně
+1 000, přesně 500) je podezřelé — bývá to strop, ne náhoda.

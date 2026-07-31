@@ -991,3 +991,55 @@ input[type="range"] {
   border-width: 2px;
   color: var(--razitko);
 }
+
+/* ───────────────────────────────────────────────────────────────── dialog */
+
+/*
+ * Potvrzení nevratného kroku. Leží přes stránku, aby si ho nešlo odkliknout
+ * omylem cestou jinam.
+ */
+.zaclona {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgb(26 33 28 / 45%);
+  display: grid;
+  place-items: center;
+  padding: var(--o4);
+}
+
+.dialog {
+  max-width: 28rem;
+  width: 100%;
+  background: var(--karta);
+  border: 1px solid var(--inkoust-slaby);
+  border-radius: var(--r);
+  padding: var(--o5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--o3);
+  box-shadow: 0 8px 28px rgb(26 33 28 / 25%);
+}
+
+.dialog > h3 {
+  font-family: var(--pismo-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dialog > p {
+  margin: 0;
+  font-size: var(--t-drobny);
+}
+
+/* Nevratný krok se odlišuje barvou i slovem, ne jen umístěním v dialogu. */
+.tlacitko.nebezpecne {
+  background: var(--cihla);
+  border-color: var(--cihla);
+  color: var(--bila);
+}
+
+.tlacitko.nebezpecne:hover:not(:disabled) {
+  background: #7a3226;
+}

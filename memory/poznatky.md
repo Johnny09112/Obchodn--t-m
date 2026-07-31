@@ -715,3 +715,31 @@ prohlížeče nehlásí chybu. **Neumím ověřit:** že to po kliknutí dělá,
 Nepředstírat, že je to totéž. Do předávky patří výslovný seznam, co má
 majitel proklikat — a proč zrovna to (u přesunutého kódu jiné věci než
 u nově napsaného).
+
+## Příprava testů roste s počtem migrací (2026-07-31)
+
+U 25 migrací začal `beforeEach` (který pouští `spustMigrace`) vypršovat pod
+souběžnou zátěží. `vitest.config.ts` měl `testTimeout: 30_000`, ale
+**`hookTimeout` zůstal na výchozích 10 s** — přitom příprava dělá stejně
+těžkou práci jako test sám. Srovnáno na 30 s.
+
+**Pozor do budoucna:** je to odklad, ne řešení. Každý testovací soubor pouští
+všech N migrací znovu (41 souborů × 25 migrací). Až to začne vadit znovu,
+správná odpověď je migrovat jednou a připravenou databázi klonovat, ne
+zvyšovat limit dál.
+
+**Poznávací znamení:** test padá pod plnou sadou, ale samostatně projde.
+To není chyba v logice, to je čas.
+
+## Odmítnutý zápis se z prohlížeče pozná jen podle počtu řádků (2026-07-31)
+
+Když pravidlo přístupu zamítne zápis, Supabase **nevrátí chybu** — jen změní
+nula řádků. Kód, který kontroluje `error`, tedy nic nepozná a tlačítko jen
+zabliká; pro člověka to vypadá jako porucha.
+
+**Pravidlo:** u každého zápisu z aplikace přidat `.select("id")` a ověřit,
+že se nějaký řádek opravdu změnil. Teprve pak jde říct proč (patří to
+někomu jinému, mazat smí jen admin…).
+
+Ověřeno naostro: `sasek@` archivoval kampaň, kde je zástup (prošlo), a dvě
+cizí (odmítnuto).

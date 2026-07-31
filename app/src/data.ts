@@ -131,6 +131,7 @@ export interface RadekKampane {
   zastupce: string | null;
   krok: number;
   oblast_id: string | null;
+  archivovana_at: string | null;
   updated_at: string;
 }
 
@@ -158,7 +159,7 @@ export const POPIS_STAVU_KAMPANE: Record<string, { popis: string; trida: string 
 export async function nactiKampane(): Promise<RadekKampane[]> {
   const { data, error } = await supabase
     .from("kampane")
-    .select("id,nazev,stav,spravce,zastupce,krok,oblast_id,updated_at")
+    .select("id,nazev,stav,spravce,zastupce,krok,oblast_id,archivovana_at,updated_at")
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as RadekKampane[];
@@ -195,4 +196,42 @@ export async function nactiPravidlaSita(): Promise<{
         .filter((x): x is string => !!x),
     ),
   };
+}
+
+/**
+ * Uklidí kampaň z přehledu, nebo ji vrátí zpátky. Nic se nemaže.
+ *
+ * Pravidlo přístupu zamítne zápis MLČKY — Supabase nevrátí chybu, jen změní
+ * nula řádků. Bez téhle kontroly by tlačítko u cizí kampaně jen zablikalo
+ * a nic neudělalo, což vypadá jako porucha.
+ */
+export async function archivujKampan(id: string, archivovat: boolean): Promise<void> {
+  const { data, error } = await supabase
+    .from("kampane")
+    .update({ archivovana_at: archivovat ? new Date().toISOString() : null })
+    .eq("id", id)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Kampaň se nepodařilo uklidit — patří někomu jinému. Upravovat ji smí správce, jeho zástup a admin.",
+    );
+  }
+}
+
+/**
+ * Nevratné smazání. Databáze ho pustí jen adminovi a jen u kampaně, která
+ * nikdy neběžela; po smazané kampani zůstane záznam v `smazane_kampane`.
+ *
+ * Když pravidlo přístupu zápis odmítne, Supabase nevrátí chybu — jen smaže
+ * nula řádků. Proto se počítají, ne kontroluje `error`.
+ */
+export async function smazKampan(id: string): Promise<void> {
+  const { data, error } = await supabase.from("kampane").delete().eq("id", id).select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Smazání neprošlo. Mazat smí jen admin, a jen kampaň, ze které ještě nic neodešlo.",
+    );
+  }
 }

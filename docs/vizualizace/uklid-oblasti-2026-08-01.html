@@ -1,0 +1,512 @@
+<meta charset="utf-8">
+<title>Úklid oblastí — 1. 8. 2026</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --papir:      #f1f3ef;
+    --papir-2:    #e6eae4;
+    --inkoust:    #14262c;
+    --inkoust-2:  #2c4149;
+    --tlumene:    #5c7178;
+    --linka:      #c8d2cc;
+    --zelena:     #1f6f5c;
+    --zelena-tl:  #e2ece7;
+    --jantar:     #9a5c14;
+    --jantar-tl:  #f4ead9;
+    --cihla:      #92382a;
+    --cihla-tl:   #f5e5e1;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text:   "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj:   ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs:  .72rem;
+    --fs-sm:  .84rem;
+    --fs-b:   1.0625rem;
+    --fs-lg:  1.3rem;
+    --fs-xl:  1.9rem;
+    --fs-2xl: 2.6rem;
+
+    --sirka: 43rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir:     #101c21;
+      --papir-2:   #16262c;
+      --inkoust:   #e7ede9;
+      --inkoust-2: #b9c8c9;
+      --tlumene:   #8ba0a4;
+      --linka:     #2b3f46;
+      --zelena:    #6cc4a5;
+      --zelena-tl: #16302b;
+      --jantar:    #d9a05a;
+      --jantar-tl: #2f2415;
+      --cihla:     #e08b78;
+      --cihla-tl:  #331c17;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir:     #101c21;
+    --papir-2:   #16262c;
+    --inkoust:   #e7ede9;
+    --inkoust-2: #b9c8c9;
+    --tlumene:   #8ba0a4;
+    --linka:     #2b3f46;
+    --zelena:    #6cc4a5;
+    --zelena-tl: #16302b;
+    --jantar:    #d9a05a;
+    --jantar-tl: #2f2415;
+    --cihla:     #e08b78;
+    --cihla-tl:  #331c17;
+  }
+  :root[data-theme="light"] {
+    --papir:     #f1f3ef;
+    --papir-2:   #e6eae4;
+    --inkoust:   #14262c;
+    --inkoust-2: #2c4149;
+    --tlumene:   #5c7178;
+    --linka:     #c8d2cc;
+    --zelena:    #1f6f5c;
+    --zelena-tl: #e2ece7;
+    --jantar:    #9a5c14;
+    --jantar-tl: #f4ead9;
+    --cihla:     #92382a;
+    --cihla-tl:  #f5e5e1;
+  }
+
+  body {
+    margin: 0;
+    background: var(--papir);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    font-size: var(--fs-b);
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .stranka {
+    max-width: var(--sirka);
+    margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  /* ── hlavička ─────────────────────────────────────────────── */
+
+  .hlavicka { display: flex; flex-direction: column; gap: .9rem; }
+
+  .datum {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--tlumene);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-2xl);
+    font-weight: 660;
+    letter-spacing: -.025em;
+    line-height: 1.08;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .podtitul {
+    font-size: var(--fs-lg);
+    color: var(--inkoust-2);
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  /* ── sekce ────────────────────────────────────────────────── */
+
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-xl);
+    font-weight: 620;
+    letter-spacing: -.018em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--linka);
+  }
+
+  .sekce p { margin: 0; text-wrap: pretty; }
+
+  strong { font-weight: 600; }
+
+  code {
+    font-family: var(--pismo-udaj);
+    font-size: .86em;
+    background: var(--papir-2);
+    padding: .1em .35em;
+    border-radius: 3px;
+  }
+
+  /* ── nález: co bylo otevřené ──────────────────────────────── */
+
+  .nalezy { display: flex; flex-direction: column; gap: .9rem; }
+
+  .nalez {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .35rem 1rem;
+    padding: 1rem 1.1rem;
+    background: var(--papir-2);
+    border: 1px solid var(--linka);
+    border-left: 3px solid var(--cihla);
+    border-radius: 3px;
+  }
+
+  .nalez-znak {
+    grid-row: span 2;
+    align-self: start;
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-lg);
+    line-height: 1.2;
+    color: var(--cihla);
+  }
+
+  .nalez-bylo {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-sm);
+    font-weight: 620;
+    line-height: 1.4;
+  }
+
+  .nalez-ted {
+    font-size: var(--fs-sm);
+    color: var(--inkoust-2);
+    line-height: 1.5;
+  }
+
+  .nalez-ted b {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--zelena);
+    margin-right: .4rem;
+  }
+
+  /* ── seznam oblastí ───────────────────────────────────────── */
+
+  .oblasti {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .oblast {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: .2rem .9rem;
+    padding: .7rem .9rem;
+    background: var(--papir-2);
+    border-bottom: 1px solid var(--linka);
+  }
+  .oblast:last-child { border-bottom: 0; }
+
+  /* Stav nese i tvar pruhu vlevo, ne jen barva štítku. */
+  .oblast-volna  { box-shadow: inset .25rem 0 0 var(--zelena); }
+  .oblast-drzena { box-shadow: inset .25rem 0 0 var(--jantar); }
+
+  .oblast-nazev {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .oblast-firmy {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--tlumene);
+    text-align: right;
+  }
+
+  .oblast-stav {
+    grid-column: 1 / -1;
+    font-size: var(--fs-sm);
+    color: var(--inkoust-2);
+  }
+
+  .znacka {
+    display: inline-block;
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .1rem .45rem;
+    border-radius: 2px;
+    border: 1px solid;
+    margin-right: .45rem;
+    white-space: nowrap;
+  }
+  .znacka-volna {
+    color: var(--zelena);
+    background: var(--zelena-tl);
+    border-color: color-mix(in srgb, var(--zelena) 35%, transparent);
+  }
+  .znacka-drzena {
+    color: var(--jantar);
+    background: var(--jantar-tl);
+    border-color: color-mix(in srgb, var(--jantar) 40%, transparent);
+  }
+
+  .souhrn {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem 1.5rem;
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--tlumene);
+  }
+  .souhrn b {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--inkoust);
+  }
+
+  /* ── kdo smí co ───────────────────────────────────────────── */
+
+  .prava-obal { overflow-x: auto; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 22rem;
+    font-size: var(--fs-sm);
+  }
+
+  th, td {
+    text-align: left;
+    padding: .5rem .7rem;
+    border-bottom: 1px solid var(--linka);
+    vertical-align: baseline;
+  }
+
+  thead th {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tlumene);
+    border-bottom-color: var(--inkoust-2);
+  }
+
+  tbody th {
+    font-family: var(--pismo-nadpis);
+    font-weight: 600;
+  }
+
+  td { text-align: center; font-family: var(--pismo-udaj); }
+  td.ano { color: var(--zelena); }
+  td.ne  { color: var(--tlumene); }
+
+  .poznamka {
+    font-size: var(--fs-sm);
+    color: var(--tlumene);
+    text-wrap: pretty;
+  }
+
+  /* ── co dál ───────────────────────────────────────────────── */
+
+  .dal { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .5rem; }
+  .dal li { text-wrap: pretty; }
+  .dal li::marker { color: var(--tlumene); }
+
+  .paticka {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    color: var(--tlumene);
+    border-top: 1px solid var(--linka);
+    padding-top: 1rem;
+    text-wrap: pretty;
+    line-height: 1.7;
+  }
+</style>
+
+<div class="stranka">
+
+  <header class="hlavicka">
+    <div class="datum">Cantinero · 1. srpna 2026 · nasazeno</div>
+    <h1>Úklid oblastí</h1>
+    <p class="podtitul">
+      Nepoužité oblasti jde smazat. Cestou se ale ukázalo, že mazání bylo
+      otevřené celému týmu — a bralo by s sebou i historii průzkumů.
+    </p>
+  </header>
+
+  <section class="sekce">
+    <h2>Co se našlo cestou</h2>
+    <p>
+      Zadání bylo jednoduché: umožnit smazat oblast, kterou nikdo nepoužívá.
+      Než jsem to postavil, podíval jsem se, co se při mazání doopravdy stane.
+      Dvě věci byly špatně — a obojí tiše, bez jakéhokoli varování.
+    </p>
+
+    <div class="nalezy">
+      <div class="nalez">
+        <div class="nalez-znak">1</div>
+        <div class="nalez-bylo">Mazat oblasti směl kdokoli z týmu</div>
+        <div class="nalez-ted">
+          <b>zavřeno</b> Aplikace mazání nenabízela, ale pravidlo v databázi ho
+          povolovalo — a pravidlo je to, co platí. Teď smí mazat jen správce,
+          stejně jako u kampaní.
+        </div>
+      </div>
+
+      <div class="nalez">
+        <div class="nalez-znak">2</div>
+        <div class="nalez-bylo">Se smazanou oblastí by zmizel i záznam průzkumu</div>
+        <div class="nalez-ted">
+          <b>zavřeno</b> Průzkum je doklad o tom, jaké území se kdy analyzovalo
+          a co z něj vyšlo. Takový záznam nesmí zmizet jako vedlejší účinek
+          něčeho jiného. Teď oblast s průzkumem smazat nejde vůbec.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Osm oblastí, šest volných</h2>
+    <p>
+      Oblast drží naživu kampaň a objednaný průzkum. Firmy uvnitř ne — ten
+      seznam je jen odvozený z tvaru a spočítá se kdykoli znovu.
+    </p>
+
+    <ul class="oblasti">
+      <li class="oblast oblast-drzena">
+        <span class="oblast-nazev">Plzeň a okolí</span>
+        <span class="oblast-firmy">12 762 firem</span>
+        <span class="oblast-stav">
+          <span class="znacka znacka-drzena">drží se</span>
+          Používá ji kampaň „Zkouška průzkumu“. Objednal se nad ní průzkum.
+        </span>
+      </li>
+      <li class="oblast oblast-drzena">
+        <span class="oblast-nazev">Klatovy a okolí</span>
+        <span class="oblast-firmy">982 firem</span>
+        <span class="oblast-stav">
+          <span class="znacka znacka-drzena">drží se</span>
+          Používá ji kampaň „Test Klatovy“. Objednal se nad ní průzkum.
+        </span>
+      </li>
+      <li class="oblast oblast-volna">
+        <span class="oblast-nazev">Západní čechy</span>
+        <span class="oblast-firmy">167 firem</span>
+        <span class="oblast-stav"><span class="znacka znacka-volna">volná</span> Nedrží ji nic.</span>
+      </li>
+      <li class="oblast oblast-volna">
+        <span class="oblast-nazev">Průzkum Tlučná</span>
+        <span class="oblast-firmy">42 firem</span>
+        <span class="oblast-stav"><span class="znacka znacka-volna">volná</span> Nedrží ji nic.</span>
+      </li>
+      <li class="oblast oblast-volna">
+        <span class="oblast-nazev">Průzkum Rokycansko</span>
+        <span class="oblast-firmy">41 firem</span>
+        <span class="oblast-stav"><span class="znacka znacka-volna">volná</span> Nedrží ji nic.</span>
+      </li>
+      <li class="oblast oblast-volna">
+        <span class="oblast-nazev">Průzkum Bezdružice</span>
+        <span class="oblast-firmy">23 firem</span>
+        <span class="oblast-stav"><span class="znacka znacka-volna">volná</span> Nedrží ji nic.</span>
+      </li>
+      <li class="oblast oblast-volna">
+        <span class="oblast-nazev">Průzkum Rakovník</span>
+        <span class="oblast-firmy">0 firem</span>
+        <span class="oblast-stav"><span class="znacka znacka-volna">volná</span> Prázdný tvar, nikdy se nepoužil.</span>
+      </li>
+      <li class="oblast oblast-volna">
+        <span class="oblast-nazev">Karlovy Vary a okolí</span>
+        <span class="oblast-firmy">0 firem</span>
+        <span class="oblast-stav"><span class="znacka znacka-volna">volná</span> Prázdný tvar, nikdy se nepoužil.</span>
+      </li>
+    </ul>
+
+    <div class="souhrn">
+      <span>Volných <b>6</b></span>
+      <span>Držených <b>2</b></span>
+      <span>Smazáno zatím <b>0</b></span>
+    </div>
+
+    <p class="poznamka">
+      Čísla jsou uložené seznamy firem — to, co by se smazalo. V mapě u téže
+      oblasti uvidíte jiné číslo: to se počítá z tvaru pokaždé znovu, takže
+      je čerstvější. Nic z toho zatím smazané není, úklid je na vás.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Kdo teď smí co</h2>
+
+    <div class="prava-obal">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Role</th>
+            <th scope="col">Kreslit</th>
+            <th scope="col">Upravovat</th>
+            <th scope="col">Mazat</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Správce</th><td class="ano">ano</td><td class="ano">ano</td><td class="ano">ano</td></tr>
+          <tr><th scope="row">Uživatel</th><td class="ano">ano</td><td class="ano">ano</td><td class="ne">ne</td></tr>
+          <tr><th scope="row">Host</th><td class="ne">ne</td><td class="ne">ne</td><td class="ne">ne</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="poznamka">
+      Hlídá to databáze, ne obrazovka. Skrýt tlačítko nestačí — kdo pravidlo
+      obejde mimo aplikaci, narazí na stejnou zeď. Ověřeno naostro: uživateli
+      se nesmazalo nic, správci prošla jen volná oblast.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co zbývá u oblastí</h2>
+    <ol class="dal">
+      <li>
+        <strong>Seznam oblastí s detailem</strong> místo klikání do mapy — kdy
+        naposled prozkoumaná, kolik firem, v jakých kampaních figuruje.
+      </li>
+      <li>
+        <strong>Kampaň nad více oblastmi</strong> najednou. Slučovat tvary
+        dohromady se stavět nemá — kampaň si jich prostě vybere víc.
+      </li>
+      <li>
+        <strong>Uložit tvar oblasti k průzkumu.</strong> Když se Plzeň časem
+        rozšíří, ať je pořád vidět, jaké území tehdy Čmuchal skutečně prošel.
+      </li>
+    </ol>
+  </section>
+
+  <p class="paticka">
+    Migrace 0028 · 431 testů zelených · nasazeno do ostré databáze i na web.
+    Stav ke dni 1. 8. 2026, čísla oblastí čtená z ostré databáze.
+  </p>
+
+</div>

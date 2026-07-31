@@ -6,8 +6,12 @@ import {
   nactiLidi,
   nactiOblasti,
   nactiPravidlaSita,
+  nactiPruzkumKampane,
+  objednejPruzkumZAplikace,
+  oznacUrgentni,
   type Clovek,
   type RadekKampane,
+  type StavPruzkumu,
 } from "./data";
 import { naOblast } from "./vrstvy";
 import { supabase, type Role } from "./supabase";

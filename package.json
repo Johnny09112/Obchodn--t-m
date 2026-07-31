@@ -6,7 +6,7 @@
   "description": "Cantinero — agentní obchodní systém. Fáze 1: Čmuchal (sběr a kvalifikace firem).",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p app/tsconfig.json",
     "cli": "tsx src/cli.ts"
   },
   "engines": {

@@ -66,7 +66,7 @@ export async function nactiFirmy(): Promise<Firma[]> {
     .order("skore", { ascending: false, nullsFirst: false })
     .limit(50_000);
   if (error) throw new Error(error.message);
-  return (data ?? []) as Firma[];
+  return (data ?? []) as unknown as Firma[];
 }
 
 export async function nactiJidelny(): Promise<Jidelna[]> {

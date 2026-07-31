@@ -1,0 +1,452 @@
+<meta charset="utf-8">
+<title>Cantinero — kde jsme a kam jdeme</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c; --inkoust-2: #2c4149;
+    --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7;
+    --jantar: #9a5c14; --jantar-tl: #f4ead9;
+    --cihla: #8e3b2c; --cihla-tl: #f6e6e2;
+    --modra: #2e4a7d; --modra-tl: #e4eaf4;
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.7rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9; --inkoust-2: #b9c8c9;
+      --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b;
+      --jantar: #d9a05a; --jantar-tl: #2f2415;
+      --cihla: #e08975; --cihla-tl: #331d18;
+      --modra: #8fb0e0; --modra-tl: #17263c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9; --inkoust-2: #b9c8c9;
+    --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b;
+    --jantar: #d9a05a; --jantar-tl: #2f2415;
+    --cihla: #e08975; --cihla-tl: #331d18;
+    --modra: #8fb0e0; --modra-tl: #17263c;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c; --inkoust-2: #2c4149;
+    --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7;
+    --jantar: #9a5c14; --jantar-tl: #f4ead9;
+    --cihla: #8e3b2c; --cihla-tl: #f6e6e2;
+    --modra: #2e4a7d; --modra-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: 46rem; margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 3.25rem;
+  }
+
+  .hlavicka { display: flex; flex-direction: column; gap: .9rem; }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene); margin: 0;
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.06; text-wrap: balance; margin: 0;
+  }
+  .podtitul { font-size: var(--fs-lg); color: var(--inkoust-2); margin: 0; text-wrap: pretty; }
+
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance;
+    margin: 0; padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce > h3 {
+    font-family: var(--pismo-nadpis); font-size: 1.05rem; font-weight: 620;
+    margin: .6rem 0 0;
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  /* ── čísla ───────────────────────────────────────────────── */
+
+  .cisla {
+    display: grid; gap: .5rem;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+  .cislo {
+    background: var(--papir-2); border: 1px solid var(--linka);
+    border-radius: 4px; padding: .7rem .9rem;
+    display: flex; flex-direction: column; gap: .1rem;
+  }
+  .cislo b {
+    font-family: var(--pismo-udaj); font-size: 1.5rem; font-weight: 600;
+    line-height: 1.1; font-variant-numeric: tabular-nums;
+  }
+  .cislo span { font-size: var(--fs-sm); color: var(--tlumene); }
+  .cislo.duraz b { color: var(--zelena); }
+  .cislo.nula b { color: var(--tlumene); }
+
+  /* ── fáze ────────────────────────────────────────────────── */
+
+  .faze { display: flex; flex-direction: column; gap: .55rem; }
+  .fazi {
+    display: grid; grid-template-columns: 3.6rem 1fr; gap: 0 1rem;
+    padding: .85rem 1rem; border: 1px solid var(--linka);
+    border-radius: 4px; background: var(--papir-2);
+  }
+  .fazi-znak {
+    grid-row: 1 / span 2;
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--tlumene); padding-top: .25rem;
+  }
+  .fazi-nazev {
+    font-family: var(--pismo-nadpis); font-weight: 620; margin: 0 0 .2rem;
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  }
+  .fazi-telo { font-size: var(--fs-sm); color: var(--inkoust-2); margin: 0; }
+
+  .fazi.bezi { border-color: var(--zelena); border-width: 1.5px; background: var(--zelena-tl); }
+  .fazi.bezi .fazi-znak { color: var(--zelena); font-weight: 600; }
+  .fazi.napred { border-color: color-mix(in srgb, var(--modra) 45%, transparent); background: var(--modra-tl); }
+  .fazi.napred .fazi-znak { color: var(--modra); font-weight: 600; }
+  .fazi.ceka { opacity: .78; border-style: dashed; }
+
+  .odznak {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .06em; text-transform: uppercase;
+    padding: .12rem .45rem; border-radius: 2px; border: 1px solid; font-weight: 500;
+  }
+  .odznak-bezi { color: var(--zelena); border-color: var(--zelena); }
+  .odznak-napred { color: var(--modra); border-color: var(--modra); }
+  .odznak-ceka { color: var(--tlumene); border-color: var(--tlumene); }
+
+  /* ── seznam hotového ─────────────────────────────────────── */
+
+  .hotovo { display: flex; flex-direction: column; gap: .5rem; }
+  .polozka {
+    display: grid; grid-template-columns: 1.3rem 1fr; gap: 0 .7rem;
+    font-size: var(--fs-sm);
+  }
+  .polozka .fajfka { color: var(--zelena); font-weight: 700; }
+  .polozka b { font-family: var(--pismo-nadpis); }
+
+  /* ── etapy průvodce ──────────────────────────────────────── */
+
+  .etapy { display: flex; flex-direction: column; gap: .45rem; }
+  .etapa {
+    display: grid; grid-template-columns: 2.2rem 1fr; gap: 0 .8rem;
+    padding: .6rem .85rem; border: 1px solid var(--linka);
+    border-radius: 4px; font-size: var(--fs-sm);
+  }
+  .etapa-znak {
+    font-family: var(--pismo-udaj); font-weight: 600; color: var(--tlumene);
+  }
+  .etapa.hotova { background: var(--zelena-tl); border-color: color-mix(in srgb, var(--zelena) 35%, transparent); }
+  .etapa.hotova .etapa-znak { color: var(--zelena); }
+  .etapa.ted { background: var(--modra-tl); border-color: var(--modra); border-width: 1.5px; }
+  .etapa.ted .etapa-znak { color: var(--modra); }
+  .etapa.ceka { border-style: dashed; opacity: .82; }
+
+  /* ── pravidla ────────────────────────────────────────────── */
+
+  .pravidla {
+    padding: 1.15rem 1.3rem; background: var(--cihla-tl);
+    border: 1px solid color-mix(in srgb, var(--cihla) 35%, transparent);
+    border-left: 4px solid var(--cihla); border-radius: 4px;
+    display: flex; flex-direction: column; gap: .7rem;
+  }
+  .pravidla-stitek {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .12em; text-transform: uppercase; color: var(--cihla); font-weight: 600;
+  }
+  .pravidla ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .4rem; }
+  .pravidla li { font-size: var(--fs-sm); }
+
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .5rem; }
+  li { text-wrap: pretty; }
+  li::marker { color: var(--tlumene); }
+  .drobne li { font-size: var(--fs-sm); }
+
+  .obal-tabulky { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: var(--fs-sm); font-family: var(--pismo-nadpis); }
+  th, td { text-align: left; vertical-align: top; padding: .6rem .7rem; border-bottom: 1px solid var(--linka); }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500; white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* Schválně NE flex: uvnitř bývá `<b>` v běžícím textu a ve sloupcovém
+     rozložení by z něj byl samostatný řádek. */
+  .pozn {
+    font-size: var(--fs-sm); color: var(--inkoust-2);
+    border-left: 2px solid var(--linka); padding-left: .9rem;
+  }
+  .pozn > * + * { margin-top: .45rem; }
+  .pozn b { color: var(--inkoust); }
+
+  .patka {
+    border-top: 1px solid var(--linka); padding-top: 1.25rem;
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    line-height: 1.7; color: var(--tlumene);
+  }
+</style>
+
+<article class="stranka">
+
+  <header class="hlavicka">
+    <p class="datum">Cantinero · přehled projektu · 31. července 2026</p>
+    <h1>Kde jsme a kam jdeme</h1>
+    <p class="podtitul">
+      Systém, který hledá firmy v dojezdu partnerských školních jídelen
+      a chystá je k oslovení. Zatím jen hledá — neodesílá nic a ani to neumí.
+    </p>
+  </header>
+
+  <section class="sekce">
+    <h2>Čísla, jak jsou teď</h2>
+    <p class="pozn">
+      <b>Všechna čísla jsou skutečná</b>, přečtená z ostré databáze
+      31. 7. 2026. Nic tu není pro ilustraci.
+    </p>
+    <div class="cisla">
+      <div class="cislo"><b>167</b><span>firem v kartotéce</span></div>
+      <div class="cislo duraz"><b>104</b><span>z nich má spojení</span></div>
+      <div class="cislo"><b>144</b><span>kontaktů celkem</span></div>
+      <div class="cislo"><b>487</b><span>doložených údajů se zdrojem</span></div>
+      <div class="cislo"><b>2 004</b><span>vyřazených kandidátů, s důvodem</span></div>
+      <div class="cislo"><b>7</b><span>nakreslených oblastí</span></div>
+      <div class="cislo"><b>5</b><span>partnerských jídelen</span></div>
+      <div class="cislo nula"><b>0</b><span>odeslaných zpráv</span></div>
+    </div>
+    <p class="pozn">
+      <b>Těch 2 004 vyřazených není ztráta, ale hlavní důkaz, že to funguje.</b>
+      U každého je zapsané, proč neprošel — podle toho se brousí pravidla.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Fáze projektu</h2>
+    <p>
+      Pořadí je dané zadáním a nepřeskakuje se. Zajímavost: <strong>fáze 1
+      běží napřed</strong> — Čmuchal sbírá naostro dřív, než je fáze 0
+      dokončená, protože se na reálných datech kalibruje líp než na úvahách.
+    </p>
+
+    <div class="faze">
+      <div class="fazi bezi">
+        <span class="fazi-znak" aria-hidden="true">0</span>
+        <div>
+          <p class="fazi-nazev">Příprava <span class="odznak odznak-bezi">běží</span></p>
+          <p class="fazi-telo">
+            Jídelny a jejich zóny — hotovo. Zbývá: knihovna tvrzení, šablony
+            zpráv, odesílací doména a její pověst, právní konzultace
+            k oprávněnému zájmu, a určení člověka podepsaného pod zprávami.
+          </p>
+        </div>
+      </div>
+
+      <div class="fazi napred">
+        <span class="fazi-znak" aria-hidden="true">1</span>
+        <div>
+          <p class="fazi-nazev">Čmuchal — sběr <span class="odznak odznak-napred">běží napřed</span></p>
+          <p class="fazi-telo">
+            Sbírá, ověřuje a kvalifikuje firmy. Cíl podle zadání je 200
+            ověřených firem se zdrojem u každého údaje; máme 167. Odesílání
+            se v této fázi nedotýká vůbec.
+          </p>
+        </div>
+      </div>
+
+      <div class="fazi ceka">
+        <span class="fazi-znak" aria-hidden="true">2</span>
+        <div>
+          <p class="fazi-nazev">Spojka a inbound <span class="odznak odznak-ceka">čeká</span></p>
+          <p class="fazi-telo">
+            Oslovení zřizovatelů, stránka pro zájemce, formulář. Cíl: první
+            partnerství a prvních 100 souhlasů.
+          </p>
+        </div>
+      </div>
+
+      <div class="fazi ceka">
+        <span class="fazi-znak" aria-hidden="true">3</span>
+        <div>
+          <p class="fazi-nazev">Obchodník — první oslovení <span class="odznak odznak-ceka">čeká</span></p>
+          <p class="fazi-telo">
+            Teprve tady se poprvé něco odešle: deset zpráv denně, prvních
+            padesát schvaluje člověk před odesláním.
+          </p>
+        </div>
+      </div>
+
+      <div class="fazi ceka">
+        <span class="fazi-znak" aria-hidden="true">4</span>
+        <div>
+          <p class="fazi-nazev">Statistik a Marketér <span class="odznak odznak-ceka">čeká</span></p>
+          <p class="fazi-telo">Měření, testy struktur zpráv. Sem je odložený i návrh tvaru oblasti agentem.</p>
+        </div>
+      </div>
+
+      <div class="fazi ceka">
+        <span class="fazi-znak" aria-hidden="true">5</span>
+        <div>
+          <p class="fazi-nazev">Ředitel <span class="odznak odznak-ceka">čeká</span></p>
+          <p class="fazi-telo">Týdenní přehled, dohled, hlášení.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co už funguje</h2>
+
+    <h3>Hledání firem</h3>
+    <div class="hotovo">
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Čmuchal hledá obráceně</b> — ne „kdo je kde zapsaný", ale „kde se pracuje". Tři zdroje: otevřená data úřadu práce, mapa a registr ČSÚ.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Firma vzniká jen po ověření IČO</b> v úředním rejstříku. Jinou cestou to nejde ani omylem.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Každý údaj má zdroj a doslovnou citaci.</b> Co není doložené, zůstane prázdné — nedohaduje se.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Umí prozkoumat i nakreslené území</b>, ne jen kruh kolem jídelny. Velké území se dělí na obce, takže přerušený běh naváže.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Bere si práci sám</b> — hlídka u hodin se dívá do fronty a průzkum spustí bez tebe.</div></div>
+    </div>
+
+    <h3>Aplikace v prohlížeči</h3>
+    <div class="hotovo">
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Přihlášení a role.</b> Nepřihlášený nevidí nic; co kdo smí, hlídá databáze, ne tlačítka.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Kartotéka firem</b> s hledáním, filtry a souhrnem.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Mapa s kreslením oblastí</b> — kruh posuvníkem i vlastní tvar, živý počet firem uvnitř, hledání obce.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Kampaně</b> — založení, zástup správce, výběr území, archiv a mazání.</div></div>
+    </div>
+
+    <h3>Pojistky</h3>
+    <div class="hotovo">
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Síto mezi územím a kampaní</b> — blacklist, partnerské jídelny, bytové domy a firmy s vlastní jídelnou se do kampaně nedostanou. Vynechané se vypíšou i s důvodem.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Kampaň nejde schválit</b> bez firmy s doloženým spojením ani s nedokončeným průzkumem. Hlídá databáze.</div></div>
+      <div class="polozka"><span class="fajfka">✓</span><div><b>Do kampaně sáhne jen správce, jeho zástup a admin.</b> Ověřeno naostro.</div></div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co se staví teď: průvodce kampaní</h2>
+    <p>
+      Kampaň je pojmenovaný seznam firem k oslovení. Průvodce má čtyři kroky
+      a staví se po etapách, aby šlo po každé zastavit a přehodnotit.
+    </p>
+
+    <div class="etapy">
+      <div class="etapa hotova">
+        <span class="etapa-znak" aria-hidden="true">A</span>
+        <div><b>Návrh obrazovek a textů</b> — hotovo a odsouhlaseno.</div>
+      </div>
+      <div class="etapa hotova">
+        <span class="etapa-znak" aria-hidden="true">B</span>
+        <div><b>Založení a území</b> (kroky 1 a 2) — hotovo, sloučeno, nasazeno.</div>
+      </div>
+      <div class="etapa hotova">
+        <span class="etapa-znak" aria-hidden="true">B+</span>
+        <div><b>Hlídka Čmuchala</b> — bere si objednávky sama. Hotovo a zapnuto.</div>
+      </div>
+      <div class="etapa ted">
+        <span class="etapa-znak" aria-hidden="true">C</span>
+        <div><b>Průzkum a seznam firem</b> (kroky 3 a 4) — <strong>právě na řadě</strong>. Součástí je tlačítko „spěchá“ a přehled, proč která firma v seznamu chybí.</div>
+      </div>
+      <div class="etapa ceka">
+        <span class="etapa-znak" aria-hidden="true">D</span>
+        <div><b>Kritika a přístupnost</b> — nezávislá revize obrazovek, ovládání klávesnicí, kontrast.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co je naplánováno dál</h2>
+    <div class="obal-tabulky">
+      <table>
+        <thead><tr><th>Co</th><th>Proč</th><th>Kdy</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Dokončit průvodce kampaní</td>
+            <td>Bez kroků 3 a 4 se kampaň nedá dotáhnout do konce</td>
+            <td>hned teď</td>
+          </tr>
+          <tr>
+            <td>Ostrý běh na Plzni</td>
+            <td>719 firem nad 25 zaměstnanců v 10 obvodech — první zkouška velkého města</td>
+            <td>po průvodci</td>
+          </tr>
+          <tr>
+            <td>Stříbro</td>
+            <td>Technicky odblokované, ale chybí tam partnerská jídelna</td>
+            <td>čeká na partnera</td>
+          </tr>
+          <tr>
+            <td>Vzorek „velikost neuvedena“</td>
+            <td>Celostátně 480 498 subjektů — mohou se tam skrývat skuteční zaměstnavatelé</td>
+            <td>později</td>
+          </tr>
+          <tr>
+            <td>Zbytek fáze 0</td>
+            <td>Tvrzení, šablony, doména, právník — bez toho se nesmí do fáze 3</td>
+            <td>před oslovováním</td>
+          </tr>
+          <tr>
+            <td>Interaktivní mapa ČR</td>
+            <td>Průběžný cíl: mapa, která se plní analyzovanými oblastmi</td>
+            <td>bez termínu</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co systém nesmí — a nikdy nesměl</h2>
+    <div class="pravidla">
+      <p class="pravidla-stitek">Vynucuje kód a databáze, ne dobrá vůle</p>
+      <ul>
+        <li><strong>Nic se neodesílá.</strong> Ve fázi 0–2 nesmí vzniknout ani kód, který by to uměl. Právě proto nemáš upozornění e-mailem na hotový průzkum ani na smazání kampaně.</li>
+        <li><strong>Firma vzniká jen po ověření IČO</strong> v úředním rejstříku.</li>
+        <li><strong>Žádný údaj bez zdroje.</strong> Nedoložené zůstává prázdné; odhadované e-maily se neukládají vůbec.</li>
+        <li><strong>Sbírá se jen povolený seznam údajů.</strong> Nikdy sociální sítě, finanční údaje, inzeráty ani recenze.</li>
+        <li><strong>Jedna firma = jedno oslovení.</strong> Žádné sekvence — platí od fáze 3.</li>
+        <li><strong>LinkedIn se nescrapuje nikdy.</strong> Nikoho neoslovujeme ani kvůli zjištění kontaktu.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co čeká na tebe</h2>
+    <ul class="drobne">
+      <li><strong>Licence otevřených dat ČSÚ</strong> není na stránkách produktu výslovně uvedená. Před ostrým komerčním provozem to chce potvrdit — právní věc.</li>
+      <li><strong>Rozhodnutí o společenstvích vlastníků a živnostnících.</strong> Formálně mají zaměstnance, obědy tam ale nikdo neodebírá. Vyřadit celou kategorii je změna pravidel.</li>
+      <li><strong>Návrh Čmuchala ke schválení:</strong> u mikrofirem bez webu zkusit veřejné registry zadávacích řízení. Sám to nezkusil a čeká.</li>
+      <li><strong>Dobrousit kategorie</strong> — do „ostatních“ spadly spolky, sport, opravny a zemědělství.</li>
+      <li><strong>Kapacity jídelen</strong> ve Zbůchu, Tlučné a Hrádku. Potřeba až před fází 3.</li>
+      <li><strong>Má se hledat spojení i u mikrofirem?</strong> Podle dřívějšího rozhodnutí se na ně cílí jinak než e-mailem.</li>
+    </ul>
+  </section>
+
+  <footer class="patka">
+    <p>
+      Stav: 402 testů zelených · 27 migrací · žádné placené API nikdy neběželo.<br>
+      Podrobnosti: <code>memory/stav.md</code> · rozhodnutí a jejich důvody:
+      <code>memory/rozhodnuti.md</code> · zadání: <code>SPEC.md</code><br>
+      Odesílání je vypnuté na úrovni databáze a žádný dnešní kód ho neumí zapnout.
+    </p>
+  </footer>
+
+</article>

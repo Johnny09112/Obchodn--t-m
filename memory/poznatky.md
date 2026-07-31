@@ -688,3 +688,30 @@ tentýž průzkum našel minule. Dvě čísla, jedna firma, dvakrát započítan
 **Poučení:** u průběžných čísel si vždy napiš rovnici, která má platit, a
 otestuj ji (tady `nové + převzaté = počet firem v oblasti`). Jednotlivá čísla
 vypadají věrohodně samostatně; nesmysl je vidět teprve v součtu.
+
+## Pravidla přístupu se lokálně otestovat chováním nedají (2026-07-31)
+
+PGlite nemá Supabase Auth, takže `auth.jwt()` je náhrada vracející NULL —
+přihlásit se v testu nejde. Pravidla se proto testují **čtením jejich textu**
+z `pg_policies` (zavedeno v `test/pravidla.test.ts`, nově i
+`test/kampan-prava.test.ts`).
+
+Zvažoval jsem náhradu, která by `auth.jwt()` četla z nastavení sezení, aby
+šla pravidla otestovat doopravdy. Neudělal jsem to: testy běží jako vlastník
+tabulek, a tomu se RLS neuplatňuje vůbec (leda `force row level security`
+nebo přepnutí role, což by si vyžádalo doplnit grantům celou sadu, kterou
+Supabase přidává sám). Vznikla by tím **jiná** pravidla než v produkci —
+tedy falešná jistota, což je horší než přiznané omezení.
+
+**Důsledek pro práci:** ke každé změně pravidel přístupu patří ruční ověření
+po nasazení. Zapisovat ho do předávky, ne spoléhat na zelené testy.
+
+## Aplikace se nedá proklikat bez hesla (2026-07-31)
+
+Obrazovky jsou za přihlášením a heslo zadávat nesmím. U frontendové práce
+tedy umím ověřit: kontrolu typů, že se to přeloží, a že server ani konzole
+prohlížeče nehlásí chybu. **Neumím ověřit:** že to po kliknutí dělá, co má.
+
+Nepředstírat, že je to totéž. Do předávky patří výslovný seznam, co má
+majitel proklikat — a proč zrovna to (u přesunutého kódu jiné věci než
+u nově napsaného).

@@ -1,3 +1,17 @@
+---
+name: archiv-rozhodnuti-do-2026-07-31
+description: Původní log rozhodnutí (104 řádků) před přechodem na vault
+type: research
+status: archived
+created: 2026-08-01
+updated: 2026-08-01
+related: []
+---
+
+> ARCHIV. Přeneseno beze změny z memory/rozhodnuti.md při přechodu na vault
+> 1. 8. 2026. Živé záznamy jsou v decisions/ a patterns/; tohle je
+> úplná historie pro případ, že by v kurátorském výběru něco chybělo.
+
 # Log rozhodnutí
 
 Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.

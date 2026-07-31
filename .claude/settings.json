@@ -1,0 +1,17 @@
+{
+  "autoMemoryDirectory": "C:/Projekty/Obchodní-tým/_claude/auto-memory",
+  "autoMemoryProjectName": "obchodni-tym",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/reindex.cjs"
+          }
+        ]
+      }
+    ]
+  }
+}

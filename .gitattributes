@@ -1,0 +1,7 @@
+# Vault paměti je psaný jako cross-platform — u něj normalizuj řádkování na LF.
+#
+# Šablona VZOR sem přinesla pravidlo pro `*`, tedy pro celý repozitář.
+# Zúženo schválně: plošná normalizace by přepsala konce řádků ve všech
+# souborech projektu, což nikdo nežádal a na Windows by to udělalo zbytečně
+# velký rozdíl. Vault je nový, takže u něj to nic nestojí.
+_claude/** text=auto eol=lf

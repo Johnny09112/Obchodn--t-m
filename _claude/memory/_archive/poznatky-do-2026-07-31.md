@@ -1,3 +1,17 @@
+---
+name: archiv-poznatky-do-2026-07-31
+description: Původní sbírka technických poznatků a gotchas před přechodem na vault
+type: research
+status: archived
+created: 2026-08-01
+updated: 2026-08-01
+related: []
+---
+
+> ARCHIV. Přeneseno beze změny z memory/poznatky.md při přechodu na vault
+> 1. 8. 2026. Živé záznamy jsou v decisions/ a patterns/; tohle je
+> úplná historie pro případ, že by v kurátorském výběru něco chybělo.
+
 # Poznatky a gotchas
 
 ## Supabase vystavuje schéma `public` veřejnému API (2026-07-28)

@@ -12,11 +12,12 @@ se jen na to, co ví jenom majitel (jestli tam máme partnera, kapacita).
 
 ## Start každé session (povinné, v tomto pořadí)
 
-1. Přečti `docs/PREDAVKA.md` — co je hotové, co majitel vyžádal a čeká,
-   a pasti, které už někoho stály čas.
-2. Přečti `memory/MEMORY.md` a `memory/stav.md` — kde jsme a co je další krok.
-3. Podle tématu práce přečti `memory/rozhodnuti.md` / `memory/poznatky.md`
-   a příslušný dokument v `docs/` (fáze 0: `docs/FAZE-0.md`).
+1. Přečti `_claude/memory/context/project-context.md` — kde jsme a co je
+   další krok. Mechanika paměti je v `_claude/BOOTSTRAP.md`.
+2. Přečti `_claude/memory/INDEX.md` a podle tématu načti relevantní záznamy
+   (ne všechny) — hlavně `patterns/`, ať nešlápneš do pasti, kterou už někdo
+   objevil.
+3. Podle tématu práce i příslušný dokument v `docs/` (fáze 0: `docs/FAZE-0.md`).
 4. Nezačínej práci, která je v rozporu se zapsaným rozhodnutím — pokud
    nesouhlasíš, navrhni změnu rozhodnutí, nerozhoduj mlčky jinak.
 
@@ -40,19 +41,16 @@ fáze 0 viz docs/FAZE-0.md.
 - Tvrdá pravidla se vynucují v kódu/DB. Instrukce v promptu není záruka —
   nikdy neobcházej repository vrstvu přímými INSERTy do companies/evidence.
 
-## Paměť a dokumentace (kdy a kam zapisovat)
+## Dokumentace (co nepatří do paměti)
 
-Zápis je **event-triggered** — „konec session" nepoznáš, proto zapisuj hned:
+Paměť má vlastní sekci na konci tohoto souboru; tady je zbytek:
 
-- Dokončený milník / commit → aktualizuj `memory/stav.md` (stav + další krok).
-- Jakékoli rozhodnutí (moje i majitelovo) → ihned řádek do
-  `memory/rozhodnuti.md` (datum · kdo · co · proč).
-- Technický či procesní poznatek/gotcha → ihned do `memory/poznatky.md`.
 - Větší návrhy a plány → dokument do `docs/` (plány `docs/superpowers/plans/`,
   architektura `docs/adr/`), do paměti jen odkaz.
 - Playbook Čmuchala (`playbook-cmuchal.md`) si agent doplňuje sám po bězích.
-- Routing: týmové/projektové → `memory/` v gitu; osobní preference majitele
-  napříč projekty → osobní vault (mimo git). Tajemství nikam mimo `.env`.
+- Routing: týmové/projektové → vault `_claude/` (je v gitu, kolega ho vidí);
+  osobní preference majitele napříč projekty → osobní vault mimo tenhle
+  repozitář. Tajemství nikam mimo `.env`.
 - Neudržuj totéž na dvou místech — paměť odkazuje, neopisuje.
 
 ## Komunikace s majitelem
@@ -115,14 +113,12 @@ zdůvodněním; pokud se dá pokračovat na jiné části práce, neblokuj se č
 ## Struktura
 
 - `SPEC.md` — závazné zadání (v2)
-- `docs/PREDAVKA.md` — **předávka: začni tady**
+- `_claude/` — **dlouhodobá paměť projektu (začni tady)**
 - `docs/NOVA-OBLAST.md` — **postup pro zpracování nové oblasti od A do Z**
 - `docs/FAZE-0.md` — orchestrace přípravné fáze; `docs/adr/` — rozhodnutí
 - `src/` — jádro (deterministická logika + repository + enrichment)
 - `supabase/migrations/` — schéma; `test/` — testovací sada
 - `playbook-cmuchal.md` — playbook agenta (smí si ho měnit sám)
-- `memory/` — projektová paměť týmu (index `memory/MEMORY.md`; osobní věci
-  patří do osobního vaultu, ne sem)
 - `docs/JAK-TO-FUNGUJE.md` — lidský popis systému pro majitele
 
 ## Příkazy
@@ -143,3 +139,23 @@ Definice vzniknou v S0.3 (.claude/agents/). Aktivní ve fázi 1 je pouze
 Čmuchal (sběr, kvalifikace — nikdy neodesílá). Obchodník, Spojka, Statistik,
 Marketér a Ředitel se aktivují až v příslušných fázích; jejich smí/nesmí je
 závazně ve SPEC.
+
+## Paměť (long-term memory)
+
+Tento projekt má dlouhodobou paměť ve vaultu `_claude/` (uvnitř repozitáře —
+cesty proto relativní, ať přežijí přesun projektu). Spravuj ji podle pravidel.
+
+**Na startu session** (po auto-injektovaném `auto-memory/MEMORY.md`):
+1. Přečti `_claude/memory/INDEX.md` — katalog záznamů.
+2. Přečti `_claude/memory/context/project-context.md` — živý stav.
+3. Načti relevantní záznamy dle úkolu. Mechanika: `BOOTSTRAP.md`. Invarianty: `policies.md`.
+
+**Zapiš OKAMŽITĚ (event-triggered, ne na „konec session" — ten nepoznáš) když:**
+1. Učiníš architektonické rozhodnutí → `memory/decisions/`
+2. Vyřešíš netriviální bug (root cause) → `memory/bugs/`
+3. Objevíš projektovou konvenci / skrytou závislost / gotchu → `memory/patterns/`
+4. Narazíš na chybu/varování/lint issue → `memory/code-issues/` (ihned; po opravě → `_archive/`)
+5. Dokončíš milník / ucelený krok → přepiš `memory/context/project-context.md`
+6. Dostaneš feedback „dělej / nedělej takhle" → `auto-memory/feedback/`
+
+**Single source of truth:** pravidla paměti žijí ve vaultu (`policies.md`, `BOOTSTRAP.md`), ne tady. Tento blok je jen ukazatel + triggery.

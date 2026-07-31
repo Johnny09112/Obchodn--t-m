@@ -1,0 +1,17 @@
+{
+  "autoMemoryDirectory": "<PROJECT_VAULT>/_claude/auto-memory",
+  "autoMemoryProjectName": "<PROJECT_NAME>",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/reindex.js"
+          }
+        ]
+      }
+    ]
+  }
+}

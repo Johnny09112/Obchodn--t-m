@@ -4,6 +4,7 @@ import { PanelVrstev } from "./PanelVrstev";
 import { SeznamFirem } from "./SeznamFirem";
 import { supabase, type Role } from "./supabase";
 import { najdiPrekryv, naOblast, spoctiVrstvy } from "./vrstvy";
+import { najdiMisto, type Misto } from "./hledaniMista";
 import { bodVOblasti, type Oblast } from "../../src/oblast-tvar";
 import { vzdalenostM, type Bod } from "../../src/geo";
 import {
@@ -57,6 +58,10 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
   const [hlaska, setHlaska] = useState<string | null>(null);
   const [zobrazene, setZobrazene] = useState<ReadonlySet<string>>(new Set());
 
+  const [dotazMista, setDotazMista] = useState("");
+  const [nalezena, setNalezena] = useState<Misto[]>([]);
+  const [presunNa, setPresunNa] = useState<{ stred: Bod; zoom: number } | null>(null);
+
   useEffect(() => {
     Promise.all([nactiFirmy(), nactiJidelny(), nactiKategorie(), nactiOblasti()])
       .then(([f, j, k, o]) => {
@@ -88,6 +93,21 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
     [oblasti, zobrazene, firmy],
   );
   const prekryv = useMemo(() => najdiPrekryv(vrstvy), [vrstvy]);
+
+  // Nominatim snese nejvýš jeden dotaz za sekundu, takže se psaní odkládá —
+  // dotaz odejde až po odmlce, ne po každém písmenu.
+  useEffect(() => {
+    if (!dotazMista.trim()) {
+      setNalezena([]);
+      return;
+    }
+    const casovac = setTimeout(() => {
+      najdiMisto(dotazMista)
+        .then(setNalezena)
+        .catch(() => setNalezena([]));
+    }, 600);
+    return () => clearTimeout(casovac);
+  }, [dotazMista]);
 
   function prepniVrstvu(id: string) {
     setZobrazene((p) => {
@@ -305,8 +325,34 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
 
   return (
     <>
-      {smiZapisovat && (
-        <div className="pas-oblasti sloupec">
+      <div className="pas-oblasti sloupec">
+        <label className="pole">
+          <span>Hledat obec nebo adresu</span>
+          <input
+            value={dotazMista}
+            onChange={(e) => setDotazMista(e.target.value)}
+            placeholder="Zbůch"
+          />
+        </label>
+        {nalezena.length > 0 && (
+          <div className="tlacitka">
+            {nalezena.map((m) => (
+              <button
+                key={`${m.lat},${m.lng}`}
+                className="tlacitko tise"
+                onClick={() => {
+                  setPresunNa({ stred: { lat: m.lat, lng: m.lng }, zoom: 13 });
+                  setNalezena([]);
+                  setDotazMista("");
+                }}
+              >
+                {m.nazev}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {smiZapisovat && (
           <div className="tlacitka">
             <button className="tlacitko tise" onClick={zacniKruh}>
               Nový kruh
@@ -315,8 +361,8 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
               Obkreslit tvar
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Pokyn „klikněte do mapy na střed" přijde dřív, než návrh vznikne —
           panel nad mapou tedy ještě nestojí a hláška by neměla kde být. */}
@@ -467,6 +513,7 @@ export function MapaOblasti({ role, onVyber, vybranaId }: MapaOblastiProps) {
             if (o) otevri(o);
           }}
           vychozi={VYCHOZI}
+          presunNa={presunNa}
         />
       </div>
 

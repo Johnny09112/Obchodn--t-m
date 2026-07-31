@@ -688,3 +688,58 @@ tentýž průzkum našel minule. Dvě čísla, jedna firma, dvakrát započítan
 **Poučení:** u průběžných čísel si vždy napiš rovnici, která má platit, a
 otestuj ji (tady `nové + převzaté = počet firem v oblasti`). Jednotlivá čísla
 vypadají věrohodně samostatně; nesmysl je vidět teprve v součtu.
+
+## Pravidla přístupu se lokálně otestovat chováním nedají (2026-07-31)
+
+PGlite nemá Supabase Auth, takže `auth.jwt()` je náhrada vracející NULL —
+přihlásit se v testu nejde. Pravidla se proto testují **čtením jejich textu**
+z `pg_policies` (zavedeno v `test/pravidla.test.ts`, nově i
+`test/kampan-prava.test.ts`).
+
+Zvažoval jsem náhradu, která by `auth.jwt()` četla z nastavení sezení, aby
+šla pravidla otestovat doopravdy. Neudělal jsem to: testy běží jako vlastník
+tabulek, a tomu se RLS neuplatňuje vůbec (leda `force row level security`
+nebo přepnutí role, což by si vyžádalo doplnit grantům celou sadu, kterou
+Supabase přidává sám). Vznikla by tím **jiná** pravidla než v produkci —
+tedy falešná jistota, což je horší než přiznané omezení.
+
+**Důsledek pro práci:** ke každé změně pravidel přístupu patří ruční ověření
+po nasazení. Zapisovat ho do předávky, ne spoléhat na zelené testy.
+
+## Aplikace se nedá proklikat bez hesla (2026-07-31)
+
+Obrazovky jsou za přihlášením a heslo zadávat nesmím. U frontendové práce
+tedy umím ověřit: kontrolu typů, že se to přeloží, a že server ani konzole
+prohlížeče nehlásí chybu. **Neumím ověřit:** že to po kliknutí dělá, co má.
+
+Nepředstírat, že je to totéž. Do předávky patří výslovný seznam, co má
+majitel proklikat — a proč zrovna to (u přesunutého kódu jiné věci než
+u nově napsaného).
+
+## Příprava testů roste s počtem migrací (2026-07-31)
+
+U 25 migrací začal `beforeEach` (který pouští `spustMigrace`) vypršovat pod
+souběžnou zátěží. `vitest.config.ts` měl `testTimeout: 30_000`, ale
+**`hookTimeout` zůstal na výchozích 10 s** — přitom příprava dělá stejně
+těžkou práci jako test sám. Srovnáno na 30 s.
+
+**Pozor do budoucna:** je to odklad, ne řešení. Každý testovací soubor pouští
+všech N migrací znovu (41 souborů × 25 migrací). Až to začne vadit znovu,
+správná odpověď je migrovat jednou a připravenou databázi klonovat, ne
+zvyšovat limit dál.
+
+**Poznávací znamení:** test padá pod plnou sadou, ale samostatně projde.
+To není chyba v logice, to je čas.
+
+## Odmítnutý zápis se z prohlížeče pozná jen podle počtu řádků (2026-07-31)
+
+Když pravidlo přístupu zamítne zápis, Supabase **nevrátí chybu** — jen změní
+nula řádků. Kód, který kontroluje `error`, tedy nic nepozná a tlačítko jen
+zabliká; pro člověka to vypadá jako porucha.
+
+**Pravidlo:** u každého zápisu z aplikace přidat `.select("id")` a ověřit,
+že se nějaký řádek opravdu změnil. Teprve pak jde říct proč (patří to
+někomu jinému, mazat smí jen admin…).
+
+Ověřeno naostro: `sasek@` archivoval kampaň, kde je zástup (prošlo), a dvě
+cizí (odmítnuto).

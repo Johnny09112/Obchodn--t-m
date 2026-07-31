@@ -388,3 +388,21 @@ Formát: datum · kdo · rozhodnutí · proč. Nové řádky nahoru.
 - 2026-07-31 · Claude · **Zamyká se i `kampan_firmy` a `pruzkumy`**, ne jen
   `kampane`. Zamknout kampaň a nechat její seznam firem otevřený by byl
   zámek na dveřích vedle otevřeného okna.
+- 2026-07-31 · majitel · **Kampaně se archivují a smí se i mazat.** MĚNÍ to
+  zadání z 29. 7. kap. 5 („kampaně se nemažou, zrušení je stav s důvodem").
+  Archivace skryje kampaň z přehledu a jde vrátit; mazání je nevratné.
+  **Mazat smí jen admin, ostatní archivují** — tím odpadá potřeba někoho
+  upozorňovat, protože maže rovnou ten, kdo by zprávu dostával.
+- 2026-07-31 · Claude · **Potvrzovací e-mail adminovi se nestaví** (majitel
+  ho původně chtěl). Porušilo by to TP-8: fáze 0–2 nesmí odesílání ani
+  implementovat. Vyřešeno jinak — mazání je vyhrazené adminovi, takže není
+  koho upozorňovat. Věcně je to i silnější: e-mail dorazí až po smazání.
+- 2026-07-31 · Claude · **Podmínka „smazat jen když nic neodešlo" se zapisuje
+  přes stav kampaně**, ne přes tabulku zpráv. `messages` nemá vazbu na
+  kampaň (přidá se ve fázi 3 spolu s odesíláním), zatímco odesílat se smí
+  jen z běžící kampaně — `stav not in ('bezi','uzavrena')` tedy znamená
+  totéž a jde ověřit už dnes.
+- 2026-07-31 · Claude · **Smazaná kampaň po sobě nechá záznam**
+  (`smazane_kampane`: název, správce, kdo a kdy smazal). Projekt jinde trvá
+  na doložitelnosti a mazání beze stopy by z toho vybočovalo; stojí to
+  spoušť o deseti řádcích.

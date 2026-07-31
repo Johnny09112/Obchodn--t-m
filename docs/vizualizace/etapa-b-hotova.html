@@ -1,0 +1,245 @@
+<meta charset="utf-8">
+<title>Etapa B hotová — co ověřit</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c; --inkoust-2: #2c4149;
+    --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7;
+    --jantar: #9a5c14; --jantar-tl: #f4ead9;
+    --cihla: #8e3b2c; --cihla-tl: #f6e6e2;
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.6rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9; --inkoust-2: #b9c8c9;
+      --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b;
+      --jantar: #d9a05a; --jantar-tl: #2f2415;
+      --cihla: #e08975; --cihla-tl: #331d18;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9; --inkoust-2: #b9c8c9;
+    --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b;
+    --jantar: #d9a05a; --jantar-tl: #2f2415;
+    --cihla: #e08975; --cihla-tl: #331d18;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c; --inkoust-2: #2c4149;
+    --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7;
+    --jantar: #9a5c14; --jantar-tl: #f4ead9;
+    --cihla: #8e3b2c; --cihla-tl: #f6e6e2;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: 43rem; margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 3rem;
+  }
+  .hlavicka { display: flex; flex-direction: column; gap: .9rem; }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene); margin: 0;
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: 0;
+  }
+  .podtitul { font-size: var(--fs-lg); color: var(--inkoust-2); margin: 0; text-wrap: pretty; }
+
+  .stavy { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .stav {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .06em; text-transform: uppercase;
+    padding: .34rem .7rem; border-radius: 2px; border: 1px solid;
+  }
+  .stav::before { content: ""; width: .55em; height: .55em; flex: none; }
+  .stav-ok { color: var(--zelena); background: var(--zelena-tl);
+    border-color: color-mix(in srgb, var(--zelena) 35%, transparent); }
+  .stav-ok::before { background: var(--zelena); }
+  .stav-cek { color: var(--jantar); background: var(--jantar-tl);
+    border-color: color-mix(in srgb, var(--jantar) 40%, transparent); }
+  .stav-cek::before { border: 1.5px solid var(--jantar); transform: rotate(45deg); }
+
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance;
+    margin: 0; padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  .hotovo { display: flex; flex-direction: column; gap: .55rem; }
+  .polozka {
+    display: grid; grid-template-columns: 1.4rem 1fr; gap: 0 .7rem;
+    padding: .7rem .9rem; background: var(--papir-2);
+    border: 1px solid var(--linka); border-radius: 4px; font-size: var(--fs-sm);
+  }
+  .polozka .fajfka { color: var(--zelena); font-weight: 700; }
+  .polozka b { font-family: var(--pismo-nadpis); }
+
+  .varovani {
+    display: flex; flex-direction: column; gap: .85rem;
+    padding: 1.25rem 1.35rem; background: var(--cihla-tl);
+    border: 1px solid color-mix(in srgb, var(--cihla) 40%, transparent);
+    border-left: 4px solid var(--cihla); border-radius: 4px;
+  }
+  .varovani-stitek {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--cihla); font-weight: 600;
+  }
+  .varovani p { font-size: var(--fs-sm); }
+
+  ol.kontrola { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: .8rem; }
+  ol.kontrola li { text-wrap: pretty; }
+  ol.kontrola li::marker { font-family: var(--pismo-udaj); color: var(--tlumene); }
+  .proc { display: block; font-size: var(--fs-sm); color: var(--inkoust-2); margin-top: .2rem; }
+
+  .patka {
+    border-top: 1px solid var(--linka); padding-top: 1.25rem;
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    line-height: 1.7; color: var(--tlumene);
+  }
+</style>
+
+<article class="stranka">
+
+  <header class="hlavicka">
+    <p class="datum">Cantinero · etapa B · 31. července 2026</p>
+    <h1>Kampaň jde založit v aplikaci</h1>
+    <p class="podtitul">
+      Osm úkolů hotových. Než to sloučím do hlavní větve, potřebuju od tebe
+      tři kliknutí — jsou věci, které za tebe ověřit nemůžu.
+    </p>
+    <div class="stavy">
+      <span class="stav stav-ok">381 testů zelených</span>
+      <span class="stav stav-ok">Typy čisté</span>
+      <span class="stav stav-cek">Čeká na tvoje ověření</span>
+    </div>
+  </header>
+
+  <section class="sekce">
+    <h2>Co přibylo</h2>
+    <div class="hotovo">
+      <div class="polozka">
+        <span class="fajfka" aria-hidden="true">✓</span>
+        <div><b>Kampaně v horní liště.</b> Vedle Oblastí a Kartotéky.
+          Seznam kampaní se stavem, správcem a zástupem.</div>
+      </div>
+      <div class="polozka">
+        <span class="fajfka" aria-hidden="true">✓</span>
+        <div><b>Krok 1 — založení.</b> Název, k čemu kampaň je, a zástup.
+          Správcem se stáváš automaticky ty.</div>
+      </div>
+      <div class="polozka">
+        <span class="fajfka" aria-hidden="true">✓</span>
+        <div><b>Krok 2 — území.</b> Celá mapa i s kreslením, jak jsi chtěl.
+          Ukazuje dvě čísla: kolik firem v území leží a kolik jich projde sítem.</div>
+      </div>
+      <div class="polozka">
+        <span class="fajfka" aria-hidden="true">✓</span>
+        <div><b>Hledání obce v mapě.</b> Napíšeš „Zbůch“, mapa se přesune.
+          Tohle aplikace dosud vůbec neuměla.</div>
+      </div>
+      <div class="polozka">
+        <span class="fajfka" aria-hidden="true">✓</span>
+        <div><b>Zámek na kampaních.</b> Dosud mohl do každé kampaně sáhnout
+          kdokoli přihlášený. Nově jen správce, jeho zástup a admin.</div>
+      </div>
+      <div class="polozka">
+        <span class="fajfka" aria-hidden="true">✓</span>
+        <div><b>Evidence lidí</b> pro výběr zástupu, a doplňky designu
+          (krokovník, klidná hláška, stupnice rozměrů). Vzhled beze změny.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co ověřené není</h2>
+    <div class="varovani">
+      <p class="varovani-stitek">Tohle za tebe udělat nemůžu</p>
+      <p>
+        <strong>Obrazovky jsou za přihlášením a heslo zadávat nesmím.</strong>
+        Ověřil jsem, že se všechno přeloží, že sedí typy a že server ani
+        prohlížeč nehlásí chybu. Že to po kliknutí dělá, co má, ověřené není —
+        a nebudu předstírat, že je to totéž.
+      </p>
+      <p>
+        <strong>Pravidla přístupu se lokálně netestují chováním.</strong>
+        Testovací databáze nemá přihlašování, takže se kontroluje obsah
+        pravidel, ne co doopravdy udělají. Proto je bod 1 níž ten nejdůležitější.
+      </p>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Tři věci k proklikání</h2>
+    <ol class="kontrola">
+      <li>
+        <strong>Přihlas se jako <code>sasek@cantinero.cz</code> a zkus upravit
+        kampaň, kterou založil někdo jiný.</strong>
+        <span class="proc">
+          Nesmí to projít. Tohle je jediné ověření zámku, které něco doopravdy
+          dokazuje.
+        </span>
+      </li>
+      <li>
+        <strong>Projdi obrazovku Oblasti jako dřív</strong> — zobrazení
+        uložených oblastí, nový kruh s posuvníkem, obkreslení tvaru, tažení
+        bodů, uložení.
+        <span class="proc">
+          Mapa se stěhovala do sdílené součástky, aby ji mohl použít i průvodce.
+          Kód se neměnil, jen přesouval — ale přesouval se celý.
+        </span>
+      </li>
+      <li>
+        <strong>Založ kampaň, vyber území a zkontroluj obě čísla.</strong>
+        <span class="proc">
+          „V území leží“ se musí shodovat s tím, co ukazuje mapa v Oblastech.
+          Když dáš firmu na blacklist, „do kampaně projde“ musí klesnout o jedna.
+        </span>
+      </li>
+    </ol>
+  </section>
+
+  <section class="sekce">
+    <h2>Co přijde potom</h2>
+    <p>
+      <strong>Etapa B+ — naplánovaný běh Čmuchala.</strong> Bez ní by krok 3
+      průvodce čekal na průzkum, který nikdo nespustí. Je to serverová práce,
+      žádné obrazovky.
+    </p>
+    <p>
+      Teprve po ní má smysl stavět kroky 3 a 4 (průzkum a seznam firem).
+    </p>
+  </section>
+
+  <footer class="patka">
+    <p>
+      Větev <code>kampan-pruvodce-b</code>, 9 commitů. Do hlavní větve zatím
+      sloučená není — čeká na ověření výš.<br>
+      Plán: <code>docs/superpowers/plans/2026-07-31-pruvodce-kampani-etapa-b.md</code><br>
+      Nic se neodesílá. Odesílání zůstává zakázané až do fáze 3.
+    </p>
+  </footer>
+
+</article>

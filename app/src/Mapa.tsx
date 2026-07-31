@@ -25,6 +25,12 @@ interface Props {
   onKlikNaVrstvu: (id: string) => void;
   /** Střed a přiblížení při prvním vykreslení. */
   vychozi: { stred: Bod; zoom: number };
+  /**
+   * Přesun pohledu zvenčí — po vyhledání obce. Každý nový objekt mapu
+   * přesune; `null` ji nechá být. Výchozí pohled se tím nemění, ten platí
+   * jen při založení.
+   */
+  presunNa?: { stred: Bod; zoom: number } | null;
 }
 
 /**
@@ -44,6 +50,7 @@ export function Mapa({
   onPosunVrcholu,
   onKlikNaVrstvu,
   vychozi,
+  presunNa,
 }: Props) {
   const obal = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
@@ -97,6 +104,12 @@ export function Mapa({
     // Výchozí pohled se použije jen při založení — pak mapu řídí uživatel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── přesun pohledu zvenčí (po vyhledání obce)
+  useEffect(() => {
+    if (!mapa.current || !presunNa) return;
+    mapa.current.setView([presunNa.stred.lat, presunNa.stred.lng], presunNa.zoom);
+  }, [presunNa]);
 
   // ── uložené oblasti zapnuté v mapě
   useEffect(() => {

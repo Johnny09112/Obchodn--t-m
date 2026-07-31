@@ -138,7 +138,36 @@ neměřil**. Teď je typ `number | null` a null se počítá jako „nevíme".
 
 Test to hlídá rovnicí `nové + převzaté = počet firem v oblasti`.
 
-## Průvodce kampaní: etapa A hotová, čeká na schválení (2026-07-31)
+## Etapa B hotová — čeká na ruční ověření a sloučení (2026-07-31)
+
+Větev **`kampan-pruvodce-b`**, 8 commitů, 381 testů zelených, typy čisté.
+Plán: `docs/superpowers/plans/2026-07-31-pruvodce-kampani-etapa-b.md`.
+
+Hotovo:
+- **Evidence lidí** (`uzivatele`, migrace 0023) plněná spouští z `auth.users`,
+  jen ke čtení. Slouží k výběru zástupu. Role se do ní nekopíruje.
+- **Zástup a zamčení kampaní** (migrace 0024). Dosud směl do každé kampaně
+  kdokoli přihlášený; nově správce, zástup a admin. Zamčený je i seznam firem
+  kampaně a objednávky průzkumu na ni navázané.
+- **Doplňky designu:** stupnice odstupů a písma, krokovník, klidná a hotová
+  podoba hlášky, jména pro 6 natvrdo psaných barev. Vzhled beze změny.
+- **Mapa vyříznutá do `MapaOblasti.tsx`** — používá ji obrazovka Oblasti
+  i průvodce. Umí ohlásit vybranou oblast ven a obnovit ji při návratu.
+- **Seznam kampaní** a **kroky 1 a 2 průvodce** (založení se zástupem,
+  území se dvěma počty firem: kolik leží uvnitř a kolik projde sítem).
+- **Hledání obce v mapě** (Nominatim, dotaz až po 600 ms odmlky).
+
+**POZOR — co ověřené NENÍ:** obrazovky jsou za přihlášením, a heslo zadávat
+nesmím. Ověřená je kontrola typů, překlad a to, že server ani prohlížeč
+nehlásí chybu; **klikání po aplikaci ne**. Před sloučením to chce projít
+ručně, hlavně:
+1. Přihlásit se jako `sasek@cantinero.cz` a zkusit upravit kampaň, kterou
+   založil někdo jiný — **nesmí to projít**. Pravidla přístupu se lokálně
+   testují čtením jejich textu, ne chováním (PGlite nemá přihlašování).
+2. Projít Oblasti — mapa, kreslení kruhu i tvaru, uložení. Kód se stěhoval.
+3. Založit kampaň, vybrat území, ověřit obě čísla firem.
+
+## Průvodce kampaní: etapa A — návrh (2026-07-31)
 
 Návrh pěti obrazovek (seznam kampaní + čtyři kroky), textů a doplňků
 designového systému: **`docs/superpowers/specs/2026-07-31-pruvodce-kampani-obrazovky-design.md`**,

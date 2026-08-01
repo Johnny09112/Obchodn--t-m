@@ -7,6 +7,7 @@
 - [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-01
 
 ## Decisions
+- [[tvar-oblasti-u-pruzkumu]] — Průzkum si zapamatuje tvar oblasti, který skutečně prošel — zapisuje se při zahájení · active · 2026-08-02
 - [[hlidka-cmuchala-u-majitele]] — Naplánovaný běh Čmuchala je ikona u hodin na majitelově počítači · active · 2026-08-01
 - [[kampan-nad-vice-oblastmi]] — Kampaň stojí na množině oblastí (kampan_oblasti); sloupec kampane.oblast_id zrušen · active · 2026-08-01
 - [[mazani-oblasti]] — Kdo smí mazat oblasti a co jim v tom brání — kampaň a průzkum, ne firmy · active · 2026-08-01

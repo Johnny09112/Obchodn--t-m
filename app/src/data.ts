@@ -142,6 +142,11 @@ export interface PrehledOblasti {
   posledni_stav: string | null;
   posledni_at: string | null;
   posledni_chyba: string | null;
+  /**
+   * Oblast se od posledního průzkumu překreslila, takže starý průzkum už
+   * nepopisuje celý dnešní tvar (migrace 0031).
+   */
+  tvar_zmenen: boolean;
   kampane: KampanOblasti[];
 }
 
@@ -151,7 +156,7 @@ export async function nactiPrehledOblasti(): Promise<PrehledOblasti[]> {
     .from("oblasti_prehled")
     .select(
       "id,nazev,typ,polomer_m,bodu,jidelna_id,poznamka,created_at," +
-        "firem,pruzkumu,posledni_stav,posledni_at,posledni_chyba,kampane",
+        "firem,pruzkumu,posledni_stav,posledni_at,posledni_chyba,tvar_zmenen,kampane",
     )
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);

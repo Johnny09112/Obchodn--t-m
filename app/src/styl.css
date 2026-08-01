@@ -1099,6 +1099,11 @@ input[type="range"] {
   color: var(--cihla);
 }
 
+/* Není to chyba, jen věc, o které se má vědět — proto hořčice, ne cihla. */
+.pod-nazvem.varovne {
+  color: var(--horcice);
+}
+
 .tabulka .jmeno {
   font-weight: 600;
   text-align: left;

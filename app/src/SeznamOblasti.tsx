@@ -235,6 +235,13 @@ export function SeznamOblasti({
                       {o.posledni_stav === "selhalo" && o.posledni_chyba && (
                         <span className="pod-nazvem chybou">{o.posledni_chyba}</span>
                       )}
+                      {/* Oblast se dá překreslit; průzkum se tím nezneplatní,
+                          ale přestane popisovat celý dnešní tvar. */}
+                      {o.tvar_zmenen && (
+                        <span className="pod-nazvem varovne">
+                          tvar se od té doby změnil — průzkum nepokrývá celé území
+                        </span>
+                      )}
                     </td>
 
                     <td>

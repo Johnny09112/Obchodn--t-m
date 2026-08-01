@@ -500,6 +500,10 @@ export function PruvodceKampani({
     const kSpechu = pruzkumy.find(
       (o) => o.pruzkum && !o.pruzkum.urgentni && ["ceka", "bezi"].includes(o.pruzkum.stav),
     );
+    // Oblasti, které se od svého průzkumu překreslily (migrace 0031).
+    const zmeneneTvary = pruzkumy
+      .filter((o) => prehled.find((p) => p.id === o.oblastId)?.tvar_zmenen)
+      .map((o) => o.oblastNazev);
 
     return (
       <div className="sloupec">
@@ -534,6 +538,19 @@ export function PruvodceKampani({
         {vseHotovo && (
           <p className="hlaska je-hotovo">
             {souhrn.popis} Můžete pokračovat na seznam firem.
+          </p>
+        )}
+
+        {/* Oblast se od průzkumu překreslila. Kampaň se naplní z dnešního
+            tvaru, ale v dokreslené části nikdo nehledal — takže by tam firmy
+            chyběly, aniž by to bylo na čemkoli vidět. */}
+        {zmeneneTvary.length > 0 && (
+          <p className="hlaska" role="alert">
+            {zmeneneTvary.length === 1
+              ? `Oblast „${zmeneneTvary[0]}" se od průzkumu překreslila.`
+              : `Tyhle oblasti se od průzkumu překreslily: ${zmeneneTvary.join(", ")}.`}{" "}
+            V dokreslené části se ještě nehledalo, takže odtud firmy chybí.
+            Objednejte průzkum znovu, ať je seznam úplný.
           </p>
         )}
 

@@ -22,11 +22,11 @@ Seřazeno podle souvislostí, ne podle důležitosti.
    `kampan_oblasti`, sjednocení firem, průzkum na každou oblast zvlášť,
    výběr zaškrtávátky v seznamu. Viz [[kampan-nad-vice-oblastmi]].
 
-## 2. Tvar oblasti se uloží k průzkumu
+## 2. ~~Tvar oblasti se uloží k průzkumu~~ — HOTOVO 2. 8.
 
-**Odsouhlaseno, nepostaveno.** Oblast se překresluje (Plzeň se rozšiřuje),
-takže starý průzkum by tvrdil „analyzovali jsme Plzeň", ale ta Plzeň by
-mezitím znamenala něco jiného.
+Migrace 0031: tvar i název se zapisují při zahájení průzkumu, přehled oblastí
+hlásí `tvar_zmenen`. Viz [[tvar-oblasti-u-pruzkumu]]. Dva staré průzkumy tvar
+nemají a nedoplňují se.
 
 ## 3. Oznámení o dokončení průzkumu
 

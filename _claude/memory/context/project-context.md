@@ -28,8 +28,8 @@ odesílací doména, právní konzultace.
 | Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
 | Běhů agenta | 15 |
 | Náklady na API | **0 USD** — placené nikdy neběželo |
-| Migrace | po `0030_kampan_oblasti.sql`, nasazeno |
-| Testy | 490 zelených, 55 souborů |
+| Migrace | po `0031_pruzkum_tvar.sql`, nasazeno |
+| Testy | 499 zelených, 56 souborů |
 | Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -53,12 +53,14 @@ Přitom se našel a opravil pomalý zápis po jedné
 [[kampan-nad-vice-oblastmi]]. Tím je uzavřená celá trojice, kterou majitel
 zadal 31. 7. (úklid, seznam s detailem, víc oblastí).
 
+**Tvar oblasti u průzkumu (2. 8.):** hotové a nasazené (migrace 0031) —
+[[tvar-oblasti-u-pruzkumu]]. Neproklikané v prohlížeči, viz tam.
+
 ## Aktuální focus
 
-**Volný — čeká se na zadání.** Nejbližší nabíledni: uložit tvar oblasti
-k průzkumu (odsouhlaseno, nepostaveno), asymetrie ve sbírání kontaktů
-a etapa D průvodce (kritika a přístupnost). Podrobně
-[[otevrene-pozadavky-majitele]].
+**Volný — čeká se na zadání.** Nabízí se: asymetrie ve sbírání kontaktů
+(13 767 firem, jen 104 spojení), etapa D průvodce (kritika a přístupnost)
+a stránkování velkých seznamů. Podrobně [[otevrene-pozadavky-majitele]].
 
 ## Otevřené body
 

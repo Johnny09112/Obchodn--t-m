@@ -51,10 +51,18 @@ export async function dalsiPruzkum(db: Db): Promise<Pruzkum | null> {
  * běží (nebo je uzavřená), nedělá nic — díky tomu opakované volání
  * (`vyridPruzkum` ho volá při každém navazujícím běhu) nepřepíše `run_id`
  * zpátky na prázdno.
+ *
+ * Tady se taky **zaznamená tvar oblasti** (migrace 0031). Je to doklad o tom,
+ * co se skutečně prošlo: oblast se dá kdykoli překreslit, takže bez otisku by
+ * starý průzkum tvrdil „analyzovali jsme Plzeň", zatímco Plzeň by mezitím
+ * znamenala něco jiného. Zapisuje se v témž `update`, který objednávku
+ * rozbíhá — tím pádem právě jednou, při prvním spuštění.
  */
 export async function zahajPruzkum(db: Db, id: string, runId?: string): Promise<void> {
   await db.query(
-    `update pruzkumy set stav = 'bezi', zahajeno_at = now(), run_id = $1
+    `update pruzkumy set stav = 'bezi', zahajeno_at = now(), run_id = $1,
+            tvar = tvar_oblasti(oblast_id),
+            oblast_nazev = (select nazev from oblasti o where o.id = oblast_id)
      where id = $2 and stav in ('ceka', 'ceka_na_rozhodnuti')`,
     [runId ?? null, id],
   );

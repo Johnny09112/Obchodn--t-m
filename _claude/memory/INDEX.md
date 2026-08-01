@@ -11,6 +11,7 @@
 - [[mazani-oblasti]] — Kdo smí mazat oblasti a co jim v tom brání — kampaň a průzkum, ne firmy · active · 2026-08-01
 - [[odesilani-zakazano-jen-docasne]] — Zákaz odesílání je bezpečnostní pojistka do fáze 3, ne trvalá zásada · active · 2026-08-01
 - [[pamet-projektu-ve-vaultu]] — Paměť projektu se přestěhovala z memory/ do vaultu _claude/ · active · 2026-08-01
+- [[prehled-oblasti-pohledem]] — Seznam oblastí čte databázový pohled oblasti_prehled, ne dopočet v prohlížeči · active · 2026-08-01
 - [[sito-mezi-oblasti-a-kampani]] — Síto koho neoslovovat sedí na hranici oblast → kampaň, ne v přepočtu oblasti · active · 2026-08-01
 - [[skore-bez-zname-vzdalenosti]] — Skóre bez vzdálenosti se přepočítává na stejnou stupnici, ne usekává · active · 2026-08-01
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
@@ -26,6 +27,9 @@
 - [[vercel-instaluje-jen-app-zavislosti]] — Vercel neinstaluje kořenové závislosti; aplikace si nesmí přitáhnout db.ts · active · 2026-08-01
 - [[zamitnuty-zapis-bez-chyby]] — Zamítnutý zápis Supabase nehlásí jako chybu — jen změní nula řádků · active · 2026-08-01
 - [[zelene-testy-nejsou-hotova-obrazovka]] — Testy a typy nechytí vady toku a pořadí — frontend se musí proklikat · active · 2026-08-01
+
+## Bugs
+- [[zapis-po-jedne-je-lokalne-neviditelny]] — Přepočet oblasti vkládal firmy po jedné — na PGlite rychle, přes síť minuty · fixed · 2026-08-01
 
 ## Research
 - [[otevrene-pozadavky-majitele]] — Co majitel vyžádal a k 1. 8. 2026 není postavené · active · 2026-08-01

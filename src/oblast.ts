@@ -121,19 +121,43 @@ export async function prepocitejOblastFirmy(db: Db, oblastId: string): Promise<n
 
   await db.query("delete from oblast_firmy where oblast_id = $1", [oblastId]);
 
-  let pocet = 0;
+  const uvnitr: { ico: string; vzdalenost: number | null }[] = [];
   for (const f of firmy) {
     const bod = { lat: f.lat, lng: f.lng };
     if (!bodVOblasti(o.oblast, bod)) continue;
     // Vzdálenost dává smysl jen u kruhu; u nakresleného tvaru není od čeho.
-    const vzdalenost = o.oblast.stred ? vzdalenostM(o.oblast.stred, bod) : null;
-    await db.query(
-      `insert into oblast_firmy (oblast_id, ico, vzdalenost_m) values ($1,$2,$3)`,
-      [oblastId, f.ico, vzdalenost],
-    );
-    pocet++;
+    uvnitr.push({
+      ico: f.ico,
+      vzdalenost: o.oblast.stred ? vzdalenostM(o.oblast.stred, bod) : null,
+    });
   }
-  return pocet;
+
+  // Po dávkách, ne po jedné firmě. Na PGlite je to jedno — běží v procesu —
+  // ale proti vzdálené databázi je každý zápis jedna cesta tam a zpět, takže
+  // 12 762 firem Plzně znamenalo 12 762 cest a přepočet trval minuty.
+  for (let i = 0; i < uvnitr.length; i += DAVKA) {
+    const davka = uvnitr.slice(i, i + DAVKA);
+    await db.query(
+      `insert into oblast_firmy (oblast_id, ico, vzdalenost_m)
+       values ${mistaVDavce(davka.length)}`,
+      [oblastId, ...davka.flatMap((r) => [r.ico, r.vzdalenost])],
+    );
+  }
+  return uvnitr.length;
+}
+
+/** Kolik řádků najednou. Tři parametry na řádek, strop Postgresu je 65535. */
+const DAVKA = 500;
+
+/**
+ * Místa parametrů pro jednu dávku: `($1,$2,$3),($1,$4,$5)…`
+ *
+ * `$1` je oblast, stejná pro celou dávku; každý řádek si bere další dvojici.
+ */
+export function mistaVDavce(radku: number): string {
+  const kusy: string[] = [];
+  for (let i = 0; i < radku; i++) kusy.push(`($1,$${i * 2 + 2},$${i * 2 + 3})`);
+  return kusy.join(",");
 }
 
 export interface FirmaVOblasti {

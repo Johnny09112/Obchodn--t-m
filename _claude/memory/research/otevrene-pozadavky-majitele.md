@@ -15,8 +15,9 @@ Seřazeno podle souvislostí, ne podle důležitosti.
 1. ~~**Mazání nepoužitých oblastí.**~~ **HOTOVO 1. 8.** (migrace 0028) —
    `restrict` na průzkumu, mazání vyhrazené adminovi, hláška jménem kampaně.
    Viz [[mazani-oblasti]]. Past byla horší, než se čekalo: mazat směl celý tým.
-2. **Seznam oblastí s detailem** místo klikání do mapy — kdy naposled
-   prozkoumaná, kolik firem, v jakých kampaních je.
+2. ~~**Seznam oblastí s detailem**~~ **HOTOVO 1. 8.** (migrace 0029) — pohled
+   `oblasti_prehled`, hledání i řazení, mazání přestěhované sem z panelu mapy.
+   Viz [[prehled-oblasti-pohledem]].
 3. **Kampaň nad více oblastmi** (`kampan_oblasti`, mnoho k mnoha). Skutečné
    geometrické slučování tvarů se NESTAVÍ — majitel potvrdil, že jde o tohle.
 

@@ -30,7 +30,7 @@ import { priradKategorie } from "./kategorie.js";
 import { nactiProfil, seznamProfilu, zvolProfil } from "./profil.js";
 import { prenesData } from "./prenos.js";
 import {
-  firmyVOblasti, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
+  firmyVOblasti, nactiOblast, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
   type Oblast,
 } from "./oblast.js";
 import { vzdalenostM } from "./geo.js";
@@ -506,6 +506,25 @@ async function cmdOblast(argv: string[]): Promise<void> {
       }
       await prirad(db, values.oblast, values.jidelna);
       console.log("Jídelna přiřazena k oblasti.");
+      return;
+    }
+
+    if (akce === "prepocitej") {
+      // Seznam firem v oblasti je odvozenina z tvaru a zapisuje se při
+      // uložení oblasti. Kartotéka mezitím roste, takže starší oblast tvrdí
+      // méně, než kolik do ní dneska spadá — v přehledu se to pozná hned.
+      const kOprave = values.oblast
+        ? [await nactiOblast(db, values.oblast)].filter((o) => o !== null)
+        : await seznamOblasti(db);
+
+      if (kOprave.length === 0) {
+        console.log("Žádná taková oblast.");
+        return;
+      }
+      for (const o of kOprave) {
+        const pocet = await prepocitejOblastFirmy(db, o.id);
+        console.log(`${o.nazev.padEnd(24)} ${String(pocet).padStart(6)} firem`);
+      }
       return;
     }
 
@@ -1555,6 +1574,9 @@ switch (prikaz) {
   oblast prirad --oblast <id> --jidelna <id>
                                    přiřadí jídelnu k oblasti (až po jednání)
   oblast firmy --oblast <id>       vypíše firmy v oblasti
+  oblast prepocitej [--oblast <id>]
+                                   znovu spočítá, které firmy do oblasti spadají
+                                   (seznam se zapisuje při uložení, kartotéka mezitím roste)
   zona --jidelna <id> [--polomery 1000,3000,5000]
                                    kolik firem přibude při jakém poloměru zóny
   dosah [--jidelna <id>]           přepočte, které jídelny mají kterou firmu v dosahu

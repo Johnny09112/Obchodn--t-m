@@ -40,8 +40,11 @@ export interface PosuzovanaFirma {
  *
  * Kdo píše pravidlo, obvykle nepřepisuje háčky přesně podle rejstříku —
  * bez tohohle by pravidlo „kovovyroba" tiše nefungovalo a nikdo by nevěděl proč.
+ *
+ * Ze stejného důvodu podle toho hledá i aplikace: kdo píše „zapadni cechy",
+ * myslí „Západní čechy".
  */
-function porovnatelne(text: string): string {
+export function porovnatelne(text: string): string {
   return text
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")

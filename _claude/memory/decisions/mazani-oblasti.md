@@ -29,10 +29,14 @@ pravidlo je to, co platí.
 **Co drží oblast naživu:** kampaň (i archivovaná) a objednaný průzkum. Firmy
 uvnitř ne.
 
-**Důsledek:** aplikace se ptá dřív, než maže (`zjistiVyuzitiOblasti`), a řekne
-to jménem: „Smazat nejde. Používá ji kampaň „Zkouška průzkumu". Objednal se nad
-ní průzkum." Hláška Postgresu o porušení cizího klíče nikomu nic neřekne. Věta
-se skládá v čistém `src/oblast-vyuziti.ts` — stejný vzor jako `pruzkum-postup.ts`.
+**Důsledek:** aplikace se ptá dřív, než maže, a řekne to jménem: „Smazat nejde.
+Používá ji kampaň „Zkouška průzkumu". Objednal se nad ní průzkum." Hláška
+Postgresu o porušení cizího klíče nikomu nic neřekne. Věta se skládá v čistém
+`src/oblast-vyuziti.ts` — stejný vzor jako `pruzkum-postup.ts`.
+
+**Kde mazání je (od 1. 8. odpoledne):** v seznamu oblastí, ne v panelu mapy,
+kde vzniklo. Údaje o využití nese pohled `oblasti_prehled` —
+viz [[prehled-oblasti-pohledem]].
 
 **Ověřeno na ostré databázi** (v transakci, se zpětným odvoláním): role
 `uzivatel` smaže 0 řádků, admin smaže nepoužitou oblast a na držené narazí

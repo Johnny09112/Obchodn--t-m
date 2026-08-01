@@ -1060,13 +1060,90 @@ input[type="range"] {
   color: var(--bila);
 }
 
-/* Úklid stojí pod uložením a odděluje se linkou — je to jiný druh akce. */
-.uklid-oblasti {
+/* ─────────────────────────────────────────────────── seznam oblastí */
+
+/*
+ * Hlavní cesta k oblasti. Mapa ukazuje, KDE oblast je; seznam to, CO o ní
+ * víme — a rozhodnutí („smazat?", „prozkoumat znovu?") se dělá z toho druhého.
+ */
+.seznam-oblasti {
   display: flex;
   flex-direction: column;
+  gap: var(--o4);
+}
+
+.hlava-seznamu {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--o2);
-  padding-top: var(--o3);
-  border-top: 1px solid var(--linka);
+}
+
+.hlava-seznamu h3 {
+  margin: 0;
+}
+
+.seznam-oblasti .filtry {
+  margin-bottom: 0;
+}
+
+/* Druhý řádek buňky: tvar oblasti, text chyby. Doplněk, ne sdělení. */
+.pod-nazvem {
+  display: block;
+  font-size: var(--t-mikro);
+  color: var(--inkoust-slaby);
+}
+
+.pod-nazvem.chybou {
+  color: var(--cihla);
+}
+
+.tabulka .jmeno {
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Otevřená oblast se pozná i bez mapy — jinak se člověk po scrollování ztratí. */
+.tabulka tr.vybrany > td {
+  background: var(--razitko-svetle);
+}
+
+.tabulka tr.vybrany > td:first-child {
+  box-shadow: inset 3px 0 0 var(--razitko);
+}
+
+/* Údaj, který chybí, se drží zticha — není to chyba, jen prázdno. */
+.tise {
+  color: var(--inkoust-slaby);
+}
+
+.kampane-oblasti {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--o1);
+}
+
+.stitek {
+  display: inline-block;
+  font-size: var(--t-mikro);
+  line-height: 1.4;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  background: var(--papir);
+  white-space: nowrap;
+}
+
+.stitek.archivni {
+  color: var(--inkoust-slaby);
+  border-style: dashed;
+  background: transparent;
+}
+
+/* Nevratná akce v řádku: vypadá jako odkaz, ale barvou přizná, co dělá. */
+.odkaz.nebezpecny {
+  color: var(--cihla);
 }
 
 /* ──────────────────────────────────────────────── postup po obcích */

@@ -28,8 +28,8 @@ odesílací doména, právní konzultace.
 | Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
 | Běhů agenta | 15 |
 | Náklady na API | **0 USD** — placené nikdy neběželo |
-| Migrace | po `0028_oblast_uklid.sql`, nasazeno |
-| Testy | 431 zelených, 47 souborů |
+| Migrace | po `0029_oblasti_prehled.sql`, nasazeno |
+| Testy | 457 zelených, 50 souborů |
 | Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -44,11 +44,15 @@ průzkum → hlídka ho vzala → Čmuchal sebral 13 600 firem → kampaň se na
 (migrace 0028) — viz [[mazani-oblasti]]. Přitom se ukázalo, že mazání bylo
 otevřené celému týmu a kaskádou by bralo i historii průzkumů; obojí zavřeno.
 
+**Seznam oblastí (1. 8.):** obrazovka Oblasti má nahoře seznam s detailem
+(pohled `oblasti_prehled`, migrace 0029) — [[prehled-oblasti-pohledem]].
+Přitom se našel a opravil pomalý zápis po jedné
+([[zapis-po-jedne-je-lokalne-neviditelny]]).
+
 ## Aktuální focus
 
-**Oblasti dál: seznam s detailem místo klikání do mapy a kampaň nad více
-oblastmi** (`kampan_oblasti`, vazba M:N). Geometrické slučování se stavět
-nemá. Podrobně [[otevrene-pozadavky-majitele]].
+**Kampaň nad více oblastmi** (`kampan_oblasti`, vazba M:N). Geometrické
+slučování se stavět nemá. Podrobně [[otevrene-pozadavky-majitele]].
 
 Před tím nebo vedle: uložit tvar oblasti k průzkumu (odsouhlaseno,
 nepostaveno) a odpověď majitele na oznámení Windows místo e-mailu.

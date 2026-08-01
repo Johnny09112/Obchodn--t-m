@@ -1,6 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { naBlacklistu, nactiBlacklist, pridejPravidlo } from "../src/blacklist.js";
+import { porovnatelne } from "../src/sito.js";
+
+describe("srovnávací tvar textu", () => {
+  it("shodí diakritiku i velikost — hledá se tak, jak lidi píšou", () => {
+    expect(porovnatelne("Západní Čechy")).toBe("zapadni cechy");
+    expect(porovnatelne("  Zkouška průzkumu ")).toBe("zkouska pruzkumu");
+  });
+
+  it("prázdný text zůstane prázdný", () => {
+    expect(porovnatelne("   ")).toBe("");
+  });
+});
 
 let db: Db;
 

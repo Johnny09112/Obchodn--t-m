@@ -113,27 +113,57 @@ export async function nactiOblasti(): Promise<RadekOblasti[]> {
   return (data ?? []) as RadekOblasti[];
 }
 
+/** Kampaň, která oblast používá. */
+export interface KampanOblasti {
+  id: string;
+  nazev: string;
+  stav: string;
+  archivovana: boolean;
+}
+
 /**
- * Zjistí, co oblast drží naživu — kvůli hlášce dřív, než se maže.
+ * Oblast i s tím, co o ní víme — pro seznam s detailem.
  *
- * Kampaně se berou včetně archivovaných: archiv je jen úklid z přehledu,
- * kampaň pořád existuje a na oblast se odkazuje.
+ * Počty i kampaně počítá databáze (pohled `oblasti_prehled`, migrace 0029).
+ * Dopočítávat je v prohlížeči by znamenalo stáhnout desetitisíce řádků
+ * `oblast_firmy` jen kvůli jednomu číslu.
  */
-export async function zjistiVyuzitiOblasti(id: string): Promise<VyuzitiOblasti> {
-  const [k, p, f] = await Promise.all([
-    supabase.from("kampane").select("nazev").eq("oblast_id", id),
-    supabase.from("pruzkumy").select("id", { count: "exact", head: true }).eq("oblast_id", id),
-    supabase
-      .from("oblast_firmy")
-      .select("ico", { count: "exact", head: true })
-      .eq("oblast_id", id),
-  ]);
-  const chyba = k.error ?? p.error ?? f.error;
-  if (chyba) throw new Error(chyba.message);
+export interface PrehledOblasti {
+  id: string;
+  nazev: string;
+  typ: string;
+  polomer_m: number | null;
+  bodu: number | null;
+  jidelna_id: string | null;
+  poznamka: string | null;
+  created_at: string;
+  firem: number;
+  pruzkumu: number;
+  posledni_stav: string | null;
+  posledni_at: string | null;
+  posledni_chyba: string | null;
+  kampane: KampanOblasti[];
+}
+
+/** Kampaně jsou včetně archivovaných — archiv je úklid z přehledu, ne zrušení. */
+export async function nactiPrehledOblasti(): Promise<PrehledOblasti[]> {
+  const { data, error } = await supabase
+    .from("oblasti_prehled")
+    .select(
+      "id,nazev,typ,polomer_m,bodu,jidelna_id,poznamka,created_at," +
+        "firem,pruzkumu,posledni_stav,posledni_at,posledni_chyba,kampane",
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as PrehledOblasti[];
+}
+
+/** Co z přehledu brání smazání. Firmy uvnitř oblast nedrží. */
+export function vyuzitiZPrehledu(o: PrehledOblasti): VyuzitiOblasti {
   return {
-    kampane: (k.data ?? []).map((x) => x.nazev as string),
-    pruzkumu: p.count ?? 0,
-    firem: f.count ?? 0,
+    kampane: o.kampane.map((k) => k.nazev),
+    pruzkumu: o.pruzkumu,
+    firem: o.firem,
   };
 }
 

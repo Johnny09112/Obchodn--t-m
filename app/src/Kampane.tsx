@@ -4,13 +4,15 @@ import {
   archivujKampan,
   dalsiBehZa,
   nactiKampane,
-  nactiPruzkumKampane,
+  nactiPruzkumyKampane,
   smazKampan,
   POPIS_STAVU_KAMPANE,
   type RadekKampane,
 } from "./data";
 import type { Role } from "./supabase";
-import { postupPruzkumu, type Postup } from "../../src/pruzkum-postup";
+import {
+  postupPruzkumu, souhrnPruzkumu, type SouhrnPruzkumu,
+} from "../../src/pruzkum-postup";
 
 /** Datum bez času — v seznamu jde o „kdy naposled", ne o minuty. */
 function den(iso: string): string {
@@ -28,7 +30,7 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
   /** Kampaň čekající na potvrzení smazání. */
   const [keSmazani, setKeSmazani] = useState<RadekKampane | null>(null);
   const [pracuje, setPracuje] = useState(false);
-  const [postupy, setPostupy] = useState<Map<string, Postup>>(new Map());
+  const [postupy, setPostupy] = useState<Map<string, SouhrnPruzkumu>>(new Map());
 
   const jeAdmin = role === "admin" || role === "super-admin";
 
@@ -43,25 +45,33 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
     const dvojice = await Promise.all(
       cekajici.map(async (k) => {
         try {
-          const p = await nactiPruzkumKampane(k.id);
-          if (!p) return null;
-          return [
-            k.id,
-            postupPruzkumu({
-              stav: p.stav,
-              useky: p.useky,
-              bezPredMinutami: p.bezPredMinutami,
-              bezicíObec: p.bezicíObec,
-              blokujeJiny: p.blokujeJiny,
-              dalsiBehZa: dalsiBehZa(p.urgentni),
-            }),
-          ] as const;
+          // Kampaň může stát na víc oblastech; každá má vlastní objednávku,
+          // takže se v seznamu ukazuje souhrn za všechny.
+          const oblasti = await nactiPruzkumyKampane(k.id, k.oblasti);
+          if (oblasti.length === 0) return null;
+          const souhrn = souhrnPruzkumu(
+            oblasti.map((o) => ({
+              nazev: o.oblastNazev,
+              stav: o.pruzkum?.stav ?? null,
+              postup: o.pruzkum
+                ? postupPruzkumu({
+                    stav: o.pruzkum.stav,
+                    useky: o.pruzkum.useky,
+                    bezPredMinutami: o.pruzkum.bezPredMinutami,
+                    bezicíObec: o.pruzkum.bezicíObec,
+                    blokujeJiny: o.pruzkum.blokujeJiny,
+                    dalsiBehZa: dalsiBehZa(o.pruzkum.urgentni),
+                  })
+                : null,
+            })),
+          );
+          return [k.id, souhrn] as const;
         } catch {
           return null;
         }
       }),
     );
-    setPostupy(new Map(dvojice.filter((d): d is readonly [string, Postup] => d !== null)));
+    setPostupy(new Map(dvojice.filter((d): d is readonly [string, SouhrnPruzkumu] => d !== null)));
   }
 
   function obnov() {
@@ -193,7 +203,7 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
                           </span>
                         )}
                       </td>
-                      <td>{k.oblast_id ? "vybrané" : "—"}</td>
+                      <td>{k.oblasti.length > 0 ? k.oblasti.map((o) => o.nazev).join(", ") : "—"}</td>
                       <td>{k.spravce}</td>
                       <td>{k.zastupce ?? "—"}</td>
                       <td>{den(k.updated_at)}</td>

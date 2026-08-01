@@ -18,8 +18,9 @@ Seřazeno podle souvislostí, ne podle důležitosti.
 2. ~~**Seznam oblastí s detailem**~~ **HOTOVO 1. 8.** (migrace 0029) — pohled
    `oblasti_prehled`, hledání i řazení, mazání přestěhované sem z panelu mapy.
    Viz [[prehled-oblasti-pohledem]].
-3. **Kampaň nad více oblastmi** (`kampan_oblasti`, mnoho k mnoha). Skutečné
-   geometrické slučování tvarů se NESTAVÍ — majitel potvrdil, že jde o tohle.
+3. ~~**Kampaň nad více oblastmi**~~ **HOTOVO 1. 8.** (migrace 0030) — vazba
+   `kampan_oblasti`, sjednocení firem, průzkum na každou oblast zvlášť,
+   výběr zaškrtávátky v seznamu. Viz [[kampan-nad-vice-oblastmi]].
 
 ## 2. Tvar oblasti se uloží k průzkumu
 

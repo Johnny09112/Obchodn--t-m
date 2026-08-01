@@ -134,9 +134,9 @@ describe("přehled oblastí", () => {
       oblast: { typ: "kruh", stred: STRED, polomerM: 3000 },
     });
     const stara = await zalozKampan(db, { nazev: "Jaro", spravce: "a@b.cz" });
-    await nastavUzemi(db, stara, { oblastId: id });
+    await nastavUzemi(db, stara, { oblastiIds: [id] });
     const nova = await zalozKampan(db, { nazev: "Podzim", spravce: "a@b.cz" });
-    await nastavUzemi(db, nova, { oblastId: id });
+    await nastavUzemi(db, nova, { oblastiIds: [id] });
 
     const r = await prehled(id);
     expect(r.kampane.map((k) => k.nazev)).toEqual(["Podzim", "Jaro"]);
@@ -149,7 +149,7 @@ describe("přehled oblastí", () => {
       oblast: { typ: "kruh", stred: STRED, polomerM: 3000 },
     });
     const kampanId = await zalozKampan(db, { nazev: "Loňská", spravce: "a@b.cz" });
-    await nastavUzemi(db, kampanId, { oblastId: id });
+    await nastavUzemi(db, kampanId, { oblastiIds: [id] });
     await db.query("update kampane set archivovana_at = now() where id = $1", [kampanId]);
 
     expect((await prehled(id)).kampane[0]).toMatchObject({

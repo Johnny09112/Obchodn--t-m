@@ -28,8 +28,8 @@ odesílací doména, právní konzultace.
 | Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
 | Běhů agenta | 15 |
 | Náklady na API | **0 USD** — placené nikdy neběželo |
-| Migrace | po `0029_oblasti_prehled.sql`, nasazeno |
-| Testy | 457 zelených, 50 souborů |
+| Migrace | po `0030_kampan_oblasti.sql`, nasazeno |
+| Testy | 490 zelených, 55 souborů |
 | Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -49,13 +49,16 @@ otevřené celému týmu a kaskádou by bralo i historii průzkumů; obojí zav�
 Přitom se našel a opravil pomalý zápis po jedné
 ([[zapis-po-jedne-je-lokalne-neviditelny]]).
 
+**Kampaň nad více oblastmi (1. 8.):** hotová a nasazená (migrace 0030) —
+[[kampan-nad-vice-oblastmi]]. Tím je uzavřená celá trojice, kterou majitel
+zadal 31. 7. (úklid, seznam s detailem, víc oblastí).
+
 ## Aktuální focus
 
-**Kampaň nad více oblastmi** (`kampan_oblasti`, vazba M:N). Geometrické
-slučování se stavět nemá. Podrobně [[otevrene-pozadavky-majitele]].
-
-Před tím nebo vedle: uložit tvar oblasti k průzkumu (odsouhlaseno,
-nepostaveno) a odpověď majitele na oznámení Windows místo e-mailu.
+**Volný — čeká se na zadání.** Nejbližší nabíledni: uložit tvar oblasti
+k průzkumu (odsouhlaseno, nepostaveno), asymetrie ve sbírání kontaktů
+a etapa D průvodce (kritika a přístupnost). Podrobně
+[[otevrene-pozadavky-majitele]].
 
 ## Otevřené body
 

@@ -8,6 +8,7 @@
  * průzkum, který 78 minut nehlásil jediné číslo, a neměl jak zjistit, že
  * se zasekl na Plzni — ani že mu druhá objednávka stojí ve frontě za ním.
  */
+import { zZe } from "./cestina.js";
 
 export interface UsekProPostup {
   stav: string;
@@ -21,6 +22,106 @@ export interface Postup {
   popis: string;
   /** Hrubý odhad zbývajících minut. `null`, když se odhadnout nedá. */
   odhadMinut: number | null;
+}
+
+/** Jedna oblast kampaně i s tím, jak na tom je její objednávka. */
+export interface OblastPostup {
+  nazev: string;
+  /** Stav objednávky, nebo `null` když žádná není. */
+  stav: string | null;
+  /** Postup té objednávky, nebo `null` když žádná není. */
+  postup: Postup | null;
+}
+
+export interface SouhrnPruzkumu {
+  hotovych: number;
+  selhalych: number;
+  celkem: number;
+  /** Oblasti, pro které se ještě neobjednalo. */
+  bezObjednavky: string[];
+  popis: string;
+  /** Odhad zbývajících minut, nebo `null` když se nedá udělat. */
+  odhadMinut: number | null;
+}
+
+/**
+ * Postup kampaně, která stojí na víc oblastech.
+ *
+ * Každá oblast má vlastní objednávku a agent je bere po jedné. Sečíst
+ * obce napříč objednávkami by lhalo — dvě oblasti se můžou překrývat, takže
+ * „hotovo 40 z 90 obcí" by nedávalo smysl. Počítají se proto **oblasti**
+ * a rozepisuje se jen ta, která se právě řeší.
+ */
+export function souhrnPruzkumu(oblasti: readonly OblastPostup[]): SouhrnPruzkumu {
+  const celkem = oblasti.length;
+  const hotove = oblasti.filter((o) => o.stav === "hotovo");
+  const selhale = oblasti.filter((o) => o.stav === "selhalo");
+  const bezObjednavky = oblasti.filter((o) => o.stav === null).map((o) => o.nazev);
+
+  const zaklad = {
+    hotovych: hotove.length,
+    selhalych: selhale.length,
+    celkem,
+    bezObjednavky,
+  };
+
+  if (celkem === 0) {
+    return { ...zaklad, odhadMinut: null, popis: "Území zatím není vybrané." };
+  }
+
+  if (bezObjednavky.length === celkem) {
+    return { ...zaklad, odhadMinut: null, popis: "Průzkum zatím není objednaný." };
+  }
+
+  // Jediná oblast: mluv o obcích, ne o oblastech. Počítání „hotová 1 z 1"
+  // by k větě nic nepřidalo a jen ji zamlžilo.
+  if (celkem === 1) {
+    const jedina = oblasti[0]!;
+    return {
+      ...zaklad,
+      odhadMinut: jedina.postup?.odhadMinut ?? null,
+      popis: jedina.postup?.popis ?? "Průzkum zatím není objednaný.",
+    };
+  }
+
+  if (hotove.length === celkem) {
+    return {
+      ...zaklad,
+      odhadMinut: 0,
+      popis:
+        celkem === 2
+          ? "Hotovo — prozkoumané jsou obě oblasti."
+          : `Hotovo — prozkoumaných je všech ${celkem} oblastí.`,
+    };
+  }
+
+  // Rozepisuje se ta, na které se dá čekat: běžící, jinak první nehotová.
+  const nahlas =
+    oblasti.find((o) => o.stav === "bezi") ??
+    selhale[0] ??
+    oblasti.find((o) => o.stav !== null && o.stav !== "hotovo");
+
+  const kolik =
+    `${hotove.length === 1 ? "Hotová" : "Hotové"} ${hotove.length} ` +
+    `${zZe(celkem)} ${celkem} oblastí.`;
+  const detail = nahlas?.postup ? ` ${nahlas.nazev}: ${nahlas.postup.popis}` : "";
+
+  return { ...zaklad, odhadMinut: odhadCelkem(oblasti), popis: kolik + detail };
+}
+
+/**
+ * Součet zbývajících minut. `null`, jakmile se u některé nedokončené
+ * oblasti odhadnout nedá — částečný součet by tvrdil míň, než je pravda.
+ */
+function odhadCelkem(oblasti: readonly OblastPostup[]): number | null {
+  let soucet = 0;
+  for (const o of oblasti) {
+    if (o.stav === "hotovo") continue;
+    const m = o.postup?.odhadMinut;
+    if (m == null) return null;
+    soucet += m;
+  }
+  return soucet;
 }
 
 function minutySlovy(m: number): string {

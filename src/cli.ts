@@ -35,8 +35,9 @@ import {
 } from "./oblast.js";
 import { vzdalenostM } from "./geo.js";
 import {
-  firmyKampane, nactiKampan, naplnZOblasti, nastavUzemi, prekryvKampani,
-  PRECHODY, seznamKampani, souhrnKampane, vyradFirmu, zalozKampan, zmenStav,
+  firmyKampane, nactiKampan, naplnZOblasti, nastavUzemi, oblastiKampane,
+  prekryvKampani, PRECHODY, seznamKampani, souhrnKampane, vyradFirmu,
+  zalozKampan, zmenStav,
   type StavKampane,
 } from "./kampan.js";
 import {
@@ -611,13 +612,15 @@ async function cmdKampan(argv: string[]): Promise<void> {
 
     if (akce === "uzemi") {
       const kampanId = positionals[1];
-      const oblastId = positionals[2];
-      if (!kampanId || !oblastId) {
-        console.error("Použití: kampan uzemi <id kampaně> <id oblasti> [--jidelna <id>]");
+      // Oblastí smí být víc — kampaň se od migrace 0030 opírá o množinu.
+      const oblastiIds = positionals.slice(2);
+      if (!kampanId || oblastiIds.length === 0) {
+        console.error("Použití: kampan uzemi <id kampaně> <id oblasti> [<id oblasti>…] [--jidelna <id>]");
         process.exit(1);
       }
-      await nastavUzemi(db, kampanId, { oblastId, jidelnaId: values.jidelna });
-      console.log("Území nastaveno.");
+      await nastavUzemi(db, kampanId, { oblastiIds, jidelnaId: values.jidelna });
+      const oblasti = await oblastiKampane(db, kampanId);
+      console.log(`Území nastaveno: ${oblasti.map((o) => o.nazev).join(", ")}`);
       console.log(`  Doplň firmy: kampan napln ${kampanId}`);
       return;
     }
@@ -633,7 +636,7 @@ async function cmdKampan(argv: string[]): Promise<void> {
         console.error(`Kampaň ${kampanId} neexistuje`);
         process.exit(1);
       }
-      if (!k.oblastId) {
+      if ((await oblastiKampane(db, kampanId)).length === 0) {
         console.error(`Kampaň nemá přiřazené území. Nejdřív: kampan uzemi ${kampanId} <id oblasti>`);
         process.exit(1);
       }
@@ -757,10 +760,11 @@ async function cmdKampan(argv: string[]): Promise<void> {
         "select count(*)::text as n from kampan_firmy where kampan_id = $1 and stav = 'vybrana'",
         [k.id],
       );
+      const uzemi = await oblastiKampane(db, k.id);
       console.log(
         `${k.id}  ${k.nazev.padEnd(24)} ${k.stav.padEnd(17)} krok ${k.krok}  ` +
           `${String(pocet[0]!.n).padStart(4)} firem  ` +
-          `${k.oblastId ? "území přiřazeno" : "BEZ ÚZEMÍ"}`,
+          `${uzemi.length > 0 ? uzemi.map((o) => o.nazev).join(", ") : "BEZ ÚZEMÍ"}`,
       );
     }
   } finally {
@@ -1585,8 +1589,9 @@ switch (prikaz) {
   kampan [seznam]                  vypíše kampaně (pojmenované seznamy firem)
   kampan nova <název> --spravce <e-mail> [--kontext text]
                                    založí kampaň (stav rozpracovana)
-  kampan uzemi <id kampaně> <id oblasti> [--jidelna <id>]
-                                   přiřadí kampani území
+  kampan uzemi <id kampaně> <id oblasti> [<id oblasti>…] [--jidelna <id>]
+                                   přiřadí kampani území (i víc oblastí naráz;
+                                   nastavuje celou množinu, nepřidává)
   kampan napln <id kampaně>        doplní do kampaně firmy z jejího území
   kampan firmy <id kampaně>        vypíše firmy v kampani
   kampan vyrad <id kampaně> <ičo> --duvod text

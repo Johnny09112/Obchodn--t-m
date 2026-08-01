@@ -158,6 +158,29 @@ export async function nactiPrehledOblasti(): Promise<PrehledOblasti[]> {
   return (data ?? []) as unknown as PrehledOblasti[];
 }
 
+/**
+ * IČO firem ve vyjmenovaných oblastech, sjednocená.
+ *
+ * Po stránkách ze stejného důvodu jako `nactiFirmy` — server vrací nejvýš
+ * tisíc řádků naráz a Plzeň sama má přes dvanáct tisíc.
+ */
+async function nactiIcaVOblastech(oblastiIds: readonly string[]): Promise<Set<string>> {
+  const vse = new Set<string>();
+  for (let od = 0; ; od += STRANKA) {
+    const { data, error } = await supabase
+      .from("oblast_firmy")
+      .select("ico")
+      .in("oblast_id", oblastiIds as string[])
+      .order("ico")
+      .range(od, od + STRANKA - 1);
+    if (error) throw new Error(error.message);
+    const davka = (data ?? []) as { ico: string }[];
+    for (const r of davka) vse.add(r.ico);
+    if (davka.length < STRANKA) break;
+  }
+  return vse;
+}
+
 /** Co z přehledu brání smazání. Firmy uvnitř oblast nedrží. */
 export function vyuzitiZPrehledu(o: PrehledOblasti): VyuzitiOblasti {
   return {
@@ -225,7 +248,8 @@ export interface RadekKampane {
   spravce: string;
   zastupce: string | null;
   krok: number;
-  oblast_id: string | null;
+  /** Území kampaně — od migrace 0030 jich může být víc. */
+  oblasti: { id: string; nazev: string }[];
   archivovana_at: string | null;
   updated_at: string;
 }
@@ -251,13 +275,56 @@ export const POPIS_STAVU_KAMPANE: Record<string, { popis: string; trida: string 
   zrusena: { popis: "zrušená", trida: "je-zamitnuty" },
 };
 
+/** Řádek kampaně, jak ho vrací server — území přijde jako vnořená vazba. */
+interface SyrovaKampan extends Omit<RadekKampane, "oblasti"> {
+  kampan_oblasti: { poradi: number; oblasti: { id: string; nazev: string } | null }[] | null;
+}
+
 export async function nactiKampane(): Promise<RadekKampane[]> {
   const { data, error } = await supabase
     .from("kampane")
-    .select("id,nazev,stav,spravce,zastupce,krok,oblast_id,archivovana_at,updated_at")
+    .select(
+      "id,nazev,stav,spravce,zastupce,krok,archivovana_at,updated_at," +
+        "kampan_oblasti(poradi,oblasti(id,nazev))",
+    )
     .order("updated_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return (data ?? []) as RadekKampane[];
+
+  return ((data ?? []) as unknown as SyrovaKampan[]).map((k) => ({
+    ...k,
+    oblasti: (k.kampan_oblasti ?? [])
+      .slice()
+      .sort((a, b) => a.poradi - b.poradi)
+      .map((v) => v.oblasti)
+      .filter((o): o is { id: string; nazev: string } => o !== null),
+  }));
+}
+
+/**
+ * Nastaví kampani území — celou množinu naráz.
+ *
+ * Nahrazuje, nepřidává: kdo z výběru oblast odebere, musí ji opravdu odebrat
+ * (stejně jako `nastavUzemi` v jádru).
+ */
+export async function nastavUzemiKampane(
+  kampanId: string,
+  oblastiIds: readonly string[],
+): Promise<void> {
+  const smazani = await supabase.from("kampan_oblasti").delete().eq("kampan_id", kampanId);
+  if (smazani.error) throw new Error(smazani.error.message);
+
+  if (oblastiIds.length === 0) return;
+
+  const radky = [...new Set(oblastiIds)].map((oblast_id, poradi) => ({
+    kampan_id: kampanId,
+    oblast_id,
+    poradi,
+  }));
+  const { data, error } = await supabase.from("kampan_oblasti").insert(radky).select("oblast_id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length !== radky.length) {
+    throw new Error("Území se nepodařilo uložit — kampaň patří někomu jinému.");
+  }
 }
 
 export async function nactiLidi(): Promise<Clovek[]> {
@@ -349,44 +416,84 @@ export interface StavPruzkumu {
 
 type RadekPruzkumu = {
   id: string;
+  oblast_id: string;
   stav: string;
   urgentni: boolean;
   pozadano_at: string;
+  chyba: string | null;
   pruzkum_useky: { stav: string; obec: string }[];
 };
 
-export async function nactiPruzkumKampane(kampanId: string): Promise<StavPruzkumu | null> {
+/** Jedna oblast kampaně i s tím, jak na tom je její průzkum. */
+export interface PruzkumOblasti {
+  oblastId: string;
+  oblastNazev: string;
+  /** Nejnovější objednávka pro tuhle oblast, nebo `null` když žádná není. */
+  pruzkum: StavPruzkumu | null;
+  chyba: string | null;
+}
+
+/**
+ * Průzkumy území kampaně — jeden na oblast.
+ *
+ * Bere se **nejnovější objednávka na oblast, ať ji zadal kdokoli**. Oblast
+ * prozkoumaná dřív jinou kampaní je pořád prozkoumaná; ptát se jen na
+ * objednávky téhle kampaně by znamenalo objednat práci, která je hotová.
+ */
+export async function nactiPruzkumyKampane(
+  kampanId: string,
+  oblasti: readonly { id: string; nazev: string }[],
+): Promise<PruzkumOblasti[]> {
+  if (oblasti.length === 0) return [];
+
   const { data, error } = await supabase
     .from("pruzkumy")
-    .select("id,stav,urgentni,pozadano_at,pruzkum_useky(stav,obec)")
-    .eq("kampan_id", kampanId)
-    .order("pozadano_at", { ascending: false })
-    .limit(1);
+    .select("id,oblast_id,stav,urgentni,pozadano_at,chyba,pruzkum_useky(stav,obec)")
+    .in(
+      "oblast_id",
+      oblasti.map((o) => o.id),
+    )
+    .order("pozadano_at", { ascending: false });
   if (error) throw new Error(error.message);
 
-  const r = (data?.[0] as RadekPruzkumu | undefined) ?? null;
-  if (!r) return null;
-
-  const useky = r.pruzkum_useky ?? [];
-  const minuty = Math.max(
-    0,
-    Math.round((Date.now() - new Date(r.pozadano_at).getTime()) / 60000),
-  );
-
-  // Když objednávka ještě nezačala, zjisti, jestli frontu nedrží jiná.
-  // Bez toho člověk kouká na „čeká" a netuší, na co se vlastně čeká.
-  let blokujeJiny: string | null = null;
-  if (useky.length === 0 && (r.stav === "ceka" || r.stav === "bezi")) {
-    const jine = await supabase
-      .from("pruzkumy")
-      .select("oblasti(nazev)")
-      .eq("stav", "bezi")
-      .neq("id", r.id)
-      .limit(1);
-    const prvni = jine.data?.[0] as { oblasti: { nazev: string } | null } | undefined;
-    blokujeJiny = prvni?.oblasti?.nazev ?? null;
+  // Řádky chodí od nejnovějšího, takže první nalezený na oblast je ten pravý.
+  const nejnovejsi = new Map<string, RadekPruzkumu>();
+  for (const r of (data ?? []) as unknown as RadekPruzkumu[]) {
+    if (!nejnovejsi.has(r.oblast_id)) nejnovejsi.set(r.oblast_id, r);
   }
 
+  // Kdo drží frontu, se zjišťuje jednou pro celou kampaň — je to táž
+  // odpověď pro všechny její oblasti a jeden dotaz stačí.
+  const blokujeJiny = await ktoDrziFrontu([...nejnovejsi.values()].map((r) => r.id));
+
+  return oblasti.map((o) => {
+    const r = nejnovejsi.get(o.id);
+    return {
+      oblastId: o.id,
+      oblastNazev: o.nazev,
+      chyba: r?.chyba ?? null,
+      pruzkum: r ? naStavPruzkumu(r, blokujeJiny) : null,
+    };
+  });
+}
+
+/**
+ * Název oblasti průzkumu, který právě běží a není mezi našimi. Naráz běží
+ * jen jeden — bez tohohle člověk kouká na „čeká" a netuší, na co se čeká.
+ */
+async function ktoDrziFrontu(vlastniIds: string[]): Promise<string | null> {
+  const jine = await supabase.from("pruzkumy").select("id,oblasti(nazev)").eq("stav", "bezi");
+  const radky = (jine.data ?? []) as unknown as {
+    id: string;
+    oblasti: { nazev: string } | null;
+  }[];
+  const cizi = radky.find((r) => !vlastniIds.includes(r.id));
+  return cizi?.oblasti?.nazev ?? null;
+}
+
+function naStavPruzkumu(r: RadekPruzkumu, blokujeJiny: string | null): StavPruzkumu {
+  const useky = r.pruzkum_useky ?? [];
+  const minuty = Math.max(0, Math.round((Date.now() - new Date(r.pozadano_at).getTime()) / 60000));
   return {
     id: r.id,
     stav: r.stav,
@@ -394,7 +501,8 @@ export async function nactiPruzkumKampane(kampanId: string): Promise<StavPruzkum
     useky,
     bezPredMinutami: minuty,
     bezicíObec: useky.find((u) => u.stav === "bezi")?.obec ?? null,
-    blokujeJiny,
+    // Cizí běžící průzkum blokuje jen objednávku, která sama ještě nezačala.
+    blokujeJiny: useky.length === 0 && (r.stav === "ceka" || r.stav === "bezi") ? blokujeJiny : null,
   };
 }
 
@@ -421,20 +529,33 @@ export function dalsiBehZa(urgentni: boolean, ted: Date = new Date()): number {
  */
 export async function objednejPruzkumZAplikace(
   kampanId: string,
-  oblastId: string,
+  stav: readonly PruzkumOblasti[],
   pozadal: string,
-): Promise<void> {
+): Promise<{ objednano: string[]; preskoceno: string[] }> {
+  // Oblast, která už hotový průzkum má nebo na jeden čeká, se neobjednává
+  // znovu. Neúspěšná ano — selhání není výsledek.
+  const kObjednani = stav.filter(
+    (o) => o.pruzkum === null || o.pruzkum.stav === "selhalo",
+  );
+  const preskoceno = stav.filter((o) => !kObjednani.includes(o)).map((o) => o.oblastNazev);
+
+  if (kObjednani.length === 0) return { objednano: [], preskoceno };
+
   const { data, error } = await supabase
     .from("pruzkumy")
-    .insert({ kampan_id: kampanId, oblast_id: oblastId, pozadal })
+    .insert(
+      kObjednani.map((o) => ({ kampan_id: kampanId, oblast_id: o.oblastId, pozadal })),
+    )
     .select("id");
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) {
+  if (!data || data.length !== kObjednani.length) {
     throw new Error("Průzkum se nepodařilo objednat — kampaň patří někomu jinému.");
   }
 
   // Kampaň čeká na průzkum; schválit ji do té doby nejde (hlídá databáze).
   await supabase.from("kampane").update({ stav: "ceka_na_pruzkum", krok: 3 }).eq("id", kampanId);
+
+  return { objednano: kObjednani.map((o) => o.oblastNazev), preskoceno };
 }
 
 /** Označí objednávku jako spěchající. Agenta to NESPUSTÍ — jen ho navede. */
@@ -530,16 +651,19 @@ export interface NaplneniKampane {
  */
 export async function naplnKampanZOblasti(
   kampanId: string,
-  oblastId: string,
+  oblastiIds: readonly string[],
 ): Promise<NaplneniKampane> {
-  const [firmy, sito, vOblasti] = await Promise.all([
+  if (oblastiIds.length === 0) return { pridano: 0, vynechano: [] };
+
+  const [firmy, sito, vOblastech] = await Promise.all([
     nactiFirmy(),
     nactiPravidlaSita(),
-    supabase.from("oblast_firmy").select("ico").eq("oblast_id", oblastId),
+    nactiIcaVOblastech(oblastiIds),
   ]);
-  if (vOblasti.error) throw new Error(vOblasti.error.message);
 
-  const uvnitr = new Set((vOblasti.data ?? []).map((x) => (x as { ico: string }).ico));
+  // Množina, ne seznam: oblasti se smějí překrývat, ale firma v překryvu je
+  // pořád jedna firma a smí dostat jen jedno oslovení (TP-5).
+  const uvnitr = vOblastech;
   const podleIco = new Map(firmy.map((f) => [f.ico, f]));
 
   const vynechano: NaplneniKampane["vynechano"] = [];

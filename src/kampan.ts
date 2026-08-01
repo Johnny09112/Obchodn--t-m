@@ -8,7 +8,8 @@
 import { nactiBlacklist } from "./blacklist.js";
 import type { Db } from "./db.js";
 import { duvodNeoslovovat, type DuvodNeoslovovat } from "./kvalifikace.js";
-import { prepocitejOblastFirmy } from "./oblast.js";
+import { nactiOblast, prepocitejOblastFirmy, type UlozenaOblast } from "./oblast.js";
+import { objednejPruzkum } from "./pruzkum.js";
 
 export type StavKampane =
   | "rozpracovana"
@@ -25,7 +26,6 @@ export interface Kampan {
   popis: string | null;
   kontext: string | null;
   spravce: string;
-  oblastId: string | null;
   jidelnaId: string | null;
   stav: StavKampane;
   krok: number;
@@ -33,7 +33,7 @@ export interface Kampan {
 }
 
 const SLOUPCE = `id, nazev, popis, kontext, spravce,
-  oblast_id as "oblastId", jidelna_id as "jidelnaId",
+  jidelna_id as "jidelnaId",
   stav, krok, duvod_zruseni as "duvodZruseni"`;
 
 export async function zalozKampan(
@@ -58,19 +58,125 @@ export async function seznamKampani(db: Db): Promise<Kampan[]> {
 }
 
 /**
- * Přiřadí kampani území. Jídelna je nepovinná ze stejného důvodu jako
- * u oblasti — může se doplnit až po jednání.
+ * Nastaví kampani území — celou množinu oblastí naráz.
+ *
+ * Nahrazuje, nepřidává: kdo z výběru oblast odebere, musí ji opravdu odebrat.
+ * Přidávací chování by z každé opravy udělalo hromadění.
+ *
+ * Jídelna je nepovinná ze stejného důvodu jako u oblasti — může se doplnit
+ * až po jednání.
  */
 export async function nastavUzemi(
   db: Db,
   kampanId: string,
-  v: { oblastId: string; jidelnaId?: string | null },
+  v: { oblastiIds: readonly string[]; jidelnaId?: string | null },
 ): Promise<void> {
+  const bezDuplicit = [...new Set(v.oblastiIds)];
+
+  await db.query("delete from kampan_oblasti where kampan_id = $1", [kampanId]);
+  for (const [poradi, oblastId] of bezDuplicit.entries()) {
+    await db.query(
+      `insert into kampan_oblasti (kampan_id, oblast_id, poradi) values ($1,$2,$3)`,
+      [kampanId, oblastId, poradi],
+    );
+  }
+
   await db.query(
-    `update kampane set oblast_id = $1, jidelna_id = $2, krok = greatest(krok, 2)
-     where id = $3`,
-    [v.oblastId, v.jidelnaId ?? null, kampanId],
+    `update kampane set jidelna_id = $1, krok = greatest(krok, 2) where id = $2`,
+    [v.jidelnaId ?? null, kampanId],
   );
+}
+
+/** Oblasti kampaně v pořadí, ve kterém je člověk vybral. */
+export async function oblastiKampane(db: Db, kampanId: string): Promise<UlozenaOblast[]> {
+  const r = await db.query<{ oblastId: string }>(
+    `select oblast_id as "oblastId" from kampan_oblasti
+     where kampan_id = $1 order by poradi, created_at`,
+    [kampanId],
+  );
+  const oblasti: UlozenaOblast[] = [];
+  for (const { oblastId } of r) {
+    const o = await nactiOblast(db, oblastId);
+    if (o) oblasti.push(o);
+  }
+  return oblasti;
+}
+
+/** Objednávka průzkumu jedné oblasti kampaně. */
+export interface PruzkumKampane {
+  id: string;
+  oblastId: string;
+  oblastNazev: string;
+  stav: string;
+  chyba: string | null;
+}
+
+/**
+ * Průzkumy území kampaně — i ty, které nikdo neobjednal kvůli téhle kampani.
+ *
+ * Bere se nejnovější objednávka na každou oblast, ať už ji zadal kdokoli.
+ * Oblast prozkoumaná dřív a jinou kampaní je pořád prozkoumaná; tvářit se,
+ * že se na ni čeká, by znamenalo objednat práci, která je hotová.
+ */
+export async function pruzkumyKampane(db: Db, kampanId: string): Promise<PruzkumKampane[]> {
+  return db.query<PruzkumKampane>(
+    `select distinct on (ko.oblast_id)
+            p.id, ko.oblast_id as "oblastId", o.nazev as "oblastNazev", p.stav, p.chyba
+     from kampan_oblasti ko
+     join oblasti o on o.id = ko.oblast_id
+     join pruzkumy p on p.oblast_id = ko.oblast_id
+     where ko.kampan_id = $1
+     order by ko.oblast_id, p.pozadano_at desc`,
+    [kampanId],
+  ).then((radky) => seradPodleUzemi(db, kampanId, radky));
+}
+
+/** Vrátí řádky v pořadí, ve kterém člověk oblasti vybral. */
+async function seradPodleUzemi<T extends { oblastId: string }>(
+  db: Db,
+  kampanId: string,
+  radky: T[],
+): Promise<T[]> {
+  const poradi = await db.query<{ oblastId: string }>(
+    `select oblast_id as "oblastId" from kampan_oblasti
+     where kampan_id = $1 order by poradi, created_at`,
+    [kampanId],
+  );
+  const kam = new Map(poradi.map((p, i) => [p.oblastId, i]));
+  return [...radky].sort((a, b) => (kam.get(a.oblastId) ?? 0) - (kam.get(b.oblastId) ?? 0));
+}
+
+/**
+ * Objedná průzkum pro každou oblast kampaně, která ho ještě potřebuje.
+ *
+ * **Agenta to nespustí** — objednávka jen čeká ve frontě (TP-8 a rozhodnutí
+ * o hlídce). Jedna objednávka na oblast, protože agent bere území po jednom
+ * a průzkum je evidence o konkrétním tvaru.
+ *
+ * Přeskakuje oblast, která už hotový průzkum má nebo na jeden čeká. Neúspěšný
+ * průzkum se objedná znovu — selhání není výsledek.
+ */
+export async function objednejPruzkumyProKampan(
+  db: Db,
+  kampanId: string,
+  pozadal: string,
+): Promise<{ objednano: string[]; preskoceno: string[] }> {
+  const oblasti = await oblastiKampane(db, kampanId);
+  const stavy = new Map((await pruzkumyKampane(db, kampanId)).map((p) => [p.oblastId, p.stav]));
+
+  const objednano: string[] = [];
+  const preskoceno: string[] = [];
+
+  for (const o of oblasti) {
+    const stav = stavy.get(o.id);
+    if (stav && stav !== "selhalo") {
+      preskoceno.push(o.nazev);
+      continue;
+    }
+    await objednejPruzkum(db, { oblastId: o.id, kampanId, pozadal });
+    objednano.push(o.nazev);
+  }
+  return { objednano, preskoceno };
 }
 
 export interface FirmaVKampani {
@@ -115,10 +221,10 @@ export async function naplnZOblasti(
   db: Db,
   kampanId: string,
 ): Promise<{ pridano: number; jizBylo: number; vynechano: VynechanaFirma[] }> {
-  const k = await nactiKampan(db, kampanId);
-  if (!k?.oblastId) return { pridano: 0, jizBylo: 0, vynechano: [] };
+  const oblasti = await oblastiKampane(db, kampanId);
+  if (oblasti.length === 0) return { pridano: 0, jizBylo: 0, vynechano: [] };
 
-  await prepocitejOblastFirmy(db, k.oblastId);
+  for (const o of oblasti) await prepocitejOblastFirmy(db, o.id);
 
   // Pravidla se načtou jednou pro celé doplnění — stejně jako u sběru.
   const blacklist = await nactiBlacklist(db);
@@ -128,6 +234,9 @@ export async function naplnZOblasti(
     ),
   );
 
+  // `distinct` je tu kvůli TP-5: oblasti se smějí překrývat, ale firma
+  // v překryvu je pořád jedna firma a smí dostat jen jedno oslovení.
+  // Bez toho by se i vynechání hlásilo dvakrát a člověk by nevěřil číslům.
   const kandidati = await db.query<{
     ico: string;
     nazev: string;
@@ -135,12 +244,12 @@ export async function naplnZOblasti(
     pravniForma: string | null;
     maVlastniJidelnu: boolean | null;
   }>(
-    `select c.ico, c.nazev, c.cz_nace as "czNace", c.pravni_forma as "pravniForma",
+    `select distinct c.ico, c.nazev, c.cz_nace as "czNace", c.pravni_forma as "pravniForma",
             c.ma_vlastni_jidelnu as "maVlastniJidelnu"
      from oblast_firmy of
      join companies c on c.ico = of.ico
-     where of.oblast_id = $1`,
-    [k.oblastId],
+     where of.oblast_id = any($1::uuid[])`,
+    [oblasti.map((o) => o.id)],
   );
 
   const pred = await pocetRadku(db, kampanId);

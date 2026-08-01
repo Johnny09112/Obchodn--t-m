@@ -1146,6 +1146,28 @@ input[type="range"] {
   color: var(--cihla);
 }
 
+/* Výběr území v průvodci kampaní — zaškrtávátko je první, co se čte. */
+.tabulka th.vyber,
+.tabulka td.vyber {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Celá buňka je klikací plocha; samotné zaškrtávátko je na myš malý cíl. */
+.zaskrtnuti {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  cursor: pointer;
+}
+
+.zaskrtnuti input {
+  width: 1.1rem;
+  height: 1.1rem;
+  cursor: pointer;
+}
+
 /* ──────────────────────────────────────────────── postup po obcích */
 
 /*

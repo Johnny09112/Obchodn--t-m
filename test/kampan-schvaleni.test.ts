@@ -30,7 +30,7 @@ beforeEach(async () => {
     nazev: "Území", oblast: { typ: "kruh", stred: STRED, polomerM: 3000 },
   });
   kampanId = await zalozKampan(db, { nazev: "K", spravce: "a@b.cz" });
-  await nastavUzemi(db, kampanId, { oblastId });
+  await nastavUzemi(db, kampanId, { oblastiIds: [oblastId] });
   await naplnZOblasti(db, kampanId);
 });
 

@@ -8,19 +8,6 @@
  * Co oblast brání smazat, řeší `oblast-vyuziti.ts`.
  */
 
-/**
- * Český tvar podle počtu: 1 oblast · 2–4 oblasti · 5+ oblastí.
- *
- * Od dvaceti výš se chová jako pět a víc („21 oblastí"). Je to schválně
- * jednodušší než plné české skloňování — pro počty v přehledu to stačí
- * a složitější pravidlo by tu nikdo neuhlídal.
- */
-export function cesky(n: number, jedna: string, dve: string, pet: string): string {
-  if (n === 1) return jedna;
-  if (n >= 2 && n <= 4) return dve;
-  return pet;
-}
-
 export interface PopisTvaru {
   typ: string;
   polomerM: number | null;

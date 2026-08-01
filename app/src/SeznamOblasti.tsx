@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { cesky, popisPruzkumu, popisTvaru } from "../../src/oblast-popis";
+import { cesky } from "../../src/cestina";
+import { popisPruzkumu, popisTvaru } from "../../src/oblast-popis";
 import { drziOblast } from "../../src/oblast-vyuziti";
 import { porovnatelne } from "../../src/sito";
 import {
@@ -30,7 +31,15 @@ interface Props {
   /** Otevřít oblast v mapě k prohlédnutí a úpravě. */
   onOtevri: (id: string) => void;
   /** Po smazání — ať se přehled i mapa načtou znovu. */
-  onZmena: () => void;
+  onZmena?: () => void;
+  /**
+   * Zaškrtávací režim pro průvodce kampaní: které oblasti jsou vybrané.
+   * `undefined` = běžný seznam bez výběru.
+   */
+  vybrane?: ReadonlySet<string>;
+  onVyber?: (ids: string[]) => void;
+  /** V průvodci se neuklízí — mazání se nabízí jen na obrazovce Oblasti. */
+  dovolUklid?: boolean;
 }
 
 /**
@@ -50,6 +59,9 @@ export function SeznamOblasti({
   otevrenaId,
   onOtevri,
   onZmena,
+  vybrane,
+  onVyber,
+  dovolUklid = true,
 }: Props) {
   const [hledani, setHledani] = useState("");
   const [razeni, setRazeni] = useState<Razeni>("posledni");
@@ -87,8 +99,17 @@ export function SeznamOblasti({
     });
   }, [oblasti, hledani, razeni]);
 
-  const smiMazat = SMI_MAZAT.includes(role);
+  const smiMazat = dovolUklid && SMI_MAZAT.includes(role);
   const prozkoumanych = oblasti.filter((o) => o.pruzkumu > 0).length;
+  const vybirase = vybrane !== undefined && onVyber !== undefined;
+
+  function prepniVyber(id: string) {
+    if (!vybrane || !onVyber) return;
+    const s = new Set(vybrane);
+    if (s.has(id)) s.delete(id);
+    else s.add(id);
+    onVyber([...s]);
+  }
 
   async function potvrdSmazani() {
     if (!keSmazani) return;
@@ -97,7 +118,7 @@ export function SeznamOblasti({
     try {
       await smazOblast(keSmazani.id);
       setKeSmazani(null);
-      onZmena();
+      onZmena?.();
     } catch (e) {
       setChyba((e as Error).message);
       setKeSmazani(null);
@@ -123,9 +144,10 @@ export function SeznamOblasti({
       <div className="hlava-seznamu">
         <h3>Oblasti</h3>
         <p className="poznamka">
-          {oblasti.length} {cesky(oblasti.length, "oblast", "oblasti", "oblastí")} ·{" "}
-          {prozkoumanych}{" "}
-          {cesky(prozkoumanych, "prozkoumaná", "prozkoumané", "prozkoumaných")}
+          {vybirase
+            ? `Vybráno ${vybrane!.size} ${cesky(vybrane!.size, "oblast", "oblasti", "oblastí")} z ${oblasti.length}`
+            : `${oblasti.length} ${cesky(oblasti.length, "oblast", "oblasti", "oblastí")} · ` +
+              `${prozkoumanych} ${cesky(prozkoumanych, "prozkoumaná", "prozkoumané", "prozkoumaných")}`}
         </p>
       </div>
 
@@ -164,6 +186,7 @@ export function SeznamOblasti({
           <table className="tabulka">
             <thead>
               <tr>
+                {vybirase && <th className="vyber">Do kampaně</th>}
                 <th>Oblast</th>
                 <th className="cislo">Firem</th>
                 <th>Průzkum</th>
@@ -177,6 +200,18 @@ export function SeznamOblasti({
                 const drzi = drziOblast(vyuzitiZPrehledu(o));
                 return (
                   <tr key={o.id} className={otevrenaId === o.id ? "vybrany" : ""}>
+                    {vybirase && (
+                      <td className="vyber">
+                        <label className="zaskrtnuti">
+                          <input
+                            type="checkbox"
+                            checked={vybrane!.has(o.id)}
+                            onChange={() => prepniVyber(o.id)}
+                          />
+                          <span className="skryty">Zahrnout oblast {o.nazev} do kampaně</span>
+                        </label>
+                      </td>
+                    )}
                     <td>
                       <button className="odkaz jmeno" onClick={() => onOtevri(o.id)}>
                         {o.nazev}

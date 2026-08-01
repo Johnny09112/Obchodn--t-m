@@ -40,7 +40,10 @@ describe("co drží oblast naživu", () => {
   });
 
   it("kampaň oblast ochrání taky", async () => {
-    expect(await chovaniPriMazani("kampane")).toBe("r");
+    // Od migrace 0030 drží ochranu vazební tabulka, ne sloupec `kampane.oblast_id`
+    // — ten zmizel, když kampaň dostala víc oblastí. Kdyby se cizí klíč
+    // nepřenesl, úklid oblastí by se tiše otevřel.
+    expect(await chovaniPriMazani("kampan_oblasti")).toBe("r");
   });
 
   it("seznam firem v oblasti zmizí s ní — je to jen odvozenina z tvaru", async () => {
@@ -80,7 +83,7 @@ describe("mazání oblasti", () => {
   it("oblast použitá kampaní se smazat nedá", async () => {
     const id = await oblast("V kampani");
     const kampanId = await zalozKampan(db, { nazev: "K1", spravce: "a@b.cz" });
-    await nastavUzemi(db, kampanId, { oblastId: id });
+    await nastavUzemi(db, kampanId, { oblastiIds: [id] });
 
     await expect(db.query("delete from oblasti where id = $1", [id])).rejects.toThrow();
   });

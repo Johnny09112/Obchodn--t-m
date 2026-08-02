@@ -28,8 +28,8 @@ odesílací doména, právní konzultace.
 | Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
 | Běhů agenta | 15 |
 | Náklady na API | **0 USD** — placené nikdy neběželo |
-| Migrace | po `0031_pruzkum_tvar.sql`, nasazeno |
-| Testy | 513 zelených, 58 souborů |
+| Migrace | po `0032_oblast_slozeni.sql`, nasazeno |
+| Testy | 533 zelených, 61 souborů |
 | Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -59,26 +59,40 @@ zadal 31. 7. (úklid, seznam s detailem, víc oblastí).
 **Kontakty i nad oblastí a oznámení u hodin (2. 8.):** obojí hotové —
 [[kontakty-i-nad-oblasti]], [[oznameni-u-hodin]].
 
+**Velikost firem a složení území (2. 8.):** hotové a nasazené (migrace 0032) —
+[[velikost-ze-souboru-a-slozeni]]. Velikost se konečně ukládá ze souboru ČSÚ;
+5 707 firem ji dostalo zpětně. **Síto tím začalo fungovat.**
+
+## Plzeň — kde to stojí (2. 8.)
+
+| Údaj | Hodnota |
+|---|---|
+| Firem v oblasti | 12 762 |
+| Mikro (1–24) | 4 747 |
+| **Cílových (25+)** | **620** |
+| Velikost neuvádí registr | 7 395 |
+| Z cílových má jméno | **560** |
+| Z cílových má e-mail | 125 |
+| Z cílových nemá nic | 60 |
+
 ## Aktuální focus
 
-**Čeká se na majitele: jak velkou dávku doplňování kontaktů pustit.**
-**Zkušební dávka doplnění kontaktů proběhla** (200 firem Plzně, 196 uspělo).
-Ukázala dvě věci: tempo je ~2,9 s na firmu (celá Plzeň ≈ 10 h, ne 1,5)
-a **e-mail má jen 50 z 300 firem se spojením** — zbytek je jméno jednatele.
-Podrobně [[kontakty-i-nad-oblasti]].
+**Čeká se na majitele: pustit zkušební rešerši agentem na 20 firem?**
+Byl by to **první placený běh** (dosud 0 USD), proto se nespustil sám.
 
-Dál se nabízí etapa D průvodce (kritika a přístupnost) a stránkování
-velkých seznamů. Podrobně [[otevrene-pozadavky-majitele]].
+Dál: etapa D průvodce (kritika a přístupnost), stránkování velkých seznamů.
+Podrobně [[otevrene-pozadavky-majitele]].
 
 ## Otevřené body
 
 Úplný seznam je v [[otevrene-pozadavky-majitele]]. Nejdůležitější:
 
-- **Doplňovat kontakty podle kampaně, ne oblasti.** Plošně nad oblastí je to
-  10 hodin a většinou zbytečné; firem v kampani je 532 (~25 min). Rozsah
-  `--kampan` **není postavený** — nabídnuto majiteli 2. 8.
-- **Jméno jednatele není adresa.** Pro fázi 3 chybí u 4 z 5 firem způsob,
-  jak se ozvat. Bez dalšího zdroje e-mailů je doplňování poloviční výsledek.
+- **7 395 plzeňských firem bez velikosti**, z toho zhruba polovina skutečná
+  s.r.o. ARES je nedoplní ([[ares-nedoplni-velikost]]) — jediná cesta je
+  sbírka listin, nepostavená.
+- **Jméno jednatele není adresa.** I v cílovém segmentu má e-mail jen 125
+  z 620. Bez dalšího zdroje adres je to poloviční výsledek.
+- **Cena rešerše agentem není změřená.** Krok 3 nikdy neběžel.
 
 ## Co znamená „hotovo"
 

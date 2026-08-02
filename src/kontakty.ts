@@ -10,6 +10,13 @@
  * i telefon naráz a nestojí dotaz), teprve pak statutární orgán z rejstříku
  * (jen jméno a funkce, ale skoro vždy).
  *
+ * **Dva rozsahy.** Beze zadání (nebo s `jidelnaId`) se ptá na firmy v dosahové
+ * zóně jídelny — tak to vzniklo a tak to zůstává. S `oblastId` bere firmy
+ * v území, **bez ohledu na zónu a jídelnu**: sběr nad oblastí je zakládá ve
+ * stavu „čeká na jídelnu", protože oblast smí vzniknout dřív než jídelna.
+ * Bez téhle větve se k nim doplnění nikdy nedostalo a 13 600 firem nemělo
+ * jediné spojení.
+ *
  * Nic neodesílá a nic si nedomýšlí — firma bez doložitelného kontaktu
  * prostě zůstane bez kontaktu.
  */
@@ -38,15 +45,33 @@ const ZDROJ_MPSV = "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json
 
 export async function doplnKontakty(
   deps: DoplnKontaktyDeps,
-  opts: { limit?: number; jidelnaId?: string },
+  opts: { limit?: number; jidelnaId?: string; oblastId?: string },
 ): Promise<DoplnKontaktySouhrn> {
   const { db } = deps;
 
-  const podminky = ["c.v_zone is true", "c.stav = 'kvalifikovany'"];
+  const podminky: string[] = [];
   const params: unknown[] = [];
-  if (opts.jidelnaId) {
-    params.push(opts.jidelnaId);
-    podminky.push(`c.nejblizsi_jidelna_id = $${params.length}`);
+
+  if (opts.oblastId) {
+    // Sběr nad oblastí zakládá firmy **bez jídelny a bez zóny**, ve stavu
+    // „čeká na jídelnu" — oblast smí vzniknout dřív než jídelna, to je celý
+    // smysl obráceného postupu. Ptát se u nich na zónu by znamenalo nikdy je
+    // nenajít; přesně proto mělo 13 600 firem nula spojení.
+    params.push(opts.oblastId);
+    podminky.push(
+      `exists (select 1 from oblast_firmy of where of.ico = c.ico and of.oblast_id = $${params.length})`,
+      // Zamítnutou firmu nemá smysl dohledávat — byl by to dotaz navíc
+      // za výsledek, který stejně nepoužijeme.
+      "c.stav <> 'zamitnuty'",
+    );
+  } else {
+    // Beze změny: běh bez omezení se schválně nepouští do celé kartotéky,
+    // to je hodina dotazů do ARESu.
+    podminky.push("c.v_zone is true", "c.stav = 'kvalifikovany'");
+    if (opts.jidelnaId) {
+      params.push(opts.jidelnaId);
+      podminky.push(`c.nejblizsi_jidelna_id = $${params.length}`);
+    }
   }
 
   // Firmy bez JMENNÉHO kontaktu. Obecná adresa `info@` nestačí — cílem je
@@ -65,6 +90,7 @@ export async function doplnKontakty(
   const behId = await zacniBeh(db, "doplneni-kontaktu", {
     firem: firmy.length,
     jidelnaId: opts.jidelnaId ?? null,
+    oblastId: opts.oblastId ?? null,
   });
 
   const souhrn: DoplnKontaktySouhrn = {

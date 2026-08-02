@@ -29,7 +29,7 @@ odesílací doména, právní konzultace.
 | Běhů agenta | 15 |
 | Náklady na API | **0 USD** — placené nikdy neběželo |
 | Migrace | po `0031_pruzkum_tvar.sql`, nasazeno |
-| Testy | 499 zelených, 56 souborů |
+| Testy | 513 zelených, 58 souborů |
 | Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -56,19 +56,23 @@ zadal 31. 7. (úklid, seznam s detailem, víc oblastí).
 **Tvar oblasti u průzkumu (2. 8.):** hotové a nasazené (migrace 0031) —
 [[tvar-oblasti-u-pruzkumu]]. Neproklikané v prohlížeči, viz tam.
 
+**Kontakty i nad oblastí a oznámení u hodin (2. 8.):** obojí hotové —
+[[kontakty-i-nad-oblasti]], [[oznameni-u-hodin]].
+
 ## Aktuální focus
 
-**Volný — čeká se na zadání.** Nabízí se: asymetrie ve sbírání kontaktů
-(13 767 firem, jen 104 spojení), etapa D průvodce (kritika a přístupnost)
-a stránkování velkých seznamů. Podrobně [[otevrene-pozadavky-majitele]].
+**Čeká se na majitele: jak velkou dávku doplňování kontaktů pustit.**
+Nabídnuto 200 firem na zkoušku / celá Plzeň (~1,5 h) / zatím nic.
+
+Dál se nabízí etapa D průvodce (kritika a přístupnost) a stránkování
+velkých seznamů. Podrobně [[otevrene-pozadavky-majitele]].
 
 ## Otevřené body
 
 Úplný seznam je v [[otevrene-pozadavky-majitele]]. Nejdůležitější:
 
-- Majitel neodpověděl na nabídku oznámení Windows místo e-mailu.
-- Asymetrie: sběr kolem jídelny zapisuje kontakty z MPSV, sběr nad oblastí ne
-  — proto má 13 767 firem jen 104 spojení.
+- **Doplňování kontaktů naostro nespuštěné.** Kód hotový, čeká na rozhodnutí
+  o velikosti dávky — viz [[kontakty-i-nad-oblasti]].
 
 ## Co znamená „hotovo"
 

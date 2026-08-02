@@ -12,6 +12,7 @@ Add-Type -AssemblyName System.Drawing
 
 $koren = Split-Path -Parent $PSScriptRoot
 $denik = Join-Path $koren "data\cmuchal-hlidka.log"
+$souborOznameni = Join-Path $koren "data\posledni-beh.json"
 
 # Jen jedna hlídka naráz. Dvě by se sice o frontu nepraly (hlídá to zámek
 # v databázi), ale dvě ikony u hodin jsou matoucí.
@@ -30,6 +31,12 @@ $script:proces = $null
 $script:posledniUrgent = [datetime]::MinValue
 $script:posledniPlny = [datetime]::MinValue
 $script:posledniHlaska = "zatím nic"
+# Běžel průzkum při minulém tiknutí? Podle přechodu běží → doběhl se pozná,
+# že je co oznámit.
+$script:bezelo = $false
+# Čas posledního ohlášeného běhu. Při startu se načte ten, co je na disku,
+# aby hlídka po zapnutí počítače nevyskočila s bublinou ze včerejška.
+$script:posledniOznameni = ""
 
 # Řádné denní běhy. Mimo ně se sahá jen po urgentních objednávkách.
 $okna = @(8, 13, 19)
@@ -90,6 +97,38 @@ $polozkaKonec = $nabidka.Items.Add("Ukončit hlídku")
 
 function Bezi() {
   return ($null -ne $script:proces) -and (-not $script:proces.HasExited)
+}
+
+# ── oznámení u hodin
+#
+# Text skládá jádro do `data\posledni-beh.json` (viz src/oznameni.ts) — tady
+# se jen zobrazí. Čeština s pády a tvary čísel patří tam, kde se dá otestovat,
+# ne do skriptu, kam nikdo nevidí.
+#
+# Nic se neodesílá: je to místní bublina Windows, ne e-mail.
+
+function UkazOznameni() {
+  if (-not (Test-Path $souborOznameni)) { return }
+  try {
+    $obsah = Get-Content -Path $souborOznameni -Raw -Encoding utf8 | ConvertFrom-Json
+  } catch {
+    Napis "oznámení: soubor se nepodařilo přečíst — $($_.Exception.Message)"
+    return
+  }
+  if ($null -eq $obsah -or $null -eq $obsah.oznameni) { return }
+
+  # Tentýž běh se nesmí ohlásit dvakrát; časovač tiká každou minutu.
+  if ($obsah.cas -eq $script:posledniOznameni) { return }
+  $script:posledniOznameni = $obsah.cas
+
+  $o = $obsah.oznameni
+  $ikonaBubliny = switch ($o.druh) {
+    "chyba" { [System.Windows.Forms.ToolTipIcon]::Error }
+    "pozor" { [System.Windows.Forms.ToolTipIcon]::Warning }
+    default { [System.Windows.Forms.ToolTipIcon]::Info }
+  }
+  $ikona.ShowBalloonTip(20000, $o.nadpis, $o.text, $ikonaBubliny)
+  Napis "oznámení: $($o.nadpis) — $($o.text)"
 }
 
 function ObnovVzhled() {
@@ -162,7 +201,13 @@ $casovac = New-Object System.Windows.Forms.Timer
 $casovac.Interval = 60000
 $casovac.Add_Tick({
   ObnovVzhled
-  if ($script:pozastaveno -or (Bezi)) { return }
+
+  # Průzkum právě doběhl — je co ohlásit.
+  $bezi = Bezi
+  if ($script:bezelo -and (-not $bezi)) { UkazOznameni }
+  $script:bezelo = $bezi
+
+  if ($script:pozastaveno -or $bezi) { return }
 
   $ted = Get-Date
 
@@ -185,6 +230,15 @@ $casovac.Add_Tick({
 $casovac.Start()
 
 Napis "hlídka spuštěna"
+
+# Co je na disku teď, je z minula — zapamatovat, ale neukazovat.
+if (Test-Path $souborOznameni) {
+  try {
+    $stare = Get-Content -Path $souborOznameni -Raw -Encoding utf8 | ConvertFrom-Json
+    if ($null -ne $stare) { $script:posledniOznameni = $stare.cas }
+  } catch { }
+}
+
 ObnovVzhled
 
 # Hlídka žije, dokud ji člověk neukončí z nabídky.

@@ -22,6 +22,21 @@ Stav se pozná barvou i tvarem, ne jen barvou:
 
 Když na ikonu najedeš myší, řekne totéž slovy.
 
+## Oznámení, až průzkum doběhne
+
+Jakmile průzkum skončí, vyskočí u hodin **bublina** — třeba „Průzkum hotový ·
+Plzeňsko — 1 871 nových firem, 12 už jsme znali." Když se něco nepovede,
+bublina to řekne i s důvodem.
+
+Vyžádáno majitelem 1. 8. místo e-mailu, který zatím **nesmí odejít** (TP-8).
+Je to místní oznámení Windows; nic se nikam neodesílá.
+
+- **Prázdná fronta bublinu nedostane.** Hlídka se ptá každých deset minut
+  a „nebylo co dělat" by se během hodiny stalo otravným.
+- **Po zapnutí počítače nevyskočí nic starého** — hlídka si při startu
+  zapamatuje poslední známý běh a hlásí až ten další.
+- Text je i v deníku, kdyby ti bublina utekla.
+
 ## Co umí (pravé tlačítko na ikoně)
 
 - **Prozkoumat frontu teď** — nečeká se na řádný čas. Totéž udělá dvojklik na ikonu.

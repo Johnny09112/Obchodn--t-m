@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { appendFile, readFile } from "node:fs/promises";
+import { appendFile, readFile, writeFile } from "node:fs/promises";
 import { nactiEnv } from "./env.js";
 
 // Hned na začátku, ať nastavení ze souboru vidí i klienti vytvářené níž.
@@ -21,6 +21,7 @@ import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
 import { novePoznatky } from "./playbook.js";
 import { doplnKontakty } from "./kontakty.js";
+import { oznameniOBehu, type VysledekObjednavky } from "./oznameni.js";
 import { prepocitejDosah } from "./dosah.js";
 import { rozborZony } from "./zona.js";
 import {
@@ -297,8 +298,16 @@ async function cmdKartoteka(argv: string[]): Promise<void> {
 async function cmdDoplnitKontakty(argv: string[]): Promise<void> {
   const { values } = parseArgs({
     args: argv,
-    options: { limit: { type: "string" }, jidelna: { type: "string" } },
+    options: {
+      limit: { type: "string" },
+      jidelna: { type: "string" },
+      oblast: { type: "string" },
+    },
   });
+  if (values.jidelna && values.oblast) {
+    console.error("Zvol buď --jidelna, nebo --oblast, ne obojí.");
+    process.exit(1);
+  }
   const db = await pripojDb();
   try {
     const souhrn = await doplnKontakty(
@@ -306,6 +315,7 @@ async function cmdDoplnitKontakty(argv: string[]): Promise<void> {
       {
         limit: values.limit ? Number(values.limit) : undefined,
         jidelnaId: values.jidelna,
+        oblastId: values.oblast,
       },
     );
     console.log(`Doplnění kontaktů — běh ${souhrn.behId}`);
@@ -800,6 +810,32 @@ function odhadCasuZamereni(kandidatu: number): string {
   return `přibližně ${zaokrouhleno} min`;
 }
 
+/** Kam se ukládá výsledek posledního běhu pro bublinu u hodin. */
+const SOUBOR_OZNAMENI = "data/posledni-beh.json";
+
+/**
+ * Uloží, jak běh dopadl — hlídka si to po jeho skončení přečte a ukáže
+ * bublinu u hodin (`skripty/cmuchal-hlidka.ps1`).
+ *
+ * **Neodesílá to nic.** Je to soubor na disku a místní oznámení Windows,
+ * ne e-mail; TP-8 platí dál.
+ *
+ * Zapsat se musí i prázdný výsledek — jinak by hlídka ukázala bublinu
+ * ze včerejška jako čerstvou.
+ */
+async function zapisOznameni(vysledky: VysledekObjednavky[]): Promise<void> {
+  try {
+    await writeFile(
+      SOUBOR_OZNAMENI,
+      JSON.stringify({ cas: new Date().toISOString(), oznameni: oznameniOBehu(vysledky) }, null, 2),
+      "utf8",
+    );
+  } catch (e) {
+    // Nepovedené oznámení nesmí shodit běh, který jinak dopadl dobře.
+    console.error(`  (oznámení se nepodařilo zapsat: ${e instanceof Error ? e.message : e})`);
+  }
+}
+
 /**
  * Fronta objednávek na průzkum území. Objednávku vyzvedne agent, aplikace
  * ho spustit neumí (běží v Claude Code, ne na serveru — ADR 0001).
@@ -860,13 +896,19 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
         return;
       }
 
+      // Výsledky se sbírají kvůli oznámení u hodin — hlídka běh nesleduje,
+      // jen se po jeho skončení podívá do souboru (viz `src/oznameni.ts`).
+      const vysledky: VysledekObjednavky[] = [];
+
       try {
         let vyrizeno = 0;
         for (let i = 0; i < nejvyseObjednavek; i++) {
           const p = await dalsiKVyrizeni(db, { jenUrgentni: values["jen-urgentni"] });
           if (!p) break;
 
-          console.log(`Objednávka ${p.id} (oblast ${p.oblastId})…`);
+          const oblast = await nactiOblast(db, p.oblastId);
+          const jmenoOblasti = oblast?.nazev ?? p.oblastId;
+          console.log(`Objednávka ${p.id} (oblast ${jmenoOblasti})…`);
           const deps = await vytvorPruzkumDeps(db);
           try {
             const v = await vyridPruzkum(deps, p.id, {
@@ -881,13 +923,36 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
             // toutéž objednávkou donekonečna.
             if (!v.uzavreno && v.usekuCelkem === 0) {
               console.log("  čeká na rozhodnutí člověka — fronta jde dál");
+              vysledky.push({
+                oblast: jmenoOblasti,
+                stav: "ceka_na_rozhodnuti",
+                firemNovych: 0,
+                firemPrevzato: 0,
+                chyba: null,
+              });
               break;
             }
+            vysledky.push({
+              oblast: jmenoOblasti,
+              // Nedoběhnutá objednávka (došel strop úseků) není hotová —
+              // bublina by tvrdila víc, než se stalo.
+              stav: v.uzavreno ? "hotovo" : "bezi",
+              firemNovych: v.firemNovych,
+              firemPrevzato: v.firemPrevzato,
+              chyba: null,
+            });
           } catch (e) {
             // Jedna vadná objednávka nesmí zastavit celou frontu.
             const popis = e instanceof Error ? e.message : String(e);
             console.error(`  selhalo: ${popis}`);
             await selhalPruzkum(db, p.id, popis).catch(() => undefined);
+            vysledky.push({
+              oblast: jmenoOblasti,
+              stav: "selhalo",
+              firemNovych: 0,
+              firemPrevzato: 0,
+              chyba: popis,
+            });
           }
           vyrizeno++;
           await tep(db, ZAMEK_CMUCHAL, drzitel);
@@ -897,6 +962,7 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
         );
       } finally {
         await odemkni(db, ZAMEK_CMUCHAL, drzitel);
+        await zapisOznameni(vysledky);
       }
       return;
     }
@@ -1584,8 +1650,10 @@ switch (prikaz) {
   zona --jidelna <id> [--polomery 1000,3000,5000]
                                    kolik firem přibude při jakém poloměru zóny
   dosah [--jidelna <id>]           přepočte, které jídelny mají kterou firmu v dosahu
-  doplnit-kontakty [--limit N] [--jidelna id]
+  doplnit-kontakty [--limit N] [--jidelna id | --oblast id]
                                    doplní kontakty u firem, které už v kartotéce jsou
+                                   (--oblast dosáhne i na firmy bez jídelny —
+                                   ty ze sběru nad územím; ARES snese dávky, ne 13 tisíc naráz)
   kampan [seznam]                  vypíše kampaně (pojmenované seznamy firem)
   kampan nova <název> --spravce <e-mail> [--kontext text]
                                    založí kampaň (stav rozpracovana)

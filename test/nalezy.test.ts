@@ -198,3 +198,31 @@ describe("zapisDavku", () => {
     expect(behy[0]!.konec).not.toBeNull();
   });
 });
+
+describe("fronta rešerše nad oblastí", () => {
+  it("vidí firmy bez jídelny — sběr nad územím je zakládá mimo zónu", async () => {
+    // Stejná díra jako u kontaktů: výchozí fronta se ptá na `v_zone is true`,
+    // takže by z 620 cílových firem Plzně nabídla 16.
+    const oblastId = (
+      await db.query<{ id: string }>(
+        `insert into oblasti (nazev, typ, stred_lat, stred_lng, polomer_m)
+         values ('Plzeň','kruh',49.7,13.4,5000) returning id`,
+      )
+    )[0]!.id;
+
+    await zalozFirmu(db, {
+      ico: "25232657", nazev: "Bez jídelny s.r.o.", adresa: "x", obec: "Plzeň",
+      czNace: ["25610"], velikostKategorie: null, kodObce: 554791, pravniForma: "112",
+    });
+    await nastavStav(db, "25232657", "cekajici_na_jidelnu");
+    await db.query("insert into oblast_firmy (oblast_id, ico) values ($1,$2)", [
+      oblastId, "25232657",
+    ]);
+
+    const vychozi = (await firmyKObohaceni(db, {})).map((f) => f.ico);
+    const nadOblasti = (await firmyKObohaceni(db, { oblastId })).map((f) => f.ico);
+
+    expect(vychozi).not.toContain("25232657");
+    expect(nadOblasti).toEqual(["25232657"]);
+  });
+});

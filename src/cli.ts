@@ -1511,6 +1511,8 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
     options: {
       limit: { type: "string" },
       jidelna: { type: "string" },
+      // Území místo zóny jídelny — firmy ze sběru nad oblastí jsou mimo zónu.
+      oblast: { type: "string" },
       // Např. --segmenty stredni,korporat — u drobných se rešerše nevyplatí.
       segmenty: { type: "string" },
       // Firmy, kde známe jméno, ale ne spojení na něj.
@@ -1522,6 +1524,7 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
     const firmy = await firmyKObohaceni(db, {
       limit: values.limit ? Number(values.limit) : undefined,
       jidelnaId: values.jidelna,
+      oblastId: values.oblast,
       segmenty: values.segmenty?.split(",").map((s) => s.trim()) as Segment[] | undefined,
       jenBezSpojeni: values["bez-spojeni"] === true,
     });

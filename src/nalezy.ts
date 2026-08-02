@@ -192,9 +192,29 @@ export async function firmyKObohaceni(
     jidelnaId?: string;
     segmenty?: Segment[];
     jenBezSpojeni?: boolean;
+    /**
+     * Území místo zóny jídelny. Sběr nad oblastí zakládá firmy **bez jídelny
+     * a bez zóny** (stav `cekajici_na_jidelnu`), takže je výchozí fronta
+     * nikdy neuvidí — v Plzni by z 620 cílových firem nabídla 16.
+     * Stejná díra jako u doplňování kontaktů.
+     */
+    oblastId?: string;
   },
 ): Promise<FirmaKObohaceni[]> {
-  const podminky = ["f.stav = 'kvalifikovany'", "f.v_zone is true"];
+  const podminky: string[] = [];
+  const params: unknown[] = [];
+
+  if (opts.oblastId) {
+    params.push(opts.oblastId);
+    podminky.push(
+      "f.stav <> 'zamitnuty'",
+      `exists (select 1 from oblast_firmy o where o.ico = f.ico
+                 and o.oblast_id = $${params.length})`,
+    );
+  } else {
+    podminky.push("f.stav = 'kvalifikovany'", "f.v_zone is true");
+  }
+
   if (!opts.jenBezSpojeni) {
     // Standardní fronta jde po firmách, které rešerší ještě neprošly.
     podminky.push("f.obohaceno_at is null");
@@ -207,7 +227,6 @@ export async function firmyKObohaceni(
                      and (k.email is not null or k.telefon is not null))`,
     );
   }
-  const params: unknown[] = [];
   if (opts.jidelnaId) {
     params.push(opts.jidelnaId);
     podminky.push(`f.nejblizsi_jidelna_id = $${params.length}`);

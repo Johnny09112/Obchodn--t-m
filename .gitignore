@@ -18,3 +18,6 @@ src/tmp-*.ts
 # Závislosti aplikace
 app/node_modules/
 app/dist/
+
+# Pracovní seznamy a nálezy agenta (obsahují data o firmách)
+data/prace/

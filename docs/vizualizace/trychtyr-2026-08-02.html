@@ -1,0 +1,342 @@
+<meta charset="utf-8">
+<title>Kde se z 12 762 firem stane 500 — a proč se zatím nestane</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --papir:      #f1f3ef;
+    --papir-2:    #e6eae4;
+    --inkoust:    #14262c;
+    --inkoust-2:  #2c4149;
+    --tlumene:    #5c7178;
+    --linka:      #c8d2cc;
+    --zelena:     #1f6f5c;
+    --zelena-tl:  #e2ece7;
+    --jantar:     #9a5c14;
+    --jantar-tl:  #f4ead9;
+    --cihla:      #92382a;
+    --cihla-tl:   #f5e5e1;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text:   "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj:   ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs:  .72rem;
+    --fs-sm:  .84rem;
+    --fs-b:   1.0625rem;
+    --fs-lg:  1.3rem;
+    --fs-xl:  1.9rem;
+    --fs-2xl: 2.5rem;
+
+    --sirka: 44rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+  }
+
+  body {
+    margin: 0;
+    background: var(--papir);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    font-size: var(--fs-b);
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .stranka {
+    max-width: var(--sirka);
+    margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+  }
+
+  .datum {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--tlumene);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-2xl);
+    font-weight: 660;
+    letter-spacing: -.025em;
+    line-height: 1.08;
+    text-wrap: balance;
+    margin: .6rem 0 0;
+  }
+
+  .podtitul {
+    font-size: var(--fs-lg);
+    color: var(--inkoust-2);
+    margin: .7rem 0 0;
+    text-wrap: pretty;
+  }
+
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-xl);
+    font-weight: 620;
+    letter-spacing: -.018em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--linka);
+  }
+
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+
+  /* ── trychtýř ─────────────────────────────────────────────── */
+
+  .trychtyr { display: flex; flex-direction: column; gap: .55rem; }
+
+  .patro {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .3rem;
+    padding: .75rem .9rem;
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    background: var(--papir-2);
+  }
+
+  /* Šířka pruhu nese velikost — číslo i tvar, ne jen číslo. */
+  .pruh {
+    height: .5rem;
+    border-radius: 2px;
+    background: var(--zelena);
+    opacity: .85;
+  }
+  .patro.uzko .pruh { background: var(--jantar); }
+  .patro.kriticke .pruh { background: var(--cihla); }
+
+  .patro-hlava {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .8rem;
+    flex-wrap: wrap;
+  }
+
+  .patro-nazev {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-sm);
+    font-weight: 620;
+  }
+
+  .patro-cislo {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-lg);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .patro.uzko .patro-cislo { color: var(--jantar); }
+  .patro.kriticke .patro-cislo { color: var(--cihla); }
+
+  .patro-popis {
+    font-size: var(--fs-sm);
+    color: var(--inkoust-2);
+  }
+
+  /* ── nálezy ───────────────────────────────────────────────── */
+
+  .nalez {
+    padding: 1rem 1.1rem;
+    background: var(--papir-2);
+    border: 1px solid var(--linka);
+    border-left: 3px solid var(--cihla);
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }
+
+  .nalez h3 {
+    font-family: var(--pismo-nadpis);
+    font-size: var(--fs-b);
+    font-weight: 620;
+    margin: 0;
+  }
+
+  .nalez p { font-size: var(--fs-sm); }
+
+  .poznamka {
+    font-size: var(--fs-sm);
+    color: var(--tlumene);
+    text-wrap: pretty;
+  }
+
+  ol.postup {
+    margin: 0;
+    padding-left: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+  }
+  ol.postup li { text-wrap: pretty; }
+  ol.postup li::marker { color: var(--tlumene); font-family: var(--pismo-udaj); }
+
+  .paticka {
+    font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs);
+    color: var(--tlumene);
+    border-top: 1px solid var(--linka);
+    padding-top: 1rem;
+    line-height: 1.7;
+  }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · 2. srpna 2026 · Plzeň a okolí</div>
+    <h1>Kde se z 12 762 firem stane 500</h1>
+    <p class="podtitul">
+      Ptal ses, jestli se seznam nejdřív profiltruje offline na zhruba 500
+      použitelných firem, a teprve u nich se hledají kontakty. Ano — tak je to
+      myšlené. Jenže to zatím nefunguje a tady je vidět proč.
+    </p>
+  </header>
+
+  <section class="sekce">
+    <h2>Jak to teď doopravdy padá</h2>
+
+    <div class="trychtyr">
+      <div class="patro">
+        <div class="patro-hlava">
+          <span class="patro-nazev">Firem v Plzni a okolí</span>
+          <span class="patro-cislo">12 762</span>
+        </div>
+        <div class="pruh" style="width: 100%"></div>
+        <span class="patro-popis">Co Čmuchal sebral z registru a ověřil v ARESu.</span>
+      </div>
+
+      <div class="patro">
+        <div class="patro-hlava">
+          <span class="patro-nazev">Projde sítem do kampaně</span>
+          <span class="patro-cislo">12 760</span>
+        </div>
+        <div class="pruh" style="width: 99.98%"></div>
+        <span class="patro-popis">
+          Síto vyhodilo <strong>dvě firmy</strong> — ty s doloženou vlastní jídelnou.
+          Nic víc odfiltrovat neumí.
+        </span>
+      </div>
+
+      <div class="patro uzko">
+        <div class="patro-hlava">
+          <span class="patro-nazev">Víme, jak jsou velké</span>
+          <span class="patro-cislo">132</span>
+        </div>
+        <div class="pruh" style="width: 4%"></div>
+        <span class="patro-popis">
+          U zbylých 12 630 firem <strong>netušíme, jestli mají pět lidí, nebo pět set.</strong>
+        </span>
+      </div>
+
+      <div class="patro kriticke">
+        <div class="patro-hlava">
+          <span class="patro-nazev">Známe počet zaměstnanců</span>
+          <span class="patro-cislo">0</span>
+        </div>
+        <div class="pruh" style="width: 1.5%"></div>
+        <span class="patro-popis">
+          Ani u jedné. A přesně tohle číslo rozhoduje, jestli má smysl nabízet obědy.
+        </span>
+      </div>
+    </div>
+
+    <p class="poznamka">
+      Sběr sám o sobě filtruje dobře — cestou vyřadil 4 044 kandidátů s důvodem
+      (vyloučený obor 1 392, neuvedená velikost 965, mimo zónu 776, bez
+      zaměstnanců 683 a další). Ale co projde do kartotéky, už se dál nezúží.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>Dvě věci, které jsem měl říct dřív</h2>
+
+    <div class="nalez">
+      <h3>Těch 532 firem v kampani není výběr, je to zbytek</h3>
+      <p>
+        Kampaň „Zkouška průzkumu" má 532 firem a vypadalo to jako ta správná
+        pětistovka. Není. Vzniklo to, když se kampaň plnila ze zkráceného
+        seznamu — server tehdy vracel jen část řádků. Kdyby se naplnila dnes,
+        má <strong>12 760 firem</strong>, ne 532.
+      </p>
+    </div>
+
+    <div class="nalez">
+      <h3>Zkušební dávku kontaktů jsem pustil na špatnou skupinu</h3>
+      <p>
+        Doplnil jsem kontakty 200 firmám s nejvyšším skóre v celé Plzni. Jenže
+        skóre bez znalosti velikosti moc neznamená — takže to byly z velké
+        části firmy, které do kampaně stejně nepatří. Nic se tím nepokazilo,
+        jen se z toho nedá vyčíst, jak dobré ty kontakty budou u těch správných.
+      </p>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co z toho plyne pro pořadí prací</h2>
+    <p>
+      Tvoje pořadí bylo správné. Jen chybí krok, o kterém jsme nemluvili —
+      zjistit velikost firem. Bez něj se seznam nemá podle čeho zúžit.
+    </p>
+    <ol class="postup">
+      <li>
+        <strong>Doplnit velikost firem.</strong> Je v otevřených datech
+        (statistický registr, účetní závěrky ve sbírce listin). Dokud tohle
+        chybí, každý další krok pracuje naslepo.
+      </li>
+      <li>
+        <strong>Teprve pak zúžit seznam</strong> — a uvidí se, jestli z 12 762
+        zbude 500, 1 500, nebo 200. To číslo dnes nikdo neví, včetně mě.
+      </li>
+      <li>
+        <strong>Kontakty až na ten zúžený seznam.</strong> Při naměřených
+        2,9 sekundy na firmu je 500 firem 25 minut. 12 762 je deset hodin —
+        a většina zbytečně.
+      </li>
+    </ol>
+    <p class="poznamka">
+      Pořád platí i to, co ukázala zkušební dávka: ze 300 firem se spojením má
+      e-mail jen 50. U zbytku máme jméno jednatele z rejstříku, ale ne adresu,
+      na kterou se dá napsat. To je samostatný problém k vyřešení.
+    </p>
+  </section>
+
+  <p class="paticka">
+    Všechna čísla čtená z ostré databáze 2. 8. 2026. Nic se neodesílá,
+    odesílání zůstává vypnuté.
+  </p>
+
+</div>

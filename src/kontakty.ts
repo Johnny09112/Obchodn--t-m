@@ -45,7 +45,7 @@ const ZDROJ_MPSV = "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json
 
 export async function doplnKontakty(
   deps: DoplnKontaktyDeps,
-  opts: { limit?: number; jidelnaId?: string; oblastId?: string },
+  opts: { limit?: number; jidelnaId?: string; oblastId?: string; jenCilove?: boolean },
 ): Promise<DoplnKontaktySouhrn> {
   const { db } = deps;
 
@@ -64,6 +64,10 @@ export async function doplnKontakty(
       // za výsledek, který stejně nepoužijeme.
       "c.stav <> 'zamitnuty'",
     );
+    // Cílová velikost: 25 a víc zaměstnanců. „Nevíme" sem nepatří — kdo si
+    // vybere cílový segment, chce doložené firmy; neznámé se řeší zvlášť
+    // a vědomě (volba ve druhém kroku průvodce).
+    if (opts.jenCilove) podminky.push("c.velikost_kategorie in ('stredni','korporat')");
   } else {
     // Beze změny: běh bez omezení se schválně nepouští do celé kartotéky,
     // to je hodina dotazů do ARESu.

@@ -303,6 +303,7 @@ async function cmdDoplnitKontakty(argv: string[]): Promise<void> {
       limit: { type: "string" },
       jidelna: { type: "string" },
       oblast: { type: "string" },
+      "jen-cilove": { type: "boolean" },
     },
   });
   if (values.jidelna && values.oblast) {
@@ -317,6 +318,7 @@ async function cmdDoplnitKontakty(argv: string[]): Promise<void> {
         limit: values.limit ? Number(values.limit) : undefined,
         jidelnaId: values.jidelna,
         oblastId: values.oblast,
+        jenCilove: values["jen-cilove"],
       },
     );
     console.log(`Doplnění kontaktů — běh ${souhrn.behId}`);
@@ -1682,7 +1684,7 @@ switch (prikaz) {
   doplnit-velikosti [--oblast id]
                                    doplní velikost firem ze souboru registru ČSÚ
                                    (bez internetu; ARES nic navíc nedoplní)
-  doplnit-kontakty [--limit N] [--jidelna id | --oblast id]
+  doplnit-kontakty [--limit N] [--jidelna id | --oblast id] [--jen-cilove]
                                    doplní kontakty u firem, které už v kartotéce jsou
                                    (--oblast dosáhne i na firmy bez jídelny —
                                    ty ze sběru nad územím; ARES snese dávky, ne 13 tisíc naráz)

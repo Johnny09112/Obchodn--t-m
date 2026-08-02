@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { doplnKontakty } from "../src/kontakty.js";
 import { prepocitejOblastFirmy, zalozOblast } from "../src/oblast.js";
-import { nastavGeo, nastavStav, zalozFirmu } from "../src/repo.js";
+import { nastavGeo, nastavStav, zalozFirmu, zapisAtribut } from "../src/repo.js";
 import type { AresKlient, AresZaznam } from "../src/ares.js";
 import type { MpsvKlient } from "../src/mpsv.js";
 
@@ -13,9 +13,14 @@ const STRED = { lat: 49.9, lng: 12.97 };
 /** Daleko od oblasti — ať je vidět, že se výběr opravdu řídí územím. */
 const JINDE = { lat: 50.6, lng: 15.4 };
 
+/**
+ * Firma tak, jak vzniká při sběru nad oblastí: **bez velikosti**. ARES ji
+ * u běžného dotazu nevrací a doplňuje se až ze souboru registru — právě to
+ * byla ta díra, kvůli které nikdo neměl kontakt.
+ */
 const firma = (ico: string, nazev: string): AresZaznam => ({
   ico, nazev, adresa: "Náves 1", obec: "Bezdružice", czNace: ["25610"],
-  velikostKategorie: "stredni", kodObce: 560740, pravniForma: "112",
+  velikostKategorie: null, kodObce: 560740, pravniForma: "112",
 });
 
 const ares: AresKlient = {
@@ -106,6 +111,34 @@ describe("doplnění kontaktů nad oblastí", () => {
     const s = await doplnKontakty({ db, ares, mpsv }, { oblastId, limit: 2 });
 
     expect(s.zpracovano).toBe(2);
+  });
+
+  it("umí se omezit na cílovou velikost — kontakty u mikrofirem nemá smysl hledat", async () => {
+    await firmaVOblasti("25232657");
+    await firmaVOblasti("48362956");
+    await zapisAtribut(db, "25232657", "velikost_kategorie", "stredni", {
+      zdrojUrl: "https://csu.example/res", citace: "statistický registr: 25–49 zaměstnanců",
+    });
+    await zapisAtribut(db, "48362956", "velikost_kategorie", "mikro", {
+      zdrojUrl: "https://csu.example/res", citace: "statistický registr: 1–5 zaměstnanců",
+    });
+    await prepocitejOblastFirmy(db, oblastId);
+
+    const s = await doplnKontakty({ db, ares, mpsv }, { oblastId, jenCilove: true });
+
+    expect(s.zpracovano).toBe(1);
+    expect(await maKontakt("48362956")).toBe(false);
+  });
+
+  it("firma bez známé velikosti do cílového výběru nepatří", async () => {
+    // Nevíme není totéž co velká. Kdo si vybere cílovou velikost, chce
+    // doložené firmy — neznámé se řeší zvlášť a vědomě.
+    await firmaVOblasti("25232657");
+    await prepocitejOblastFirmy(db, oblastId);
+
+    const s = await doplnKontakty({ db, ares, mpsv }, { oblastId, jenCilove: true });
+
+    expect(s.zpracovano).toBe(0);
   });
 
   it("bez zadaného území se chová jako dřív — jen firmy v zóně jídelny", async () => {

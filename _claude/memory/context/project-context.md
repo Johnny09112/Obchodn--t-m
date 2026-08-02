@@ -23,7 +23,7 @@ odesílací doména, právní konzultace.
 | Údaj | Hodnota |
 |---|---|
 | Firem v kartotéce | **13 767** |
-| Z toho se spojením | **300** (z toho jen 50 s e-mailem) |
+| Z toho se spojením | **860** · v Plzni má 560 z 620 cílových |
 | Vyřazených kandidátů, s důvodem | 4 044 |
 | Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
 | Běhů agenta | 15 |

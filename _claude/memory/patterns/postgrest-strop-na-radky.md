@@ -21,3 +21,22 @@ dávka). 13 767 firem za 4,3 s; třídění až v prohlížeči.
 **Pravidlo:** u hromadného čtení ověřit počet proti `count: 'exact'`.
 Zaokrouhlené číslo v přehledu (přesně 1 000, přesně 500) je podezřelé —
 bývá to strop, ne náhoda.
+
+## Strop zvednutý na 20 000 (3. 8.)
+
+Majitel schválil zvýšení, aby se kartotéka nenačítala na čtrnáct kol:
+
+```sql
+alter role authenticator set pgrst.db_max_rows = '20000';
+notify pgrst, 'reload config';
+```
+
+**Nastavení v roli je vidět, chování přes API ověřené NENÍ** — anonymní
+čtení je zavřené a bez přihlášení se dotaz neudělá. Trvalejší místo je
+nastavení projektu v Supabase (Settings → API → Max rows); kdyby platforma
+při restartu roli přepsala, vrátí se strop na tisíc.
+
+**Proto na velikosti dávky nesmí nic viset.** Cyklus v `nactiFirmy`
+i `nactiIcaVOblastech` končí až **prázdnou dávkou**, ne dávkou menší, než
+si řekl. Kdyby se spoléhal na velikost a strop klesl, kartotéka by se tiše
+useknula — přesně chyba popsaná výš.

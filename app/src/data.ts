@@ -63,8 +63,17 @@ const SLOUPCE_FIRMY =
  * a při kreslení oblasti se pak počítá bez dalšího dotazu do databáze,
  * takže počet firem ve tvaru naskakuje okamžitě.
  */
-/** Po kolika řádcích se čte. Server stejně víc než tisíc najednou nedá. */
-const STRANKA = 1000;
+/**
+ * Kolik řádků si říct o jednu dávku.
+ *
+ * Server má vlastní strop (`pgrst.db_max_rows`) a ten klientské přání
+ * přebije — **mlčky, bez chyby**. Proto se o víc říct smí, ale nikdy se
+ * nesmí předpokládat, že tolik přijde: cyklus končí až prázdnou dávkou,
+ * ne dávkou menší, než jsme chtěli. Kdyby se spoléhal na velikost, stačilo
+ * by snížit strop na serveru a kartotéka by se tiše useknula — přesně ta
+ * chyba, která tu už jednou byla.
+ */
+const STRANKA = 10000;
 
 export async function nactiFirmy(): Promise<Firma[]> {
   // POZOR: `.limit()` tu nestačí. Server má vlastní strop na počet řádků
@@ -86,8 +95,8 @@ export async function nactiFirmy(): Promise<Firma[]> {
     if (error) throw new Error(error.message);
 
     const davka = (data ?? []) as unknown as Firma[];
+    if (davka.length === 0) break;
     vse.push(...davka);
-    if (davka.length < STRANKA) break;
     posledni = davka[davka.length - 1]!.ico;
   }
 
@@ -199,8 +208,8 @@ async function nactiIcaVOblastech(oblastiIds: readonly string[]): Promise<Set<st
     const { data, error } = await dotaz;
     if (error) throw new Error(error.message);
     const davka = (data ?? []) as { ico: string }[];
+    if (davka.length === 0) break;
     for (const r of davka) vse.add(r.ico);
-    if (davka.length < STRANKA) break;
     posledni = davka[davka.length - 1]!.ico;
   }
   return vse;

@@ -21,6 +21,7 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[ares-nedoplni-velikost]] — Dotaz do ARESu na velikost firmy nevrátí nic navíc proti souboru ČSÚ — je to tentýž registr · active · 2026-08-02
 - [[automaticka-uprava-textu-potrebuje-guard]] — Skript, který jen vypíše hotovo, nic nedokazuje — hlídej každou náhradu zvlášť · active · 2026-08-01
 - [[cantinero-data-dir-vs-database-url]] — CANTINERO_DATA_DIR neplatí, když je nastavené DATABASE_URL · active · 2026-08-01
 - [[hook-cjs-v-esm-projektu]] — Hooky ze šablon bývají CommonJS, ale tenhle projekt má type: module · active · 2026-08-01

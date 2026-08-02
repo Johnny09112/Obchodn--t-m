@@ -23,7 +23,7 @@ odesílací doména, právní konzultace.
 | Údaj | Hodnota |
 |---|---|
 | Firem v kartotéce | **13 767** |
-| Z toho se spojením | **104** |
+| Z toho se spojením | **300** (z toho jen 50 s e-mailem) |
 | Vyřazených kandidátů, s důvodem | 4 044 |
 | Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
 | Běhů agenta | 15 |
@@ -62,7 +62,10 @@ zadal 31. 7. (úklid, seznam s detailem, víc oblastí).
 ## Aktuální focus
 
 **Čeká se na majitele: jak velkou dávku doplňování kontaktů pustit.**
-Nabídnuto 200 firem na zkoušku / celá Plzeň (~1,5 h) / zatím nic.
+**Zkušební dávka doplnění kontaktů proběhla** (200 firem Plzně, 196 uspělo).
+Ukázala dvě věci: tempo je ~2,9 s na firmu (celá Plzeň ≈ 10 h, ne 1,5)
+a **e-mail má jen 50 z 300 firem se spojením** — zbytek je jméno jednatele.
+Podrobně [[kontakty-i-nad-oblasti]].
 
 Dál se nabízí etapa D průvodce (kritika a přístupnost) a stránkování
 velkých seznamů. Podrobně [[otevrene-pozadavky-majitele]].
@@ -71,8 +74,11 @@ velkých seznamů. Podrobně [[otevrene-pozadavky-majitele]].
 
 Úplný seznam je v [[otevrene-pozadavky-majitele]]. Nejdůležitější:
 
-- **Doplňování kontaktů naostro nespuštěné.** Kód hotový, čeká na rozhodnutí
-  o velikosti dávky — viz [[kontakty-i-nad-oblasti]].
+- **Doplňovat kontakty podle kampaně, ne oblasti.** Plošně nad oblastí je to
+  10 hodin a většinou zbytečné; firem v kampani je 532 (~25 min). Rozsah
+  `--kampan` **není postavený** — nabídnuto majiteli 2. 8.
+- **Jméno jednatele není adresa.** Pro fázi 3 chybí u 4 z 5 firem způsob,
+  jak se ozvat. Bez dalšího zdroje e-mailů je doplňování poloviční výsledek.
 
 ## Co znamená „hotovo"
 

@@ -5,11 +5,12 @@ import { nactiJidelny, nactiPrehledOblasti, type Jidelna, type PrehledOblasti } 
 import type { Role } from "./supabase";
 
 /**
- * Obrazovka Oblasti — seznam s detailem nahoře, mapa pod ním.
+ * Obrazovka Oblasti — mapa, pod ní seznam oblastí, úplně dole firmy.
  *
- * Seznam je hlavní cesta: podle něj se pozná, co je prozkoumané, co něco
- * drží a co jde uklidit. Mapa zůstává na kreslení a na to, aby bylo vidět,
- * kde oblasti leží a kde se překrývají.
+ * Pořadí si vyžádal majitel 2. 8., když seznam vystrčil mapu pod ohyb:
+ * „to bych určitě otočil, abych první viděl mapu a až následně byly oblasti
+ * a pak firmy." Mapa je to, podle čeho se člověk zorientuje; seznam odpovídá
+ * na otázky, které přijdou až potom.
  *
  * Vybraná oblast je společná: kliknutí v seznamu ji otevře v mapě a naopak.
  * Mapa sama žije v `MapaOblasti`, protože ji používá i průvodce kampaní —
@@ -49,35 +50,38 @@ export function Oblasti({ role }: { role: Role }) {
         </p>
       </div>
 
-      <div className="sloupec">
-        {chyba ? (
-          <p className="hlaska" role="alert">
-            Přehled oblastí se nepodařilo načíst: {chyba}
-          </p>
-        ) : nacita ? (
-          <p className="nacitani">Načítám přehled oblastí…</p>
-        ) : (
-          <SeznamOblasti
-            oblasti={prehled}
-            jidelny={jidelny}
-            role={role}
-            otevrenaId={vybranaId}
-            onOtevri={setVybranaId}
-            onZmena={() => {
-              // Po smazání nesmí zůstat vybraná — mapa by ji marně hledala.
-              setVybranaId(null);
-              void obnov();
-            }}
-          />
-        )}
-      </div>
-
+      {/* Pořadí je záměr: nejdřív mapa, pak oblasti, pak firmy. Seznam
+          oblastí se proto vkládá dovnitř mapy — seznam firem patří k ní
+          a musí zůstat až úplně dole. */}
       <MapaOblasti
         role={role}
         vybranaId={vybranaId}
         onVyber={setVybranaId}
         onZmena={() => void obnov()}
-      />
+      >
+        <div className="sloupec">
+          {chyba ? (
+            <p className="hlaska" role="alert">
+              Přehled oblastí se nepodařilo načíst: {chyba}
+            </p>
+          ) : nacita ? (
+            <p className="nacitani">Načítám přehled oblastí…</p>
+          ) : (
+            <SeznamOblasti
+              oblasti={prehled}
+              jidelny={jidelny}
+              role={role}
+              otevrenaId={vybranaId}
+              onOtevri={setVybranaId}
+              onZmena={() => {
+                // Po smazání nesmí zůstat vybraná — mapa by ji marně hledala.
+                setVybranaId(null);
+                void obnov();
+              }}
+            />
+          )}
+        </div>
+      </MapaOblasti>
     </>
   );
 }

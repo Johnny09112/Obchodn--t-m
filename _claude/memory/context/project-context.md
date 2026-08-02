@@ -28,8 +28,8 @@ odesílací doména, právní konzultace.
 | Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
 | Běhů agenta | 15 |
 | Náklady na API | **0 USD** — placené nikdy neběželo |
-| Migrace | po `0032_oblast_slozeni.sql`, nasazeno |
-| Testy | 533 zelených, 61 souborů |
+| Migrace | po `0033_indexy_rychlost.sql`, nasazeno |
+| Testy | 538 zelených, 62 souborů |
 | Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.

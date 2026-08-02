@@ -71,18 +71,24 @@ export async function nactiFirmy(): Promise<Firma[]> {
   // (výchozí tisíc) a ten klientský limit přebije — MLČKY, bez chyby.
   // Kartotéka pak tiše ukazovala 1 000 firem z 13 767 a počty v mapě
   // i v kampani byly nižší, než měly být. Proto se čte po stránkách.
+  //
+  // Stránkuje se **podle posledního IČO, ne přes `offset`**. S offsetem musí
+  // databáze u každé další stránky znovu přeskákat všechny předchozí řádky,
+  // takže poslední stránka je nejdražší a celek roste s druhou mocninou.
+  // Takhle je každá stránka jedno seknutí do indexu.
   const vse: Firma[] = [];
-  for (let od = 0; ; od += STRANKA) {
-    const { data, error } = await supabase
-      .from("companies")
-      .select(SLOUPCE_FIRMY)
-      .order("ico")
-      .range(od, od + STRANKA - 1);
+  let posledni: string | null = null;
+  for (;;) {
+    let dotaz = supabase.from("companies").select(SLOUPCE_FIRMY).order("ico").limit(STRANKA);
+    if (posledni !== null) dotaz = dotaz.gt("ico", posledni);
+
+    const { data, error } = await dotaz;
     if (error) throw new Error(error.message);
 
     const davka = (data ?? []) as unknown as Firma[];
     vse.push(...davka);
     if (davka.length < STRANKA) break;
+    posledni = davka[davka.length - 1]!.ico;
   }
 
   // Třídění až tady: přes stránky by ho server stejně neudržel.
@@ -180,17 +186,22 @@ export async function nactiPrehledOblasti(): Promise<PrehledOblasti[]> {
  */
 async function nactiIcaVOblastech(oblastiIds: readonly string[]): Promise<Set<string>> {
   const vse = new Set<string>();
-  for (let od = 0; ; od += STRANKA) {
-    const { data, error } = await supabase
+  let posledni: string | null = null;
+  for (;;) {
+    let dotaz = supabase
       .from("oblast_firmy")
       .select("ico")
       .in("oblast_id", oblastiIds as string[])
       .order("ico")
-      .range(od, od + STRANKA - 1);
+      .limit(STRANKA);
+    if (posledni !== null) dotaz = dotaz.gt("ico", posledni);
+
+    const { data, error } = await dotaz;
     if (error) throw new Error(error.message);
     const davka = (data ?? []) as { ico: string }[];
     for (const r of davka) vse.add(r.ico);
     if (davka.length < STRANKA) break;
+    posledni = davka[davka.length - 1]!.ico;
   }
   return vse;
 }

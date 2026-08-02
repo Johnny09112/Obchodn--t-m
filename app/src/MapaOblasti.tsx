@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Mapa, type Rezim } from "./Mapa";
 import { PanelVrstev } from "./PanelVrstev";
 import { SeznamFirem } from "./SeznamFirem";
@@ -35,10 +35,19 @@ export interface MapaOblastiProps {
    */
   vybranaId?: string | null;
   /**
-   * Oblast se uložila. Seznam nad mapou z toho žije — bez toho by po
-   * nakreslení nové oblasti ukazoval starý stav, dokud se stránka nenačte.
+   * Oblast se uložila. Seznam z toho žije — bez toho by po nakreslení nové
+   * oblasti ukazoval starý stav, dokud se stránka nenačte.
    */
   onZmena?: () => void;
+  /**
+   * Obsah mezi mapou a seznamem firem.
+   *
+   * Majitel 2. 8.: „to bych určitě otočil, abych první viděl mapu a až
+   * následně byly oblasti a pak firmy." Seznam firem přitom patří k mapě
+   * (ukazuje, co je ve vybraném tvaru), takže se sem seznam oblastí vkládá
+   * mezi ně, místo aby se mapa rozřezala na dvě komponenty.
+   */
+  children?: ReactNode;
 }
 
 /**
@@ -47,7 +56,13 @@ export interface MapaOblastiProps {
  * Sdílená obrazovkou Oblasti a průvodcem kampaní. Dvě samostatné mapy by se
  * časem rozešly — oprava v jedné by tu druhou minula.
  */
-export function MapaOblasti({ role, onVyber, vybranaId, onZmena }: MapaOblastiProps) {
+export function MapaOblasti({
+  role,
+  onVyber,
+  vybranaId,
+  onZmena,
+  children,
+}: MapaOblastiProps) {
   const [firmy, setFirmy] = useState<Firma[]>([]);
   const [jidelny, setJidelny] = useState<Jidelna[]>([]);
   const [kategorie, setKategorie] = useState<Kategorie[]>([]);

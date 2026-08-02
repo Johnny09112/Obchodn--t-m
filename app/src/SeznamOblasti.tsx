@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { cesky } from "../../src/cestina";
+import { ProuzekSlozeni } from "./ProuzekSlozeni";
 import { popisPruzkumu, popisTvaru } from "../../src/oblast-popis";
 import { drziOblast } from "../../src/oblast-vyuziti";
 import { porovnatelne } from "../../src/sito";
@@ -189,6 +190,7 @@ export function SeznamOblasti({
                 {vybirase && <th className="vyber">Do kampaně</th>}
                 <th>Oblast</th>
                 <th className="cislo">Firem</th>
+                <th>Složení</th>
                 <th>Průzkum</th>
                 <th>Kampaně</th>
                 <th>Jídelna</th>
@@ -222,6 +224,10 @@ export function SeznamOblasti({
                     </td>
 
                     <td className="cislo">{o.firem.toLocaleString("cs")}</td>
+
+                    <td className="slozeni-bunka">
+                      <ProuzekSlozeni s={o} kompaktni />
+                    </td>
 
                     <td>
                       {popisPruzkumu(

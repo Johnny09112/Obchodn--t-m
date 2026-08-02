@@ -1151,6 +1151,118 @@ input[type="range"] {
   color: var(--cihla);
 }
 
+/* Volba rozsahu kampaně — rozhodnutí, ne jen zaškrtávátko mezi poli. */
+.volba-rozsahu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--o2);
+  padding: var(--o3);
+  border: 1px solid var(--linka);
+  border-left: 3px solid var(--razitko);
+  border-radius: var(--r);
+  background: var(--karta);
+}
+
+.zaskrtnuti-radek {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--o2);
+  cursor: pointer;
+  font-size: var(--t-drobny);
+}
+
+.zaskrtnuti-radek input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.1rem;
+  flex: none;
+  cursor: pointer;
+}
+
+/* V tabulce nesmí proužek zabrat celý řádek — ale musí zůstat čitelný. */
+.slozeni-bunka {
+  min-width: 11rem;
+}
+
+.slozeni-bunka .poznamka {
+  font-size: var(--t-mikro);
+}
+
+/* ──────────────────────────────────────────── složení firem v území */
+
+.slozeni {
+  display: flex;
+  flex-direction: column;
+  gap: var(--o2);
+}
+
+.slozeni-pruh {
+  display: flex;
+  gap: 1px;
+  height: 0.75rem;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--linka);
+}
+
+.slozeni.kompaktni .slozeni-pruh {
+  height: 0.4rem;
+}
+
+/*
+ * Cílový segment bývá kolem pěti procent, takže by při čistě poměrné šířce
+ * zmizel. Minimální šířka je schválně — proužek má ukázat, že tam něco JE,
+ * ne měřit podíly na milimetr. Přesná čísla jsou v legendě vedle.
+ */
+.slozeni-pruh .dil {
+  min-width: 4px;
+  flex-basis: 0;
+}
+
+/* Stav nese i pořadí zleva (od největších), ne jen barva. */
+.dil.je-korporat { background: var(--razitko-tmave); }
+.dil.je-stredni { background: var(--zelen); }
+.dil.je-mikro { background: var(--horcice); }
+.dil.je-nevime {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--linka) 0 3px,
+    var(--karta) 3px 6px
+  );
+}
+
+.slozeni-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--o1) var(--o4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--t-mikro);
+}
+
+.slozeni-legenda li {
+  display: flex;
+  align-items: center;
+  gap: var(--o1);
+}
+
+.slozeni-legenda .dil {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  flex: none;
+}
+
+.slozeni-legenda .popis {
+  color: var(--inkoust-slaby);
+}
+
+.slozeni-legenda .pocet {
+  font-family: var(--pismo-data);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Výběr území v průvodci kampaní — zaškrtávátko je první, co se čte. */
 .tabulka th.vyber,
 .tabulka td.vyber {

@@ -10,6 +10,7 @@
 - [[kontakty-i-nad-oblasti]] — Doplňování kontaktů umí i firmy bez jídelny — sběr nad oblastí je zakládá mimo zónu · active · 2026-08-02
 - [[oznameni-u-hodin]] — Dokončený průzkum hlásí bublina Windows; text skládá jádro, hlídka ho jen zobrazí · active · 2026-08-02
 - [[tvar-oblasti-u-pruzkumu]] — Průzkum si zapamatuje tvar oblasti, který skutečně prošel — zapisuje se při zahájení · active · 2026-08-02
+- [[velikost-ze-souboru-a-slozeni]] — Velikost firem se ukládá ze souboru ČSÚ; složení území je v pohledu a v proužku · active · 2026-08-02
 - [[hlidka-cmuchala-u-majitele]] — Naplánovaný běh Čmuchala je ikona u hodin na majitelově počítači · active · 2026-08-01
 - [[kampan-nad-vice-oblastmi]] — Kampaň stojí na množině oblastí (kampan_oblasti); sloupec kampane.oblast_id zrušen · active · 2026-08-01
 - [[mazani-oblasti]] — Kdo smí mazat oblasti a co jim v tom brání — kampaň a průzkum, ne firmy · active · 2026-08-01

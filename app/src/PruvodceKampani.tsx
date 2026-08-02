@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Krokovnik } from "./Krokovnik";
 import { MapaOblasti } from "./MapaOblasti";
 import {
@@ -31,9 +31,11 @@ import {
 } from "./data";
 import { SeznamFirem } from "./SeznamFirem";
 import { SeznamOblasti } from "./SeznamOblasti";
+import { ProuzekSlozeni } from "./ProuzekSlozeni";
 import { naOblast } from "./vrstvy";
 import { supabase, type Role } from "./supabase";
 import { cesky } from "../../src/cestina";
+import { odhadKontaktu } from "../../src/odhady";
 import { duvodNeoslovovat } from "../../src/sito";
 import { bodVOblasti } from "../../src/oblast-tvar";
 import { postupPruzkumu, souhrnPruzkumu } from "../../src/pruzkum-postup";
@@ -77,6 +79,12 @@ export function PruvodceKampani({
   const [prehled, setPrehled] = useState<PrehledOblasti[]>([]);
   const [jidelny, setJidelny] = useState<Jidelna[]>([]);
   const [otevrenaId, setOtevrenaId] = useState<string | null>(null);
+  /**
+   * Brát i firmy, u kterých registr velikost neuvádí? Výchozí ne — z těch
+   * 12 630 plzeňských je většina živnostníků a rešerše u nich stojí čas.
+   * Ale schovat je úplně by bylo horší: polovina jsou skutečná s.r.o.
+   */
+  const [zahrnoutNezname, setZahrnoutNezname] = useState(false);
   const [lide, setLide] = useState<Clovek[]>([]);
   const [uklada, setUklada] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
@@ -93,6 +101,24 @@ export function PruvodceKampani({
   const [kategorie, setKategorie] = useState<Kategorie[]>([]);
 
   const smi = smiUpravovat(kampan, role, email);
+
+  /** Složení vybraných oblastí dohromady. */
+  const slozeniVyberu = useMemo(() => {
+    const vybrane = prehled.filter((o) => oblastiIds.includes(o.id));
+    // Pozor: u překrývajících se oblastí se firma započítá dvakrát. Je to
+    // odhad pro rozhodnutí o rozsahu, ne konečný počet firem v kampani —
+    // ten se ukáže po naplnění a bere se z něj `distinct`.
+    return vybrane.reduce(
+      (a, o) => ({
+        firem: a.firem + o.firem,
+        mikro: a.mikro + o.mikro,
+        stredni: a.stredni + o.stredni,
+        korporat: a.korporat + o.korporat,
+        bez_velikosti: a.bez_velikosti + o.bez_velikosti,
+      }),
+      { firem: 0, mikro: 0, stredni: 0, korporat: 0, bez_velikosti: 0 },
+    );
+  }, [prehled, oblastiIds]);
 
   useEffect(() => {
     // Seznam lidí je pro výběr zástupu. Když se nenačte, průvodce funguje
@@ -258,7 +284,7 @@ export function PruvodceKampani({
     setUklada(true);
     setChyba(null);
     try {
-      const v = await naplnKampanZOblasti(id, oblastiIds);
+      const v = await naplnKampanZOblasti(id, oblastiIds, { jenCilove: !zahrnoutNezname });
       setVynechano(v.vynechano);
       nactiSeznam();
     } catch (e) {
@@ -413,6 +439,44 @@ export function PruvodceKampani({
                   v posledním kroku.
                 </p>
               )}
+              {/* Složení výběru — z holého počtu se nepozná, jestli je území
+                  použitelné, nebo je to hromada živnostníků. */}
+              <ProuzekSlozeni s={slozeniVyberu} />
+
+              <div className="volba-rozsahu">
+                <label className="zaskrtnuti-radek">
+                  <input
+                    type="checkbox"
+                    checked={zahrnoutNezname}
+                    onChange={(e) => setZahrnoutNezname(e.target.checked)}
+                  />
+                  <span>
+                    Zahrnout i {slozeniVyberu.bez_velikosti.toLocaleString("cs")}{" "}
+                    {cesky(slozeniVyberu.bez_velikosti, "firmu", "firmy", "firem")}{" "}
+                    <strong>s neznámou velikostí</strong>
+                  </span>
+                </label>
+                <p className="poznamka">
+                  {zahrnoutNezname ? (
+                    <>
+                      Kampaň bude mít{" "}
+                      {(slozeniVyberu.stredni + slozeniVyberu.korporat + slozeniVyberu.bez_velikosti).toLocaleString("cs")}{" "}
+                      firem. Dohledání kontaktů zabere navíc{" "}
+                      <strong>{odhadKontaktu(slozeniVyberu.bez_velikosti)}</strong> —
+                      registr o jejich velikosti mlčí, takže se ukáže až při rešerši,
+                      jestli stojí za oslovení.
+                    </>
+                  ) : (
+                    <>
+                      Kampaň vezme jen firmy s doloženými 25 a více zaměstnanci.
+                      Zbylých {slozeniVyberu.bez_velikosti.toLocaleString("cs")} firem
+                      zůstane stranou — mezi nimi jsou i skutečné firmy, u kterých
+                      registr velikost prostě neuvádí.
+                    </>
+                  )}
+                </p>
+              </div>
+
               {pocty.vPrekryvu > 0 && (
                 <p className="hlaska je-klid">
                   {pocty.vPrekryvu === 1

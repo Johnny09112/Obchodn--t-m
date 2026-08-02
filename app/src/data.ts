@@ -138,6 +138,14 @@ export interface PrehledOblasti {
   poznamka: string | null;
   created_at: string;
   firem: number;
+  /** Složení podle velikosti — součet dílů dá `firem`. */
+  mikro: number;
+  stredni: number;
+  korporat: number;
+  /** Registr u nich velikost neuvádí. Není to nula, je to „nevíme". */
+  bez_velikosti: number;
+  /** Firem se jmenným kontaktem. */
+  se_spojenim: number;
   pruzkumu: number;
   posledni_stav: string | null;
   posledni_at: string | null;
@@ -156,7 +164,8 @@ export async function nactiPrehledOblasti(): Promise<PrehledOblasti[]> {
     .from("oblasti_prehled")
     .select(
       "id,nazev,typ,polomer_m,bodu,jidelna_id,poznamka,created_at," +
-        "firem,pruzkumu,posledni_stav,posledni_at,posledni_chyba,tvar_zmenen,kampane",
+        "firem,mikro,stredni,korporat,bez_velikosti,se_spojenim," +
+        "pruzkumu,posledni_stav,posledni_at,posledni_chyba,tvar_zmenen,kampane",
     )
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -657,6 +666,7 @@ export interface NaplneniKampane {
 export async function naplnKampanZOblasti(
   kampanId: string,
   oblastiIds: readonly string[],
+  opts: { jenCilove?: boolean } = {},
 ): Promise<NaplneniKampane> {
   if (oblastiIds.length === 0) return { pridano: 0, vynechano: [] };
 
@@ -677,6 +687,15 @@ export async function naplnKampanZOblasti(
   for (const ico of uvnitr) {
     const f = podleIco.get(ico);
     if (!f) continue;
+
+    // Volba z druhého kroku: brát jen firmy v cílové velikosti, nebo i ty,
+    // u kterých registr velikost neuvádí. Malé firmy (mikro) se neberou
+    // nikdy — obědy pro pět lidí nedávají smysl ani jedné straně.
+    if (opts.jenCilove && f.velikost_kategorie !== "stredni" && f.velikost_kategorie !== "korporat") {
+      continue;
+    }
+    if (!opts.jenCilove && f.velikost_kategorie === "mikro") continue;
+
     const duvod = duvodNeoslovovat({
       ico: f.ico,
       nazev: f.nazev,

@@ -113,6 +113,45 @@ export function rozdelRadek(radek: string): string[] {
   return pole;
 }
 
+/** Odkaz na registr pro evidenci (TP-2). */
+export const ZDROJ_REGISTRU = ZDROJ;
+
+/**
+ * Velikostní kategorie všech subjektů v registru, proudově.
+ *
+ * Není to metoda `RegistrKlient` schválně: ten se v testech nahrazuje
+ * dvojníkem a povinná metoda navíc by rozbila každý z nich kvůli něčemu,
+ * co se používá na jednom místě.
+ *
+ * Soubor se tu **nestahuje** — počítá se s tím, že už na disku je (stáhne
+ * ho běžný sběr). Když není, je to chyba a řekne se to nahlas.
+ */
+export function zdrojVelikosti(opts: { cestaSouboru?: string } = {}) {
+  const cesta = opts.cestaSouboru ?? "data/cache/res_data.csv";
+  return {
+    zdrojUrl: ZDROJ,
+    async *kategorie(): AsyncGenerator<{ ico: string; kategorieKod: string }> {
+      const rl = createInterface({
+        input: createReadStream(cesta, "utf8"),
+        crlfDelay: Infinity,
+      });
+      let sloupce: Map<string, number> | null = null;
+      for await (const radek of rl) {
+        if (!radek) continue;
+        const pole = rozdelRadek(radek);
+        if (!sloupce) {
+          sloupce = new Map(pole.map((n, i) => [n.trim(), i]));
+          continue;
+        }
+        const r = new Radek(pole, sloupce);
+        // Zaniklý subjekt se přeskakuje ze stejného důvodu jako při sběru.
+        if (r.hodnota("DDATZAN")) continue;
+        yield { ico: r.hodnota("ICO"), kategorieKod: r.hodnota("KATPO") };
+      }
+    },
+  };
+}
+
 const FORMY = new Set(FORMY_ZAMESTNAVATELU);
 
 /** Porovnání bez ohledu na velikost písmen a okolní/vnitřní mezery. */

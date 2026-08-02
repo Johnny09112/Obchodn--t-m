@@ -16,11 +16,12 @@ import { vygenerujMapu } from "./mapa.js";
 import { vytvorResKlienta, type Segment } from "./res.js";
 import { vytvorMpsvKlienta } from "./mpsv.js";
 import { vytvorOsmKlienta } from "./osm.js";
-import { vytvorRegistrKlienta } from "./registr.js";
+import { vytvorRegistrKlienta, zdrojVelikosti } from "./registr.js";
 import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
 import { novePoznatky } from "./playbook.js";
 import { doplnKontakty } from "./kontakty.js";
+import { doplnVelikosti } from "./velikosti.js";
 import { oznameniOBehu, type VysledekObjednavky } from "./oznameni.js";
 import { prepocitejDosah } from "./dosah.js";
 import { rozborZony } from "./zona.js";
@@ -808,6 +809,31 @@ function odhadCasuZamereni(kandidatu: number): string {
   if (minuty < 1) return "necelou minutu";
   const zaokrouhleno = minuty < 10 ? minuty.toFixed(1) : Math.round(minuty).toString();
   return `přibližně ${zaokrouhleno} min`;
+}
+
+/**
+ * Doplní velikost firem ze souboru statistického registru.
+ *
+ * Bez internetu — všechno potřebné je na disku. Doptávat se ARESu nemá smysl,
+ * je to tentýž registr (ověřeno, doplnil 0 z 25).
+ */
+async function cmdDoplnitVelikosti(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: { oblast: { type: "string" } },
+  });
+  const db = await pripojDb();
+  try {
+    const s = await doplnVelikosti(db, zdrojVelikosti(), { oblastId: values.oblast });
+    console.log("Doplnění velikosti ze statistického registru");
+    console.log(`  velikost zapsána:      ${s.doplneno}`);
+    console.log(`  registr velikost neuvádí: ${s.neuvedeno}`);
+    console.log(`  bez zaměstnanců:       ${s.bezZamestnancu}`);
+    console.log(`  velikost už měly:      ${s.jizMela}`);
+    if (!values.oblast) console.log(`  mimo kartotéku:        ${s.mimoKartoteku}`);
+  } finally {
+    await db.close();
+  }
 }
 
 /** Kam se ukládá výsledek posledního běhu pro bublinu u hodin. */
@@ -1605,6 +1631,9 @@ switch (prikaz) {
   case "doplnit-kontakty":
     await cmdDoplnitKontakty(zbytek);
     break;
+  case "doplnit-velikosti":
+    await cmdDoplnitVelikosti(zbytek);
+    break;
   case "kampan":
     await cmdKampan(zbytek);
     break;
@@ -1650,6 +1679,9 @@ switch (prikaz) {
   zona --jidelna <id> [--polomery 1000,3000,5000]
                                    kolik firem přibude při jakém poloměru zóny
   dosah [--jidelna <id>]           přepočte, které jídelny mají kterou firmu v dosahu
+  doplnit-velikosti [--oblast id]
+                                   doplní velikost firem ze souboru registru ČSÚ
+                                   (bez internetu; ARES nic navíc nedoplní)
   doplnit-kontakty [--limit N] [--jidelna id | --oblast id]
                                    doplní kontakty u firem, které už v kartotéce jsou
                                    (--oblast dosáhne i na firmy bez jídelny —

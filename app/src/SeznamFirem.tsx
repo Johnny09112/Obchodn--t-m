@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DetailFirmy } from "./DetailFirmy";
 import {
   maSpojeni,
@@ -49,6 +49,12 @@ export function SeznamFirem({
   const [velikost, setVelikost] = useState("");
   const [obor, setObor] = useState("");
   const [spojeni, setSpojeni] = useState("");
+  /**
+   * Kolik řádků na stránku. Výchozích sto: třináct tisíc řádků naráz
+   * prohlížeč vykresluje vteřiny a stejně je nikdo nepřečte.
+   */
+  const [naStranku, setNaStranku] = useState(100);
+  const [stranka, setStranka] = useState(0);
 
   const nazvyKategorii = useMemo(
     () => new Map(kategorie.map((k) => [k.kod, k.nazev])),
@@ -86,6 +92,19 @@ export function SeznamFirem({
   }, [videt]);
 
   const filtrujeSe = !!(hledani || velikost || obor || spojeni);
+
+  // Po změně filtru se vrať na začátek — jinak člověk kouká na prázdno,
+  // protože stojí na patnácté stránce výběru, který má dvě.
+  useEffect(() => {
+    setStranka(0);
+  }, [hledani, velikost, obor, spojeni, naStranku]);
+
+  const stranek = naStranku > 0 ? Math.max(1, Math.ceil(videt.length / naStranku)) : 1;
+  const kde = Math.min(stranka, stranek - 1);
+  const naStrance = useMemo(
+    () => (naStranku > 0 ? videt.slice(kde * naStranku, (kde + 1) * naStranku) : videt),
+    [videt, kde, naStranku],
+  );
 
   return (
     <section className="seznam-firem">
@@ -186,7 +205,7 @@ export function SeznamFirem({
               </tr>
             </thead>
             <tbody>
-              {videt.map((f) => (
+              {naStrance.map((f) => (
                 <tr key={f.ico}>
                   <td>
                     {/* Detail je jediné místo, kde jsou u údajů vidět zdroje
@@ -214,6 +233,55 @@ export function SeznamFirem({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {videt.length > 0 && (
+        <div className="strankovani">
+          <label className="pole">
+            <span>Na stránku</span>
+            <select value={naStranku} onChange={(e) => setNaStranku(Number(e.target.value))}>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={250}>250</option>
+              <option value={0}>všechny</option>
+            </select>
+          </label>
+
+          <span className="rozsah">
+            {naStranku > 0 ? (
+              <>
+                {(kde * naStranku + 1).toLocaleString("cs")}–
+                {Math.min((kde + 1) * naStranku, videt.length).toLocaleString("cs")} z{" "}
+                {videt.length.toLocaleString("cs")}
+              </>
+            ) : (
+              <>všech {videt.length.toLocaleString("cs")}</>
+            )}
+          </span>
+
+          {naStranku > 0 && stranek > 1 && (
+            <div className="tlacitka vlevo">
+              <button
+                className="tlacitko tise"
+                onClick={() => setStranka(kde - 1)}
+                disabled={kde === 0}
+              >
+                ← Předchozí
+              </button>
+              <span className="rozsah">
+                strana {kde + 1} z {stranek}
+              </span>
+              <button
+                className="tlacitko tise"
+                onClick={() => setStranka(kde + 1)}
+                disabled={kde >= stranek - 1}
+              >
+                Další →
+              </button>
+            </div>
+          )}
         </div>
       )}
       {detail && <DetailFirmy firma={detail} onZavri={() => setDetail(null)} />}

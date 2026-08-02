@@ -1151,6 +1151,32 @@ input[type="range"] {
   color: var(--cihla);
 }
 
+/* ────────────────────────────────────────────────────── stránkování */
+
+/*
+ * Kartotéka má přes třináct tisíc řádků. Vykreslit je naráz trvá vteřiny
+ * a stejně je nikdo nepřečte — proto se listuje, výchozí stovka.
+ */
+.strankovani {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--o2) var(--o4);
+  margin-top: var(--o3);
+}
+
+.strankovani .pole {
+  max-width: 8rem;
+}
+
+.strankovani .rozsah {
+  font-family: var(--pismo-data);
+  font-size: var(--t-mikro);
+  color: var(--inkoust-slaby);
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 0.4rem;
+}
+
 /* ─────────────────────────────────────────────────────── detail firmy */
 
 .dialog.detail-firmy {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Mapa, type Rezim } from "./Mapa";
 import { PanelVrstev } from "./PanelVrstev";
+import { PrekryvOblasti } from "./PrekryvOblasti";
 import { SeznamFirem } from "./SeznamFirem";
 import { supabase, type Role } from "./supabase";
 import { najdiPrekryv, naOblast, spoctiVrstvy } from "./vrstvy";
@@ -48,6 +49,18 @@ export interface MapaOblastiProps {
    * mezi ně, místo aby se mapa rozřezala na dvě komponenty.
    */
   children?: ReactNode;
+  /**
+   * Ovládání vrstev zvenčí. Když se předá, mapa **nekreslí vlastní panel**
+   * s oblastmi — vypisuje je seznam pod mapou a dva seznamy téhož by jen
+   * mátly (majitel 3. 8.: „oblast má opět nastavené oblasti napravo v mapě").
+   *
+   * Bez toho si mapa vrstvy řídí sama a panel ukazuje — tak ji používá
+   * průvodce kampaní, kde seznam pod mapou slouží k výběru území.
+   */
+  vrstvyZvenci?: {
+    zobrazene: ReadonlySet<string>;
+    onPrepni: (id: string) => void;
+  };
 }
 
 /**
@@ -62,6 +75,7 @@ export function MapaOblasti({
   vybranaId,
   onZmena,
   children,
+  vrstvyZvenci,
 }: MapaOblastiProps) {
   const [firmy, setFirmy] = useState<Firma[]>([]);
   const [jidelny, setJidelny] = useState<Jidelna[]>([]);
@@ -79,7 +93,9 @@ export function MapaOblasti({
   const [jidelnaId, setJidelnaId] = useState("");
   const [uklada, setUklada] = useState(false);
   const [hlaska, setHlaska] = useState<string | null>(null);
-  const [zobrazene, setZobrazene] = useState<ReadonlySet<string>>(new Set());
+  const [vlastniZobrazene, setVlastniZobrazene] = useState<ReadonlySet<string>>(new Set());
+  const zobrazene = vrstvyZvenci?.zobrazene ?? vlastniZobrazene;
+  const setZobrazene = setVlastniZobrazene;
 
   const [dotazMista, setDotazMista] = useState("");
   const [nalezena, setNalezena] = useState<Misto[]>([]);
@@ -156,6 +172,10 @@ export function MapaOblasti({
   }, [dotazMista]);
 
   function prepniVrstvu(id: string) {
+    if (vrstvyZvenci) {
+      vrstvyZvenci.onPrepni(id);
+      return;
+    }
     setZobrazene((p) => {
       const s = new Set(p);
       if (s.has(id)) s.delete(id);
@@ -541,18 +561,22 @@ export function MapaOblasti({
           </div>
         )}
 
-        <PanelVrstev
-          oblasti={oblasti}
-          zobrazene={zobrazene}
-          vrstvy={vrstvy}
-          prekryv={prekryv}
-          otevrenaId={upravovanaId}
-          onPrepni={prepniVrstvu}
-          onVsechny={(zapnout) =>
-            setZobrazene(zapnout ? new Set(oblasti.map((o) => o.id)) : new Set())
-          }
-          onOtevri={otevri}
-        />
+        {/* Panel s oblastmi jen tehdy, když si vrstvy řídí mapa sama. Jinak
+            je vypisuje seznam pod mapou a dva seznamy téhož jen matou. */}
+        {!vrstvyZvenci && (
+          <PanelVrstev
+            oblasti={oblasti}
+            zobrazene={zobrazene}
+            vrstvy={vrstvy}
+            prekryv={prekryv}
+            otevrenaId={upravovanaId}
+            onPrepni={prepniVrstvu}
+            onVsechny={(zapnout) =>
+              setZobrazene(zapnout ? new Set(oblasti.map((o) => o.id)) : new Set())
+            }
+            onOtevri={otevri}
+          />
+        )}
 
         <Mapa
           firmy={firmy}
@@ -573,6 +597,16 @@ export function MapaOblasti({
         />
       </div>
 
+      {/* Když panel u mapy není, překryv se ukazuje pod ní — je to varování
+          k TP-5 a nesmí zmizet jen proto, že zmizel panel. */}
+      {vrstvyZvenci && (
+        <div className="sloupec">
+          <PrekryvOblasti prekryv={prekryv} vrstvy={vrstvy} />
+        </div>
+      )}
+
+      {children}
+
       <div className="sloupec">
         <SeznamFirem
           firmy={vybraneFirmy}
@@ -581,7 +615,6 @@ export function MapaOblasti({
           bezSouradnic={navrh ? bezSouradnic : 0}
         />
       </div>
-
     </>
   );
 }

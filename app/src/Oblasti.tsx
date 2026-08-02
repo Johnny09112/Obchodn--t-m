@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { MapaOblasti } from "./MapaOblasti";
 import { SeznamOblasti } from "./SeznamOblasti";
 import { nactiJidelny, nactiPrehledOblasti, type Jidelna, type PrehledOblasti } from "./data";
+import { barvaOblasti } from "./vrstvy";
 import type { Role } from "./supabase";
 
 /**
@@ -22,6 +23,14 @@ export function Oblasti({ role }: { role: Role }) {
   const [nacita, setNacita] = useState(true);
   const [chyba, setChyba] = useState<string | null>(null);
   const [vybranaId, setVybranaId] = useState<string | null>(null);
+  /**
+   * Které oblasti jsou vidět v mapě. Drží to tahle obrazovka, ne mapa —
+   * ovládá je seznam pod mapou a mapa už vlastní panel s oblastmi nekreslí
+   * (majitel 3. 8.: „oblast má opět nastavené oblasti napravo v mapě").
+   */
+  const [zobrazene, setZobrazene] = useState<ReadonlySet<string>>(new Set());
+  /** Dokud si člověk nic nepřepnul, jsou vidět všechny. */
+  const [prepnutoRucne, setPrepnutoRucne] = useState(false);
 
   const obnov = useCallback(async () => {
     try {
@@ -29,16 +38,28 @@ export function Oblasti({ role }: { role: Role }) {
       setPrehled(o);
       setJidelny(j);
       setChyba(null);
+      // Nově nakreslená oblast má být rovnou vidět; ruční výběr se nepřepisuje.
+      if (!prepnutoRucne) setZobrazene(new Set(o.map((x) => x.id)));
     } catch (e) {
       setChyba((e as Error).message);
     } finally {
       setNacita(false);
     }
-  }, []);
+  }, [prepnutoRucne]);
 
   useEffect(() => {
     void obnov();
   }, [obnov]);
+
+  function prepniVrstvu(id: string) {
+    setPrepnutoRucne(true);
+    setZobrazene((p) => {
+      const s = new Set(p);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  }
 
   return (
     <>
@@ -58,6 +79,7 @@ export function Oblasti({ role }: { role: Role }) {
         vybranaId={vybranaId}
         onVyber={setVybranaId}
         onZmena={() => void obnov()}
+        vrstvyZvenci={{ zobrazene, onPrepni: prepniVrstvu }}
       >
         <div className="sloupec">
           {chyba ? (
@@ -73,6 +95,15 @@ export function Oblasti({ role }: { role: Role }) {
               role={role}
               otevrenaId={vybranaId}
               onOtevri={setVybranaId}
+              vMape={{
+                zobrazene,
+                barva: (id) => barvaOblasti(prehled.findIndex((x) => x.id === id)),
+                onPrepni: prepniVrstvu,
+                onVsechny: (zapnout) => {
+                  setPrepnutoRucne(true);
+                  setZobrazene(zapnout ? new Set(prehled.map((x) => x.id)) : new Set());
+                },
+              }}
               onZmena={() => {
                 // Po smazání nesmí zůstat vybraná — mapa by ji marně hledala.
                 setVybranaId(null);

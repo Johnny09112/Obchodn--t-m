@@ -41,6 +41,16 @@ interface Props {
   onVyber?: (ids: string[]) => void;
   /** V průvodci se neuklízí — mazání se nabízí jen na obrazovce Oblasti. */
   dovolUklid?: boolean;
+  /**
+   * Ovládání toho, co je vidět v mapě. Když se předá, seznam nahradí panel
+   * u mapy — jinak by tytéž oblasti byly vypsané dvakrát.
+   */
+  vMape?: {
+    zobrazene: ReadonlySet<string>;
+    barva: (id: string) => string;
+    onPrepni: (id: string) => void;
+    onVsechny: (zapnout: boolean) => void;
+  };
 }
 
 /**
@@ -63,6 +73,7 @@ export function SeznamOblasti({
   vybrane,
   onVyber,
   dovolUklid = true,
+  vMape,
 }: Props) {
   const [hledani, setHledani] = useState("");
   const [razeni, setRazeni] = useState<Razeni>("posledni");
@@ -150,6 +161,16 @@ export function SeznamOblasti({
             : `${oblasti.length} ${cesky(oblasti.length, "oblast", "oblasti", "oblastí")} · ` +
               `${prozkoumanych} ${cesky(prozkoumanych, "prozkoumaná", "prozkoumané", "prozkoumaných")}`}
         </p>
+        {vMape && (
+          <div className="prepinace">
+            <button className="odkaz" onClick={() => vMape.onVsechny(true)}>
+              Zobrazit vše v mapě
+            </button>
+            <button className="odkaz" onClick={() => vMape.onVsechny(false)}>
+              Skrýt vše
+            </button>
+          </div>
+        )}
       </div>
 
       {chyba && (
@@ -188,6 +209,7 @@ export function SeznamOblasti({
             <thead>
               <tr>
                 {vybirase && <th className="vyber">Do kampaně</th>}
+                {vMape && <th className="vyber">V mapě</th>}
                 <th>Oblast</th>
                 <th className="cislo">Firem</th>
                 <th>Složení</th>
@@ -212,6 +234,23 @@ export function SeznamOblasti({
                           />
                           <span className="skryty">Zahrnout oblast {o.nazev} do kampaně</span>
                         </label>
+                      </td>
+                    )}
+                    {vMape && (
+                      <td className="vyber">
+                        <label className="zaskrtnuti">
+                          <input
+                            type="checkbox"
+                            checked={vMape.zobrazene.has(o.id)}
+                            onChange={() => vMape.onPrepni(o.id)}
+                          />
+                          <span className="skryty">Zobrazit {o.nazev} v mapě</span>
+                        </label>
+                        <span
+                          className="swatch"
+                          style={{ background: vMape.barva(o.id) }}
+                          aria-hidden="true"
+                        />
                       </td>
                     )}
                     <td>

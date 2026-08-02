@@ -1151,6 +1151,90 @@ input[type="range"] {
   color: var(--cihla);
 }
 
+/* ─────────────────────────────────────────────────────── detail firmy */
+
+.dialog.detail-firmy {
+  max-width: 40rem;
+  max-height: 85vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.detail-firmy h4 {
+  margin: var(--o4) 0 var(--o2);
+  font-size: var(--t-drobny);
+  font-family: var(--pismo-data);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--inkoust-slaby);
+  border-bottom: 1px solid var(--linka);
+  padding-bottom: var(--o1);
+}
+
+.udaje-firmy {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0 var(--o4);
+}
+
+.seznam-dokladu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--o3);
+}
+
+.seznam-dokladu > li {
+  padding: var(--o3);
+  background: var(--papir);
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  gap: var(--o1);
+}
+
+.doklad-hlava {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--o1);
+  font-size: var(--t-drobny);
+}
+
+.doklad-spojeni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--o1) var(--o3);
+  font-size: var(--t-drobny);
+}
+
+.doklad-spojeni .telefon {
+  font-family: var(--pismo-data);
+}
+
+/*
+ * Doslovná citace ze zdroje. Vypadá jako citace schválně — je to cizí text,
+ * ne naše tvrzení, a ten rozdíl musí být vidět na první pohled.
+ */
+.citace {
+  margin: 0;
+  padding-left: var(--o3);
+  border-left: 2px solid var(--linka);
+  font-size: var(--t-mikro);
+  color: var(--inkoust-slaby);
+  font-style: italic;
+}
+
+/* Odkaz na stránku, kde údaj stál — kvůli tomu detail vznikl. */
+.doklad-zdroj {
+  font-size: var(--t-mikro);
+  font-family: var(--pismo-data);
+  word-break: break-all;
+}
+
 /* Volba rozsahu kampaně — rozhodnutí, ne jen zaškrtávátko mezi poli. */
 .volba-rozsahu {
   display: flex;

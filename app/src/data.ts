@@ -225,6 +225,77 @@ export async function smazOblast(id: string): Promise<void> {
   }
 }
 
+// ────────────────────────────────────────────────────── detail firmy
+
+/** Kontakt i s tím, odkud je — bez zdroje by se mu nedalo věřit (TP-2). */
+export interface KontaktDetail {
+  id: string;
+  jmeno: string | null;
+  prijmeni: string | null;
+  pozice: string | null;
+  email: string | null;
+  telefon: string | null;
+  uroven_adresy: number | null;
+  zdroj_url: string | null;
+  ziskano_at: string;
+  /** Doslovná citace ze stránky, kde kontakt stál. */
+  citace: string | null;
+}
+
+/** Jeden dohledaný údaj o firmě i s doložením. */
+export interface EvidenceDetail {
+  id: string;
+  atribut: string;
+  hodnota: string;
+  zdroj_url: string;
+  citace: string;
+  ziskano_at: string;
+}
+
+export interface DetailFirmy {
+  kontakty: KontaktDetail[];
+  evidence: EvidenceDetail[];
+}
+
+/**
+ * Všechno, co o firmě víme, i s doložením.
+ *
+ * Vyžádal si to majitel 2. 8.: „potřebuji k dohledanému kontaktu web, kde byl
+ * kontakt nalezen — pro jistotu." Bez odkazu se údaj nedá ověřit ani obhájit,
+ * a přesně proto ho tvrdé pravidlo TP-2 vyžaduje u každého zápisu.
+ */
+export async function nactiDetailFirmy(ico: string): Promise<DetailFirmy> {
+  const [k, e] = await Promise.all([
+    supabase
+      .from("contacts")
+      .select("id,jmeno,prijmeni,pozice,email,telefon,uroven_adresy,zdroj_url,ziskano_at")
+      .eq("ico", ico)
+      .order("uroven_adresy"),
+    supabase
+      .from("evidence")
+      .select("id,atribut,hodnota,zdroj_url,citace,ziskano_at,contact_id")
+      .eq("ico", ico)
+      .order("ziskano_at", { ascending: false }),
+  ]);
+  if (k.error) throw new Error(k.error.message);
+  if (e.error) throw new Error(e.error.message);
+
+  const evidence = (e.data ?? []) as unknown as (EvidenceDetail & { contact_id: string | null })[];
+  // Citace ke kontaktu je v evidenci, ne v `contacts` — spáruje se přes id.
+  const citaceKontaktu = new Map(
+    evidence.filter((x) => x.contact_id).map((x) => [x.contact_id!, x.citace]),
+  );
+
+  return {
+    kontakty: ((k.data ?? []) as unknown as KontaktDetail[]).map((x) => ({
+      ...x,
+      citace: citaceKontaktu.get(x.id) ?? null,
+    })),
+    // Kontakty mají vlastní sekci, ať se v atributech neopakují.
+    evidence: evidence.filter((x) => x.atribut !== "kontakt"),
+  };
+}
+
 export function maSpojeni(f: Firma): boolean {
   return (f.contacts[0]?.count ?? 0) > 0;
 }

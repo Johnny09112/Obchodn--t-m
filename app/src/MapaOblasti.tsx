@@ -53,6 +53,8 @@ export function MapaOblasti({ role, onVyber, vybranaId, onZmena }: MapaOblastiPr
   const [kategorie, setKategorie] = useState<Kategorie[]>([]);
   const [oblasti, setOblasti] = useState<RadekOblasti[]>([]);
   const [nacita, setNacita] = useState(true);
+  /** Firmy dobíhají po mapě — samy o sobě ji neblokují. */
+  const [nacitaFirmy, setNacitaFirmy] = useState(true);
   const [chyba, setChyba] = useState<string | null>(null);
 
   const [navrh, setNavrh] = useState<Oblast | null>(null);
@@ -68,10 +70,20 @@ export function MapaOblasti({ role, onVyber, vybranaId, onZmena }: MapaOblastiPr
   const [nalezena, setNalezena] = useState<Misto[]>([]);
   const [presunNa, setPresunNa] = useState<{ stred: Bod; zoom: number } | null>(null);
 
+  /**
+   * Načítá se ve dvou vlnách, ne najednou.
+   *
+   * Kartotéka má přes 13 tisíc firem a server jich vydá nejvýš tisíc naráz,
+   * takže je to čtrnáct dotazů za sebou — půl minuty. Dokud se čekalo na
+   * všechny, obrazovka místo mapy ukazovala „Načítám" a vypadalo to, že mapa
+   * zmizela (majitel to tak taky nahlásil).
+   *
+   * Tvary oblastí přitom firmy k vykreslení nepotřebují. Mapa se proto ukáže
+   * hned, jakmile jsou oblasti a jídelny, a značky firem do ní doskáčou.
+   */
   useEffect(() => {
-    Promise.all([nactiFirmy(), nactiJidelny(), nactiKategorie(), nactiOblasti()])
-      .then(([f, j, k, o]) => {
-        setFirmy(f);
+    Promise.all([nactiJidelny(), nactiKategorie(), nactiOblasti()])
+      .then(([j, k, o]) => {
         setJidelny(j);
         setKategorie(k);
         setOblasti(o);
@@ -79,6 +91,15 @@ export function MapaOblasti({ role, onVyber, vybranaId, onZmena }: MapaOblastiPr
       })
       .catch((e: Error) => setChyba(e.message))
       .finally(() => setNacita(false));
+  }, []);
+
+  useEffect(() => {
+    // Firmy zvlášť: když se nenačtou, mapa i kreslení fungují dál — jen bez
+    // značek a bez počtu firem uvnitř. To je lepší než prázdná obrazovka.
+    nactiFirmy()
+      .then(setFirmy)
+      .catch(() => setFirmy([]))
+      .finally(() => setNacitaFirmy(false));
   }, []);
 
   // Otevři, co si vybral někdo zvenčí — seznam nad mapou nebo návrat do
@@ -329,7 +350,7 @@ export function MapaOblasti({ role, onVyber, vybranaId, onZmena }: MapaOblastiPr
       </p>
     );
   }
-  if (nacita) return <p className="nacitani">Načítám mapu a firmy…</p>;
+  if (nacita) return <p className="nacitani">Načítám mapu…</p>;
 
   const smiZapisovat = SMI_ZAPISOVAT.includes(role);
   const pocetBodu = navrh?.typ === "polygon" ? (navrh.body?.length ?? 0) : 0;
@@ -380,6 +401,15 @@ export function MapaOblasti({ role, onVyber, vybranaId, onZmena }: MapaOblastiPr
       {!navrh && hlaska && (
         <div className="sloupec">
           <p className="poznamka zvyraznena">{hlaska}</p>
+        </div>
+      )}
+
+      {nacitaFirmy && (
+        <div className="sloupec">
+          <p className="poznamka">
+            Mapa je hotová, značky firem ještě dobíhají — kartotéka má přes
+            třináct tisíc firem a server je vydává po tisícovkách.
+          </p>
         </div>
       )}
 

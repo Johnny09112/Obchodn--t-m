@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { DetailFirmy } from "./DetailFirmy";
 import {
   maSpojeni,
   POPIS_STAVU,
@@ -43,6 +44,8 @@ export function SeznamFirem({
   popisAkce = "",
 }: Props) {
   const [hledani, setHledani] = useState("");
+  /** Firma otevřená v detailu — tam jsou u údajů vidět zdroje a citace. */
+  const [detail, setDetail] = useState<Firma | null>(null);
   const [velikost, setVelikost] = useState("");
   const [obor, setObor] = useState("");
   const [spojeni, setSpojeni] = useState("");
@@ -185,7 +188,13 @@ export function SeznamFirem({
             <tbody>
               {videt.map((f) => (
                 <tr key={f.ico}>
-                  <td>{f.nazev}</td>
+                  <td>
+                    {/* Detail je jediné místo, kde jsou u údajů vidět zdroje
+                        a citace — proto vede z názvu, ne z ikonky stranou. */}
+                    <button className="odkaz jmeno" onClick={() => setDetail(f)}>
+                      {f.nazev}
+                    </button>
+                  </td>
                   <td className="ico">{f.ico}</td>
                   <td>{f.obec ?? "—"}</td>
                   <td>{f.kategorie ? (nazvyKategorii.get(f.kategorie) ?? f.kategorie) : "—"}</td>
@@ -207,6 +216,7 @@ export function SeznamFirem({
           </table>
         </div>
       )}
+      {detail && <DetailFirmy firma={detail} onZavri={() => setDetail(null)} />}
     </section>
   );
 }

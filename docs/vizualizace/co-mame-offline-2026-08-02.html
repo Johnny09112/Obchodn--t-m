@@ -262,6 +262,51 @@
       <strong>Zhruba 790 firem.</strong> Přesně ta pětistovka, o které jsi mluvil —
       a je celá v souboru, který máme na disku od 27. července.
     </p>
+
+    <h3 style="font-family: var(--pismo-nadpis); font-size: var(--fs-b); margin: .6rem 0 0">
+      Všech dvacet kategorií
+    </h3>
+    <div class="obal">
+      <table>
+        <thead>
+          <tr><th>Kód</th><th>Pásmo</th><th>Celá ČR</th><th>Podíl</th><th>Plzeň-město</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="kod">000</td><td>neuvedeno</td><td class="pct">1 484 345</td><td class="pct">50,6 %</td><td class="pct">27 878</td></tr>
+          <tr><td class="kod">110</td><td>bez zaměstnanců</td><td class="pct">1 035 077</td><td class="pct">35,3 %</td><td class="pct">17 492</td></tr>
+          <tr><td class="kod">120</td><td>1–5</td><td class="pct">282 282</td><td class="pct">9,6 %</td><td class="pct">6 108</td></tr>
+          <tr><td class="kod">130</td><td>6–9</td><td class="pct">46 491</td><td class="pct">1,6 %</td><td class="pct">1 012</td></tr>
+          <tr><td class="kod">210</td><td>10–19</td><td class="pct">40 480</td><td class="pct">1,4 %</td><td class="pct">891</td></tr>
+          <tr><td class="kod">220</td><td>20–24</td><td class="pct">8 857</td><td class="pct">0,30 %</td><td class="pct">177</td></tr>
+          <tr class="klic"><td class="kod">230</td><td>25–49</td><td class="pct">17 896</td><td class="pct">0,61 %</td><td class="pct">369</td></tr>
+          <tr class="klic"><td class="kod">240</td><td>50–99</td><td class="pct">9 908</td><td class="pct">0,34 %</td><td class="pct">206</td></tr>
+          <tr class="klic"><td class="kod">310</td><td>100–199</td><td class="pct">4 654</td><td class="pct">0,16 %</td><td class="pct">120</td></tr>
+          <tr class="klic"><td class="kod">320</td><td>200–249</td><td class="pct">878</td><td class="pct">0,03 %</td><td class="pct">21</td></tr>
+          <tr><td class="kod">330</td><td>250–499</td><td class="pct">1 563</td><td class="pct">0,05 %</td><td class="pct">43</td></tr>
+          <tr><td class="kod">340</td><td>500–999</td><td class="pct">737</td><td class="pct">0,03 %</td><td class="pct">19</td></tr>
+          <tr><td class="kod">410–510</td><td>1 000 a víc</td><td class="pct">469</td><td class="pct">0,02 %</td><td class="pct">13</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="poznamka">
+      Zvýrazněná pásma (25–249) jsou cílový segment. Pozor na past v číselníku:
+      <code>000</code> je <em>neuvedeno</em>, kdežto <em>bez zaměstnanců</em> je až
+      <code>110</code>.
+    </p>
+
+    <div class="nalez" style="background: var(--jantar-tl); border-left-color: var(--jantar)">
+      <h3>Polovina firem v „neuvedeno" nejsou živnostníci</h3>
+      <p>
+        Napříč republikou je v kategorii „neuvedeno" 59 % živnostníků — ty
+        klidně zahodíme. Ale <strong>22,7 % jsou s.r.o.</strong> V okrese
+        Plzeň-město to dělá <strong>5 672 s.r.o. a a.s. bez uvedené velikosti,
+        proti 5 686 se známou</strong>. Přesně polovina.
+      </p>
+      <p>
+        Odfiltrovat „neuvedeno" natvrdo tedy znamená naslepo zahodit polovinu
+        skutečných firem. To je rozhodnutí, ne technický detail.
+      </p>
+    </div>
   </section>
 
   <section class="sekce">
@@ -285,6 +330,103 @@
       Není to chybějící data, je to nedopsaný řádek. Až se velikost bude
       ukládat, síto začne fungovat samo — a teprve pak má smysl pouštět
       vrstvy 2 a 3.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>5. Jak se dnes zjišťuje velikost</h2>
+
+    <div class="obal">
+      <table>
+        <thead>
+          <tr><th>Způsob</th><th>Co dá</th><th>Cena</th><th>Používáme</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>KATPO ze souboru</strong></td><td>pásmo (25–49, 50–99…)</td>
+            <td>zdarma, okamžitě</td><td><span class="znacka skoda">čteme, neukládáme</span></td>
+          </tr>
+          <tr>
+            <td>ARES statistický registr</td><td>totéž pásmo, na jedno IČO</td>
+            <td>~0,3 s na firmu</td><td><span class="znacka ano">ano, u jídelen</span></td>
+          </tr>
+          <tr>
+            <td>Inzeráty úřadu práce</td><td>počet nabízených míst</td>
+            <td>zdarma</td><td><span class="znacka ne">jen jako signál</span></td>
+          </tr>
+          <tr>
+            <td>Sbírka listin — účetní závěrky</td><td><strong>přesný počet lidí i obrat</strong></td>
+            <td>stažení a čtení PDF</td><td><span class="znacka ne">ne</span></td>
+          </tr>
+          <tr>
+            <td>Web firmy (agent)</td><td>„máme 200 zaměstnanců"</td>
+            <td>placené</td><td><span class="znacka ne">agent velikost nehledá</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="poznamka">
+      Jediný zdroj přesného čísla je sbírka listin. Všechno ostatní dává pásmo,
+      nebo nic.
+    </p>
+  </section>
+
+  <section class="sekce">
+    <h2>6. Jak agent postupuje u kontaktů</h2>
+    <p>
+      Tři kroky za sebou. První dva dělá kód sám a jsou zadarmo; do třetího se
+      pouští agent teprve u toho, co zbylo.
+    </p>
+
+    <div class="obal">
+      <table>
+        <thead>
+          <tr><th>Krok</th><th>Kdo</th><th>Zdroj</th><th>Co získá</th><th>Úspěšnost</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="kod">1</td><td>kód</td><td>Otevřená data úřadu práce</td>
+            <td>jméno, pozice, <strong>e-mail i telefon</strong></td><td class="pct">16 %</td>
+          </tr>
+          <tr>
+            <td class="kod">2</td><td>kód</td><td>Veřejný rejstřík (ARES)</td>
+            <td>jméno jednatele a funkce — <em>bez adresy</em></td><td class="pct">82 %</td>
+          </tr>
+          <tr>
+            <td class="kod">3</td><td><strong>agent</strong></td><td>Web firmy</td>
+            <td>max 2 kontakty, vlastní jídelna, způsob stravování, účel adresy</td>
+            <td class="pct">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="poznamka">
+      Úspěšnost změřená na zkušební dávce 200 firem (2. 8.). Krok 3 se zatím
+      naostro nepouštěl.
+    </p>
+
+    <h3 style="font-family: var(--pismo-nadpis); font-size: var(--fs-b); margin: .6rem 0 0">
+      Co agent hledá a v jakém pořadí
+    </h3>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Priorita</th><th>Typ kontaktu</th><th>Proč tenhle první</th></tr></thead>
+        <tbody>
+          <tr><td class="kod">1.</td><td><code>poptavky@</code>, <code>nabidky@</code>, formulář pro dodavatele</td><td>adresa přímo určená k příjmu nabídek</td></tr>
+          <tr><td class="kod">2.</td><td><code>info@</code> — obecná firemní</td><td>když adresa pro nabídky není</td></tr>
+          <tr><td class="kod">3.</td><td>jmenná adresa konkrétní osoby</td><td>až nakonec; u osob HR, office, provozní ředitel</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="poznamka">
+      Kde hledá, když „Kontakty" nestačí: sekce pro dodavatele → podstránka
+      provozovny → tým a vedení → dokumenty ke stažení (pod ceníky bývá
+      podepsaný člověk) → web mateřské firmy → archiv webu.
+      <strong>Nikdy LinkedIn ani sociální sítě</strong>, nikdy odvozování adres
+      podle vzoru, ke každému údaji doslovná citace a odkaz. Co není doložené,
+      se nezapisuje.
     </p>
   </section>
 

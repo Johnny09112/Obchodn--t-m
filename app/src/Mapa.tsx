@@ -31,6 +31,11 @@ interface Props {
    * jen při založení.
    */
   presunNa?: { stred: Bod; zoom: number } | null;
+  /**
+   * Přiblížit na tuhle oblast. `klic` se mění při každém otevření — podle
+   * něj se pozná, že jde o nový požadavek, i když je oblast tatáž.
+   */
+  zamerNa?: { klic: string; oblast: Oblast } | null;
 }
 
 /**
@@ -51,6 +56,7 @@ export function Mapa({
   onKlikNaVrstvu,
   vychozi,
   presunNa,
+  zamerNa,
 }: Props) {
   const obal = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
@@ -211,7 +217,7 @@ export function Mapa({
     if (!navrh) return;
 
     if (navrh.typ === "kruh" && navrh.stred && navrh.polomerM !== undefined) {
-      L.circle([navrh.stred.lat, navrh.stred.lng], {
+      const kruh = L.circle([navrh.stred.lat, navrh.stred.lng], {
         radius: navrh.polomerM,
         color: "#2e4a7d",
         weight: 2,
@@ -222,7 +228,9 @@ export function Mapa({
         icon: L.divIcon({ className: "uchyt uchyt-stred", html: "", iconSize: [12, 12] }),
         draggable: true,
       })
-        .on("drag", (e) => {
+        // Během tažení se hýbe jen kresba, ne stav Reactu — viz `dragend`.
+        .on("drag", (e) => kruh.setLatLng((e.target as L.Marker).getLatLng()))
+        .on("dragend", (e) => {
           const p = (e.target as L.Marker).getLatLng();
           posun.current(0, { lat: p.lat, lng: p.lng });
         })
@@ -231,32 +239,72 @@ export function Mapa({
     }
 
     const body = navrh.body ?? [];
+    // Živá kopie bodů: během tažení se přepisuje tady, ne v Reactu.
+    const zive = body.map((b) => [b.lat, b.lng] as [number, number]);
+    let tvar: L.Polygon | L.Polyline | null = null;
+
     if (body.length >= 2) {
-      const cara = body.map((b) => [b.lat, b.lng] as [number, number]);
       // Dokud nejsou tři body, plocha neexistuje — kresli jen čáru.
-      if (body.length >= 3) {
-        L.polygon(cara, {
-          color: "#2e4a7d",
-          weight: 2,
-          fillColor: "#2e4a7d",
-          fillOpacity: 0.07,
-        }).addTo(v);
-      } else {
-        L.polyline(cara, { color: "#2e4a7d", weight: 2, dashArray: "4 4" }).addTo(v);
-      }
+      tvar =
+        body.length >= 3
+          ? L.polygon(zive, {
+              color: "#2e4a7d",
+              weight: 2,
+              fillColor: "#2e4a7d",
+              fillOpacity: 0.07,
+            }).addTo(v)
+          : L.polyline(zive, { color: "#2e4a7d", weight: 2, dashArray: "4 4" }).addTo(v);
     }
+
     body.forEach((b, i) => {
       L.marker([b.lat, b.lng], {
         icon: L.divIcon({ className: "uchyt", html: "", iconSize: [11, 11] }),
         draggable: true,
       })
+        /*
+         * Během tažení se **nesahá na stav Reactu**. Dřív se `onPosunVrcholu`
+         * volal na každý `drag`, čímž se překreslil `navrh`, celá vrstva se
+         * vyčistila (`clearLayers`) a s ní zmizel i úchyt, který měl člověk
+         * pod myší — bod se proto pohnul jen o kousek a tažení skončilo.
+         *
+         * Teď se hýbe jen kresba a stav se zapíše až po puštění.
+         */
         .on("drag", (e) => {
+          const p = (e.target as L.Marker).getLatLng();
+          zive[i] = [p.lat, p.lng];
+          tvar?.setLatLngs(body.length >= 3 ? [zive] : zive);
+        })
+        .on("dragend", (e) => {
           const p = (e.target as L.Marker).getLatLng();
           posun.current(i, { lat: p.lat, lng: p.lng });
         })
         .addTo(v);
     });
   }, [navrh]);
+
+  /**
+   * Přiblížení na vybranou oblast.
+   *
+   * Vyžádal si to majitel 3. 8.: kliknutí v seznamu oblast otevřelo, ale mapa
+   * zůstala tam, kde byla — u Klatov to znamenalo hledat tvar mimo obrazovku.
+   * Reaguje se na `klic`, ne na tvar: jinak by mapa uskakovala při každém
+   * posunu bodu během úpravy.
+   */
+  useEffect(() => {
+    const m = mapa.current;
+    if (!m || !zamerNa) return;
+    const o = zamerNa.oblast;
+    // POZOR: `L.circle(...).getBounds()` tu nejde. Počítá přes `this._map`,
+    // takže kruh, který do mapy nikdo nepřidal, na tom spadne a s ním celá
+    // obrazovka. `latLng.toBounds()` je čistý výpočet a mapu nepotřebuje.
+    const hranice =
+      o.typ === "kruh" && o.stred && o.polomerM
+        ? L.latLng(o.stred.lat, o.stred.lng).toBounds(o.polomerM * 2)
+        : (o.body?.length ?? 0) >= 2
+          ? L.polygon((o.body ?? []).map((b) => [b.lat, b.lng] as [number, number])).getBounds()
+          : null;
+    if (hranice) m.fitBounds(hranice, { padding: [40, 40] });
+  }, [zamerNa?.klic]);
 
   // ── kurzor podle toho, co klik udělá
   useEffect(() => {

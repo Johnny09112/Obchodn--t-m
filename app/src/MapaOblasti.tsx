@@ -141,12 +141,14 @@ export function MapaOblasti({
     if (!vybranaId || vybranaId === upravovanaId) return;
     const o = oblasti.find((x) => x.id === vybranaId);
     if (!o) return;
-    setNavrh(naOblast(o));
+    const tvar = naOblast(o);
+    setNavrh(tvar);
     setUpravovanaId(o.id);
     setNazev(o.nazev);
     setJidelnaId(o.jidelna_id ?? "");
     setRezim("prohlizeni");
     setHlaska(null);
+    setZamerNa({ klic: `${o.id}:${Date.now()}`, oblast: tvar });
     setZobrazene((p) => new Set(p).add(o.id));
   }, [vybranaId, upravovanaId, oblasti]);
 
@@ -204,6 +206,25 @@ export function MapaOblasti({
     [firmy],
   );
 
+  /** Partnerské jídelny, které leží v nakresleném tvaru. */
+  const jidelnyUvnitr = useMemo(
+    () =>
+      navrh
+        ? jidelny.filter(
+            (j) =>
+              j.lat !== null && j.lng !== null && bodVOblasti(navrh, { lat: j.lat, lng: j.lng }),
+          )
+        : [],
+    [navrh, jidelny],
+  );
+
+  /**
+   * Na kterou oblast přiblížit. Klíč se mění při každém otevření, aby mapa
+   * přeskočila i tehdy, když člověk klikne na tutéž oblast znovu — ale
+   * neuskakovala při každém posunu bodu během úpravy.
+   */
+  const [zamerNa, setZamerNa] = useState<{ klic: string; oblast: Oblast } | null>(null);
+
   // ── kreslení
 
   function klikDoMapy(bod: Bod) {
@@ -256,12 +277,16 @@ export function MapaOblasti({
   }
 
   function otevri(r: RadekOblasti) {
-    setNavrh(naOblast(r));
+    const tvar = naOblast(r);
+    setNavrh(tvar);
     setUpravovanaId(r.id);
     setNazev(r.nazev);
     setJidelnaId(r.jidelna_id ?? "");
     setRezim("prohlizeni");
     setHlaska(null);
+    // Mapa má na oblast přeskočit — jinak se u vzdálené oblasti hledá tvar
+    // mimo obrazovku (majitel 3. 8.).
+    setZamerNa({ klic: `${r.id}:${Date.now()}`, oblast: tvar });
     onVyber?.(r.id);
   }
 
@@ -529,20 +554,29 @@ export function MapaOblasti({
                     />
                   </label>
 
-                  <label className="pole">
-                    <span>Jídelna</span>
-                    <select value={jidelnaId} onChange={(e) => setJidelnaId(e.target.value)}>
-                      <option value="">zatím žádná</option>
-                      {jidelny.map((j) => (
-                        <option key={j.id} value={j.id}>
-                          {j.nazev}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <p className="poznamka">
-                    Jídelnu můžete doplnit až po jednání — oblast na ni nečeká.
+                  {/*
+                    Jídelna se k oblasti nepřiřazuje ručně (majitel 3. 8.).
+                    Oblast je plocha na mapě — co v ní leží, se dá spočítat,
+                    a ručně vybraná jídelna se s překreslením tvaru rozešla
+                    s realitou. Přiřazení jídelny nebo bodu ke konkrétní
+                    firmě přijde až s obchodními use-case.
+                  */}
+                  <p className="udaj">
+                    <span className="popisek">Jídelny uvnitř</span>
+                    <span className="hodnota">{jidelnyUvnitr.length}</span>
                   </p>
+                  {jidelnyUvnitr.length > 0 ? (
+                    <ul className="seznam-jidelen">
+                      {jidelnyUvnitr.map((j) => (
+                        <li key={j.id}>{j.nazev}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="poznamka">
+                      V tomhle tvaru zatím žádná partnerská jídelna neleží.
+                      Oblast na ni nečeká — smysl má i bez ní.
+                    </p>
+                  )}
 
                   <div className="tlacitka">
                     <button
@@ -594,6 +628,7 @@ export function MapaOblasti({
           }}
           vychozi={VYCHOZI}
           presunNa={presunNa}
+          zamerNa={zamerNa}
         />
       </div>
 

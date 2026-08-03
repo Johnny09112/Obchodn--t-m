@@ -1151,6 +1151,17 @@ input[type="range"] {
   color: var(--cihla);
 }
 
+/* Jídelny, které leží v nakresleném tvaru — počítá se, neklikuje. */
+.seznam-jidelen {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--t-drobny);
+}
+
+.seznam-jidelen li {
+  margin-bottom: 0.15rem;
+}
+
 /* ────────────────────────────────────────────────────── stránkování */
 
 /*

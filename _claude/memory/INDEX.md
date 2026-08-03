@@ -37,6 +37,7 @@
 
 ## Bugs
 - [[chybejici-index-na-contacts]] — Kartotéka se načítala 20+ s, protože contacts.ico neměl index — cizí klíč index nedělá · fixed · 2026-08-03
+- [[tazeni-bodu-prerusoval-react]] — Bod tvaru šel posunout jen o kousek — každý drag překreslil vrstvu a sebral úchyt zpod myši · fixed · 2026-08-03
 - [[zapis-po-jedne-je-lokalne-neviditelny]] — Přepočet oblasti vkládal firmy po jedné — na PGlite rychle, přes síť minuty · fixed · 2026-08-01
 
 ## Research

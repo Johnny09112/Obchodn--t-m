@@ -7,7 +7,7 @@ import {
   type PocetKosu,
 } from "../../src/kampan-kandidati";
 
-export type { VyuzitiOblasti };
+export type { VyuzitiOblasti, PocetKosu };
 
 export interface Firma {
   ico: string;

@@ -883,3 +883,79 @@ describe("vyridPruzkum", () => {
     expect(v[0]?.duvod).toBe("blacklist");
   });
 });
+
+describe("velikost se ukládá rovnou při sběru", () => {
+  let oblastId: string;
+  let behId: string;
+
+  beforeEach(async () => {
+    oblastId = await zalozOblast(db, { nazev: "Území", oblast: OBLAST });
+    behId = await zacniBeh(db, "cmuchal-oblast", { oblastId });
+  });
+
+  const zaznamKandidata = (over: Partial<RegistrZaznam> = {}): RegistrZaznam => ({
+    ico: "10000003",
+    nazev: "Testovací s.r.o.",
+    pravniForma: "112",
+    kategorieKod: "330",
+    nace: ["25610"],
+    adresa: "Náves 1",
+    obec: "Zbůch",
+    psc: "330 22",
+    jednotka: VYCHOZI_JEDNOTKA,
+    zdrojUrl: "https://csu.gov.cz/registr",
+    ...over,
+  });
+
+  function sAresem(deps: CmuchalDeps, zaznam: RegistrZaznam) {
+    deps.ares.overFirmu = async (ico) =>
+      ico === zaznam.ico
+        ? {
+            ico: zaznam.ico,
+            nazev: zaznam.nazev,
+            adresa: zaznam.adresa,
+            obec: zaznam.obec,
+            czNace: zaznam.nace,
+            velikostKategorie: null, // ARES ji u běžného dotazu nevrací
+            kodObce: zaznam.jednotka,
+            pravniForma: zaznam.pravniForma,
+          }
+        : null;
+  }
+
+  it("nově založená firma má velikost hned, ne až po zpětném doplnění", async () => {
+    // Tohle je ta díra, kvůli které měla kampaň Čachrov nula firem: průzkum
+    // sebral 91 firem a u všech 91 zůstala velikost prázdná, takže je filtr
+    // na cílovou velikost odřízl. Kód přitom `KATPO` ze souboru četl —
+    // jen ho nikam nezapsal.
+    const { deps } = falesneDeps(db);
+    const zaznam = zaznamKandidata({ ico: "10000003", kategorieKod: "240" }); // 50–99
+    sAresem(deps, zaznam);
+    const pravidla = await vychoziPravidla(db);
+
+    await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
+
+    const f = await db.query<{ v: string | null }>(
+      "select velikost_kategorie as v from companies where ico = $1",
+      [zaznam.ico],
+    );
+    expect(f[0]?.v).toBe("stredni");
+  });
+
+  it("k velikosti vzniká evidence se zdrojem (TP-2)", async () => {
+    const { deps } = falesneDeps(db);
+    const zaznam = zaznamKandidata({ ico: "10000011", kategorieKod: "330" }); // 250–499
+    sAresem(deps, zaznam);
+    const pravidla = await vychoziPravidla(db);
+
+    await zpracujFirmuVOblasti(deps, { zaznam, oblast: OBLAST, oblastId, behId, ...pravidla });
+
+    const e = await db.query<{ hodnota: string; citace: string }>(
+      "select hodnota, citace from evidence where ico = $1 and atribut = 'velikost_kategorie'",
+      [zaznam.ico],
+    );
+    expect(e).toHaveLength(1);
+    expect(e[0]!.hodnota).toBe("korporat");
+    expect(e[0]!.citace).toContain("250–499");
+  });
+});

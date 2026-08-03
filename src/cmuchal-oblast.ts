@@ -25,10 +25,13 @@ import {
   ukonciBeh,
   zacniBeh,
   zalozFirmu,
+  zapisAtribut,
   zaznamVyrazeni,
   type DuvodVyrazeni,
 } from "./repo.js";
-import { jeBezZamestnancu, segmentPodleKategorie, type ResUdaje } from "./res.js";
+import {
+  jeBezZamestnancu, KATEGORIE_PRACOVNIKU, segmentPodleKategorie, type ResUdaje,
+} from "./res.js";
 import { spocitejSkore } from "./score.js";
 import { obceVOblasti, KROK_MRIZKY_M } from "./uzemi.js";
 
@@ -314,6 +317,29 @@ export async function zpracujFirmuVOblasti(
   // a tady se nepřepisuje.
   if (ares) {
     await nastavStav(db, ico, "cekajici_na_jidelnu");
+
+    /*
+     * Velikost se zapisuje **hned při sběru**, ne až zpětným doplněním.
+     *
+     * Dřív se `KATPO` ze souboru přečetlo, použilo na kvalifikaci a skóre —
+     * a zahodilo. Do kartotéky šla velikost z ARESu, kde u běžného dotazu
+     * není, takže každá nově sebraná firma zůstala bez velikosti. U kampaně
+     * Čachrov to znamenalo 91 firem, z nichž filtr na cílovou velikost
+     * nepustil ani jednu.
+     *
+     * `segmentPodleKategorie` vrací null u „neuvedeno" i „bez zaměstnanců" —
+     * ani jedno velikost není a nic se nedomýšlí (TP-2).
+     */
+    const segment = segmentPodleKategorie(zaznam.kategorieKod);
+    if (segment) {
+      await zapisAtribut(db, ico, "velikost_kategorie", segment, {
+        zdrojUrl: zaznam.zdrojUrl,
+        citace:
+          "statistický registr ČSÚ, kategorie počtu pracovníků: " +
+          `${KATEGORIE_PRACOVNIKU[zaznam.kategorieKod ?? ""]?.popis ?? zaznam.kategorieKod} zaměstnanců`,
+      });
+    }
+
     await nastavSkore(
       db,
       ico,

@@ -743,6 +743,14 @@ const POPIS_DUVODU: Record<string, string> = {
 export interface NaplneniKampane {
   pridano: number;
   vynechano: { ico: string; nazev: string; duvod: string; detail: string }[];
+  /**
+   * Kolik firem odřízla velikost — zvlášť od důvodů síta.
+   *
+   * Bez toho končila kampaň nad malou obcí s nulou a jedinou hláškou
+   * „v tomhle tvaru zatím žádná firma není". To byla nepravda: firmy tam
+   * byly (Čachrov jich měl 91), jen u nich neznáme velikost.
+   */
+  preskoceno: { mikro: number; bezVelikosti: number };
 }
 
 /**
@@ -759,7 +767,9 @@ export async function naplnKampanZOblasti(
   oblastiIds: readonly string[],
   opts: { jenCilove?: boolean } = {},
 ): Promise<NaplneniKampane> {
-  if (oblastiIds.length === 0) return { pridano: 0, vynechano: [] };
+  if (oblastiIds.length === 0) {
+    return { pridano: 0, vynechano: [], preskoceno: { mikro: 0, bezVelikosti: 0 } };
+  }
 
   const [firmy, sito, vOblastech] = await Promise.all([
     nactiFirmy(),
@@ -773,6 +783,7 @@ export async function naplnKampanZOblasti(
   const podleIco = new Map(firmy.map((f) => [f.ico, f]));
 
   const vynechano: NaplneniKampane["vynechano"] = [];
+  const preskoceno = { mikro: 0, bezVelikosti: 0 };
   const kVlozeni: { kampan_id: string; ico: string }[] = [];
 
   for (const ico of uvnitr) {
@@ -782,10 +793,18 @@ export async function naplnKampanZOblasti(
     // Volba z druhého kroku: brát jen firmy v cílové velikosti, nebo i ty,
     // u kterých registr velikost neuvádí. Malé firmy (mikro) se neberou
     // nikdy — obědy pro pět lidí nedávají smysl ani jedné straně.
-    if (opts.jenCilove && f.velikost_kategorie !== "stredni" && f.velikost_kategorie !== "korporat") {
+    if (f.velikost_kategorie === "mikro") {
+      preskoceno.mikro++;
       continue;
     }
-    if (!opts.jenCilove && f.velikost_kategorie === "mikro") continue;
+    if (
+      opts.jenCilove &&
+      f.velikost_kategorie !== "stredni" &&
+      f.velikost_kategorie !== "korporat"
+    ) {
+      preskoceno.bezVelikosti++;
+      continue;
+    }
 
     const duvod = duvodNeoslovovat({
       ico: f.ico,
@@ -821,7 +840,7 @@ export async function naplnKampanZOblasti(
     pridano += data?.length ?? 0;
   }
 
-  return { pridano, vynechano };
+  return { pridano, vynechano, preskoceno };
 }
 
 export async function vyradZKampane(

@@ -1380,6 +1380,25 @@ input[type="range"] {
   white-space: nowrap;
 }
 
+/*
+ * Barva vrstvy vedle zaškrtávátka. Bez ní se v mapě nepozná, který tvar
+ * patří kterému řádku — zaškrtávátko samo řekne jen „je vidět".
+ * Rozměr musí být tady: `.swatch` je jinak nastavený jen uvnitř panelu
+ * vrstev a v tabulce by byl neviditelný (což se taky stalo).
+ */
+.tabulka td.vyber {
+  display: flex;
+  align-items: center;
+  gap: var(--o1);
+}
+
+.tabulka td.vyber .swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 2px;
+  flex: none;
+}
+
 /* Celá buňka je klikací plocha; samotné zaškrtávátko je na myš malý cíl. */
 .zaskrtnuti {
   display: flex;

@@ -406,6 +406,17 @@ export function PruvodceKampani({
 
   if (krok === 2) {
     const vyrazeno = pocty ? pocty.uvnitr - pocty.projde : 0;
+    /**
+     * Kolik firem kampaň opravdu dostane — se započtenou volbou velikosti.
+     *
+     * Bez toho tu stálo „do kampaně projde 12 760" a o dva řádky níž
+     * „620 firem v cílové velikosti". Dvě různá čísla o téže věci; člověk
+     * pak nevěří ani jednomu.
+     */
+    const doKampane =
+      slozeniVyberu.stredni +
+      slozeniVyberu.korporat +
+      (zahrnoutNezname ? slozeniVyberu.bez_velikosti : 0);
     return (
       <>
         <div className="sloupec">
@@ -425,18 +436,20 @@ export function PruvodceKampani({
             <>
               <p className="udaj">
                 <span className="popisek">V území leží</span>
-                <span className="hodnota">{pocty.uvnitr}</span>
+                <span className="hodnota">{pocty.uvnitr.toLocaleString("cs")}</span>
               </p>
-              <p className="udaj">
+              <p className="udaj vyrazny">
                 <span className="popisek">Do kampaně projde</span>
-                <span className="hodnota">{pocty.projde}</span>
+                <span className="hodnota">{doKampane.toLocaleString("cs")}</span>
               </p>
               {vyrazeno > 0 && (
                 <p className="hlaska je-klid">
-                  {vyrazeno === 1 ? "Jednu firmu" : `${vyrazeno} firem`} síto
-                  nepustí — je na blacklistu, je to bytový dům, naše partnerská
-                  jídelna, nebo má vlastní jídelnu. Důvod u každé uvidíte
-                  v posledním kroku.
+                  {vyrazeno === 1
+                    ? "Jednu firmu"
+                    : `${vyrazeno.toLocaleString("cs")} ${cesky(vyrazeno, "firmu", "firmy", "firem")}`}{" "}
+                  síto nepustí — je na blacklistu, je to bytový dům, naše
+                  partnerská jídelna, nebo má vlastní jídelnu. Důvod u každé
+                  uvidíte v posledním kroku.
                 </p>
               )}
               {/* Složení výběru — z holého počtu se nepozná, jestli je území

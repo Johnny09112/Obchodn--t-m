@@ -104,7 +104,7 @@ export function PanelVrstev({
                           {o.nazev}
                         </button>
                         <span className="popis">
-                          {zobrazene.has(o.id) ? `${pocty.get(o.id) ?? 0} firem · ` : ""}
+                          {zobrazene.has(o.id) ? `${(pocty.get(o.id) ?? 0).toLocaleString("cs")} firem · ` : ""}
                           {o.typ === "kruh"
                             ? `kruh ${((o.polomer_m ?? 0) / 1000).toFixed(1).replace(".", ",")} km`
                             : `tvar o ${o.body?.length ?? 0} bodech`}
@@ -124,7 +124,7 @@ export function PanelVrstev({
                 <div className="prekryv">
                   <p className="udaj">
                     <span className="popisek">V překryvu</span>
-                    <span className="hodnota">{prekryv.firmy.size} firem</span>
+                    <span className="hodnota">{prekryv.firmy.size.toLocaleString("cs")} firem</span>
                   </p>
                   <p className="poznamka">
                     Tyhle firmy leží ve víc zobrazených oblastech. Na jednu firmu
@@ -134,7 +134,7 @@ export function PanelVrstev({
                   <ul className="dvojice">
                     {prekryv.dvojice.slice(0, 4).map((d) => (
                       <li key={`${d.a}|${d.b}`}>
-                        {d.a} × {d.b} — {d.pocet}
+                        {d.a} × {d.b} — {d.pocet.toLocaleString("cs")}
                       </li>
                     ))}
                   </ul>

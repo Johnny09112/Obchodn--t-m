@@ -94,7 +94,7 @@ export function roztridKandidaty(vstup: {
   firmy: readonly FirmaProTrideni[];
   vUzemi: ReadonlySet<string>;
   jizVKampani: ReadonlySet<string>;
-  sito: { partnerskaIca: ReadonlySet<string>; blacklist: ReadonlySet<string> };
+  sito: { partnerskaIca: ReadonlySet<string>; blacklist: readonly Pravidlo[] };
 }): Kandidat[];
 ```
 

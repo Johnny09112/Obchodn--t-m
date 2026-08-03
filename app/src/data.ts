@@ -1,7 +1,11 @@
 import { supabase } from "./supabase";
 import type { Pravidlo } from "../../src/sito";
-import { duvodNeoslovovat } from "../../src/sito";
 import type { VyuzitiOblasti } from "../../src/oblast-vyuziti";
+import {
+  roztridKandidaty,
+  spoctiKose,
+  type PocetKosu,
+} from "../../src/kampan-kandidati";
 
 export type { VyuzitiOblasti };
 
@@ -777,55 +781,37 @@ export async function naplnKampanZOblasti(
     nactiIcaVOblastech(oblastiIds),
   ]);
 
-  // Množina, ne seznam: oblasti se smějí překrývat, ale firma v překryvu je
-  // pořád jedna firma a smí dostat jen jedno oslovení (TP-5).
-  const uvnitr = vOblastech;
-  const podleIco = new Map(firmy.map((f) => [f.ico, f]));
+  const kandidati = roztridKandidaty({
+    firmy,
+    vUzemi: vOblastech,
+    // Prázdná schválně: duplicity odchytí `on conflict do nothing` a seznam
+    // `vynechano` musí dál vypisovat VŠECHNY firmy zadržené sítem, ne jen ty,
+    // které v kampani ještě nejsou. Kdo nevidí, proč firma chybí, přestane
+    // pravidlům věřit.
+    jizVKampani: new Set<string>(),
+    sito,
+  });
 
-  const vynechano: NaplneniKampane["vynechano"] = [];
-  const preskoceno = { mikro: 0, bezVelikosti: 0 };
-  const kVlozeni: { kampan_id: string; ico: string }[] = [];
+  const vynechano: NaplneniKampane["vynechano"] = kandidati
+    .filter((k) => k.kosik === "sito")
+    .map((k) => ({
+      ico: k.ico,
+      nazev: k.nazev,
+      duvod: POPIS_DUVODU[k.duvod!.duvod] ?? k.duvod!.duvod,
+      detail: k.duvod!.detail,
+    }));
 
-  for (const ico of uvnitr) {
-    const f = podleIco.get(ico);
-    if (!f) continue;
+  const pocty = spoctiKose(kandidati);
+  const preskoceno = {
+    mikro: pocty.mikro,
+    // Přeskočené jen tehdy, když se braly jen cílové. Při širokém rozsahu
+    // se nepřeskočilo nic — vešly se do kampaně.
+    bezVelikosti: opts.jenCilove ? pocty.bezVelikosti : 0,
+  };
 
-    // Volba z druhého kroku: brát jen firmy v cílové velikosti, nebo i ty,
-    // u kterých registr velikost neuvádí. Malé firmy (mikro) se neberou
-    // nikdy — obědy pro pět lidí nedávají smysl ani jedné straně.
-    if (f.velikost_kategorie === "mikro") {
-      preskoceno.mikro++;
-      continue;
-    }
-    if (
-      opts.jenCilove &&
-      f.velikost_kategorie !== "stredni" &&
-      f.velikost_kategorie !== "korporat"
-    ) {
-      preskoceno.bezVelikosti++;
-      continue;
-    }
-
-    const duvod = duvodNeoslovovat({
-      ico: f.ico,
-      nazev: f.nazev,
-      czNace: f.cz_nace,
-      pravniForma: f.pravni_forma,
-      maVlastniJidelnu: f.ma_vlastni_jidelnu,
-      partnerskaIca: sito.partnerskaIca,
-      blacklist: sito.blacklist,
-    });
-    if (duvod) {
-      vynechano.push({
-        ico: f.ico,
-        nazev: f.nazev,
-        duvod: POPIS_DUVODU[duvod.duvod] ?? duvod.duvod,
-        detail: duvod.detail,
-      });
-    } else {
-      kVlozeni.push({ kampan_id: kampanId, ico: f.ico });
-    }
-  }
+  const kVlozeni = kandidati
+    .filter((k) => k.kosik === "cilova" || (!opts.jenCilove && k.kosik === "bez_velikosti"))
+    .map((k) => ({ kampan_id: kampanId, ico: k.ico }));
 
   let pridano = 0;
   for (let i = 0; i < kVlozeni.length; i += 500) {
@@ -841,6 +827,38 @@ export async function naplnKampanZOblasti(
   }
 
   return { pridano, vynechano, preskoceno };
+}
+
+/**
+ * Kolik firem z území v kampani ještě NENÍ, po koších.
+ *
+ * Nic neukládá a nikam se nezapisuje — počítá se z dat pokaždé znovu, aby
+ * číslo na obrazovce nemohlo zastarat. Co tahle funkce vrátí v `bezVelikosti`,
+ * to tlačítko „přidat i firmy s neznámou velikostí" doopravdy přidá.
+ */
+export async function spocitejCekajici(
+  kampanId: string,
+  oblastiIds: readonly string[],
+): Promise<PocetKosu> {
+  if (oblastiIds.length === 0) return { cilova: 0, bezVelikosti: 0, mikro: 0 };
+
+  const [firmy, sito, vOblastech, vKampani] = await Promise.all([
+    nactiFirmy(),
+    nactiPravidlaSita(),
+    nactiIcaVOblastech(oblastiIds),
+    nactiFirmyKampane(kampanId),
+  ]);
+
+  return spoctiKose(
+    roztridKandidaty({
+      firmy,
+      vUzemi: vOblastech,
+      // Vyřazené firmy jsou v `kampan_firmy` taky a doplnění je nevzkřísí —
+      // proto sem patří všechny, ne jen ty se stavem `vybrana`.
+      jizVKampani: new Set(vKampani.map((f) => f.ico)),
+      sito,
+    }),
+  );
 }
 
 export async function vyradZKampane(

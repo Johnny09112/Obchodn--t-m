@@ -4,7 +4,7 @@ description: Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, 
 type: context
 status: active
 created: 2026-08-01
-updated: 2026-08-01
+updated: 2026-08-03
 ---
 
 # obchodni-tym — živý kontext
@@ -18,89 +18,74 @@ naostro, protože se na reálných datech kalibruje líp než na úvahách. Do f
 (oslovování) se nesmí, dokud není hotový zbytek fáze 0: tvrzení, šablony,
 odesílací doména, právní konzultace.
 
-Čísla z ostré databáze k 1. 8. 2026:
+Čísla z ostré databáze k 3. 8. 2026:
 
 | Údaj | Hodnota |
 |---|---|
-| Firem v kartotéce | **13 767** |
-| Z toho se spojením | **860** · v Plzni má 560 z 620 cílových |
-| Vyřazených kandidátů, s důvodem | 4 044 |
-| Oblasti · kampaně · průzkumy | 8 · 4 · 2 (oba hotové) |
-| Běhů agenta | 15 |
-| Náklady na API | **0 USD** — placené nikdy neběželo |
+| Firem v kartotéce | **13 858** |
+| Z toho se spojením | 648 |
+| Oblastí · kampaní | 7 · 5 |
+| Náklady na API | **0 USD** — placené nikdy neběželo, agent jde z předplatného |
 | Migrace | po `0033_indexy_rychlost.sql`, nasazeno |
-| Testy | 538 zelených, 62 souborů |
+| Testy | **540 zelených, 62 souborů** |
 | Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
+Vývojový server: `npm run dev --prefix app` (port 5173).
 
-**Poslední milník (31. 7.):** průvodce kampaní je celý — etapy A (návrh),
-B (založení a území), B+ (hlídka Čmuchala), C (průzkum a seznam firem).
-K tomu archivace a mazání kampaní, zámek úprav a provozní deník (obrazovka
-Provoz, jen admin). Ověřeno celým řetězcem naostro: aplikace objednala
-průzkum → hlídka ho vzala → Čmuchal sebral 13 600 firem → kampaň se naplnila.
-
-**Úklid oblastí (1. 8.):** mazání nepoužitých oblastí je hotové a nasazené
-(migrace 0028) — viz [[mazani-oblasti]]. Přitom se ukázalo, že mazání bylo
-otevřené celému týmu a kaskádou by bralo i historii průzkumů; obojí zavřeno.
-
-**Seznam oblastí (1. 8.):** obrazovka Oblasti má nahoře seznam s detailem
-(pohled `oblasti_prehled`, migrace 0029) — [[prehled-oblasti-pohledem]].
-Přitom se našel a opravil pomalý zápis po jedné
-([[zapis-po-jedne-je-lokalne-neviditelny]]).
-
-**Kampaň nad více oblastmi (1. 8.):** hotová a nasazená (migrace 0030) —
-[[kampan-nad-vice-oblastmi]]. Tím je uzavřená celá trojice, kterou majitel
-zadal 31. 7. (úklid, seznam s detailem, víc oblastí).
-
-**Tvar oblasti u průzkumu (2. 8.):** hotové a nasazené (migrace 0031) —
-[[tvar-oblasti-u-pruzkumu]]. Neproklikané v prohlížeči, viz tam.
-
-**Kontakty i nad oblastí a oznámení u hodin (2. 8.):** obojí hotové —
-[[kontakty-i-nad-oblasti]], [[oznameni-u-hodin]].
-
-**Velikost firem a složení území (2. 8.):** hotové a nasazené (migrace 0032) —
-[[velikost-ze-souboru-a-slozeni]]. Velikost se konečně ukládá ze souboru ČSÚ;
-5 707 firem ji dostalo zpětně. **Síto tím začalo fungovat.**
-
-## Plzeň — kde to stojí (2. 8.)
+## Plzeň — referenční oblast
 
 | Údaj | Hodnota |
 |---|---|
 | Firem v oblasti | 12 762 |
 | Mikro (1–24) | 4 747 |
 | **Cílových (25+)** | **620** |
-| Velikost neuvádí registr | 7 395 |
-| Z cílových má jméno | **560** |
-| Z cílových má e-mail | 125 |
-| Z cílových nemá nic | 60 |
+| Velikost registr neuvádí | 7 395 |
+| Z cílových má jméno · e-mail · telefon | 560 · 125 · 80 |
+
+## Co se stalo 1.–3. 8.
+
+- **Oblasti**: úklid a mazání ([[mazani-oblasti]]), seznam s detailem
+  ([[prehled-oblasti-pohledem]]), kampaň nad více oblastmi
+  ([[kampan-nad-vice-oblastmi]]), tvar u průzkumu ([[tvar-oblasti-u-pruzkumu]]).
+- **Velikost firem** se konečně ukládá ze souboru ČSÚ
+  ([[velikost-ze-souboru-a-slozeni]]) — nejdřív zpětně, pak i **u zdroje**
+  ([[sber-neukladal-velikost]]). Tím začalo fungovat síto.
+- **Kontakty** i nad oblastí ([[kontakty-i-nad-oblasti]]); rešerše agentem
+  změřená ([[resurse-agentem-zmereno]]).
+- **Oznámení u hodin** místo e-mailu ([[oznameni-u-hodin]]).
+- **Rychlost**: chyběly indexy ([[chybejici-index-na-contacts]]), kartotéka
+  se listuje ([[obrazovka-oblasti-a-listovani]]).
+- **Mapa**: tažení bodů ([[tazeni-bodu-prerusoval-react]]), přiblížení na
+  vybranou oblast, jídelny se počítají ([[jidelna-se-nepriradi-rucne]]).
 
 ## Aktuální focus
 
-**Čeká se na majitele: pustit zkušební rešerši agentem na 20 firem?**
-Byl by to **první placený běh** (dosud 0 USD), proto se nespustil sám.
-
-Dál: etapa D průvodce (kritika a přístupnost), stránkování velkých seznamů.
-Podrobně [[otevrene-pozadavky-majitele]].
+**Čeká se na rozhodnutí majitele o Čachrově** (viz otevřené body) a pak
+na volbu dalšího celku.
 
 ## Otevřené body
 
-Úplný seznam je v [[otevrene-pozadavky-majitele]]. Nejdůležitější:
+Úplný seznam a priority: [[otevrene-pozadavky-majitele]]. Nejdůležitější:
 
-- **7 395 plzeňských firem bez velikosti**, z toho zhruba polovina skutečná
-  s.r.o. ARES je nedoplní ([[ares-nedoplni-velikost]]) — jediná cesta je
-  sbírka listin, nepostavená.
-- **Jméno jednatele není adresa.** I v cílovém segmentu má e-mail jen 125
-  z 620. Bez dalšího zdroje adres je to poloviční výsledek.
-- **Cena rešerše agentem není změřená.** Krok 3 nikdy neběžel.
+- **Čachrov**: kampaň má 5 cílových firem, 68 dalších je bez známé velikosti.
+  Majiteli nabídnuto je zahrnout a pustit na ně rešerši. **Nerozhodnuto.**
+- **7 395 plzeňských firem bez velikosti**, z toho ~polovina skutečná s.r.o.
+  ARES je nedoplní ([[ares-nedoplni-velikost]]). Jediná cesta je sbírka
+  listin — **nepostavená**.
+- **Jméno jednatele není adresa.** V cílovém segmentu Plzně má e-mail jen
+  125 z 620. Rešerše to zvedá (19 z 20), ale stojí ~64 s na firmu.
+- **Rešerše zbylých 432 plzeňských firem** ≈ 7,5 h agentní práce.
+  Nerozhodnuto.
 
 ## Co znamená „hotovo"
 
 1. `npm test` **a** `npm run typecheck` (pouští i `app/`).
-2. U frontendu **proklikat v prohlížeči** — testy ani typy nechytí vady toku
-   a pořadí ([[zelene-testy-nejsou-hotova-obrazovka]]).
+2. U frontendu **proklikat v prohlížeči**. Od 3. 8. to jde: majitel se
+   přihlásí v panelu Browser a dál se klika sám
+   ([[zelene-testy-nejsou-hotova-obrazovka]]).
 3. U migrací **nasadit** (`npm run cli -- migrate`).
-4. Před tvrzením o nasazení pustit `npm run build --prefix app`
+4. Před tvrzením o nasazení `npm run build --prefix app`
    ([[vercel-instaluje-jen-app-zavislosti]]).
 
 ## Kde co hledat
@@ -111,4 +96,5 @@ Podrobně [[otevrene-pozadavky-majitele]].
 | Postup pro novou oblast | `docs/NOVA-OBLAST.md` |
 | Lidský popis systému | `docs/JAK-TO-FUNGUJE.md` |
 | Vizuální výstupy pro majitele | `docs/vizualizace/` |
-| Historie rozhodnutí a poznatků do 31. 7. | `_claude/memory/_archive/` |
+| Co je v souboru ČSÚ a co ne | `docs/vizualizace/co-mame-offline-2026-08-02.html` |
+| Historie do 31. 7. | `_claude/memory/_archive/` |

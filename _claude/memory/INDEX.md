@@ -4,9 +4,11 @@
 > Plný katalog on-demand záznamů. Always-load vrstvu viz auto-memory/MEMORY.md.
 
 ## Context
-- [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-01
+- [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-03
 
 ## Decisions
+- [[jidelna-se-nepriradi-rucne]] — Jídelna se k oblasti nevybírá ručně — ukazuje se, které v tom tvaru leží · active · 2026-08-03
+- [[obrazovka-oblasti-a-listovani]] — Oblasti = mapa nahoře, jeden seznam pod ní ovládá vrstvy; kartotéka se listuje po stovkách · active · 2026-08-03
 - [[kontakty-i-nad-oblasti]] — Doplňování kontaktů umí i firmy bez jídelny — sběr nad oblastí je zakládá mimo zónu · active · 2026-08-02
 - [[oznameni-u-hodin]] — Dokončený průzkum hlásí bublina Windows; text skládá jádro, hlídka ho jen zobrazí · active · 2026-08-02
 - [[resurse-agentem-zmereno]] — Rešerše Čmuchalem změřená na 20 firmách — 64 s na firmu, e-mail u 19 z 20 · active · 2026-08-02
@@ -42,5 +44,5 @@
 - [[zapis-po-jedne-je-lokalne-neviditelny]] — Přepočet oblasti vkládal firmy po jedné — na PGlite rychle, přes síť minuty · fixed · 2026-08-01
 
 ## Research
-- [[otevrene-pozadavky-majitele]] — Co majitel vyžádal a k 1. 8. 2026 není postavené · active · 2026-08-01
+- [[otevrene-pozadavky-majitele]] — Co majitel vyžádal nebo co čeká na jeho rozhodnutí, k 3. 8. 2026 · active · 2026-08-03
 

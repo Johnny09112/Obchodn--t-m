@@ -1,57 +1,57 @@
 ---
 name: otevrene-pozadavky-majitele
-description: Co majitel vyžádal a k 1. 8. 2026 není postavené
+description: Co majitel vyžádal nebo co čeká na jeho rozhodnutí, k 3. 8. 2026
 type: research
 status: active
 created: 2026-08-01
-updated: 2026-08-01
-related: []
+updated: 2026-08-03
 ---
 
-Seřazeno podle souvislostí, ne podle důležitosti.
+Seřazeno podle toho, co blokuje postup.
 
-## 1. Oblasti: úklid, výběr, více oblastí na kampaň
+## A. Čeká na rozhodnutí majitele
 
-1. ~~**Mazání nepoužitých oblastí.**~~ **HOTOVO 1. 8.** (migrace 0028) —
-   `restrict` na průzkumu, mazání vyhrazené adminovi, hláška jménem kampaně.
-   Viz [[mazani-oblasti]]. Past byla horší, než se čekalo: mazat směl celý tým.
-2. ~~**Seznam oblastí s detailem**~~ **HOTOVO 1. 8.** (migrace 0029) — pohled
-   `oblasti_prehled`, hledání i řazení, mazání přestěhované sem z panelu mapy.
-   Viz [[prehled-oblasti-pohledem]].
-3. ~~**Kampaň nad více oblastmi**~~ **HOTOVO 1. 8.** (migrace 0030) — vazba
-   `kampan_oblasti`, sjednocení firem, průzkum na každou oblast zvlášť,
-   výběr zaškrtávátky v seznamu. Viz [[kampan-nad-vice-oblastmi]].
+1. **Čachrov — vzít i firmy bez známé velikosti?** Kampaň má 5 cílových
+   firem; dalších 68 registr velikostí nepokrývá. U malé obce dává jejich
+   zahrnutí větší smysl než u Plzně. Doporučeno zahrnout a pustit rešerši.
+2. **Rešerše zbylých 432 plzeňských firem** (~7,5 h agentní práce, jde
+   z předplatného). Doporučeno napřed 100 firem, ať se ověří, že úspěšnost
+   drží i mimo nejlepší skóre ([[resurse-agentem-zmereno]]).
+3. **Strop řádků v Supabase.** Zvednut na 20 000 přes roli `authenticator`;
+   **trvalejší místo je Settings → API → Max rows** v dashboardu. Kdyby
+   platforma roli přepsala, strop spadne zpět na tisíc (aplikace to přežije,
+   jen zpomalí) — viz [[postgrest-strop-na-radky]].
 
-## 2. ~~Tvar oblasti se uloží k průzkumu~~ — HOTOVO 2. 8.
+## B. Postavit, až se rozhodne výš
 
-Migrace 0031: tvar i název se zapisují při zahájení průzkumu, přehled oblastí
-hlásí `tvar_zmenen`. Viz [[tvar-oblasti-u-pruzkumu]]. Dva staré průzkumy tvar
-nemají a nedoplňují se.
+1. **Sbírka listin — přesný počet zaměstnanců.** Jediný zdroj velikosti pro
+   7 395 plzeňských firem, které registr nepokrývá ([[ares-nedoplni-velikost]]).
+   Znamená stahovat a číst PDF účetních závěrek.
+2. **Další zdroj e-mailů.** Jméno jednatele z rejstříku není adresa; bez
+   e-mailu se ve fázi 3 nedá oslovit. Věcné i právní rozhodnutí, ne technické.
+3. **Doplňování kontaktů podle kampaně** (`--kampan <id>`), ne jen podle
+   oblasti. Malá věc, ale šetří práci.
 
-## 3. Oznámení o dokončení průzkumu
+## C. Vlastní vývoj, nezahájené
 
-Majitel chtěl e-mail; teď to nejde (TP-8). Nabídnuto oznámení Windows
-z hlídky — **majitel zatím neodpověděl**.
+1. **Etapa D průvodce** — nezávislá kritika obrazovek, přístupnost
+   (klávesnice, kontrast).
+2. **Stránkování seznamu firem v kampani.** Kartotéka se od 3. 8. listuje
+   ([[obrazovka-oblasti-a-listovani]]); seznam v kampani zatím ne — u kampaně
+   nad krajem to bude potřeba.
+3. **Přiřazení jídelny/bodu ke konkrétní firmě** pro obchodní use-case.
+   **Není to totéž co jídelna oblasti** ([[jidelna-se-nepriradi-rucne]]).
 
-## 4. Asymetrie ve sbírání kontaktů
-
-Sběr **kolem jídelny** zapisuje kontakt z otevřených dat MPSV, sběr
-**nad oblastí** ne. Nikdo to nerozhodl, jen tak vzniklo — proto má 13 767 firem
-jen 104 spojení. Stojí za srovnání.
-
-## 5. Etapa D průvodce
-
-Nezávislá kritika obrazovek, přístupnost (klávesnice, kontrast). Naplánované,
-nezahájené.
-
-## 6. Velký seznam v kampani
-
-Krok 4 vypsal 532 firem naráz a prohlížeč to zvládl. U kampaně nad krajem
-poroste — až přeroste tisíce, bude potřeba stránkování.
-
-## Čeká na majitele (starší)
+## D. Čeká na majitele (starší, neuzavřené)
 
 - Licence otevřených dat ČSÚ — právní věc před ostrým provozem.
 - Rozhodnutí o SVJ a živnostnících v kartotéce.
 - Návrh Čmuchala: registry zadávacích řízení u mikrofirem bez webu.
 - Kapacity jídelen ve Zbůchu, Tlučné a Hrádku.
+
+## Hotové (pro pořádek, ať se nezadává znovu)
+
+Úklid oblastí · seznam oblastí s detailem · kampaň nad více oblastmi · tvar
+oblasti u průzkumu · oznámení u hodin · velikost firem ze souboru · složení
+území v proužku · kontakty nad oblastí · zrychlení (indexy, stránkování) ·
+tažení bodů v mapě · přiblížení na vybranou oblast.

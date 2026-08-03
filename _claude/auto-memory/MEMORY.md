@@ -6,6 +6,8 @@
 ## Feedback (always-load pravidla chování)
 
 <!-- AUTO:feedback — jeden řádek na soubor z auto-memory/feedback/*.md; formát: - [[slug]] — háček -->
+- [[overuj-obrazovky-v-prohlizeci]] — frontend neodhaduj; řekni si o přihlášení a proklikej to
+- [[agent-jde-z-predplatneho]] — rešerše Čmuchalem nic nestojí navíc, neblokuj ji dotazem na peníze
 <!-- /AUTO:feedback -->
 
 ## Jak používat tuto paměť

@@ -35,40 +35,88 @@ výsledek bez důvodu vypadá jako rozbitá aplikace.
   jednotlivě s důvodem, jak to jde dnes — jinak by se smazala i rozhodnutí
   udělaná mezitím.
 
+### 2.1 Doplněno po revizi 2. úkolu (2026-08-03)
+
+Revize odhalila, že přepis mění, které firmy se vypíšou jako vyřazené. Při
+dotazu na to majitel řekl: *„mě zajímají především také firmy do 24
+zaměstnanců, nezajímají mě společenství."* Kontrola SPEC.md tomu dala za
+pravdu — a odhalila rozpor:
+
+- **SPEC.md kap. 10.2 zná mikropodnik (do 25) jako plnohodnotný segment**
+  s vlastním úhlem oslovení („krátce, cena, jednoduchost, žádná
+  administrativa"). `src/score.ts` jim přiděluje body, ne nulu.
+- **Aplikace je přesto zahazovala.** Pravidlo „mikro se do kampaně neberou
+  nikdy" v SPEC nikde není; bylo zadrátované v `naplnKampanZOblasti`
+  s komentářem „obědy pro pět lidí nedávají smysl ani jedné straně".
+
+Rozhodnutí majitele:
+
+- **Firmy do 24 zaměstnanců jde přibrat stejně jako firmy bez známé
+  velikosti** — vlastní nabídkou a vlastním potvrzením, ne jedním tlačítkem
+  pro obojí. Segmenty se rozhodují zvlášť, protože jsou to různá rozhodnutí.
+- **Společenství vlastníků se tím nepřibírají.** Vyhazuje je síto jako bytový
+  dům (`jeBytovyDum`, kódy 145 a 233) bez ohledu na velikost — tedy skončí
+  v koši `sito`, ne v koši `mikro`. Tohle je přesně ten rozdíl, který majitel
+  pojmenoval, a drží se sám od sebe.
+- **Výpis vyřazených se omezí na prvních 50** a pod nimi bude „… a dalších N
+  firem". Kampaň nad Plzní by jinak vypsala přes tisíc řádků na jednu
+  obrazovku.
+
 ## 3. Co uvidí majitel
 
 Ve 4. kroku přibude panel, který se ukáže **při každém otevření kampaně**, ne
-jen po stisku tlačítka. Tři stavy:
+jen po stisku tlačítka. Nabídky jsou **dvě, každá zvlášť** — přibrat firmy bez
+známé velikosti a přibrat malé firmy jsou dvě různá rozhodnutí a slučovat je
+do jednoho tlačítka by majiteli sebralo volbu:
 
-**a) Něco čeká, kampaň už firmy má** — klidný tón:
-
-> V území čeká 68 firem, u kterých registr neuvádí velikost.
+> V území čeká **68 firem, u kterých registr neuvádí velikost**.
 > Dohledání kontaktů u nich zabere navíc ~2 hodiny.
-> `[ Přidat i těch 68 firem ]`
+> `[ Přidat 68 firem s neznámou velikostí ]`
+>
+> A dál **23 firem do 24 zaměstnanců**. Dohledání kontaktů ~1 minutu.
+> `[ Přidat 23 malých firem ]`
 
-**b) Něco čeká, kampaň je prázdná** — důraznější, protože tohle je Čachrov:
+Každá nabídka se zobrazí jen tehdy, když v ní něco čeká. Když nečeká nic,
+panel není vidět vůbec.
 
-> **Do kampaně se zatím nedostala žádná firma.** V území čeká 68 firem,
-> u kterých registr neuvádí velikost. …
-
-**c) Nečeká nic** — panel se nezobrazí.
-
-Firmy do 24 zaměstnanců se zmíní tichou poznámkou bez tlačítka („Dalších 23 je
-do 24 zaměstnanců; ty se do kampaně neberou nikdy.").
+**Když je kampaň prázdná**, začne panel důrazněji — *„Do kampaně se zatím
+nedostala žádná firma."* Přesně tohle se stalo u Čachrova a vypadalo to jako
+rozbitá aplikace.
 
 Odhad práce navíc počítá `odhadKontaktu` ze `src/odhady.ts` — tentýž, jaký
 používá 2. krok. Dvě různá čísla o téže věci nikde nebudou.
 
-## 4. Co tlačítko udělá
+**Výpis vyřazených** („V území leží, ale do kampaně nepatří") se omezí na
+**prvních 50 firem**; pod nimi bude „… a dalších N firem". Počet v nadpisu
+zůstává úplný.
 
-1. Otevře potvrzení (`zaclona`/`dialog`, jako „Vyřadit" a „Schválit"): kolik
+## 4. Co tlačítka udělají
+
+Obě stejně, liší se jen tím, který koš přiberou:
+
+1. Otevřou potvrzení (`zaclona`/`dialog`, jako „Vyřadit" a „Schválit"): kolik
    firem, kolik práce navíc, a že zpátky to jde jen po jedné s důvodem.
-2. Po potvrzení zavolá `naplnKampanZOblasti(id, oblastiIds, { jenCilove: false })`.
-3. Znovu načte seznam i počty.
+2. Po potvrzení zavolají `naplnKampanZOblasti` s příslušným rozsahem.
+3. Znovu načtou seznam i počty.
 
-**Tlačítko nikdy nepřidá míň než „Doplnit z území".** Je to totéž doplnění, jen
-širší — případné chybějící firmy v cílové velikosti přiberou taky. To je
-správně a nepřekvapí to: „Doplnit z území" by je přidalo stejně.
+Rozsah se předává výslovně, ne záporem — `jenCilove` zmizí:
+
+```ts
+opts: { zahrnoutNezname?: boolean; zahrnoutMikro?: boolean }
+```
+
+Cílová velikost se bere vždycky. „Přidat firmy s neznámou velikostí" pošle
+`{ zahrnoutNezname: true }`, „Přidat malé firmy" pošle `{ zahrnoutMikro: true }`.
+Volba ve 2. kroku pošle `{ zahrnoutNezname: zahrnoutNezname }`.
+
+**Žádné tlačítko nikdy nepřidá míň než „Doplnit z území".** Je to totéž
+doplnění, jen širší — případné chybějící firmy v cílové velikosti se přiberou
+taky. To je správně a nepřekvapí to.
+
+**Pole `preskoceno` z `NaplneniKampane` mizí.** Bylo tam jen pro hlášku, kterou
+panel nahrazuje; panel čte `spocitejCekajici`, které platí i po znovuotevření.
+Ponechat obojí by znamenalo dvě čísla o téže věci. Volá to jediné místo
+(`PruvodceKampani.tsx:288`), takže odstranění nic dalšího nerozbije.
 
 ## 5. Proč se číslo nemůže rozejít s tlačítkem
 
@@ -109,12 +157,11 @@ a dá se testovat offline jako `src/sito.ts` nebo `src/pruzkum-postup.ts`.
 
 `app/src/data.ts` pak dělá dvě věci nad týmž výpočtem:
 
-- `naplnKampanZOblasti(...)` — vloží koše podle rozsahu (`cilova`, a při
-  `jenCilove: false` i `bez_velikosti`). Předává **prázdnou** `jizVKampani`:
-  duplicity odchytí `on conflict do nothing` a seznam `vynechano` musí dál
-  vypisovat všechny firmy zadržené sítem, ne jen ty nové. **Návratový tvar
-  `NaplneniKampane` (`pridano`, `vynechano`, `preskoceno`) se nemění** — 4. krok
-  ho dál používá beze změny.
+- `naplnKampanZOblasti(...)` — vloží koš `cilova` vždycky, `bez_velikosti` při
+  `zahrnoutNezname`, `mikro` při `zahrnoutMikro`. Předává **prázdnou**
+  `jizVKampani`: duplicity odchytí `on conflict do nothing` a seznam
+  `vynechano` musí dál vypisovat všechny firmy zadržené sítem, ne jen ty nové.
+  Návratový tvar je `{ pridano, vynechano }` — `preskoceno` mizí (viz kap. 4).
 - `spocitejCekajici(kampanId, oblastiIds)` — vrátí `{ cilova, bezVelikosti,
   mikro }`, počty firem, **které v kampani ještě nejsou**. Tady se `jizVKampani`
   naopak předává vyplněná; jinak by panel sliboval víc, než tlačítko přidá.
@@ -143,7 +190,9 @@ jen se z panelu ve 4. kroku dozvíš, že už nic nečeká.
 
 ## 7. Co se nemění
 
-- Firmy do 24 zaměstnanců (`mikro`) se do kampaně neberou nikdy.
+- **Cílová velikost se bere vždycky**, bez ptaní. Přibírá se jen to ostatní.
+- **Společenství vlastníků a bytová družstva se nepřibírají** za žádného
+  rozsahu — vyhazuje je síto, ne velikost.
 - Ručně vyřazené firmy se doplněním nevzkřísí.
 - Schválená kampaň zůstává zamčená — panel se v ní neukáže.
 - Síto `duvodNeoslovovat` platí beze změny; vyřazené se dál vypisují i s důvodem.
@@ -155,8 +204,12 @@ Nové v `test/kampan-kandidati.test.ts` (PGlite/offline, čistý výpočet):
 
 1. Firma v cílové velikosti → koš `cilova`.
 2. Firma bez známé velikosti → koš `bez_velikosti`, ne `cilova`.
-3. Firma do 24 zaměstnanců → koš `mikro` bez ohledu na rozsah.
+3. Firma do 24 zaměstnanců → koš `mikro`.
 4. Firma na blacklistu → koš `sito` i s důvodem, i když je v cílové velikosti.
+4b. **Společenství vlastníků (právní forma 145) → koš `sito`, ne `mikro`** —
+   i když je malé. Tohle je ten rozdíl, o který majiteli šlo: malé firmy ano,
+   společenství ne. Kdyby se to rozbilo, tlačítko „přidat malé firmy" by
+   začalo tahat do kampaně bytové domy.
 5. **Firma už v kampani se mezi čekající nepočítá.**
 6. **Firma ručně vyřazená z kampaně se mezi čekající nepočítá** — tohle je ta
    past z kapitoly 5.
@@ -169,9 +222,10 @@ stávající kontrolou automaticky, protože `db` ani `repo` neimportuje.
 
 1. `npm test` a `npm run typecheck` zeleně.
 2. `npm run build --prefix app` projde ([[vercel-instaluje-jen-app-zavislosti]]).
-3. **Proklikáno v prohlížeči na kampani nad Čachrovem** — ověřit, že číslo
-   v panelu sedí s tím, kolik firem tlačítko doopravdy přidá, a že po přidání
-   panel zmizí ([[zelene-testy-nejsou-hotova-obrazovka]]).
+3. **Proklikáno v prohlížeči na kampani nad Čachrovem** — ověřit, že čísla
+   v panelu sedí s tím, kolik firem tlačítka doopravdy přidají, že po přidání
+   nabídka zmizí, a že mezi přidanými malými firmami **není ani jedno
+   společenství vlastníků** ([[zelene-testy-nejsou-hotova-obrazovka]]).
 
 ## 10. Co tahle práce neřeší
 

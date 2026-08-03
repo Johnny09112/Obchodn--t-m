@@ -94,7 +94,6 @@ export function PruvodceKampani({
   const [pruzkumy, setPruzkumy] = useState<PruzkumOblasti[]>([]);
   const [firmy, setFirmy] = useState<FirmaKampane[]>([]);
   const [vynechano, setVynechano] = useState<NaplneniKampane["vynechano"]>([]);
-  const [preskoceno, setPreskoceno] = useState<NaplneniKampane["preskoceno"] | null>(null);
   const [kVyrazeni, setKVyrazeni] = useState<FirmaKampane | null>(null);
   const [duvodVyrazeni, setDuvodVyrazeni] = useState("");
   const [schvalit, setSchvalit] = useState(false);
@@ -285,9 +284,8 @@ export function PruvodceKampani({
     setUklada(true);
     setChyba(null);
     try {
-      const v = await naplnKampanZOblasti(id, oblastiIds, { jenCilove: !zahrnoutNezname });
+      const v = await naplnKampanZOblasti(id, oblastiIds, { zahrnoutNezname });
       setVynechano(v.vynechano);
-      setPreskoceno(v.preskoceno);
       nactiSeznam();
     } catch (e) {
       setChyba((e as Error).message);
@@ -761,33 +759,6 @@ export function PruvodceKampani({
               {uklada ? "Pracuji…" : firmy.length === 0 ? "Naplnit z území" : "Doplnit z území"}
             </button>
           </div>
-
-          {/*
-            Proč je seznam prázdný, se musí říct nahlas. Kampaň nad Čachrovem
-            skončila s nulou a jedinou hláškou „v tomhle tvaru zatím žádná
-            firma není" — přitom jich tam bylo 91, jen u nich nebyla známá
-            velikost. Prázdný výsledek bez důvodu vypadá jako rozbitá aplikace.
-          */}
-          {preskoceno && preskoceno.mikro + preskoceno.bezVelikosti > 0 && (
-            <p className={`hlaska ${firmy.length === 0 ? "" : "je-klid"}`}>
-              {firmy.length === 0 && <strong>Do kampaně se nedostala žádná firma. </strong>}
-              {preskoceno.bezVelikosti > 0 && (
-                <>
-                  {preskoceno.bezVelikosti.toLocaleString("cs")}{" "}
-                  {cesky(preskoceno.bezVelikosti, "firma", "firmy", "firem")} v území{" "}
-                  {cesky(preskoceno.bezVelikosti, "zůstala", "zůstaly", "zůstalo")} stranou,
-                  protože <strong>u nich registr neuvádí velikost</strong>. Vzít je můžete
-                  ve druhém kroku — zaškrtnutím „Zahrnout i firmy s neznámou velikostí".{" "}
-                </>
-              )}
-              {preskoceno.mikro > 0 && (
-                <>
-                  Dalších {preskoceno.mikro.toLocaleString("cs")} je do 24 zaměstnanců;
-                  ty se do kampaně neberou nikdy.
-                </>
-              )}
-            </p>
-          )}
 
           {chyba && (
             <p className="hlaska" role="alert">

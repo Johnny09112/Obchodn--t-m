@@ -107,4 +107,25 @@ describe("třídění kandidátů z území do kampaně", () => {
     });
     expect(spoctiKose(k)).toEqual({ cilova: 1, bezVelikosti: 0, mikro: 0 });
   });
+
+  // Majitel to řekl výslovně: malé firmy ano, společenství vlastníků ne.
+  // Drží to síto (`jeBytovyDum`, právní formy 145 a 233), ne velikost —
+  // proto společenství skončí v koši `sito`, i když je malé, a tlačítko
+  // „přidat malé firmy" na ně nesáhne.
+  it("společenství vlastníků je síto, ne malá firma", () => {
+    const k = roztrid([
+      firma({ ico: "1", velikost_kategorie: "mikro", pravni_forma: "145" }),
+      firma({ ico: "2", velikost_kategorie: "mikro", pravni_forma: "112" }),
+    ]);
+    expect(k.find((x) => x.ico === "1")!.kosik).toBe("sito");
+    expect(k.find((x) => x.ico === "2")!.kosik).toBe("mikro");
+    expect(spoctiKose(k)).toEqual({ cilova: 0, bezVelikosti: 0, mikro: 1 });
+  });
+
+  it("bytové družstvo taky", () => {
+    const k = roztrid([
+      firma({ ico: "1", velikost_kategorie: "mikro", pravni_forma: "233" }),
+    ]);
+    expect(k[0]!.kosik).toBe("sito");
+  });
 });

@@ -747,14 +747,6 @@ const POPIS_DUVODU: Record<string, string> = {
 export interface NaplneniKampane {
   pridano: number;
   vynechano: { ico: string; nazev: string; duvod: string; detail: string }[];
-  /**
-   * Kolik firem odřízla velikost — zvlášť od důvodů síta.
-   *
-   * Bez toho končila kampaň nad malou obcí s nulou a jedinou hláškou
-   * „v tomhle tvaru zatím žádná firma není". To byla nepravda: firmy tam
-   * byly (Čachrov jich měl 91), jen u nich neznáme velikost.
-   */
-  preskoceno: { mikro: number; bezVelikosti: number };
 }
 
 /**
@@ -769,10 +761,10 @@ export interface NaplneniKampane {
 export async function naplnKampanZOblasti(
   kampanId: string,
   oblastiIds: readonly string[],
-  opts: { jenCilove?: boolean } = {},
+  opts: { zahrnoutNezname?: boolean; zahrnoutMikro?: boolean } = {},
 ): Promise<NaplneniKampane> {
   if (oblastiIds.length === 0) {
-    return { pridano: 0, vynechano: [], preskoceno: { mikro: 0, bezVelikosti: 0 } };
+    return { pridano: 0, vynechano: [] };
   }
 
   const [firmy, sito, vOblastech] = await Promise.all([
@@ -801,16 +793,16 @@ export async function naplnKampanZOblasti(
       detail: k.duvod!.detail,
     }));
 
-  const pocty = spoctiKose(kandidati);
-  const preskoceno = {
-    mikro: pocty.mikro,
-    // Přeskočené jen tehdy, když se braly jen cílové. Při širokém rozsahu
-    // se nepřeskočilo nic — vešly se do kampaně.
-    bezVelikosti: opts.jenCilove ? pocty.bezVelikosti : 0,
-  };
-
+  // Cílová velikost se bere vždycky. Zbylé dva koše jsou dvě různá
+  // rozhodnutí majitele, každé s vlastním tlačítkem — proto dva příznaky,
+  // ne jeden „široký rozsah".
   const kVlozeni = kandidati
-    .filter((k) => k.kosik === "cilova" || (!opts.jenCilove && k.kosik === "bez_velikosti"))
+    .filter(
+      (k) =>
+        k.kosik === "cilova" ||
+        (opts.zahrnoutNezname && k.kosik === "bez_velikosti") ||
+        (opts.zahrnoutMikro && k.kosik === "mikro"),
+    )
     .map((k) => ({ kampan_id: kampanId, ico: k.ico }));
 
   let pridano = 0;
@@ -826,7 +818,7 @@ export async function naplnKampanZOblasti(
     pridano += data?.length ?? 0;
   }
 
-  return { pridano, vynechano, preskoceno };
+  return { pridano, vynechano };
 }
 
 /**

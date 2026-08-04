@@ -19,7 +19,7 @@ export type Kosik =
   | "cilova"
   /** Registr velikost neuvádí — bere se jen na vyžádání. */
   | "bez_velikosti"
-  /** Do 24 zaměstnanců — nebere se nikdy. */
+  /** Do 24 zaměstnanců — do kampaně se neberou automaticky, majitel je může přibrat vlastní volbou. */
   | "mikro"
   /** Zadrželo síto (blacklist, bytový dům, partner, vlastní jídelna). */
   | "sito";

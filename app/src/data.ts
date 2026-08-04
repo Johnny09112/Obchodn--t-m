@@ -694,13 +694,16 @@ export interface FirmaKampane {
   urovne: number[];
 }
 
+/**
+ * Firmy v kampani — po stránkách ze stejného důvodu jako `nactiFirmy` a
+ * `nactiIcaVOblastech`.
+ *
+ * Bez stránkování by server u velké kampaně odpověď MLČKY usekl a `jizVKampani`
+ * v `spocitejCekajici` by dostalo neúplnou množinu — firmy, které v kampani
+ * už jsou, by se pak započítaly jako čekající. Panel by slíbil víc, než
+ * tlačítko doopravdy přidá.
+ */
 export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[]> {
-  const { data, error } = await supabase
-    .from("kampan_firmy")
-    .select("ico,stav,duvod_vyrazeni,companies(nazev,obec,skore),contacts:companies(contacts(uroven_adresy))")
-    .eq("kampan_id", kampanId);
-  if (error) throw new Error(error.message);
-
   type Radek = {
     ico: string;
     stav: "vybrana" | "vyrazena";
@@ -709,20 +712,43 @@ export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[
     contacts: { contacts: { uroven_adresy: number | null }[] } | null;
   };
 
-  return ((data ?? []) as unknown as Radek[])
-    .map((r) => ({
-      ico: r.ico,
-      nazev: r.companies?.nazev ?? r.ico,
-      obec: r.companies?.obec ?? null,
-      skore: r.companies?.skore ?? null,
-      stav: r.stav,
-      duvod_vyrazeni: r.duvod_vyrazeni,
-      urovne: (r.contacts?.contacts ?? [])
-        .map((k) => k.uroven_adresy)
-        .filter((u): u is number => u !== null),
-    }))
-    // Nejlepší napřed — u firem z oblasti skóre funguje od 31. 7.
-    .sort((a, b) => (b.skore ?? -1) - (a.skore ?? -1));
+  const vse: FirmaKampane[] = [];
+  let posledni: string | null = null;
+  for (;;) {
+    let dotaz = supabase
+      .from("kampan_firmy")
+      .select(
+        "ico,stav,duvod_vyrazeni,companies(nazev,obec,skore),contacts:companies(contacts(uroven_adresy))",
+      )
+      .eq("kampan_id", kampanId)
+      .order("ico")
+      .limit(STRANKA);
+    if (posledni !== null) dotaz = dotaz.gt("ico", posledni);
+
+    const { data, error } = await dotaz;
+    if (error) throw new Error(error.message);
+
+    const davka = (data ?? []) as unknown as Radek[];
+    if (davka.length === 0) break;
+    vse.push(
+      ...davka.map((r) => ({
+        ico: r.ico,
+        nazev: r.companies?.nazev ?? r.ico,
+        obec: r.companies?.obec ?? null,
+        skore: r.companies?.skore ?? null,
+        stav: r.stav,
+        duvod_vyrazeni: r.duvod_vyrazeni,
+        urovne: (r.contacts?.contacts ?? [])
+          .map((k) => k.uroven_adresy)
+          .filter((u): u is number => u !== null),
+      })),
+    );
+    posledni = davka[davka.length - 1]!.ico;
+  }
+
+  // Třídění až tady, přes stránky by ho server stejně neudržel — nejlepší
+  // napřed, u firem z oblasti skóre funguje od 31. 7.
+  return vse.sort((a, b) => (b.skore ?? -1) - (a.skore ?? -1));
 }
 
 /**
@@ -827,18 +853,24 @@ export async function naplnKampanZOblasti(
  * Nic neukládá a nikam se nezapisuje — počítá se z dat pokaždé znovu, aby
  * číslo na obrazovce nemohlo zastarat. Co tahle funkce vrátí v `bezVelikosti`,
  * to tlačítko „přidat i firmy s neznámou velikostí" doopravdy přidá.
+ *
+ * `prednactene` je nepovinné: volající, který si `nactiFirmy()` a
+ * `nactiFirmyKampane()` už stáhl (obrazovka kampaně je stahuje kvůli
+ * seznamu firem), je předá a ušetří tak druhé stažení přes 13 000 firem.
+ * Když se nepředají, načtou se tady jako dosud — jiná místa je volají bez nich.
  */
 export async function spocitejCekajici(
   kampanId: string,
   oblastiIds: readonly string[],
+  prednactene?: { firmy: Firma[]; vKampani: FirmaKampane[] },
 ): Promise<PocetKosu> {
   if (oblastiIds.length === 0) return { cilova: 0, bezVelikosti: 0, mikro: 0 };
 
   const [firmy, sito, vOblastech, vKampani] = await Promise.all([
-    nactiFirmy(),
+    prednactene ? prednactene.firmy : nactiFirmy(),
     nactiPravidlaSita(),
     nactiIcaVOblastech(oblastiIds),
-    nactiFirmyKampane(kampanId),
+    prednactene ? prednactene.vKampani : nactiFirmyKampane(kampanId),
   ]);
 
   return spoctiKose(

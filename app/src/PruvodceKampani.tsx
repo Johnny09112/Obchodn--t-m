@@ -114,13 +114,19 @@ export function PruvodceKampani({
 
   const smi = smiUpravovat(kampan, role, email);
   /**
-   * Schválená kampaň se ze seznamu otevřít DÁ (`Kampane.tsx`, klik na název)
-   * a schvalovací dialog slibuje, že se seznam uzamkne. Databáze to ale
-   * nehlídá — `smi_do_kampane` se ptá jen KDO, ne v jakém je kampaň stavu.
-   * Do nápravy v databázi to tedy drží obrazovka: u schválené kampaně se
-   * doplňování nenabízí vůbec.
+   * Schválená (a dál i běžící, uzavřená, zrušená) kampaň se ze seznamu
+   * otevřít DÁ (`Kampane.tsx`, klik na název) a schvalovací dialog slibuje,
+   * že se seznam uzamkne. Databáze to ale nehlídá — `smi_do_kampane` se ptá
+   * jen KDO, ne v jakém je kampaň stavu. Do nápravy v databázi to tedy drží
+   * obrazovka.
+   *
+   * Uzamyká se na množinu stavů, ne jen na `schvalena`: `PRECHODY` se dnes
+   * do `bezi` ani `uzavrena` přes aplikaci nedostane, ale kdyby se to
+   * jednou změnilo (nebo je nastavil někdo přímo v databázi), nesmí se
+   * nabídka tiše odemknout. Rozpracovaná kampaň je jediná, do které se smí
+   * přidávat — nová kampaň (`kampan === null`) rozpracovaná logicky je.
    */
-  const zamcena = kampan?.stav === "schvalena";
+  const zamcena = kampan !== null && kampan.stav !== "rozpracovana";
 
   /** Složení vybraných oblastí dohromady. */
   const slozeniVyberu = useMemo(() => {
@@ -280,20 +286,23 @@ export function PruvodceKampani({
   // a hledáním, které by vlastní tabulka neměla.
   const nactiSeznam = useCallback(() => {
     if (!id) return;
-    Promise.all([
-      nactiFirmyKampane(id),
-      nactiFirmy(),
-      nactiKategorie(),
-      spocitejCekajici(id, oblastiIds),
-    ])
-      .then(([vKampani, vsechny, kat, ceka]) => {
+    Promise.all([nactiFirmyKampane(id), nactiFirmy(), nactiKategorie()])
+      .then(([vKampani, vsechny, kat]) => {
         setFirmy(vKampani);
         const podleIco = new Map(vsechny.map((f) => [f.ico, f]));
         setUdajeFirem(
           vKampani.map((k) => podleIco.get(k.ico)).filter((f): f is Firma => f !== undefined),
         );
         setKategorie(kat);
-        setCekajici(ceka);
+
+        // Vlastní řetězec se svým vlastním catch: dopočet je ze všech čtyř
+        // dotazů nejtěžší a jeho pád nesmí smazat seznam firem, který se
+        // právě úspěšně načetl (viz komentář u `cekajici` výš). Data pro
+        // dopočet už máme — díky tomu si je `spocitejCekajici` nemusí
+        // stahovat znovu.
+        spocitejCekajici(id, oblastiIds, { firmy: vsechny, vKampani })
+          .then(setCekajici)
+          .catch(() => setCekajici(null));
       })
       .catch(() => {
         setFirmy([]);
@@ -803,8 +812,7 @@ export function PruvodceKampani({
 
           {zamcena ? (
             <p className="hlaska je-hotovo">
-              Kampaň je schválená, seznam firem je uzavřený. Přidávat do něj
-              už nejde.
+              Kampaň už firmy nepřijímá. Přidávat do seznamu nejde.
             </p>
           ) : (
             <div className="tlacitka vlevo">
@@ -835,7 +843,8 @@ export function PruvodceKampani({
               {cekajici.bezVelikosti > 0 && (
                 <>
                   <p>
-                    V území čeká {cekajici.bezVelikosti.toLocaleString("cs")}{" "}
+                    V území {cesky(cekajici.bezVelikosti, "čeká", "čekají", "čeká")}{" "}
+                    {cekajici.bezVelikosti.toLocaleString("cs")}{" "}
                     {cesky(cekajici.bezVelikosti, "firma", "firmy", "firem")},
                     u {cesky(cekajici.bezVelikosti, "které", "kterých", "kterých")}{" "}
                     <strong>registr neuvádí velikost</strong>. Dohledání kontaktů

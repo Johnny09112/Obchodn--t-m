@@ -120,13 +120,16 @@ export function PruvodceKampani({
    * jen KDO, ne v jakém je kampaň stavu. Do nápravy v databázi to tedy drží
    * obrazovka.
    *
-   * Uzamyká se na množinu stavů, ne jen na `schvalena`: `PRECHODY` se dnes
-   * do `bezi` ani `uzavrena` přes aplikaci nedostane, ale kdyby se to
-   * jednou změnilo (nebo je nastavil někdo přímo v databázi), nesmí se
-   * nabídka tiše odemknout. Rozpracovaná kampaň je jediná, do které se smí
-   * přidávat — nová kampaň (`kampan === null`) rozpracovaná logicky je.
+   * Vyjmenovávají se stavy ZAMČENÉ, ne ty otevřené. Opačné pravidlo
+   * („otevřená je jen rozpracovaná") vypadá bezpečněji, ale zamklo kampaně
+   * ve stavu `ceka_na_pruzkum` a `k_posouzeni` — a to jsou přesně ty, ve
+   * kterých se seznam firem skládá. Kampaň nad Hrobcemi kvůli tomu přestala
+   * nabízet 22 firem, které čekaly.
+   *
+   * Nová kampaň (`kampan === null`) zamčená není.
    */
-  const zamcena = kampan !== null && kampan.stav !== "rozpracovana";
+  const ZAMCENE_STAVY = ["schvalena", "bezi", "uzavrena", "zrusena"];
+  const zamcena = kampan !== null && ZAMCENE_STAVY.includes(kampan.stav);
 
   /** Složení vybraných oblastí dohromady. */
   const slozeniVyberu = useMemo(() => {

@@ -5,6 +5,17 @@
 > `superpowers:executing-plans` a odpracuj plán úkol po úkolu. Kroky jsou
 > zaškrtávací (`- [ ]`).
 
+> **Rozsah se během práce rozšířil.** Tenhle plán zůstal ve verzi, ve které
+> se malé firmy (koš `mikro`) do kampaně nedaly přibrat vůbec — ř. 33 níž
+> a úryvky u „preskoceno"/`jenCilove` tomu odpovídají. Zadání
+> (`docs/superpowers/specs/2026-08-03-dodatecne-rozsireni-kampane-design.md`)
+> se mezitím aktualizovalo a **platí ono, ne tenhle plán**. Co se změnilo:
+> malé firmy (do 24 zaměstnanců) jde majitel přibrat stejně jako firmy bez
+> známé velikosti, jen vlastním tlačítkem; parametr `jenCilove` nahradily
+> dva nezávislé příznaky `zahrnoutNezname`/`zahrnoutMikro`; návratové pole
+> `preskoceno` zaniklo (nahradil ho trvalý panel `spocitejCekajici`); a výpis
+> vyřazených firem (`vynechano`) se v obrazovce omezuje na 50 položek.
+
 **Zadání:** `docs/superpowers/specs/2026-08-03-dodatecne-rozsireni-kampane-design.md`
 
 **Cíl:** Majitel může firmy bez známé velikosti přibrat do kampaně i dodatečně,

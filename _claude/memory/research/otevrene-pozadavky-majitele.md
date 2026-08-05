@@ -22,6 +22,13 @@ Seřazeno podle toho, co blokuje postup.
    platforma roli přepsala, strop spadne zpět na tisíc (aplikace to přežije,
    jen zpomalí) — viz [[postgrest-strop-na-radky]].
 
+4. **Schválený seznam firem není v databázi zamčený.** Schvalovací dialog
+   slibuje „seznam se uzamkne a nepůjde do něj přidávat", ale pravidlo zápisu
+   `kampan_firmy_zapis` stojí na `smi_do_kampane`, a ta se ptá **jen kdo** —
+   správce, zástup, admin. Stav kampaně nekontroluje. Od 4. 8. to drží
+   obrazovka ([[zamykej-vyjmenovanim-zamcenych-stavu]]), ale tvrdá pravidla
+   patří do databáze. Náprava = migrace + nasazení. **Nerozhodnuto.**
+
 ## B. Postavit, až se rozhodne výš
 
 1. **Sbírka listin — přesný počet zaměstnanců.** Jediný zdroj velikosti pro

@@ -18,6 +18,7 @@ import {
   naplnKampanZOblasti,
   nejlepsiUroven,
   schvalKampan,
+  spocitejCekajici,
   vyradZKampane,
   type Clovek,
   type Firma,
@@ -25,6 +26,7 @@ import {
   type Jidelna,
   type Kategorie,
   type NaplneniKampane,
+  type PocetKosu,
   type PrehledOblasti,
   type PruzkumOblasti,
   type RadekKampane,
@@ -94,14 +96,40 @@ export function PruvodceKampani({
   const [pruzkumy, setPruzkumy] = useState<PruzkumOblasti[]>([]);
   const [firmy, setFirmy] = useState<FirmaKampane[]>([]);
   const [vynechano, setVynechano] = useState<NaplneniKampane["vynechano"]>([]);
-  const [preskoceno, setPreskoceno] = useState<NaplneniKampane["preskoceno"] | null>(null);
   const [kVyrazeni, setKVyrazeni] = useState<FirmaKampane | null>(null);
   const [duvodVyrazeni, setDuvodVyrazeni] = useState("");
   const [schvalit, setSchvalit] = useState(false);
   const [udajeFirem, setUdajeFirem] = useState<Firma[]>([]);
   const [kategorie, setKategorie] = useState<Kategorie[]>([]);
+  /**
+   * Kolik firem z území v kampani ještě není. Načítá se při vstupu do
+   * 4. kroku a po každém doplnění, takže platí i po znovuotevření kampaně —
+   * na rozdíl od hlášky, která se dřív ukázala jen hned po stisku a pak
+   * zmizela. Kampaň nad Čachrovem kvůli tomu mlčela o 68 firmách, které
+   * čekaly, a vypadala jako rozbitá.
+   */
+  const [cekajici, setCekajici] = useState<PocetKosu | null>(null);
+  /** Který koš se právě potvrzuje v dialogu. */
+  const [pridat, setPridat] = useState<"nezname" | "mikro" | null>(null);
 
   const smi = smiUpravovat(kampan, role, email);
+  /**
+   * Schválená (a dál i běžící, uzavřená, zrušená) kampaň se ze seznamu
+   * otevřít DÁ (`Kampane.tsx`, klik na název) a schvalovací dialog slibuje,
+   * že se seznam uzamkne. Databáze to ale nehlídá — `smi_do_kampane` se ptá
+   * jen KDO, ne v jakém je kampaň stavu. Do nápravy v databázi to tedy drží
+   * obrazovka.
+   *
+   * Vyjmenovávají se stavy ZAMČENÉ, ne ty otevřené. Opačné pravidlo
+   * („otevřená je jen rozpracovaná") vypadá bezpečněji, ale zamklo kampaně
+   * ve stavu `ceka_na_pruzkum` a `k_posouzeni` — a to jsou přesně ty, ve
+   * kterých se seznam firem skládá. Kampaň nad Hrobcemi kvůli tomu přestala
+   * nabízet 22 firem, které čekaly.
+   *
+   * Nová kampaň (`kampan === null`) zamčená není.
+   */
+  const ZAMCENE_STAVY = ["schvalena", "bezi", "uzavrena", "zrusena"];
+  const zamcena = kampan !== null && ZAMCENE_STAVY.includes(kampan.stav);
 
   /** Složení vybraných oblastí dohromady. */
   const slozeniVyberu = useMemo(() => {
@@ -269,12 +297,22 @@ export function PruvodceKampani({
           vKampani.map((k) => podleIco.get(k.ico)).filter((f): f is Firma => f !== undefined),
         );
         setKategorie(kat);
+
+        // Vlastní řetězec se svým vlastním catch: dopočet je ze všech čtyř
+        // dotazů nejtěžší a jeho pád nesmí smazat seznam firem, který se
+        // právě úspěšně načetl (viz komentář u `cekajici` výš). Data pro
+        // dopočet už máme — díky tomu si je `spocitejCekajici` nemusí
+        // stahovat znovu.
+        spocitejCekajici(id, oblastiIds, { firmy: vsechny, vKampani })
+          .then(setCekajici)
+          .catch(() => setCekajici(null));
       })
       .catch(() => {
         setFirmy([]);
         setUdajeFirem([]);
+        setCekajici(null);
       });
-  }, [id]);
+  }, [id, oblastiIds]);
 
   useEffect(() => {
     if (krok === 4) nactiSeznam();
@@ -285,13 +323,35 @@ export function PruvodceKampani({
     setUklada(true);
     setChyba(null);
     try {
-      const v = await naplnKampanZOblasti(id, oblastiIds, { jenCilove: !zahrnoutNezname });
+      const v = await naplnKampanZOblasti(id, oblastiIds, { zahrnoutNezname });
       setVynechano(v.vynechano);
-      setPreskoceno(v.preskoceno);
       nactiSeznam();
     } catch (e) {
       setChyba((e as Error).message);
     } finally {
+      setUklada(false);
+    }
+  }
+
+  /**
+   * Doplní z území včetně vybraného koše. Cílová velikost se bere vždycky,
+   * takže tohle nikdy nepřidá míň než „Doplnit z území".
+   */
+  async function pridejKos(kos: "nezname" | "mikro") {
+    if (!id || oblastiIds.length === 0) return;
+    setUklada(true);
+    setChyba(null);
+    try {
+      const v = await naplnKampanZOblasti(id, oblastiIds, {
+        zahrnoutNezname: kos === "nezname",
+        zahrnoutMikro: kos === "mikro",
+      });
+      setVynechano(v.vynechano);
+      nactiSeznam();
+    } catch (e) {
+      setChyba((e as Error).message);
+    } finally {
+      setPridat(null);
       setUklada(false);
     }
   }
@@ -483,10 +543,11 @@ export function PruvodceKampani({
                     </>
                   ) : (
                     <>
-                      Kampaň vezme jen firmy s doloženými 25 a více zaměstnanci.
+                      Naplnění vezme jen firmy s doloženými 25 a více zaměstnanci.
                       Zbylých {slozeniVyberu.bez_velikosti.toLocaleString("cs")} firem
-                      zůstane stranou — mezi nimi jsou i skutečné firmy, u kterých
-                      registr velikost prostě neuvádí.
+                      má mezi sebou i skutečné firmy, u kterých registr velikost
+                      prostě neuvádí — <strong>přibrat je můžete i potom</strong>,
+                      tlačítkem v posledním kroku.
                     </>
                   )}
                 </p>
@@ -752,41 +813,80 @@ export function PruvodceKampani({
             někdo je i proč tam někdo není.
           </p>
 
-          <div className="tlacitka vlevo">
-            <button
-              className="tlacitko tise"
-              onClick={naplnit}
-              disabled={uklada || oblastiIds.length === 0}
-            >
-              {uklada ? "Pracuji…" : firmy.length === 0 ? "Naplnit z území" : "Doplnit z území"}
-            </button>
-          </div>
+          {zamcena ? (
+            <p className="hlaska je-hotovo">
+              Kampaň už firmy nepřijímá. Přidávat do seznamu nejde.
+            </p>
+          ) : (
+            <div className="tlacitka vlevo">
+              <button
+                className="tlacitko tise"
+                onClick={naplnit}
+                disabled={uklada || oblastiIds.length === 0}
+              >
+                {uklada ? "Pracuji…" : firmy.length === 0 ? "Naplnit z území" : "Doplnit z území"}
+              </button>
+            </div>
+          )}
 
           {/*
-            Proč je seznam prázdný, se musí říct nahlas. Kampaň nad Čachrovem
-            skončila s nulou a jedinou hláškou „v tomhle tvaru zatím žádná
-            firma není" — přitom jich tam bylo 91, jen u nich nebyla známá
-            velikost. Prázdný výsledek bez důvodu vypadá jako rozbitá aplikace.
+            Co v území čeká, se musí říct pořád — ne jen hned po stisku
+            doplnění. Číslo se dopočítá z dat při každém otevření, takže
+            nemůže zastarat: co je tu napsané, to tlačítko doopravdy přidá.
+
+            Nabídky jsou dvě, ne jedna sloučená. Přibrat firmy bez známé
+            velikosti a přibrat malé firmy jsou dvě různá rozhodnutí.
           */}
-          {preskoceno && preskoceno.mikro + preskoceno.bezVelikosti > 0 && (
-            <p className={`hlaska ${firmy.length === 0 ? "" : "je-klid"}`}>
-              {firmy.length === 0 && <strong>Do kampaně se nedostala žádná firma. </strong>}
-              {preskoceno.bezVelikosti > 0 && (
+          {!zamcena && cekajici && cekajici.bezVelikosti + cekajici.mikro > 0 && (
+            <div className={`hlaska ${firmy.length === 0 ? "" : "je-klid"}`}>
+              {firmy.length === 0 && (
+                <strong>Do kampaně se zatím nedostala žádná firma. </strong>
+              )}
+
+              {cekajici.bezVelikosti > 0 && (
                 <>
-                  {preskoceno.bezVelikosti.toLocaleString("cs")}{" "}
-                  {cesky(preskoceno.bezVelikosti, "firma", "firmy", "firem")} v území{" "}
-                  {cesky(preskoceno.bezVelikosti, "zůstala", "zůstaly", "zůstalo")} stranou,
-                  protože <strong>u nich registr neuvádí velikost</strong>. Vzít je můžete
-                  ve druhém kroku — zaškrtnutím „Zahrnout i firmy s neznámou velikostí".{" "}
+                  <p>
+                    V území {cesky(cekajici.bezVelikosti, "čeká", "čekají", "čeká")}{" "}
+                    {cekajici.bezVelikosti.toLocaleString("cs")}{" "}
+                    {cesky(cekajici.bezVelikosti, "firma", "firmy", "firem")},
+                    u {cesky(cekajici.bezVelikosti, "které", "kterých", "kterých")}{" "}
+                    <strong>registr neuvádí velikost</strong>. Dohledání kontaktů
+                    u nich zabere navíc {odhadKontaktu(cekajici.bezVelikosti)}.
+                  </p>
+                  <div className="tlacitka vlevo">
+                    <button
+                      className="tlacitko"
+                      disabled={uklada}
+                      onClick={() => setPridat("nezname")}
+                    >
+                      Přidat {cekajici.bezVelikosti.toLocaleString("cs")}{" "}
+                      {cesky(cekajici.bezVelikosti, "firmu", "firmy", "firem")} s neznámou velikostí
+                    </button>
+                  </div>
                 </>
               )}
-              {preskoceno.mikro > 0 && (
+
+              {cekajici.mikro > 0 && (
                 <>
-                  Dalších {preskoceno.mikro.toLocaleString("cs")} je do 24 zaměstnanců;
-                  ty se do kampaně neberou nikdy.
+                  <p>
+                    A dál {cekajici.mikro.toLocaleString("cs")}{" "}
+                    {cesky(cekajici.mikro, "firma", "firmy", "firem")}{" "}
+                    <strong>do 24 zaměstnanců</strong>. Dohledání kontaktů u nich
+                    zabere navíc {odhadKontaktu(cekajici.mikro)}.
+                  </p>
+                  <div className="tlacitka vlevo">
+                    <button
+                      className="tlacitko"
+                      disabled={uklada}
+                      onClick={() => setPridat("mikro")}
+                    >
+                      Přidat {cekajici.mikro.toLocaleString("cs")}{" "}
+                      {cesky(cekajici.mikro, "malou firmu", "malé firmy", "malých firem")}
+                    </button>
+                  </div>
                 </>
               )}
-            </p>
+            </div>
           )}
 
           {chyba && (
@@ -825,17 +925,25 @@ export function PruvodceKampani({
           )}
 
           {/* Vyřazené schválně NAHOŘE, ne schované. Kdo nevidí, proč firma
-              v seznamu chybí, přestane pravidlům věřit a začne je obcházet. */}
+              v seznamu chybí, přestane pravidlům věřit a začne je obcházet.
+              Vypisuje se ale jen prvních padesát — počet v nadpisu zůstává
+              úplný, takže se nic nezatajuje, jen se to vejde na obrazovku. */}
           {vynechano.length > 0 && (
             <div className="hlaska je-klid">
               <strong>V území leží, ale do kampaně nepatří ({vynechano.length}):</strong>
               <ul>
-                {vynechano.map((v) => (
+                {vynechano.slice(0, 50).map((v) => (
                   <li key={v.ico}>
                     {v.nazev} — {v.duvod}: {v.detail}
                   </li>
                 ))}
               </ul>
+              {vynechano.length > 50 && (
+                <p className="poznamka">
+                  … a dalších {(vynechano.length - 50).toLocaleString("cs")}{" "}
+                  {cesky(vynechano.length - 50, "firma", "firmy", "firem")}.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -960,6 +1068,61 @@ export function PruvodceKampani({
                 </button>
                 <button className="tlacitko" disabled={uklada} onClick={schval}>
                   {uklada ? "Schvaluji…" : "Schválit"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {pridat && cekajici && (
+          <div
+            className="zaclona"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Přidat firmy do kampaně"
+          >
+            <div className="dialog">
+              {pridat === "nezname" ? (
+                <>
+                  <h3>
+                    Přidat {cekajici.bezVelikosti.toLocaleString("cs")}{" "}
+                    {cesky(cekajici.bezVelikosti, "firmu", "firmy", "firem")} s neznámou velikostí?
+                  </h3>
+                  <p>
+                    Registr o jejich velikosti mlčí — jestli stojí za oslovení,
+                    se ukáže až při rešerši. Dohledání kontaktů u nich zabere
+                    navíc <strong>{odhadKontaktu(cekajici.bezVelikosti)}</strong>.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3>
+                    Přidat {cekajici.mikro.toLocaleString("cs")}{" "}
+                    {cesky(cekajici.mikro, "malou firmu", "malé firmy", "malých firem")}?
+                  </h3>
+                  <p>
+                    Firmy do 24 zaměstnanců. Dohledání kontaktů u nich zabere
+                    navíc <strong>{odhadKontaktu(cekajici.mikro)}</strong>.
+                    Společenství vlastníků a bytová družstva mezi nimi nejsou —
+                    ta vyřazuje síto bez ohledu na velikost.
+                  </p>
+                </>
+              )}
+              <p className="poznamka">
+                Zpátky to jde jen po jedné, tlačítkem Vyřadit u konkrétní firmy.
+                Hromadné odebrání není — smazalo by i rozhodnutí, která jste
+                mezitím udělali.
+              </p>
+              <div className="tlacitka vlevo">
+                <button className="tlacitko tise" onClick={() => setPridat(null)}>
+                  Ještě ne
+                </button>
+                <button
+                  className="tlacitko"
+                  disabled={uklada}
+                  onClick={() => pridejKos(pridat)}
+                >
+                  {uklada ? "Přidávám…" : "Přidat"}
                 </button>
               </div>
             </div>

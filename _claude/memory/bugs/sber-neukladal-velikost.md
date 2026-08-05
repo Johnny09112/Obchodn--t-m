@@ -31,9 +31,11 @@ si nese dál a příště ji objeví uživatel.
 proč je prázdná — a hláška ze seznamu firem („zkuste tvar roztáhnout") radila
 opak toho, co bylo potřeba.
 
-`naplnKampanZOblasti` teď vrací `preskoceno: { mikro, bezVelikosti }` a krok 4
-to vypíše: „68 firem v území zůstalo stranou, protože u nich registr neuvádí
-velikost. Vzít je můžete ve druhém kroku…"
+Krok 4 dnes čte `spocitejCekajici` a ukazuje trvalý panel: kolik firem
+z území v kampani ještě není, po koších (bez známé velikosti / do 24
+zaměstnanců). Panel se dopočítá z dat při každém vstupu do kroku, takže
+platí i po znovuotevření kampaně — na rozdíl od hlášky vázané jen na
+okamžik doplnění, která zmizela a druhé otevření o čekajících firmách mlčelo.
 
 Pravidlo do budoucna: **kdykoli filtr sníží počet na nulu, musí obrazovka
 říct který filtr a jak ho povolit.**

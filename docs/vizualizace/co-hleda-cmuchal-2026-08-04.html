@@ -1,0 +1,568 @@
+<title>Co hledá Čmuchal</title>
+
+<style>
+  :root {
+    --papir: #f6f8f7;
+    --papir-2: #ffffff;
+    --inkoust: #16211f;
+    --inkoust-2: #33403c;
+    --tlum: #5e6b67;
+    --linka: #d9e0dd;
+    --akcent: #0e6b5e;
+    --akcent-tlum: #e4efec;
+    --zakaz: #a3341f;
+    --zakaz-tlum: #f7e9e5;
+    --stin: rgba(22, 33, 31, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #0f1513;
+      --papir-2: #161e1b;
+      --inkoust: #e8efec;
+      --inkoust-2: #b6c3be;
+      --tlum: #8a9a94;
+      --linka: #2a3733;
+      --akcent: #5fc3ae;
+      --akcent-tlum: #16302b;
+      --zakaz: #e08b73;
+      --zakaz-tlum: #2f1c16;
+      --stin: rgba(0, 0, 0, .4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #0f1513;
+    --papir-2: #161e1b;
+    --inkoust: #e8efec;
+    --inkoust-2: #b6c3be;
+    --tlum: #8a9a94;
+    --linka: #2a3733;
+    --akcent: #5fc3ae;
+    --akcent-tlum: #16302b;
+    --zakaz: #e08b73;
+    --zakaz-tlum: #2f1c16;
+    --stin: rgba(0, 0, 0, .4);
+  }
+  :root[data-theme="light"] {
+    --papir: #f6f8f7;
+    --papir-2: #ffffff;
+    --inkoust: #16211f;
+    --inkoust-2: #33403c;
+    --tlum: #5e6b67;
+    --linka: #d9e0dd;
+    --akcent: #0e6b5e;
+    --akcent-tlum: #e4efec;
+    --zakaz: #a3341f;
+    --zakaz-tlum: #f7e9e5;
+    --stin: rgba(22, 33, 31, .06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--papir);
+    color: var(--inkoust);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .stranka {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+
+  h1, h2, h3 {
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-weight: 600;
+    text-wrap: balance;
+    margin: 0;
+    letter-spacing: -.01em;
+  }
+  h1 { font-size: clamp(2rem, 5vw, 2.9rem); line-height: 1.15; }
+  h2 { font-size: clamp(1.35rem, 3vw, 1.7rem); line-height: 1.25; }
+  h3 { font-size: 1.05rem; line-height: 1.35; }
+
+  p { margin: 0; max-width: 65ch; }
+
+  .stitek {
+    font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--tlum);
+  }
+
+  /* ── hlavička */
+
+  header { display: flex; flex-direction: column; gap: 1rem; }
+  header .perex { font-size: 1.15rem; color: var(--inkoust-2); max-width: 58ch; }
+  .datum {
+    border-top: 2px solid var(--inkoust);
+    padding-top: .6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  /* ── oddíly */
+
+  section { display: flex; flex-direction: column; gap: 1.25rem; }
+  section > .uvod { color: var(--inkoust-2); }
+
+  /* ── karty atributů */
+
+  .atributy {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1rem;
+  }
+  .atribut {
+    background: var(--papir-2);
+    border: 1px solid var(--linka);
+    border-left: 3px solid var(--akcent);
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+  }
+  .atribut h3 { color: var(--akcent); }
+  .atribut p { font-size: .93rem; color: var(--inkoust-2); }
+  .atribut .kde { font-size: .85rem; color: var(--tlum); }
+
+  /* ── žebříček zdrojů: pořadí je věcná informace, ne ozdoba */
+
+  .zdroje { display: flex; flex-direction: column; gap: 0; counter-reset: zdroj; }
+  .zdroj {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--linka);
+    align-items: start;
+  }
+  .zdroj:last-child { border-bottom: 1px solid var(--linka); }
+  .zdroj .poradi {
+    counter-increment: zdroj;
+    font-family: ui-monospace, monospace;
+    font-size: 1.05rem;
+    color: var(--akcent);
+    font-variant-numeric: tabular-nums;
+    padding-top: .1rem;
+  }
+  .zdroj .poradi::before { content: counter(zdroj); }
+  .zdroj .telo { display: flex; flex-direction: column; gap: .3rem; }
+  .zdroj .telo p { font-size: .93rem; color: var(--inkoust-2); }
+  .zdroj.hotovo { opacity: .72; }
+  .znacka {
+    display: inline-block;
+    font-family: ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: .12rem .5rem;
+    border-radius: 2px;
+    background: var(--akcent-tlum);
+    color: var(--akcent);
+    margin-left: .5rem;
+    vertical-align: .1em;
+  }
+
+  /* ── zákazy */
+
+  .zakazy {
+    background: var(--zakaz-tlum);
+    border: 1px solid var(--zakaz);
+    padding: 1.4rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+  }
+  .zakazy ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .7rem; }
+  .zakazy li { color: var(--inkoust); }
+  .zakazy li strong { color: var(--zakaz); }
+  .zakazy .pozn { font-size: .9rem; color: var(--inkoust-2); }
+
+  /* ── tabulky */
+
+  .tabulka-obal { overflow-x: auto; border: 1px solid var(--linka); background: var(--papir-2); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; min-width: 34rem; }
+  th, td { text-align: left; padding: .7rem .9rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  thead th {
+    font-family: ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tlum);
+    font-weight: 500;
+    background: var(--papir);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.typ { font-weight: 600; }
+  td.slepe { color: var(--tlum); }
+
+  /* ── měření */
+
+  .mereni { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1px; background: var(--linka); border: 1px solid var(--linka); }
+  .cislo { background: var(--papir-2); padding: 1.1rem 1rem; display: flex; flex-direction: column; gap: .3rem; }
+  .cislo b {
+    font-family: Georgia, serif;
+    font-size: 1.9rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--akcent);
+    font-weight: 600;
+  }
+  .cislo span { font-size: .85rem; color: var(--inkoust-2); }
+
+  .poznamka {
+    font-size: .9rem;
+    color: var(--tlum);
+    border-left: 2px solid var(--linka);
+    padding-left: .9rem;
+  }
+
+  footer {
+    border-top: 1px solid var(--linka);
+    padding-top: 1.25rem;
+    font-size: .87rem;
+    color: var(--tlum);
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }
+  footer code {
+    font-family: ui-monospace, monospace;
+    font-size: .85em;
+    color: var(--inkoust-2);
+  }
+
+  @media (max-width: 34rem) {
+    body { font-size: 16px; }
+    .stranka { padding: 2rem 1.1rem 3.5rem; gap: 2.5rem; }
+    .zdroj { grid-template-columns: 1.9rem 1fr; gap: .7rem; }
+  }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="stitek">Cantinero · agent Čmuchal</div>
+    <h1>Co dnes hledá AI průzkum — a kde</h1>
+    <p class="perex">
+      Přehled toho, co agent při rešerši firmy shání, v jakém pořadí to zkouší
+      a čeho se nikdy nedotkne. Sestaveno z definice agenta a z playbooku,
+      který si sám doplňuje po každém běhu.
+    </p>
+    <div class="datum">
+      <span class="stitek">Stav k 4. 8. 2026</span>
+      <span class="stitek">Odesílání vypnuté</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>Hlavní úkol je jediný</h2>
+    <p class="uvod">
+      <strong>Najít u firmy konkrétního člověka, na kterého se dá obrátit</strong> —
+      jméno, pozici, telefon nebo e-mail. Stačí jeden z těch údajů, ale musí být
+      doložený. Firma bez jediného kontaktu je k ničemu, i kdybychom o ní věděli
+      všechno ostatní. Vedle toho sbírá tři věci o stravování.
+    </p>
+
+    <div class="atributy">
+      <div class="atribut">
+        <h3>Kontakt</h3>
+        <p>Nejvýš dvě osoby nebo adresy na firmu.</p>
+        <p class="kde">Kontakty, O nás, Tým, Vedení</p>
+      </div>
+      <div class="atribut">
+        <h3>Vlastní jídelna</h3>
+        <p>Má firma závodní jídelnu nebo kantýnu? Ano / ne.</p>
+        <p class="kde">Sekce o firmě, kariérní stránka, benefity</p>
+      </div>
+      <div class="atribut">
+        <h3>Způsob stravování</h3>
+        <p>Jak firma řeší obědy — stravenky, příspěvek, dovoz, nic.</p>
+        <p class="kde">Kariérní stránka, benefity, inzeráty</p>
+      </div>
+      <div class="atribut">
+        <h3>Účel adresy</h3>
+        <p>K čemu firma zveřejněnou adresu určila. Rozhoduje o její užitečnosti.</p>
+        <p class="kde">Kontaktní stránka</p>
+      </div>
+    </div>
+
+    <p class="poznamka">
+      Adresy se řadí do tří úrovní. <strong>Nejlepší je adresa zveřejněná pro
+      příjem nabídek</strong> (<code>poptavky@</code>, <code>nabidky@</code>),
+      pak obecná firemní (<code>info@</code>), nejníž jmenná adresa konkrétní
+      osoby. Nižší úroveň se bere jen tehdy, když vyšší neexistuje.
+    </p>
+  </section>
+
+  <section>
+    <h2>Kde hledá, v pořadí podle výtěžnosti</h2>
+    <p class="uvod">
+      Pořadí není libovolné — je seřazené podle toho, co se na skutečných
+      běhách osvědčilo. První dvě položky obstará kód sám ještě před tím, než
+      se agent vůbec zapojí.
+    </p>
+
+    <div class="zdroje">
+      <div class="zdroj hotovo">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Otevřená data úřadu práce <span class="znacka">dělá kód</span></h3>
+          <p>
+            U inzerátu bývá pole „komu se hlásit" se jménem, pozicí, e-mailem
+            i telefonem. Zaměstnavatel to zveřejnil sám — nejlevnější zdroj vůbec.
+            Omezení: jen firmy, které nabírají, a účelem adresy je nábor, ne nabídky.
+          </p>
+        </div>
+      </div>
+
+      <div class="zdroj hotovo">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Jednatel z veřejného rejstříku <span class="znacka">dělá kód</span></h3>
+          <p>
+            Jméno a funkce prakticky ke každé s.r.o. a a.s. Zachrání i firmy bez
+            webu. Bere se jen jméno a funkce, nikdy datum narození ani bydliště.
+            U firmy do padesáti lidí je jednatel často ten pravý; u velké rozhodně ne.
+          </p>
+        </div>
+      </div>
+
+      <div class="zdroj">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Kontakty na webu firmy — hledané podle už známého jména</h3>
+          <p>
+            Nejvýnosnější jediný krok celé rešerše. Agent nehledá „nějaký
+            kontakt", ale rovnou spojení na konkrétního člověka, kterého už zná
+            z rejstříku. Ve zkušební dávce takhle uspěl u 8 firem z 20.
+          </p>
+        </div>
+      </div>
+
+      <div class="zdroj">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Sekce pro nabídky</h3>
+          <p>
+            „Cenové nabídky", „obchodní zástupci", „pro dodavatele". Dá kontakt
+            té nejlepší úrovně. Hledá se cíleně — obecné Kontakty vedou na centrálu.
+          </p>
+        </div>
+      </div>
+
+      <div class="zdroj">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Podstránka konkrétní provozovny</h3>
+          <p>
+            U firem s víc pobočkami. Tam bývají místní lidé, ne ústředí.
+          </p>
+        </div>
+      </div>
+
+      <div class="zdroj">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Tým, Vedení, O nás, tiráž</h3>
+          <p>Standardní místa, kde firmy jmenují lidi.</p>
+        </div>
+      </div>
+
+      <div class="zdroj">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Dokumenty ke stažení</h3>
+          <p>
+            Ceníky, katalogy, obchodní podmínky, formuláře. Bývá pod nimi
+            podepsaný konkrétní člověk i s přímým kontaktem.
+          </p>
+        </div>
+      </div>
+
+      <div class="zdroj">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Web mateřské firmy</h3>
+          <p>
+            Když česká doména mlčí. U firem vlastněných zahraniční skupinou
+            samostatná <code>.cz</code> doména často vůbec neexistuje a kontakty
+            jsou na mezinárodním webu.
+          </p>
+        </div>
+      </div>
+
+      <div class="zdroj">
+        <div class="poradi"></div>
+        <div class="telo">
+          <h3>Archiv webu</h3>
+          <p>U firem, jejichž stránky už nefungují.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co nesmí, ať se děje co se děje</h2>
+    <div class="zakazy">
+      <ul>
+        <li>
+          <strong>Nikoho neoslovuje</strong> — ani kvůli zjištění kontaktu.
+          Žádný telefon na centrálu s dotazem „kdo u vás řeší stravování",
+          žádný e-mail na <code>info@</code>.
+        </li>
+        <li>
+          <strong>LinkedIn a sociální sítě nikdy</strong>, ani ke čtení.
+          Platí i přesto, že jinak je při hledání dovoleno prakticky vše.
+        </li>
+        <li>
+          <strong>Neodhaduje e-maily podle vzoru.</strong> Odvodit
+          <code>jmeno.prijmeni@firma.cz</code> z jedné známé adresy je
+          vymýšlení, které se v kartotéce tváří jako fakt.
+        </li>
+        <li>
+          <strong>Ke každému údaji doslovná citace a odkaz na konkrétní
+          stránku</strong> — ne na domovskou. Co není doložené, se nezapíše.
+        </li>
+        <li>
+          <strong>Nesbírá nic mimo výčet výše.</strong> Žádné finanční údaje,
+          recenze, hodnocení, inzeráty jako obsah ani jména jiných zaměstnanců
+          než adresáta.
+        </li>
+        <li>
+          <strong>Nic neodesílá.</strong> Nemá k tomu nástroj a mít ho nebude.
+        </li>
+      </ul>
+      <p class="pozn">
+        Tohle nejsou doporučení v promptu. Zápis, který je poruší, odmítne
+        kontrola v kódu — proto na tom nezáleží, jestli se model splete.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co se ukázalo jako slepé</h2>
+    <p class="uvod">Vyzkoušeno a zamítnuto — ať se to nezkouší podruhé.</p>
+    <div class="tabulka-obal">
+      <table>
+        <thead>
+          <tr><th>Zdroj</th><th>Proč nefunguje</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="typ">Registr smluv</td>
+            <td class="slepe">Metadata nesou jen název, IČO, adresu a datovou schránku. Žádnou kontaktní osobu — jména by byla až uvnitř PDF.</td>
+          </tr>
+          <tr>
+            <td class="typ">Souhrny z vyhledávače</td>
+            <td class="slepe">Umí si vymyslet telefon nebo e-mail, který na cílové stránce vůbec není. Kontakt se nikdy nezapisuje bez přímého načtení stránky.</td>
+          </tr>
+          <tr>
+            <td class="typ">Malé pracovní agregátory</td>
+            <td class="slepe">Do týdnů až měsíců mizí. Zdroj by za čas ukazoval na nic.</td>
+          </tr>
+          <tr>
+            <td class="typ">Katalogy třetích stran</td>
+            <td class="slepe">Poslední možnost — údaj tam může být roky starý. Označuje se jako slabší zdroj.</td>
+          </tr>
+          <tr>
+            <td class="typ">Skupinový kariérní portál</td>
+            <td class="slepe">Benefit popsaný pro celou skupinu nejde bezpečně přiřadit ke konkrétní dceřiné firmě, pokud ji stránka nejmenuje.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co zabírá podle typu firmy</h2>
+    <div class="tabulka-obal">
+      <table>
+        <thead>
+          <tr><th>Typ</th><th>Co zabírá</th><th>Co je slepé</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="typ">Obce a města</td>
+            <td>Kontakty podle agend; tajemník je nejbližší obdoba personalisty. Odkaz na portál veřejné správy dá přímý e-mail označený „oficiální".</td>
+            <td class="slepe">Stravování úředníků se neuvádí nikdy</td>
+          </tr>
+          <tr>
+            <td class="typ">Příspěvkovky města</td>
+            <td>Vlastní telefonní seznam podle jmen a funkcí, obdoba úřadu</td>
+            <td class="slepe">Stravování se na webu neřeší vůbec</td>
+          </tr>
+          <tr>
+            <td class="typ">Bytová družstva</td>
+            <td>Kontakty rozpadlé po jednotlivých lidech včetně předsedy</td>
+            <td class="slepe">—</td>
+          </tr>
+          <tr>
+            <td class="typ">Výroba s víc provozy</td>
+            <td>Podstránka provozovny; sekce obchodních zástupců</td>
+            <td class="slepe">Obecné Kontakty vedou jen na ústředí</td>
+          </tr>
+          <tr>
+            <td class="typ">Sociální zařízení</td>
+            <td>Podstránka o stravě („Přihláška a odhláška stravy")</td>
+            <td class="slepe">Obecné „O nás" odkáže bez detailu</td>
+          </tr>
+          <tr>
+            <td class="typ">Školy</td>
+            <td>Stránka školní jídelny doloží vlastní jídelnu</td>
+            <td class="slepe">—</td>
+          </tr>
+          <tr>
+            <td class="typ">Spolky</td>
+            <td>Podstránka „Podpora a sponzoring", „Dary", výroční zpráva</td>
+            <td class="slepe">Obecné Kontakty spolek často vůbec nezmíní</td>
+          </tr>
+          <tr>
+            <td class="typ">Nová s.r.o. bez webu</td>
+            <td>Jen jednatel z rejstříku</td>
+            <td class="slepe">Nulová webová stopa — katalogy nenajdou nic navíc</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Jak je úspěšný</h2>
+    <p class="uvod">
+      Naměřeno na zkušební dávce <strong>20 firem z Plzně, 2. 8. 2026</strong>.
+      Vzorek byl výroba, bytová družstva, spolky a příspěvkové organizace —
+      firmy s doloženou velikostí a známým jednatelem, ale bez spojení.
+    </p>
+    <div class="mereni">
+      <div class="cislo"><b>19/20</b><span>doložený e-mail nebo telefon</span></div>
+      <div class="cislo"><b>8/20</b><span>spojení na už známého jednatele</span></div>
+      <div class="cislo"><b>1/20</b><span>doložený způsob stravování</span></div>
+      <div class="cislo"><b>0/20</b><span>poptávková adresa</span></div>
+      <div class="cislo"><b>64 s</b><span>na jednu firmu</span></div>
+    </div>
+    <p class="poznamka">
+      Dvě čísla vypadají špatně, ale nejsou to selhání rešerše.
+      <strong>Stravování weby prostě neuvádějí</strong> — u městských organizací
+      nikdy. A <strong>poptávkovou adresu tenhle typ firem nemá</strong>;
+      objevila by se spíš u obchodních a dodavatelských firem. Na kvalifikaci
+      firmy se proto stravování spoléhat nedá.
+    </p>
+  </section>
+
+  <footer>
+    <div>Sestaveno z definice agenta a jeho playbooku, které se mění po každém běhu.</div>
+    <div><code>.claude/agents/cmuchal.md</code> · <code>playbook-cmuchal.md</code> · <code>src/whitelist.ts</code></div>
+  </footer>
+
+</div>

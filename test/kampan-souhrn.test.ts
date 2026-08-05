@@ -37,17 +37,27 @@ async function firmaVKampani(kampanId: string, ico: string, uroven?: 1 | 2 | 3) 
 }
 
 describe("rozpad kontaktů v kampani", () => {
-  it("roztřídí firmy podle úrovně adresy", async () => {
+  // Pozor na počty: kdyby měla každá úroveň jednu firmu, test by projel
+  // i s pootočenými popisky. Právě to se stalo — obrazovka i příkazová řádka
+  // hlásily úroveň 1 jako jmenovanou osobu, ačkoli TP-6 říká opak.
+  it("roztřídí firmy podle úrovně adresy — pořadí podle TP-6", async () => {
     const id = await zalozKampan(db, { nazev: "K1", spravce: "a@b.cz" });
+    // Úroveň 1 = adresa pro nabídky
     await firmaVKampani(id, "25232657", 1);
+    // Úroveň 2 = obecná firemní adresa
     await firmaVKampani(id, "48362956", 2);
-    await firmaVKampani(id, "17439523", 3);
-    await firmaVKampani(id, "60193531");
+    await firmaVKampani(id, "17439523", 2);
+    // Úroveň 3 = jmenovaná osoba (ta, u které patří do zprávy poučení
+    // podle čl. 14 GDPR — proto se nesmí splést s ostatními)
+    await firmaVKampani(id, "60193531", 3);
+    await firmaVKampani(id, "26353130", 3);
+    await firmaVKampani(id, "23967102", 3);
+    await firmaVKampani(id, "00255211");
 
     expect(await rozpadKontaktuKampane(db, id)).toEqual({
-      jmenna: 1,
       proNabidky: 1,
-      obecna: 1,
+      obecna: 2,
+      jmenna: 3,
       zadny: 1,
     });
   });
@@ -56,18 +66,22 @@ describe("rozpad kontaktů v kampani", () => {
     // Jinak by jedna firma přispěla do dvou sloupců a součet by nesouhlasil
     // s počtem firem v kampani.
     const id = await zalozKampan(db, { nazev: "K2", spravce: "a@b.cz" });
+    // Firma má jmenovanou osobu (úroveň 3)…
     await firmaVKampani(id, "25232657", 3);
+    // …a k tomu adresu zveřejněnou pro příjem nabídek (úroveň 1).
     await zapisKontakt(db, "25232657", {
-      email: "reditel@example.cz",
+      email: "poptavky@example.cz",
       urovenAdresy: 1,
-      zdrojUrl: "https://example.cz/vedeni",
-      citace: "ředitel společnosti",
+      zdrojUrl: "https://example.cz/pro-dodavatele",
+      citace: "Nabídky posílejte na poptavky@example.cz",
     });
 
+    // Píše se na poptávkovou adresu — je to pozvánka a nevyžaduje poučení
+    // podle čl. 14 GDPR, na rozdíl od psaní jmenované osobě.
     expect(await rozpadKontaktuKampane(db, id)).toEqual({
-      jmenna: 1,
-      proNabidky: 0,
+      proNabidky: 1,
       obecna: 0,
+      jmenna: 0,
       zadny: 0,
     });
   });

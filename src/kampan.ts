@@ -449,7 +449,10 @@ export interface RozpadKontaktu {
  *
  * Firma se počítá podle NEJLEPŠÍHO kontaktu, který má — jinak by jedna firma
  * přispěla do dvou sloupců a součet by nesouhlasil s počtem firem v kampani.
- * Nejlepší je nejnižší úroveň: 1 je jmenovaná osoba, 3 obecná adresa.
+ * Nejlepší je nejnižší úroveň. Podle TP-6: **1 je adresa pro nabídky,
+ * 2 obecná firemní adresa, 3 jmenovaná osoba.** Není to pořadí podle toho,
+ * kdo rozhoduje, ale právní žebříček — u jmenované osoby patří do zprávy
+ * poučení podle čl. 14 GDPR.
  *
  * Ručně vyřazené firmy se nepočítají vůbec; ty už v kampani nejsou.
  */
@@ -470,9 +473,9 @@ export async function rozpadKontaktuKampane(
 
   const podle = new Map(r.map((x) => [x.uroven, x.pocet]));
   return {
-    jmenna: podle.get(1) ?? 0,
-    proNabidky: podle.get(2) ?? 0,
-    obecna: podle.get(3) ?? 0,
+    proNabidky: podle.get(1) ?? 0,
+    obecna: podle.get(2) ?? 0,
+    jmenna: podle.get(3) ?? 0,
     zadny: podle.get(null) ?? 0,
   };
 }

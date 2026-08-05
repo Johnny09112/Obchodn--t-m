@@ -795,10 +795,15 @@ export function PruvodceKampani({
     const vybrane = firmy.filter((f) => f.stav === "vybrana");
     const rozpad = { jmenna: 0, proNabidky: 0, obecna: 0, zadny: 0 };
     for (const f of vybrane) {
+      // Pořadí podle TP-6: 1 = adresa pro nabídky, 2 = obecná, 3 = jmenovaná
+      // osoba. Dřív to tu bylo obráceně, takže obrazovka hlásila poptávkovou
+      // adresu jako jmenovanou osobu a naopak — a právě počet jmenovaných
+      // osob je ten, který má před fází 3 rozsvítit pozornost kvůli GDPR
+      // čl. 14 (u jmenované osoby patří poučení přímo do zprávy).
       const u = nejlepsiUroven(f);
-      if (u === 1) rozpad.jmenna++;
-      else if (u === 2) rozpad.proNabidky++;
-      else if (u === 3) rozpad.obecna++;
+      if (u === 1) rozpad.proNabidky++;
+      else if (u === 2) rozpad.obecna++;
+      else if (u === 3) rozpad.jmenna++;
       else rozpad.zadny++;
     }
     const seSpojenim = vybrane.length - rozpad.zadny;

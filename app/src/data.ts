@@ -754,7 +754,11 @@ export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[
 /**
  * Nejlepší doložená úroveň adresy, nebo `null` když firma spojení nemá.
  *
- * Nejlepší je nejnižší číslo: 1 je jmenovaná osoba, 3 obecná adresa.
+ * Nejlepší je nejnižší číslo. Podle TP-6: **1 je adresa pro nabídky,
+ * 2 obecná firemní adresa, 3 jmenovaná osoba.** Pořadí není o tom, kdo
+ * o nabídce rozhoduje — je to právní žebříček: adresa zveřejněná pro příjem
+ * nabídek je pozvánka, kdežto u jmenované osoby zpracováváme osobní údaj
+ * získaný odjinud a do zprávy patří poučení podle čl. 14 GDPR.
  * Firma se počítá jen jednou — jinak by přispěla do dvou sloupců a součet
  * by nesouhlasil s počtem firem. Totéž dělá `rozpadKontaktuKampane`
  * v `src/kampan.ts` pro příkazovou řádku.

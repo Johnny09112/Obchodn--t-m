@@ -61,8 +61,24 @@ Vývojový server: `npm run dev --prefix app` (port 5173).
 
 ## Aktuální focus
 
-**Čeká se na rozhodnutí majitele o Čachrově** (viz otevřené body) a pak
-na volbu dalšího celku.
+**Čachrov je vyřešený** (4. 8.) — majitel může firmy přibrat sám, viz níž.
+Čeká se na volbu dalšího celku.
+
+## Co se stalo 4. 8.
+
+**Dodatečné přibírání firem do kampaně** ([[male-firmy-a-nezname-jde-pribrat]]).
+U seznamu firem je trvalý panel, který při každém otevření ukáže, co v území
+čeká, a nabídne to dvěma tlačítky — firmy bez známé velikosti a firmy do 24
+zaměstnanců zvlášť. Čísla se dopočítávají z dat, takže nemůžou zastarat.
+
+Cestou se ukázalo, že **aplikace zahazovala mikropodniky**, ačkoli SPEC kap.
+10.2 je zná jako plnohodnotný segment. Pravidlo „mikro se neberou nikdy"
+v SPEC nikde nebylo. Společenství vlastníků se nepřibírají — drží je síto.
+
+Ověřeno naostro na Čachrovu: 5 → 23 → **91 firem**, mezi 18 malými ani jedno
+společenství. Kampaň Hrobce má dalších 22 malých firem, které čekají.
+
+Past objevená až proklikáním: [[zamykej-vyjmenovanim-zamcenych-stavu]].
 
 ## Otevřené body
 

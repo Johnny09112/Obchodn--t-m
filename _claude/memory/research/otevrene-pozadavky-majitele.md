@@ -11,9 +11,9 @@ Seřazeno podle toho, co blokuje postup.
 
 ## A. Čeká na rozhodnutí majitele
 
-1. **Čachrov — vzít i firmy bez známé velikosti?** Kampaň má 5 cílových
-   firem; dalších 68 registr velikostí nepokrývá. U malé obce dává jejich
-   zahrnutí větší smysl než u Plzně. Doporučeno zahrnout a pustit rešerši.
+1. ~~**Čachrov — vzít i firmy bez známé velikosti?**~~ **Vyřešeno 4. 8.** —
+   majitel je přibral sám v aplikaci, kampaň má 91 firem
+   ([[male-firmy-a-nezname-jde-pribrat]]). Rešerše na ně zatím neběžela.
 2. **Rešerše zbylých 432 plzeňských firem** (~7,5 h agentní práce, jde
    z předplatného). Doporučeno napřed 100 firem, ať se ověří, že úspěšnost
    drží i mimo nejlepší skóre ([[resurse-agentem-zmereno]]).

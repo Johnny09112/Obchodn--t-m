@@ -7,6 +7,7 @@
 - [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-03
 
 ## Decisions
+- [[male-firmy-a-nezname-jde-pribrat]] — Firmy bez známé velikosti i firmy do 24 zaměstnanců jde do kampaně přibrat dodatečně, každé vlastním tlačítkem · active · 2026-08-04
 - [[jidelna-se-nepriradi-rucne]] — Jídelna se k oblasti nevybírá ručně — ukazuje se, které v tom tvaru leží · active · 2026-08-03
 - [[obrazovka-oblasti-a-listovani]] — Oblasti = mapa nahoře, jeden seznam pod ní ovládá vrstvy; kartotéka se listuje po stovkách · active · 2026-08-03
 - [[kontakty-i-nad-oblasti]] — Doplňování kontaktů umí i firmy bez jídelny — sběr nad oblastí je zakládá mimo zónu · active · 2026-08-02
@@ -25,6 +26,7 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[zamykej-vyjmenovanim-zamcenych-stavu]] — Zámek psaný jako „otevřený je jen jeden stav" zamkne i pracovní stavy — vyjmenuj stavy zamčené · active · 2026-08-04
 - [[ares-nedoplni-velikost]] — Dotaz do ARESu na velikost firmy nevrátí nic navíc proti souboru ČSÚ — je to tentýž registr · active · 2026-08-02
 - [[automaticka-uprava-textu-potrebuje-guard]] — Skript, který jen vypíše hotovo, nic nedokazuje — hlídej každou náhradu zvlášť · active · 2026-08-01
 - [[cantinero-data-dir-vs-database-url]] — CANTINERO_DATA_DIR neplatí, když je nastavené DATABASE_URL · active · 2026-08-01

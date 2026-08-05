@@ -32,8 +32,11 @@ fáze 0 viz docs/FAZE-0.md.
 - Firma vzniká JEN po ověření IČO v ARES (TP-1). Jediná cesta: `zalozFirmu()`.
 - Každý dohledaný atribut má evidenci se `zdroj_url` a doslovnou citací;
   bez zdroje zůstává NULL (TP-2). Jediná cesta: `zapisAtribut()` / `zapisKontakt()`.
-- Sbírá a personalizuje se jen whitelist atributů (src/whitelist.ts, TP-3).
-  Nikdy: sociální sítě, finanční údaje, inzeráty, recenze, odhady.
+- **Do zprávy** smí jen whitelist atributů (src/whitelist.ts, TP-3).
+  **Sběr** je širší — určuje ho profil produktu, ale pořád jen s doloženým
+  zdrojem (SPEC kap. 5, dvě vrstvy). Nikdy nikam: sociální sítě, finanční
+  údaje, recenze, odhady. Pracovní inzeráty se smějí číst, ale nesmějí do
+  zprávy.
 - Nic se neodesílá. `system_state.sending_enabled` je false a žádný kód fáze
   0–2 nesmí odesílání implementovat ani zapínat. Zapnout smí pouze člověk (TP-8).
 - Jedna firma = jedno oslovení, žádné sekvence (TP-5) — platí od fáze 3.

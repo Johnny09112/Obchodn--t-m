@@ -85,6 +85,11 @@ odhadem.
 Renderer smí sáhnout pouze na atributy z whitelistu, a jen tam, kde
 existuje evidence. Chybí-li, příslušná pasáž ze zprávy vypadne.
 
+**Pravidlo váže zprávu, ne sběr** (upřesněno 2026-08-06). Co o firmě smíme
+zjišťovat, určuje profil produktu — pořád ale jen s doloženým zdrojem (TP-2)
+a bez zakázaných kategorií z kap. 5.3. Whitelist tedy říká, co smí ven, ne
+co smíme vědět.
+
 **TP-4 — Území.** Odeslat lze pouze firmě, která má vyplněné
 `nejblizsi_jidelna_id` a `vzdalenost_m` v rámci nastavené zóny.
 
@@ -153,12 +158,41 @@ schválení lze obnovit odesílání.
 
 ---
 
-## 5. Personalizace
+## 5. Znalost o firmě a personalizace
 
-Cílem je relevance, ne demonstrace toho, kolik jsme toho zjistili.
-Přehnaná personalizace působí jako sledování a snižuje odezvu.
+> Rozděleno na dvě vrstvy rozhodnutím majitele 2026-08-06 (viz
+> `docs/adr/0002-dve-vrstvy-a-nastavitelnost.md`). Dřív byla kapitola jedna
+> a whitelist omezoval sběr i zprávu naráz.
 
-### Povolené atributy
+**Cílem je relevance, ne demonstrace toho, kolik jsme toho zjistili.
+Přehnaná personalizace působí jako sledování a snižuje odezvu.** Tahle věta
+platí beze změny — ale platí o **zprávě**, ne o tom, co smíme vědět.
+
+| Vrstva | Co to je | Jak široká |
+|---|---|---|
+| **A — znalost o firmě** | podklad pro obchod, schůzku, nabídku | široká, nastavitelná profilem produktu |
+| **B — obsah oslovení** | co firmě napíšeme | úzká, drží whitelist a test pohlednice |
+
+**Vrstva B smí čerpat jen z whitelistu níž, ne z celé vrstvy A.**
+Sběr se rozšiřuje, zpráva ne.
+
+### 5.1 Vrstva A — co smíme o firmě zjišťovat
+
+Rozsah určuje **profil produktu**, ne pevný seznam v této kapitole — jiná
+cílovka potřebuje jiné údaje. Bez ohledu na profil ale platí:
+
+- **Každý údaj má `zdroj_url` a doslovnou citaci** (TP-2). Bez zdroje se
+  nezapíše. Žádné odhady, žádné dopočty.
+- **Sociální sítě nikdy**, ani ke čtení.
+- **Nikoho neoslovujeme** kvůli zjištění údaje.
+- Zakázané kategorie z 5.3 platí i pro sběr, s jednou výjimkou popsanou tam.
+
+### 5.2 Vrstva B — co smí do zprávy
+
+Whitelist atributů (`src/whitelist.ts`). Renderer smí sáhnout jen sem, a jen
+tam, kde existuje evidence. Chybí-li, pasáž ze zprávy vypadne.
+
+#### Povolené atributy
 
 | Atribut | Zdroj | Poznámka |
 |---|---|---|
@@ -171,7 +205,9 @@ Přehnaná personalizace působí jako sledování a snižuje odezvu.
 | způsob stravování | web firmy | jen s doslovnou citací zdroje |
 | jméno a pozice adresáta | veřejný zdroj | max jednou ve zprávě |
 
-### Zakázané atributy
+#### Zakázané atributy
+
+Ve zprávě nikdy:
 
 - cokoli ze soukromých profilů na sociálních sítích
 - jména jiných zaměstnanců než adresáta
@@ -179,6 +215,19 @@ Přehnaná personalizace působí jako sledování a snižuje odezvu.
 - odkazy na inzeráty, recenze nebo hodnocení firmy
 - jakýkoli údaj bez záznamu v `evidence`
 - odhad či dopočet čehokoli
+
+### 5.3 Které z těch zákazů platí i pro sběr
+
+Všechny **kromě pracovních inzerátů**. Ty se číst smějí — jsou to veřejná
+data, u kterých zaměstnavatel sám zveřejnil, jak to u něj chodí, a jsou
+nejlepším zdrojem informací o směnném provozu a benefitech. Systém je ostatně
+už dnes čte z otevřených dat úřadu práce.
+
+**Do zprávy se ale nedostanou nikdy** — ani obsahem, ani narážkou. To, že
+před třemi týdny inzerovali pozici účetní, je přesně ten typ znalosti, který
+adresáta znepokojí. Tenhle rozdíl je celý smysl rozdělení na dvě vrstvy.
+
+Sociální sítě zůstávají zakázané v obou vrstvách.
 
 ### Test pohlednice
 

@@ -1,9 +1,11 @@
 # ADR 0002 — Dvě vrstvy (znalost vs. zpráva) a nastavitelnost produktu
 
-**Stav:** K ODSOUHLASENÍ · **Datum:** 2026-08-04
+**Stav:** ODSOUHLASENO 2026-08-06 · **Datum:** 2026-08-04
 
-> Návrh změny **SPEC kap. 5**. Dokud ho majitel neschválí, platí SPEC beze
-> změny a nic z tohohle se nestaví.
+> SPEC kap. 5 a TP-3 podle tohohle rozhodnutí **upraveny**. Kód zatím ne —
+> `src/whitelist.ts` a `src/repo.ts` dál odmítají zápis mimo whitelist, takže
+> vrstva A je zatím jen na papíře. To je v pořádku: nic se nerozbije, jen se
+> zatím nedá zapsat víc, než se dalo dřív.
 
 ## Kontext
 
@@ -115,15 +117,34 @@ naostro (proto je v přehledu 0 USD).
 **Návrh:** cesta přes API klíč se stane cestou produktovou. Podagent
 v Claude Code zůstane jako pohodlí pro majitele, ne jako základ produktu.
 
-**Jiný LLM než Claude** je legitimní přání, ale je to vlastní práce.
-Navrhuju **připravit švy** (jedno místo, které volá model, jasně
-oddělené) a **implementovat zatím jen Claude**. Stavět tři adaptéry pro
-poskytovatele, které nikdo neověřil, je předčasné.
+**Rozhodnutí majitele (2026-08-06):** cesta přes API klíč se **připraví**,
+ale ostrý provoz zatím jede **z předplatného**. Není to náhrada, je to druhá
+možnost vedle stávající.
 
-**Pozor na náklady:** dnes je 0 USD, protože placená cesta neběžela.
-Jakmile se produkt postaví na API klíč, **rešerše začne stát peníze** —
-u zákazníka jeho vlastní, u nás naše při testování. Je to čisté rozhodnutí
-majitele a patří do rozpočtu, ne do technického návrhu.
+**Jiný LLM:** neřeší se. Časem přichází v úvahu **lokální model** pro
+zájemce o plně interní systém s výkonným serverem — proto se místo, které
+volá model, udrží jako **jeden jasně oddělený šev**, ať se do toho
+nezabetonujeme. Adaptéry pro cizí poskytovatele se nestavějí.
+
+### Co by API stálo
+
+Odhad z **jediného naměřeného běhu** (20 firem, 201 152 tokenů, 2. 8. 2026),
+rozdělení vstup/výstup odhadnuté na 90/10. **Řádový odhad, ne rozpočet.**
+
+Zhruba 10 000 tokenů na firmu:
+
+| Model | Na firmu | Čachrov (91) | Plzeň cílové (620) |
+|---|---|---|---|
+| Sonnet 5 | ~0,04 USD | ~3,50 USD | ~24 USD |
+| Haiku 4.5 | ~0,014 USD | ~1,30 USD | ~9 USD |
+
+**Při cílovém provozu 5–10 oslovení denně** (tedy ~10 firem denně) vychází
+Sonnet na **~0,40 USD denně, ~12 USD měsíčně**. Cena je tedy problém jen
+u hromadného dohánění, ne u běžného provozu.
+
+Dvě varování: hlubší rešerše (vrstva A) bude stát **dvoj- až trojnásobek**
+proti měření, které hledalo jen kontakt. A **ukládání do mezipaměti** to
+naopak srazí — instrukce agenta jsou u každé firmy stejné.
 
 ## Právní poloha
 
@@ -173,10 +194,16 @@ se neděje.
 **Nestaví se teď:** vícenájemnost (nebude vůbec), propojení instancí do
 jednoho CRM (později), FSM/ERP/účetnictví (směr, ne úkol).
 
-## Co potřebuje majitel rozhodnout
+## Rozhodnuto (2026-08-06)
 
-1. Souhlasí se **změnou TP-3** popsanou výš?
-2. Souhlasí s tím, že **produktová cesta poběží na API klíč**, a tedy že
-   rešerše u nás při testování **začne stát peníze**?
-3. Má se **jiný LLM než Claude** připravit jen jako šev, nebo ho chce
-   rovnou funkční?
+1. **Změna TP-3 schválena.** SPEC kap. 5 rozdělena na vrstvu A (znalost)
+   a vrstvu B (zpráva); TP-3 nově výslovně váže zprávu, ne sběr.
+2. **API klíč se připraví, ostrý provoz jede z předplatného.**
+3. **Jiný LLM se neřeší**, jen se udrží šev kvůli budoucímu lokálnímu modelu.
+
+### Co při úpravě SPEC vyšlo najevo
+
+TP-3 ve SPEC **nikdy neomezoval sběr** — mluvil o rendereru a o zprávě.
+Zákaz sbírat cokoli mimo whitelist vznikl až v kódu (`repo.ts` zápis odmítne)
+a v projektovém `CLAUDE.md`. Změna je tedy menší, než se zdálo: SPEC se
+upřesnil, ale nepřevrátil. Skutečná změna čeká v kódu.

@@ -30,33 +30,35 @@ export interface VysledekSpusteni {
 }
 
 /**
- * Nástroje, které agent při rešerši dostane.
+ * Nástroje, které agent při rešerši dostane. **Žádný shell.**
  *
- * **Nespoléhej na to jako na bezpečnostní hranici.** Ověřeno živým pokusem
- * 6. 8. 2026: cesty v povolovacím seznamu čtení souborů **neomezují** —
- * s povoleným `Read(playbook-cmuchal.md)` agent přesto přečetl `src/reserse.ts`
- * a vrátil jeho přesnou délku. Zákaz podle cesty zabírá jen někdy
- * (`Read(src/**)` ano, `.env` ne). Tenhle seznam je tedy vodítko pro model,
- * ne zámek.
+ * Práce se předává soubory: obsluha zapíše, co dohledat, agent to přečte
+ * a nálezy zapíše do druhého souboru, obsluha je pak sama zapíše do databáze.
+ * Původní návrh nechával agenta vzít si práci příkazem — a **při první ostré
+ * dávce 6. 8. 2026 se ukázalo, že to nefunguje**: Bash mu byl zamítnut
+ * („This command requires approval") u obou zkoušených tvarů vzoru, takže
+ * dávka doběhla s nulou. Přes soubory shell vůbec není potřeba.
+ *
+ * **Nespoléhej na tenhle seznam jako na bezpečnostní hranici.** Ověřeno
+ * živými pokusy 6. 8. 2026: cesty v povolovacím seznamu čtení souborů
+ * **neomezují** — s povoleným `Read(playbook-cmuchal.md)` agent přesto přečetl
+ * `src/reserse.ts` a vrátil jeho přesnou délku. Zákaz podle cesty zabírá jen
+ * někdy. Seznam je vodítko pro model, ne zámek. Proto je tu `Read`/`Write`
+ * bez cest — předstírat omezení, které neplatí, je horší než ho nemít.
  *
  * Skutečné hranice, na kterých stojí bezpečnost běhu bez dozoru:
  * 1. **Tajemství nejsou v pracovní složce** — `.env` leží mimo repozitář
  *    (`src/env.ts`, `vychoziCestaEnv`). Na co agent nedosáhne, to neunikne.
- * 2. **Každý zápis prochází `zapis-nalezy`**, které vyžaduje zdroj a doslovnou
- *    citaci (TP-2) a odmítá atributy mimo whitelist (TP-3).
+ * 2. **Agent do databáze nesahá.** Nálezy zapisuje obsluha přes `zapisDavku`,
+ *    které vyžaduje zdroj a doslovnou citaci (TP-2) a odmítá atributy mimo
+ *    whitelist (TP-3). Co agent nedoloží, neprojde.
  * 3. **Agent nemá čím odeslat** (TP-8) a každý běh je v `agent_runs` (TP-13).
- *
- * Playbook si agent smí upravovat sám, to je záměr (`.claude/agents/cmuchal.md`).
  */
 export const POVOLENE_NASTROJE = [
   "WebSearch",
   "WebFetch",
-  "Read(playbook-cmuchal.md)",
-  "Read(nalezy*.json)",
-  "Write(playbook-cmuchal.md)",
-  "Write(nalezy*.json)",
-  "Bash(npm run cli -- k-obohaceni*)",
-  "Bash(npm run cli -- zapis-nalezy*)",
+  "Read",
+  "Write",
 ] as const;
 
 /**

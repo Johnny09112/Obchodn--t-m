@@ -37,13 +37,32 @@ describe("přenos argumentů a zadání bez shellu (nález 1)", () => {
     expect(vystup.argv).toEqual(sestavArgumenty());
     expect(vystup.argv).toContain("--agent");
     expect(vystup.argv).toContain("cmuchal");
-    // Vzor se závorkami i mezerami — přesně to, co se dřív rozpadlo na pět
-    // samostatných argumentů.
-    expect(vystup.argv).toContain("Bash(npm run cli -- k-obohaceni*)");
-    expect(POVOLENE_NASTROJE).toContain(vystup.argv.find((a) => a.startsWith("Bash(npm run cli -- k-obohaceni")));
+    // Agent nesmí dostat shell. Práce se předává soubory — původní návrh mu
+    // ji dával příkazem a při první ostré dávce 6. 8. 2026 mu Bash zamítlo
+    // oprávnění, takže dávka doběhla s nulou.
+    expect(POVOLENE_NASTROJE).not.toContain("Bash");
+    expect(vystup.argv.some((a) => a.startsWith("Bash"))).toBe(false);
 
     // Zadání dorazilo celé a beze zkrácení na prvním novém řádku.
     expect(vystup.stdin).toBe(prompt);
+  });
+
+  // Zvlášť, protože produkční seznam nástrojů takový argument dnes neobsahuje —
+  // a právě na argumentu se závorkami a mezerami se dřív celé předání rozpadlo
+  // (se `shell: true` se z něj stalo pět samostatných argumentů). Kdyby se
+  // shell vrátil, tenhle test spadne, i kdyby se seznam nástrojů mezitím
+  // změnil na cokoli.
+  it("argument se závorkami a mezerami přežije předání vcelku", async () => {
+    const zaludny = "Bash(npm run cli -- neco*)";
+    const { beh } = spustSurovyProces(process.execPath, [POMOCNY_SKRIPT, "--x", zaludny], {
+      cwd: process.cwd(),
+      prompt: "",
+    });
+    const vysledek = await beh;
+
+    expect(vysledek.kod).toBe(0);
+    const vystup = JSON.parse(vysledek.stdout) as { argv: string[] };
+    expect(vystup.argv).toEqual(["--x", zaludny]);
   });
 
   it("nepověsí se ani na delší výstup na stdout (nález 3 — nutné odebírat obě roury)", async () => {

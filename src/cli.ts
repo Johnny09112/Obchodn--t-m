@@ -1,5 +1,6 @@
 import { parseArgs } from "node:util";
-import { appendFile, readFile, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { nactiEnv } from "./env.js";
 
 // Hned na začátku, ať nastavení ze souboru vidí i klienti vytvářené níž.
@@ -59,6 +60,9 @@ import { hostname } from "node:os";
 
 /** Jméno zámku na běh Čmuchala nad frontou objednávek. */
 const ZAMEK_CMUCHAL = "cmuchal-fronta";
+
+/** Pracovní soubory Čmuchala. Gitignorováno — obsahují data o firmách. */
+const SLOZKA_PRACE = "data/prace";
 import type { CmuchalDeps } from "./cmuchal.js";
 import type { DuvodNeoslovovat } from "./kvalifikace.js";
 
@@ -1315,17 +1319,32 @@ async function cmdReserse(argv: string[]): Promise<void> {
           tep(db, ZAMEK_CMUCHAL, drzitel).catch(() => undefined);
         }, 5 * 60_000);
 
-        // Firmy dostane agent příkazem, ne vypsané v textu (nález 2
-        // závěrečné revize): `k-obohaceni` bez `--kampan` má úplně jinou,
-        // globální frontu (`stav = 'kvalifikovany' and v_zone`), do které
-        // firmy sebrané nad oblastí vůbec nespadají. `--kampan` uvnitř
-        // vybírá přesně tutéž množinu jako `firmyProReserse` o pár řádků
-        // výš — a k tomu agentovi vrátí i `chybi`/`znameOsoby`, které by ve
-        // výpisu IČO chyběly.
+        // Práce se předává SOUBORY, ne příkazy. Původní návrh nechával agenta
+        // vzít si ji přes `k-obohaceni` — při první ostré dávce 6. 8. 2026 mu
+        // ale Bash zamítlo oprávnění („This command requires approval") a celá
+        // dávka doběhla s nulou. Takhle shell vůbec nepotřebuje a nálezy
+        // zapisuje obsluha sama, tedy pod toutéž kontrolou zdrojů (TP-2).
+        await mkdir(SLOZKA_PRACE, { recursive: true });
+        const souborPrace = join(SLOZKA_PRACE, `reserse-${o.id}-prace.json`);
+        const souborNalezu = join(SLOZKA_PRACE, `reserse-${o.id}-nalezy.json`);
+
+        // `firmyKObohaceni` vrací navíc `chybi` a `znameOsoby` — tedy co které
+        // firmě schází a koho už u ní známe. Bez toho by agent hledal „nějaký
+        // kontakt" místo spojení na konkrétního člověka, což je podle měření
+        // z 2. 8. výrazně horší výchozí pozice.
+        const prace = await firmyKObohaceni(db, { kampanId: o.kampanId, limit: firmy.length });
+        await writeFile(souborPrace, JSON.stringify(prace, null, 2), "utf8");
+
         const prompt =
           `${o.zadani}\n\n` +
-          `Vezmi si firmy příkazem: npm run cli -- k-obohaceni --kampan ${o.kampanId} --limit ${firmy.length}\n` +
-          `Nálezy zapiš příkazem: npm run cli -- zapis-nalezy --soubor <cesta k JSON souboru s nálezy>.`;
+          `Firmy k prozkoumání najdeš v souboru ${souborPrace}. ` +
+          `U každé je pole "chybi" (co u ní schází) a "znameOsoby" (koho už známe).\n\n` +
+          `Nálezy zapiš do souboru ${souborNalezu} ve tvaru, který popisuje tvá ` +
+          `definice — tedy s klíči "nalezy", "kontakty", "bezNalezu" a ` +
+          `"poznamkyProPlaybook". Firmy, u kterých jsi nic doložitelného nenašel, ` +
+          `patří do "bezNalezu" — prázdný výsledek je správný výsledek.\n\n` +
+          `Nespouštěj žádné příkazy; nemáš je povolené a nepotřebuješ je. ` +
+          `Do databáze zapíše nálezy sama obsluha, až soubor přečte.`;
 
         console.log(`Objednávka ${o.id}: ${firmy.length} firem, pouštím Čmuchala…`);
         const v = await spustCmuchalaProces({
@@ -1333,6 +1352,24 @@ async function cmdReserse(argv: string[]): Promise<void> {
           koren: process.cwd(),
           stropMs: stropMs(firmy.length),
         });
+
+        // Nálezy zapisuje obsluha, ne agent — proto přes `zapisDavku`, které
+        // vyžaduje zdroj a doslovnou citaci a odmítá atributy mimo whitelist.
+        // Chybějící soubor není pád: agent mohl skončit dřív, a to se pozná
+        // z počtu zpracovaných firem níž.
+        try {
+          const davka = JSON.parse(await readFile(souborNalezu, "utf8"));
+          const zapis = await zapisDavku(db, davka);
+          console.log(
+            `  zapsáno: nálezů ${zapis.zapsanoNalezu}, kontaktů ${zapis.zapsanoKontaktu},` +
+              ` bez nálezu ${zapis.oznacenoBezNalezu}, odmítnuto ${zapis.odmitnuto.length}`,
+          );
+          for (const o of zapis.odmitnuto.slice(0, 5)) {
+            console.log(`    odmítnuto: ${o.duvod}`);
+          }
+        } catch (e) {
+          console.log(`  soubor s nálezy se nepodařilo zpracovat: ${(e as Error).message}`);
+        }
 
         const potom = await pocetSeSpojenim(db, ica);
         const pribylo = potom - predtim;

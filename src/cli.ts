@@ -1,5 +1,6 @@
 import { parseArgs } from "node:util";
-import { appendFile, readFile, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { nactiEnv } from "./env.js";
 
 // Hned na začátku, ať nastavení ze souboru vidí i klienti vytvářené níž.
@@ -47,10 +48,21 @@ import {
 } from "./pruzkum.js";
 import { rozhlednuti, vyridPruzkum } from "./cmuchal-oblast.js";
 import { dalsiKVyrizeni, odemkni, tep, zamkni } from "./fronta.js";
+import {
+  dalsiReserseKVyrizeni, firmyProReserse, pocetSeSpojenim, pocetZpracovanych, selhalaReserse,
+  uzavriReserse, zahajReserse,
+} from "./reserse.js";
+// Aliasováno — `spustCmuchala` už je jméno funkce z cmuchal.ts (obohacení
+// nad jídelnou), tohle je jiná věc: spuštění Čmuchala jako procesu.
+import { spustCmuchala as spustCmuchalaProces, stropMs } from "./cmuchal-spousteni.js";
+import { zacniBeh, ukonciBeh } from "./repo.js";
 import { hostname } from "node:os";
 
 /** Jméno zámku na běh Čmuchala nad frontou objednávek. */
 const ZAMEK_CMUCHAL = "cmuchal-fronta";
+
+/** Pracovní soubory Čmuchala. Gitignorováno — obsahují data o firmách. */
+const SLOZKA_PRACE = "data/prace";
 import type { CmuchalDeps } from "./cmuchal.js";
 import type { DuvodNeoslovovat } from "./kvalifikace.js";
 
@@ -1237,6 +1249,171 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
 }
 
 /**
+ * Fronta objednávek AI rešerše. Průzkum mapuje území kódem, rešerši ale
+ * dělá agent (Claude Code) — obsluha ho jen neinteraktivně spustí a počká.
+ */
+async function cmdReserse(argv: string[]): Promise<void> {
+  const { positionals } = parseArgs({ args: argv, allowPositionals: true, options: {} });
+  const akce = positionals[0] ?? "obsluz";
+  if (akce !== "obsluz") {
+    console.error(`Neznámá akce "reserse ${akce}". Zatím je jen: reserse obsluz`);
+    process.exit(1);
+  }
+
+  const db = await pripojDb();
+  try {
+    const drzitel = `${hostname()}:${process.pid}`;
+    // Stejný zámek jako průzkum — obojí dělá Čmuchal a chodí na cizí weby.
+    // Důsledek: dlouhá rešerše pozdrží průzkum a naopak. Záměr, ne opomenutí.
+    if (!(await zamkni(db, ZAMEK_CMUCHAL, drzitel))) {
+      console.log("Čmuchal už běží jinde — tenhle běh nic nedělá.");
+      return;
+    }
+    // Obnovuje zámek, dokud běží Čmuchal — nastavuje se, jakmile je co
+    // hlídat, a ruší se dole ve `finally` spolu s odemknutím.
+    let srdce: NodeJS.Timeout | undefined;
+    try {
+      const o = await dalsiReserseKVyrizeni(db);
+      if (!o) {
+        console.log("Fronta rešerší je prázdná.");
+        return;
+      }
+
+      const firmy = await firmyProReserse(db, o.kampanId, o.firemZadano);
+      if (firmy.length === 0) {
+        // Prázdná dávka není selhání — všechny firmy už rešerší prošly.
+        await uzavriReserse(db, o.id, { firemZpracovano: 0, firemSNalezem: 0 });
+        console.log(`Objednávka ${o.id}: žádná firma nečeká, uzavírám.`);
+        return;
+      }
+
+      const ica = firmy.map((f) => f.ico);
+      const predtim = await pocetSeSpojenim(db, ica);
+
+      const behId = await zacniBeh(db, "cmuchal-reserse", {
+        objednavka: o.id,
+        firem: firmy.length,
+      });
+
+      // `try` začíná hned tady, ne až u spuštění Čmuchala — `zahajReserse`
+      // je hned za `zacniBeh` a musí spadat pod stejné jištění: kdyby
+      // vyhodila výjimku (typicky výpadek spojení k DB) mimo `try`, `behId`
+      // by v `agent_runs` zůstal navždy otevřený beze stopy o chybě.
+      //
+      // `behUzavren` hlídá, aby se `ukonciBeh` v `catch` nezavolal podruhé,
+      // kdyby selhal už ten úspěšný pokus na konci `try` — to by byl zbytečný
+      // druhý zápis nad stejným řádkem.
+      let behUzavren = false;
+      try {
+        await zahajReserse(db, o.id, behId);
+
+        // `ZAMEK_CMUCHAL` má TTL 15 minut (VYCHOZI_PRODLEVA_MIN ve
+        // src/fronta.ts), ale čekání na Čmuchala (stropMs) běžně přesáhne
+        // 15 minut už od ~8 firem — jediný dlouhý `await` bez srdce by zámek
+        // nechal vystydnout. `dalsiReserseKVyrizeni` schválně bere i
+        // objednávky ve stavu 'bezi' (zotavení po pádu procesu), takže by si
+        // jiný běh vzal TUTÉŽ rozjetou objednávku a zpracoval stejné firmy
+        // podruhé. Chybu z tepu polykáme — ztracený jeden tep nevadí,
+        // ztracený zámek ano.
+        srdce = setInterval(() => {
+          tep(db, ZAMEK_CMUCHAL, drzitel).catch(() => undefined);
+        }, 5 * 60_000);
+
+        // Práce se předává SOUBORY, ne příkazy. Původní návrh nechával agenta
+        // vzít si ji přes `k-obohaceni` — při první ostré dávce 6. 8. 2026 mu
+        // ale Bash zamítlo oprávnění („This command requires approval") a celá
+        // dávka doběhla s nulou. Takhle shell vůbec nepotřebuje a nálezy
+        // zapisuje obsluha sama, tedy pod toutéž kontrolou zdrojů (TP-2).
+        await mkdir(SLOZKA_PRACE, { recursive: true });
+        const souborPrace = join(SLOZKA_PRACE, `reserse-${o.id}-prace.json`);
+        const souborNalezu = join(SLOZKA_PRACE, `reserse-${o.id}-nalezy.json`);
+
+        // `firmyKObohaceni` vrací navíc `chybi` a `znameOsoby` — tedy co které
+        // firmě schází a koho už u ní známe. Bez toho by agent hledal „nějaký
+        // kontakt" místo spojení na konkrétního člověka, což je podle měření
+        // z 2. 8. výrazně horší výchozí pozice.
+        const prace = await firmyKObohaceni(db, { kampanId: o.kampanId, limit: firmy.length });
+        await writeFile(souborPrace, JSON.stringify(prace, null, 2), "utf8");
+
+        const prompt =
+          `${o.zadani}\n\n` +
+          `Firmy k prozkoumání najdeš v souboru ${souborPrace}. ` +
+          `U každé je pole "chybi" (co u ní schází) a "znameOsoby" (koho už známe).\n\n` +
+          `Nálezy zapiš do souboru ${souborNalezu} ve tvaru, který popisuje tvá ` +
+          `definice — tedy s klíči "nalezy", "kontakty", "bezNalezu" a ` +
+          `"poznamkyProPlaybook". Firmy, u kterých jsi nic doložitelného nenašel, ` +
+          `patří do "bezNalezu" — prázdný výsledek je správný výsledek.\n\n` +
+          `Nespouštěj žádné příkazy; nemáš je povolené a nepotřebuješ je. ` +
+          `Do databáze zapíše nálezy sama obsluha, až soubor přečte.`;
+
+        console.log(`Objednávka ${o.id}: ${firmy.length} firem, pouštím Čmuchala…`);
+        const v = await spustCmuchalaProces({
+          prompt,
+          koren: process.cwd(),
+          stropMs: stropMs(firmy.length),
+        });
+
+        // Nálezy zapisuje obsluha, ne agent — proto přes `zapisDavku`, které
+        // vyžaduje zdroj a doslovnou citaci a odmítá atributy mimo whitelist.
+        // Chybějící soubor není pád: agent mohl skončit dřív, a to se pozná
+        // z počtu zpracovaných firem níž.
+        try {
+          const davka = JSON.parse(await readFile(souborNalezu, "utf8"));
+          const zapis = await zapisDavku(db, davka);
+          console.log(
+            `  zapsáno: nálezů ${zapis.zapsanoNalezu}, kontaktů ${zapis.zapsanoKontaktu},` +
+              ` bez nálezu ${zapis.oznacenoBezNalezu}, odmítnuto ${zapis.odmitnuto.length}`,
+          );
+          for (const o of zapis.odmitnuto.slice(0, 5)) {
+            console.log(`    odmítnuto: ${o.duvod}`);
+          }
+        } catch (e) {
+          console.log(`  soubor s nálezy se nepodařilo zpracovat: ${(e as Error).message}`);
+        }
+
+        const potom = await pocetSeSpojenim(db, ica);
+        const pribylo = potom - predtim;
+
+        if (v.ok) {
+          // Kolik firem agent doopravdy stihl, ne kolik se mu jen předalo
+          // (nález 7 závěrečné revize) — `firmyProReserse` vybírá jen firmy
+          // s `obohaceno_at is null`, takže razítko po běhu znamená, že se
+          // agent té firmy doopravdy dotkl.
+          const zpracovano = await pocetZpracovanych(db, ica);
+          await uzavriReserse(db, o.id, {
+            firemZpracovano: zpracovano,
+            firemSNalezem: pribylo,
+          });
+          console.log(`  hotovo — zpracováno ${zpracovano} z ${firmy.length}, spojení přibylo u ${pribylo}`);
+        } else {
+          await selhalaReserse(db, o.id, v.chyba ?? "neznámá chyba");
+          console.log(`  selhalo: ${v.chyba}`);
+        }
+        behUzavren = true;
+        await ukonciBeh(db, behId, { firem: firmy.length, pribylo }, [], 0);
+      } catch (chyba) {
+        // `ukonciBeh` musí proběhnout i tady — jinak zůstane řádek v
+        // agent_runs navždy otevřený (stejná past jako u rozhlednuti v
+        // src/cmuchal-oblast.ts). Nejlepší snaha: když databáze nejde ani
+        // teď, dál se nedá — ale nesmí to schovat původní chybu. Pokud už
+        // `ukonciBeh` proběhl (a spadl právě on), znovu ho nevoláme.
+        if (!behUzavren) {
+          const popis = chyba instanceof Error ? chyba.message : String(chyba);
+          await selhalaReserse(db, o.id, popis).catch(() => undefined);
+          await ukonciBeh(db, behId, null, [popis], 0).catch(() => undefined);
+        }
+        throw chyba;
+      }
+    } finally {
+      if (srdce) clearInterval(srdce);
+      await odemkni(db, ZAMEK_CMUCHAL, drzitel);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
  * Přenos lokálních dat do sdílené databáze. Jednorázový krok při přechodu
  * na provoz pro víc uživatelů.
  */
@@ -1513,6 +1690,10 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       jidelna: { type: "string" },
       // Území místo zóny jídelny — firmy ze sběru nad oblastí jsou mimo zónu.
       oblast: { type: "string" },
+      // Objednávka AI rešerše — jen firmy vybrané do dané kampaně, stejné
+      // pravidlo jako firmyProReserse (src/reserse.ts). Nepovinné, majitel
+      // dál může použít příkaz ručně beze změny.
+      kampan: { type: "string" },
       // Např. --segmenty stredni,korporat — u drobných se rešerše nevyplatí.
       segmenty: { type: "string" },
       // Firmy, kde známe jméno, ale ne spojení na něj.
@@ -1525,6 +1706,7 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       limit: values.limit ? Number(values.limit) : undefined,
       jidelnaId: values.jidelna,
       oblastId: values.oblast,
+      kampanId: values.kampan,
       segmenty: values.segmenty?.split(",").map((s) => s.trim()) as Segment[] | undefined,
       jenBezSpojeni: values["bez-spojeni"] === true,
     });
@@ -1645,6 +1827,9 @@ switch (prikaz) {
   case "pruzkum":
     await cmdPruzkum(zbytek);
     break;
+  case "reserse":
+    await cmdReserse(zbytek);
+    break;
   case "k-obohaceni":
     await cmdKObohaceni(zbytek);
     break;
@@ -1724,9 +1909,13 @@ switch (prikaz) {
                                    --i-bez-obci jen dovolí běh, když tvar nezabírá
                                    žádnou obec — sběr podle souřadnic zatím neumí nic navíc
   pruzkum useky <id>               vypíše úseky průzkumu a jejich stav
-  k-obohaceni [--limit N] [--segmenty stredni,korporat] [--bez-spojeni]
+  reserse obsluz                   vyřídí jednu objednávku AI průzkumu
+                                   (spustí Čmuchala neinteraktivně)
+  k-obohaceni [--limit N] [--kampan <id>] [--segmenty stredni,korporat] [--bez-spojeni]
                                    vypíše firmy čekající na rešerši (pro agenta);
-                                   --bez-spojeni = známe jméno, chybí e-mail i telefon
+                                   --kampan = jen firmy vybrané do dané kampaně (stejné jako
+                                   objednávka AI rešerše); --bez-spojeni = známe jméno, chybí
+                                   e-mail i telefon
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
     process.exit(prikaz ? 1 : 0);

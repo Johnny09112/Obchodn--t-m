@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { rozeberEnv } from "../src/env.js";
+import { homedir } from "node:os";
+import { rozeberEnv, vychoziCestaEnv } from "../src/env.js";
 
 describe("čtení .env", () => {
   it("přečte hodnoty a ignoruje komentáře i prázdné řádky", () => {
@@ -20,5 +21,26 @@ describe("čtení .env", () => {
 
   it("řádek bez rovnítka přeskočí", () => {
     expect(rozeberEnv("tohle není nastavení\nA=1")).toEqual({ A: "1" });
+  });
+});
+
+describe("kde se hledá soubor s nastavením", () => {
+  // Tajemství nesmí ležet v pracovní složce projektu. Agent, který tam běží
+  // bez dozoru, na něj totiž dosáhne: ověřeno 6. 8. 2026 živým pokusem —
+  // omezení `--allowedTools` čtení souborů NEOMEZUJE a zákaz čtení `.env` prostým jménem
+  // ani hvězdičkovým vzorem nezabral.
+  it("výchozí cesta míří mimo repozitář", () => {
+    expect(vychoziCestaEnv().startsWith(homedir())).toBe(true);
+  });
+
+  it("CANTINERO_ENV má přednost", () => {
+    const puvodni = process.env.CANTINERO_ENV;
+    process.env.CANTINERO_ENV = "/jinam/.env";
+    try {
+      expect(vychoziCestaEnv()).toBe("/jinam/.env");
+    } finally {
+      if (puvodni === undefined) delete process.env.CANTINERO_ENV;
+      else process.env.CANTINERO_ENV = puvodni;
+    }
   });
 });

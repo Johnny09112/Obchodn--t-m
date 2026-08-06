@@ -7,6 +7,7 @@
 - [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-03
 
 ## Decisions
+- [[dve-vrstvy-znalost-a-zprava]] — Whitelist váže obsah zprávy, ne sběr — SPEC kap. 5 rozdělena na znalost o firmě a obsah oslovení · active · 2026-08-06
 - [[male-firmy-a-nezname-jde-pribrat]] — Firmy bez známé velikosti i firmy do 24 zaměstnanců jde do kampaně přibrat dodatečně, každé vlastním tlačítkem · active · 2026-08-04
 - [[jidelna-se-nepriradi-rucne]] — Jídelna se k oblasti nevybírá ručně — ukazuje se, které v tom tvaru leží · active · 2026-08-03
 - [[obrazovka-oblasti-a-listovani]] — Oblasti = mapa nahoře, jeden seznam pod ní ovládá vrstvy; kartotéka se listuje po stovkách · active · 2026-08-03
@@ -26,6 +27,7 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[tajemstvi-mimo-pracovni-slozku]] — Omezení nástrojů agenta není bezpečnostní hranice — tajemství musí ležet mimo pracovní složku · active · 2026-08-06
 - [[zamykej-vyjmenovanim-zamcenych-stavu]] — Zámek psaný jako „otevřený je jen jeden stav" zamkne i pracovní stavy — vyjmenuj stavy zamčené · active · 2026-08-04
 - [[ares-nedoplni-velikost]] — Dotaz do ARESu na velikost firmy nevrátí nic navíc proti souboru ČSÚ — je to tentýž registr · active · 2026-08-02
 - [[automaticka-uprava-textu-potrebuje-guard]] — Skript, který jen vypíše hotovo, nic nedokazuje — hlídej každou náhradu zvlášť · active · 2026-08-01
@@ -40,6 +42,7 @@
 - [[zelene-testy-nejsou-hotova-obrazovka]] — Testy a typy nechytí vady toku a pořadí — frontend se musí proklikat · active · 2026-08-01
 
 ## Bugs
+- [[pootocene-urovne-adres]] — Obrazovka i příkazová řádka hlásily úroveň 1 jako jmenovanou osobu, ačkoli TP-6 říká opak — a právě to číslo hlídá GDPR · fixed · 2026-08-06
 - [[chybejici-index-na-contacts]] — Kartotéka se načítala 20+ s, protože contacts.ico neměl index — cizí klíč index nedělá · fixed · 2026-08-03
 - [[sber-neukladal-velikost]] — Oprava velikosti byla jen zpětná — sběr ji dál nezapisoval, takže nová kampaň měla nula firem · fixed · 2026-08-03
 - [[tazeni-bodu-prerusoval-react]] — Bod tvaru šel posunout jen o kousek — každý drag překreslil vrstvu a sebral úchyt zpod myši · fixed · 2026-08-03

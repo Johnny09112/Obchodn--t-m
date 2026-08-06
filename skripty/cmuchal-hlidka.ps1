@@ -157,14 +157,19 @@ function Spust([bool]$jenUrgentni) {
   $prepinace = if ($jenUrgentni) {
     "pruzkum obsluz --jen-urgentni --nejvyse-objednavek 1"
   } else {
-    "pruzkum obsluz --nejvyse-objednavek 3"
+    "pruzkum obsluz --nejvyse-objednavek 3 & npm run cli -- reserse obsluz"
   }
   $co = if ($jenUrgentni) { "hlídka urgentů" } else { "řádný běh" }
   Napis "$co — spouštím"
   $script:posledniHlaska = "naposled $(Get-Date -Format 'HH:mm')"
 
+  # Kulaté závorky kolem příkazu(ů): řádný běh řetězí dva "npm run cli --"
+  # oddělené obyčejným & (viz $prepinace výše). Bez závorek by přesměrování
+  # `>>` patřilo jen poslednímu příkazu a výstup toho prvního by se ztratil.
+  # Obyčejné & navíc (na rozdíl od &&) spustí druhý příkaz i po chybě/prázdném
+  # výsledku prvního.
   $script:proces = Start-Process -FilePath "cmd.exe" `
-    -ArgumentList "/c npm run cli -- $prepinace >> `"$denik`" 2>&1" `
+    -ArgumentList "/c (npm run cli -- $prepinace) >> `"$denik`" 2>&1" `
     -WorkingDirectory $koren -WindowStyle Hidden -PassThru
   ObnovVzhled
 }

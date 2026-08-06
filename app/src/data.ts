@@ -23,7 +23,14 @@ export interface Firma {
   cz_nace: string[];
   pravni_forma: string | null;
   ma_vlastni_jidelnu: boolean | null;
-  contacts: { count: number }[];
+  /**
+   * Kontakty firmy — jen `email`/`telefon`, aby šlo v `maSpojeni` poznat
+   * spojení, na které se dá napsat, ne jen že u firmy nějaký kontakt je
+   * (nález 8 závěrečné revize).
+   */
+  contacts: { email: string | null; telefon: string | null }[];
+  /** Kdy firma naposledy prošla rešerší; `null` = neprošla nikdy. */
+  obohaceno_at: string | null;
 }
 
 export interface Jidelna {
@@ -58,7 +65,7 @@ export interface RadekOblasti {
 // „koho vůbec chceme oslovit" (src/kvalifikace.ts) v kroku 2 průvodce.
 const SLOUPCE_FIRMY =
   "ico,nazev,obec,lat,lng,velikost_kategorie,zamestnanci_odhad,kategorie,skore,stav," +
-  "cz_nace,pravni_forma,ma_vlastni_jidelnu,contacts(count)";
+  "cz_nace,pravni_forma,ma_vlastni_jidelnu,contacts(email,telefon),obohaceno_at";
 
 /**
  * Načte všechny firmy najednou.
@@ -320,8 +327,27 @@ export async function nactiDetailFirmy(ico: string): Promise<DetailFirmy> {
   };
 }
 
+/**
+ * Má firma spojení, na které se dá napsat — e-mail nebo telefon u
+ * *nějakého* kontaktu, ne jen jakýkoli kontakt.
+ *
+ * `src/kontakty.ts` zakládá kontakty na jednatele z rejstříku i bez e-mailu
+ * a telefonu, a takových firem jsou tisíce — dřív se počítal jen počet
+ * kontaktů (`contacts.count`), takže se tyhle firmy v tabulce ukazovaly
+ * zeleně jako „prošla · spojení", přestože na ně napsat nešlo (nález 8
+ * závěrečné revize). Srovnáno s `pocetSeSpojenim` v jádře (src/reserse.ts),
+ * které tohle počítá správně.
+ */
 export function maSpojeni(f: Firma): boolean {
-  return (f.contacts[0]?.count ?? 0) > 0;
+  return f.contacts.some((k) => k.email !== null || k.telefon !== null);
+}
+
+/** Stav rešerše u firmy — tři možnosti, které majitel chtěl rozlišit. */
+export type StavReserse = "neprosla" | "prosla_se_spojenim" | "prosla_bez_spojeni";
+
+export function stavReserse(f: { obohaceno_at: string | null; maSpojeni: boolean }): StavReserse {
+  if (f.obohaceno_at === null) return "neprosla";
+  return f.maSpojeni ? "prosla_se_spojenim" : "prosla_bez_spojeni";
 }
 
 /**
@@ -692,6 +718,16 @@ export interface FirmaKampane {
   duvod_vyrazeni: string | null;
   /** Úrovně adres všech kontaktů firmy. Nejlepší je nejnižší číslo (TP-6). */
   urovne: number[];
+  /**
+   * Má firma kontakt, na který se dá doopravdy napsat?
+   *
+   * Není to totéž co „má kontakt". Doplnění z rejstříku zapisuje jednatele
+   * **jménem, bez e-mailu i telefonu** — u Hrobců tak 48 z 61 firem mělo
+   * kontakt, ale napsat nešlo ani jedné. Dokud se to počítalo jako spojení,
+   * hlásila obrazovka 48 a `SeznamFirem` hned pod ní 0; a schvalování kampaně
+   * se opíralo o to vyšší číslo.
+   */
+  maSpojeni: boolean;
 }
 
 /**
@@ -709,7 +745,9 @@ export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[
     stav: "vybrana" | "vyrazena";
     duvod_vyrazeni: string | null;
     companies: { nazev: string; obec: string | null; skore: number | null } | null;
-    contacts: { contacts: { uroven_adresy: number | null }[] } | null;
+    contacts: {
+      contacts: { uroven_adresy: number | null; email: string | null; telefon: string | null }[];
+    } | null;
   };
 
   const vse: FirmaKampane[] = [];
@@ -718,7 +756,8 @@ export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[
     let dotaz = supabase
       .from("kampan_firmy")
       .select(
-        "ico,stav,duvod_vyrazeni,companies(nazev,obec,skore),contacts:companies(contacts(uroven_adresy))",
+        "ico,stav,duvod_vyrazeni,companies(nazev,obec,skore)," +
+          "contacts:companies(contacts(uroven_adresy,email,telefon))",
       )
       .eq("kampan_id", kampanId)
       .order("ico")
@@ -741,6 +780,9 @@ export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[
         urovne: (r.contacts?.contacts ?? [])
           .map((k) => k.uroven_adresy)
           .filter((u): u is number => u !== null),
+        maSpojeni: (r.contacts?.contacts ?? []).some(
+          (k) => k.email !== null || k.telefon !== null,
+        ),
       })),
     );
     posledni = davka[davka.length - 1]!.ico;
@@ -1028,4 +1070,61 @@ export async function zkusPruzkumZnovu(pruzkumId: string): Promise<void> {
   if (!data || data.length === 0) {
     throw new Error("Nepovedlo se vrátit do fronty — chybí oprávnění ke kampani.");
   }
+}
+
+// ──────────────────────────────────────────────────── rešerše (fronta AI)
+
+/** Objednávka AI průzkumu z tabulky `reserse` tak, jak ji potřebuje obrazovka. */
+export interface ObjednavkaReserse {
+  id: string;
+  stav: "ceka" | "bezi" | "hotovo" | "selhalo";
+  firemZadano: number;
+  firemZpracovano: number | null;
+  firemSNalezem: number | null;
+  chyba: string | null;
+}
+
+/** Výchozí zadání. Odkazuje na playbook schválně — ten se mění, tohle ne. */
+const ZADANI_VYCHOZI =
+  "Dohledej u každé firmy kontaktní osobu a spojení na ni podle svého " +
+  "playbooku. Nic navíc nesbírej.";
+
+/**
+ * Objedná dávku AI rešerše pro kampaň. **Agenta to nespustí** — jen zapíše
+ * řádek do fronty, kterou si hlídka u hodin vyzvedne (viz `objednejPruzkumZAplikace`
+ * výš, stejný vzor).
+ */
+export async function objednejReserse(
+  kampanId: string,
+  firemZadano: number,
+  pozadal: string,
+): Promise<void> {
+  const { error } = await supabase.from("reserse").insert({
+    kampan_id: kampanId,
+    firem_zadano: firemZadano,
+    zadani: ZADANI_VYCHOZI,
+    pozadal,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** Poslední objednávka kampaně, nebo `null`. */
+export async function posledniReserse(kampanId: string): Promise<ObjednavkaReserse | null> {
+  const { data, error } = await supabase
+    .from("reserse")
+    .select("id,stav,firem_zadano,firem_zpracovano,firem_s_nalezem,chyba")
+    .eq("kampan_id", kampanId)
+    .order("pozadano_at", { ascending: false })
+    .limit(1);
+  if (error) throw new Error(error.message);
+  const r = data?.[0] as Record<string, unknown> | undefined;
+  if (!r) return null;
+  return {
+    id: r.id as string,
+    stav: r.stav as ObjednavkaReserse["stav"],
+    firemZadano: r.firem_zadano as number,
+    firemZpracovano: (r.firem_zpracovano as number | null) ?? null,
+    firemSNalezem: (r.firem_s_nalezem as number | null) ?? null,
+    chyba: (r.chyba as string | null) ?? null,
+  };
 }

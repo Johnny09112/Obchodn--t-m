@@ -3,6 +3,8 @@ import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { firmyKObohaceni, zapisDavku } from "../src/nalezy.js";
 import { nastavGeo, nastavStav, zalozFirmu, zapisKontakt } from "../src/repo.js";
 import type { AresZaznam } from "../src/ares.js";
+import { zalozKampan } from "../src/kampan.js";
+import { firmyProReserse } from "../src/reserse.js";
 
 let db: Db;
 let jidelnaId: string;
@@ -224,5 +226,40 @@ describe("fronta rešerše nad oblastí", () => {
 
     expect(vychozi).not.toContain("25232657");
     expect(nadOblasti).toEqual(["25232657"]);
+  });
+});
+
+describe("fronta rešerše nad kampaní (--kampan)", () => {
+  // Dvě místa kódují totéž pravidlo (firmyKObohaceni --kampan a
+  // firmyProReserse v src/reserse.ts) — bez tohohle testu by se dřív nebo
+  // později rozešla a agent by dostal jinou dávku, než jakou vybrala
+  // objednávka (nález 2 závěrečné revize).
+  it("vrátí přesně tu množinu IČO, kterou vybírá firmyProReserse — vyřazenou firmu i firmu s razítkem vynechají obě", async () => {
+    const kampanId = await zalozKampan(db, { nazev: "Rešerše K1", spravce: "a@b.cz" });
+
+    // Firma navíc — v kampani, ale rešerší už prošla (razítko obohaceno_at).
+    await zalozFirmu(db, firma("48362956", "Už prošla s.r.o."));
+    await db.query("update companies set obohaceno_at = now() where ico = $1", ["48362956"]);
+
+    for (const ico of ["25242407", "17255686", "48362956"]) {
+      await db.query("insert into kampan_firmy (kampan_id, ico) values ($1,$2)", [kampanId, ico]);
+    }
+    // Vyřazená z kampaně — nesmí se objevit ani v jedné frontě, vyřazení
+    // znamená „tuhle neoslovovat" (rozhodnutí majitele 2026-08-04).
+    await db.query(
+      "update kampan_firmy set stav = 'vyrazena', duvod_vyrazeni = 'test' where kampan_id = $1 and ico = $2",
+      [kampanId, "17255686"],
+    );
+
+    const zReserse = (await firmyProReserse(db, kampanId, 100)).map((f) => f.ico).sort();
+    const zObohaceni = (await firmyKObohaceni(db, { kampanId })).map((f) => f.ico).sort();
+
+    expect(zObohaceni).toEqual(["25242407"]);
+    expect(zReserse).toEqual(zObohaceni);
+  });
+
+  it("je nepovinný — bez --kampan se výchozí chování nemění ani o kus", async () => {
+    const f = await firmyKObohaceni(db, {});
+    expect(f.map((x) => x.ico).sort()).toEqual(["17255686", "25242407"]);
   });
 });

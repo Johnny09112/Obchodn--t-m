@@ -199,12 +199,30 @@ export async function firmyKObohaceni(
      * Stejná díra jako u doplňování kontaktů.
      */
     oblastId?: string;
+    /**
+     * Objednávka AI rešerše (`reserse obsluz`) vybírá jen firmy z konkrétní
+     * kampaně — jinak by agent mohl narazit na firmu, kterou majitel z
+     * kampaně vyřadil, což výslovně zakázal (rozhodnutí 2026-08-04).
+     * Podmínka tady musí přesně kopírovat `firmyProReserse` (src/reserse.ts)
+     * — je to totéž pravidlo na dvou místech a bez testu, který obě
+     * porovná, se dřív nebo později rozejdou (nález 2 závěrečné revize).
+     * Kombinuje se s `jidelnaId`/`segmenty` níž, ale ne s `jenBezSpojeni` —
+     * ta fronta je jiná, nezávislá potřeba.
+     */
+    kampanId?: string;
   },
 ): Promise<FirmaKObohaceni[]> {
   const podminky: string[] = [];
   const params: unknown[] = [];
 
-  if (opts.oblastId) {
+  if (opts.kampanId) {
+    params.push(opts.kampanId);
+    podminky.push(
+      `exists (select 1 from kampan_firmy kf where kf.kampan_id = $${params.length}
+                 and kf.ico = f.ico and kf.stav = 'vybrana')`,
+      "f.obohaceno_at is null",
+    );
+  } else if (opts.oblastId) {
     params.push(opts.oblastId);
     podminky.push(
       "f.stav <> 'zamitnuty'",
@@ -215,17 +233,22 @@ export async function firmyKObohaceni(
     podminky.push("f.stav = 'kvalifikovany'", "f.v_zone is true");
   }
 
-  if (!opts.jenBezSpojeni) {
-    // Standardní fronta jde po firmách, které rešerší ještě neprošly.
-    podminky.push("f.obohaceno_at is null");
-  } else {
-    podminky.push(
-      // Známe osobu…
-      `exists (select 1 from contacts k where k.ico = f.ico and k.prijmeni is not null)`,
-      // …ale nemáme na ni ani e-mail, ani telefon.
-      `not exists (select 1 from contacts k where k.ico = f.ico
-                     and (k.email is not null or k.telefon is not null))`,
-    );
+  // `--kampan` už podmínku „neprošla rešerší" nese sám (musí přesně
+  // odpovídat firmyProReserse) — druhé přidání by bylo jen neškodně
+  // duplicitní, ale `jenBezSpojeni` s kampaní kombinovat nedává smysl.
+  if (!opts.kampanId) {
+    if (!opts.jenBezSpojeni) {
+      // Standardní fronta jde po firmách, které rešerší ještě neprošly.
+      podminky.push("f.obohaceno_at is null");
+    } else {
+      podminky.push(
+        // Známe osobu…
+        `exists (select 1 from contacts k where k.ico = f.ico and k.prijmeni is not null)`,
+        // …ale nemáme na ni ani e-mail, ani telefon.
+        `not exists (select 1 from contacts k where k.ico = f.ico
+                       and (k.email is not null or k.telefon is not null))`,
+      );
+    }
   }
   if (opts.jidelnaId) {
     params.push(opts.jidelnaId);

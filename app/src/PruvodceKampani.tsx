@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Krokovnik } from "./Krokovnik";
 import { MapaOblasti } from "./MapaOblasti";
 import {
+  maSpojeni,
   nactiFirmy,
   nactiJidelny,
   nactiLidi,
@@ -11,14 +12,17 @@ import {
   nactiPruzkumyKampane,
   nastavUzemiKampane,
   objednejPruzkumZAplikace,
+  objednejReserse,
   oznacUrgentni,
   dalsiBehZa,
   nactiFirmyKampane,
   nactiKategorie,
   naplnKampanZOblasti,
   nejlepsiUroven,
+  posledniReserse,
   schvalKampan,
   spocitejCekajici,
+  stavReserse,
   vyradZKampane,
   type Clovek,
   type Firma,
@@ -26,6 +30,7 @@ import {
   type Jidelna,
   type Kategorie,
   type NaplneniKampane,
+  type ObjednavkaReserse,
   type PocetKosu,
   type PrehledOblasti,
   type PruzkumOblasti,
@@ -47,6 +52,21 @@ function smiUpravovat(kampan: RadekKampane | null, role: Role, email: string): b
   if (role === "admin" || role === "super-admin") return true;
   if (!kampan) return true; // novou zakládá kdokoli z týmu
   return kampan.spravce === email || kampan.zastupce === email;
+}
+
+/**
+ * Lidský odhad AI rešerše — 64 s na firmu, naměřeno na zkušební dávce
+ * 20 firem ([[resurse-agentem-zmereno]]). Jiné číslo než `odhadKontaktu`:
+ * ten měří rychlý dotaz do MPSV/ARES, tady agent sám prochází web.
+ */
+function odhadReserse(firem: number): string {
+  if (firem <= 0) return "žádný čas";
+  const minut = Math.round((firem * 64) / 60);
+  if (minut < 1) return "necelou minutu";
+  if (minut < 60) return `zhruba ${minut} ${cesky(minut, "minutu", "minuty", "minut")}`;
+  const hodin = Math.round(minut / 60);
+  if (hodin === 1) return "zhruba hodinu";
+  return `zhruba ${hodin} ${cesky(hodin, "hodinu", "hodiny", "hodin")}`;
 }
 
 /**
@@ -111,6 +131,10 @@ export function PruvodceKampani({
   const [cekajici, setCekajici] = useState<PocetKosu | null>(null);
   /** Který koš se právě potvrzuje v dialogu. */
   const [pridat, setPridat] = useState<"nezname" | "mikro" | null>(null);
+  /** Poslední objednávka AI rešerše pro tuhle kampaň, nebo `null`. */
+  const [objednavka, setObjednavka] = useState<ObjednavkaReserse | null>(null);
+  /** Kolik firem se právě potvrzuje k rešerši v dialogu; `null` = zavřeno. */
+  const [reserseZadost, setReserseZadost] = useState<number | null>(null);
 
   const smi = smiUpravovat(kampan, role, email);
   /**
@@ -317,6 +341,35 @@ export function PruvodceKampani({
   useEffect(() => {
     if (krok === 4) nactiSeznam();
   }, [krok, nactiSeznam]);
+
+  // Poslední objednávka AI rešerše — zvlášť od `nactiSeznam`, ať pád tady
+  // (typicky prázdná tabulka u nové kampaně) neshodí seznam firem.
+  const nactiObjednavku = useCallback(() => {
+    if (!id) return;
+    posledniReserse(id)
+      .then(setObjednavka)
+      .catch(() => setObjednavka(null));
+  }, [id]);
+
+  useEffect(() => {
+    if (krok === 4) nactiObjednavku();
+  }, [krok, nactiObjednavku]);
+
+  /** Objedná dávku AI rešerše. Agenta to nespustí — jen zapíše do fronty. */
+  async function objednatReserse(pocet: number) {
+    if (!id) return;
+    setUklada(true);
+    setChyba(null);
+    try {
+      await objednejReserse(id, pocet, email);
+      setReserseZadost(null);
+      nactiObjednavku();
+    } catch (e) {
+      setChyba((e as Error).message);
+    } finally {
+      setUklada(false);
+    }
+  }
 
   async function naplnit() {
     if (!id || oblastiIds.length === 0) return;
@@ -806,7 +859,28 @@ export function PruvodceKampani({
       else if (u === 3) rozpad.jmenna++;
       else rozpad.zadny++;
     }
-    const seSpojenim = vybrane.length - rozpad.zadny;
+    // POZOR: „má kontakt" a „dá se jí napsat" jsou dvě různé věci.
+    // Doplnění z rejstříku zapisuje jednatele jménem, bez e-mailu i telefonu —
+    // u Hrobců tak 48 z 61 firem mělo kontakt, ale napsat nešlo ani jedné.
+    // Dokud se tu počítalo `vybrane.length - rozpad.zadny`, hlásila obrazovka
+    // 48 a `SeznamFirem` hned pod ní 0. Schvalování kampaně se navíc opíralo
+    // o to vyšší číslo.
+    const seSpojenim = vybrane.filter((f) => f.maSpojeni).length;
+    const jenJmeno = vybrane.length - rozpad.zadny - seSpojenim;
+
+    // Kolik firem v seznamu ještě nemá AI rešerši. Jen VYBRANÉ — vyřazená
+    // firma je vyřazená i pro rešerši (fronta v `src/reserse.ts` bere jen
+    // `stav = 'vybrana'`), takže by se tu jinak slibovalo víc, než se
+    // doopravdy objedná.
+    const vybraneIca = new Set(vybrane.map((f) => f.ico));
+    const neprozkoumanych = udajeFirem.filter(
+      (f) =>
+        vybraneIca.has(f.ico) &&
+        stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f) }) === "neprosla",
+    ).length;
+    const davkaReserse = Math.min(20, neprozkoumanych);
+    const zbytekReserse = neprozkoumanych - davkaReserse;
+    const beziciObjednavka = objednavka && ["ceka", "bezi"].includes(objednavka.stav);
 
     return (
       <>
@@ -894,6 +968,65 @@ export function PruvodceKampani({
             </div>
           )}
 
+          {/*
+            Druhý panel, pod tím pro doplňování firem — objednání AI rešerše
+            pro firmy, které v kampani už jsou, ale kontakt na ně ještě nemá
+            zdroj. Zamčená kampaň nabídku nedostane vůbec, stejně jako panel
+            výš.
+          */}
+          {!zamcena && (neprozkoumanych > 0 || objednavka?.stav === "selhalo") && (
+            <div className="hlaska je-klid">
+              {/* Vytaženo mimo `neprozkoumanych > 0` schválně — jinak by
+                  zpráva o selhání zmizela, jakmile by počet mezitím klesl
+                  na nulu, a majitel by nevěděl, proč se nic nestalo. */}
+              {objednavka && objednavka.stav === "selhalo" && (
+                <p role="alert">Poslední AI průzkum se nepovedl: {objednavka.chyba}</p>
+              )}
+
+              {neprozkoumanych > 0 && (
+                beziciObjednavka && objednavka ? (
+                  <p>
+                    <strong>
+                      AI průzkum {objednavka.stav === "bezi" ? "běží" : "čeká ve frontě"}
+                    </strong>{" "}
+                    — {objednavka.firemZadano.toLocaleString("cs")}{" "}
+                    {cesky(objednavka.firemZadano, "firma", "firmy", "firem")}. Hlídka u hodin
+                    se na frontu dívá třikrát denně. Okno můžete zavřít.
+                  </p>
+                ) : (
+                  <>
+                    <p>
+                      {neprozkoumanych.toLocaleString("cs")}{" "}
+                      {cesky(neprozkoumanych, "firma v seznamu ještě nemá", "firmy v seznamu ještě nemají", "firem v seznamu ještě nemá")}{" "}
+                      AI rešerši — agent projde web a podle playbooku dohledá jméno
+                      i spojení. Poběží bez dozoru, nic se přitom neodešle.
+                    </p>
+                    <div className="tlacitka vlevo">
+                      <button
+                        className="tlacitko"
+                        disabled={uklada}
+                        onClick={() => setReserseZadost(davkaReserse)}
+                      >
+                        Objednat rešerši pro {davkaReserse.toLocaleString("cs")}{" "}
+                        {cesky(davkaReserse, "firmu", "firmy", "firem")}
+                      </button>
+                      {zbytekReserse > 0 && (
+                        <button
+                          className="tlacitko tise"
+                          disabled={uklada}
+                          onClick={() => setReserseZadost(zbytekReserse)}
+                        >
+                          A zbytek — {zbytekReserse.toLocaleString("cs")}{" "}
+                          {cesky(zbytekReserse, "firmu", "firmy", "firem")}
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )
+              )}
+            </div>
+          )}
+
           {chyba && (
             <p className="hlaska" role="alert">
               {chyba}
@@ -906,10 +1039,24 @@ export function PruvodceKampani({
                 <span className="popisek">Firem v seznamu</span>
                 <span className="hodnota">{vybrane.length}</span>
               </p>
-              <p className="udaj">
-                <span className="popisek">Se spojením</span>
+              <p className="udaj vyrazny">
+                <span className="popisek">Dá se jim napsat</span>
                 <span className="hodnota">{seSpojenim}</span>
               </p>
+              {jenJmeno > 0 && (
+                <>
+                  <p className="udaj">
+                    <span className="popisek">Známe jen jméno, ne adresu</span>
+                    <span className="hodnota">{jenJmeno}</span>
+                  </p>
+                  <p className="poznamka">
+                    U {jenJmeno.toLocaleString("cs")}{" "}
+                    {cesky(jenJmeno, "firmy", "firem", "firem")} máme jméno
+                    z rejstříku, ale žádný e-mail ani telefon. Oslovit je zatím
+                    nejde — od toho je AI průzkum.
+                  </p>
+                </>
+              )}
               <p className="udaj">
                 <span className="popisek">Na jmenovanou osobu</span>
                 <span className="hodnota">{rozpad.jmenna}</span>
@@ -1128,6 +1275,40 @@ export function PruvodceKampani({
                   onClick={() => pridejKos(pridat)}
                 >
                   {uklada ? "Přidávám…" : "Přidat"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {reserseZadost !== null && (
+          <div
+            className="zaclona"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Objednat AI průzkum"
+          >
+            <div className="dialog">
+              <h3>
+                Objednat AI průzkum pro {reserseZadost.toLocaleString("cs")}{" "}
+                {cesky(reserseZadost, "firmu", "firmy", "firem")}?
+              </h3>
+              <p>
+                Agent poběží bez dozoru a podle playbooku dohledá jméno i spojení
+                na firmu. Zabere to zhruba{" "}
+                <strong>{odhadReserse(reserseZadost)}</strong>.{" "}
+                <strong>Nic se neodesílá</strong> — jen se doplní kontakty.
+              </p>
+              <div className="tlacitka vlevo">
+                <button className="tlacitko tise" onClick={() => setReserseZadost(null)}>
+                  Ještě ne
+                </button>
+                <button
+                  className="tlacitko"
+                  disabled={uklada}
+                  onClick={() => objednatReserse(reserseZadost)}
+                >
+                  {uklada ? "Objednávám…" : "Objednat"}
                 </button>
               </div>
             </div>

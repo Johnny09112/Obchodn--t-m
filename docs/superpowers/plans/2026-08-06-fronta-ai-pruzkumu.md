@@ -66,14 +66,15 @@ PowerShell (hlídka). Žádná nová závislost.
 Vytvoř `test/reserse.test.ts`:
 
 ```ts
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { otevriTestovaciDb, type Db } from "./pomocnici.js";
+import { beforeEach, describe, expect, it } from "vitest";
+import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 
-const db: Db = await otevriTestovaciDb();
-afterAll(() => db.close());
+// Čerstvá databáze na každý test — stejný vzor jako test/kampan-souhrn.test.ts.
+let db: Db;
 
 beforeEach(async () => {
-  await db.query("delete from reserse");
+  db = await pripojPglite();
+  await spustMigrace(db);
 });
 
 describe("tabulka objednávek rešerše", () => {
@@ -120,9 +121,9 @@ describe("tabulka objednávek rešerše", () => {
 });
 ```
 
-**Pozor:** pomocníka na testovací databázi si vezmi ze sousedního testu —
-podívej se, co importuje `test/kampan-souhrn.test.ts`, a použij totéž. Cesta
-výš je zápis podle zvyklosti, ne ověřená; **řiď se skutečným souborem**.
+Firmy v testech zakládej **jen přes `zalozFirmu`** ze `src/repo.js` (TP-1) —
+přímý INSERT do `companies` je zakázaný a `test/kampan-souhrn.test.ts` ukazuje,
+jak se to dělá včetně falešného záznamu z ARESu.
 
 - [ ] **Krok 2: Spusť test a ověř, že padá**
 

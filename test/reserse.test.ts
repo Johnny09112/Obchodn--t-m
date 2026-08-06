@@ -1,11 +1,12 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { zalozKampan } from "../src/kampan.js";
-import { zalozFirmu } from "../src/repo.js";
+import { zalozFirmu, zapisKontakt } from "../src/repo.js";
 import type { AresZaznam } from "../src/ares.js";
 import {
   dalsiReserseKVyrizeni,
   firmyProReserse,
+  pocetSeSpojenim,
   selhalaReserse,
   uzavriReserse,
 } from "../src/reserse.js";
@@ -105,9 +106,11 @@ describe("výběr firem do dávky", () => {
 describe("přechody stavů objednávky", () => {
   it("fronta bere nejstarší čekající", async () => {
     const { kampanId } = await pripravKampan(db, []);
+    // Různé firem_zadano u obou záznamů schválně — jinak jsou k nerozeznání
+    // a test by prošel i s obráceným řazením nebo bez řazení vůbec.
     await db.query(
       `insert into reserse (kampan_id, firem_zadano, zadani, pozadal, pozadano_at)
-       values ($1, 5, 'z', 'a@b.cz', now() - interval '1 hour')`,
+       values ($1, 7, 'z', 'a@b.cz', now() - interval '1 hour')`,
       [kampanId],
     );
     await db.query(
@@ -116,11 +119,7 @@ describe("přechody stavů objednávky", () => {
       [kampanId],
     );
     const p = await dalsiReserseKVyrizeni(db);
-    expect(p?.firemZadano).toBe(5);
-    const vsechny = await db.query<{ pocet: number }>(
-      "select count(*)::int as pocet from reserse where stav = 'ceka'",
-    );
-    expect(vsechny[0]!.pocet).toBe(2);
+    expect(p?.firemZadano).toBe(7);
   });
 
   // Po pádu procesu zůstane objednávka v 'bezi' a nikdo ji nečeká. Kdyby si
@@ -176,5 +175,35 @@ describe("přechody stavů objednávky", () => {
     );
     expect(po[0]!.stav).toBe("selhalo");
     expect(po[0]!.chyba).toContain("nepodařilo spustit");
+  });
+});
+
+describe("počet firem se spojením", () => {
+  it("firma se dvěma kontakty se počítá jednou", async () => {
+    await zalozFirmu(db, zaznam("25232657"));
+    await zapisKontakt(db, "25232657", {
+      email: "a@example.cz",
+      urovenAdresy: 2,
+      zdrojUrl: "https://example.cz/a",
+      citace: "e-mail uvedený na stránkách",
+    });
+    await zapisKontakt(db, "25232657", {
+      telefon: "123456789",
+      urovenAdresy: 2,
+      zdrojUrl: "https://example.cz/b",
+      citace: "telefon uvedený na stránkách",
+    });
+
+    expect(await pocetSeSpojenim(db, ["25232657"])).toBe(1);
+  });
+
+  // V Postgresu je `= any('{}')` past — bez včasného návratu by dotaz
+  // proběhl a vrátil 0 oklikou, tenhle test navíc hlídá, že se do databáze
+  // vůbec nesahá.
+  it("prázdný seznam IČO vrátí 0 a nesáhne do databáze", async () => {
+    const spy = vi.spyOn(db, "query");
+
+    expect(await pocetSeSpojenim(db, [])).toBe(0);
+    expect(spy).not.toHaveBeenCalled();
   });
 });

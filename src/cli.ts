@@ -1290,21 +1290,31 @@ async function cmdReserse(argv: string[]): Promise<void> {
         objednavka: o.id,
         firem: firmy.length,
       });
-      await zahajReserse(db, o.id, behId);
 
-      // `ZAMEK_CMUCHAL` má TTL 15 minut (VYCHOZI_PRODLEVA_MIN ve
-      // src/fronta.ts), ale čekání na Čmuchala (stropMs) běžně přesáhne
-      // 15 minut už od ~8 firem — jediný dlouhý `await` bez srdce by zámek
-      // nechal vystydnout. `dalsiReserseKVyrizeni` schválně bere i
-      // objednávky ve stavu 'bezi' (zotavení po pádu procesu), takže by si
-      // jiný běh vzal TUTÉŽ rozjetou objednávku a zpracoval stejné firmy
-      // podruhé. Chybu z tepu polykáme — ztracený jeden tep nevadí,
-      // ztracený zámek ano.
-      srdce = setInterval(() => {
-        tep(db, ZAMEK_CMUCHAL, drzitel).catch(() => undefined);
-      }, 5 * 60_000);
-
+      // `try` začíná hned tady, ne až u spuštění Čmuchala — `zahajReserse`
+      // je hned za `zacniBeh` a musí spadat pod stejné jištění: kdyby
+      // vyhodila výjimku (typicky výpadek spojení k DB) mimo `try`, `behId`
+      // by v `agent_runs` zůstal navždy otevřený beze stopy o chybě.
+      //
+      // `behUzavren` hlídá, aby se `ukonciBeh` v `catch` nezavolal podruhé,
+      // kdyby selhal už ten úspěšný pokus na konci `try` — to by byl zbytečný
+      // druhý zápis nad stejným řádkem.
+      let behUzavren = false;
       try {
+        await zahajReserse(db, o.id, behId);
+
+        // `ZAMEK_CMUCHAL` má TTL 15 minut (VYCHOZI_PRODLEVA_MIN ve
+        // src/fronta.ts), ale čekání na Čmuchala (stropMs) běžně přesáhne
+        // 15 minut už od ~8 firem — jediný dlouhý `await` bez srdce by zámek
+        // nechal vystydnout. `dalsiReserseKVyrizeni` schválně bere i
+        // objednávky ve stavu 'bezi' (zotavení po pádu procesu), takže by si
+        // jiný běh vzal TUTÉŽ rozjetou objednávku a zpracoval stejné firmy
+        // podruhé. Chybu z tepu polykáme — ztracený jeden tep nevadí,
+        // ztracený zámek ano.
+        srdce = setInterval(() => {
+          tep(db, ZAMEK_CMUCHAL, drzitel).catch(() => undefined);
+        }, 5 * 60_000);
+
         const prompt =
           `${o.zadani}\n\nFirmy (IČO): ${ica.join(", ")}\n` +
           `Vezmi si je příkazem k-obohaceni, nálezy zapiš příkazem zapis-nalezy.`;
@@ -1329,15 +1339,19 @@ async function cmdReserse(argv: string[]): Promise<void> {
           await selhalaReserse(db, o.id, v.chyba ?? "neznámá chyba");
           console.log(`  selhalo: ${v.chyba}`);
         }
+        behUzavren = true;
         await ukonciBeh(db, behId, { firem: firmy.length, pribylo }, [], 0);
       } catch (chyba) {
         // `ukonciBeh` musí proběhnout i tady — jinak zůstane řádek v
         // agent_runs navždy otevřený (stejná past jako u rozhlednuti v
-        // src/cmuchal-oblast.ts). Obojí je „nejlepší snaha": když databáze
-        // nejde ani teď, dál se nedá — ale nesmí to schovat původní chybu.
-        const popis = chyba instanceof Error ? chyba.message : String(chyba);
-        await selhalaReserse(db, o.id, popis).catch(() => undefined);
-        await ukonciBeh(db, behId, null, [popis], 0).catch(() => undefined);
+        // src/cmuchal-oblast.ts). Nejlepší snaha: když databáze nejde ani
+        // teď, dál se nedá — ale nesmí to schovat původní chybu. Pokud už
+        // `ukonciBeh` proběhl (a spadl právě on), znovu ho nevoláme.
+        if (!behUzavren) {
+          const popis = chyba instanceof Error ? chyba.message : String(chyba);
+          await selhalaReserse(db, o.id, popis).catch(() => undefined);
+          await ukonciBeh(db, behId, null, [popis], 0).catch(() => undefined);
+        }
         throw chyba;
       }
     } finally {

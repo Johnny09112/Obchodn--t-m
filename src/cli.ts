@@ -47,6 +47,14 @@ import {
 } from "./pruzkum.js";
 import { rozhlednuti, vyridPruzkum } from "./cmuchal-oblast.js";
 import { dalsiKVyrizeni, odemkni, tep, zamkni } from "./fronta.js";
+import {
+  dalsiReserseKVyrizeni, firmyProReserse, pocetSeSpojenim, selhalaReserse, uzavriReserse,
+  zahajReserse,
+} from "./reserse.js";
+// Aliasováno — `spustCmuchala` už je jméno funkce z cmuchal.ts (obohacení
+// nad jídelnou), tohle je jiná věc: spuštění Čmuchala jako procesu.
+import { spustCmuchala as spustCmuchalaProces, stropMs } from "./cmuchal-spousteni.js";
+import { zacniBeh, ukonciBeh } from "./repo.js";
 import { hostname } from "node:os";
 
 /** Jméno zámku na běh Čmuchala nad frontou objednávek. */
@@ -1237,6 +1245,84 @@ async function cmdPruzkum(argv: string[]): Promise<void> {
 }
 
 /**
+ * Fronta objednávek AI rešerše. Průzkum mapuje území kódem, rešerši ale
+ * dělá agent (Claude Code) — obsluha ho jen neinteraktivně spustí a počká.
+ */
+async function cmdReserse(argv: string[]): Promise<void> {
+  const { positionals } = parseArgs({ args: argv, allowPositionals: true, options: {} });
+  const akce = positionals[0] ?? "obsluz";
+  if (akce !== "obsluz") {
+    console.error(`Neznámá akce "reserse ${akce}". Zatím je jen: reserse obsluz`);
+    process.exit(1);
+  }
+
+  const db = await pripojDb();
+  try {
+    const drzitel = `${hostname()}:${process.pid}`;
+    // Stejný zámek jako průzkum — obojí dělá Čmuchal a chodí na cizí weby.
+    // Důsledek: dlouhá rešerše pozdrží průzkum a naopak. Záměr, ne opomenutí.
+    if (!(await zamkni(db, ZAMEK_CMUCHAL, drzitel))) {
+      console.log("Čmuchal už běží jinde — tenhle běh nic nedělá.");
+      return;
+    }
+    try {
+      const o = await dalsiReserseKVyrizeni(db);
+      if (!o) {
+        console.log("Fronta rešerší je prázdná.");
+        return;
+      }
+
+      const firmy = await firmyProReserse(db, o.kampanId, o.firemZadano);
+      if (firmy.length === 0) {
+        // Prázdná dávka není selhání — všechny firmy už rešerší prošly.
+        await uzavriReserse(db, o.id, { firemZpracovano: 0, firemSNalezem: 0 });
+        console.log(`Objednávka ${o.id}: žádná firma nečeká, uzavírám.`);
+        return;
+      }
+
+      const ica = firmy.map((f) => f.ico);
+      const predtim = await pocetSeSpojenim(db, ica);
+
+      const behId = await zacniBeh(db, "cmuchal-reserse", {
+        objednavka: o.id,
+        firem: firmy.length,
+      });
+      await zahajReserse(db, o.id, behId);
+
+      const prompt =
+        `${o.zadani}\n\nFirmy (IČO): ${ica.join(", ")}\n` +
+        `Vezmi si je příkazem k-obohaceni, nálezy zapiš příkazem zapis-nalezy.`;
+
+      console.log(`Objednávka ${o.id}: ${firmy.length} firem, pouštím Čmuchala…`);
+      const v = await spustCmuchalaProces({
+        prompt,
+        koren: process.cwd(),
+        stropMs: stropMs(firmy.length),
+      });
+
+      const potom = await pocetSeSpojenim(db, ica);
+      const pribylo = potom - predtim;
+
+      if (v.ok) {
+        await uzavriReserse(db, o.id, {
+          firemZpracovano: firmy.length,
+          firemSNalezem: pribylo,
+        });
+        console.log(`  hotovo — spojení přibylo u ${pribylo} z ${firmy.length}`);
+      } else {
+        await selhalaReserse(db, o.id, v.chyba ?? "neznámá chyba");
+        console.log(`  selhalo: ${v.chyba}`);
+      }
+      await ukonciBeh(db, behId, { firem: firmy.length, pribylo }, [], 0);
+    } finally {
+      await odemkni(db, ZAMEK_CMUCHAL, drzitel);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
  * Přenos lokálních dat do sdílené databáze. Jednorázový krok při přechodu
  * na provoz pro víc uživatelů.
  */
@@ -1645,6 +1731,9 @@ switch (prikaz) {
   case "pruzkum":
     await cmdPruzkum(zbytek);
     break;
+  case "reserse":
+    await cmdReserse(zbytek);
+    break;
   case "k-obohaceni":
     await cmdKObohaceni(zbytek);
     break;
@@ -1724,6 +1813,8 @@ switch (prikaz) {
                                    --i-bez-obci jen dovolí běh, když tvar nezabírá
                                    žádnou obec — sběr podle souřadnic zatím neumí nic navíc
   pruzkum useky <id>               vypíše úseky průzkumu a jejich stav
+  reserse obsluz                   vyřídí jednu objednávku AI průzkumu
+                                   (spustí Čmuchala neinteraktivně)
   k-obohaceni [--limit N] [--segmenty stredni,korporat] [--bez-spojeni]
                                    vypíše firmy čekající na rešerši (pro agenta);
                                    --bez-spojeni = známe jméno, chybí e-mail i telefon

@@ -1265,6 +1265,9 @@ async function cmdReserse(argv: string[]): Promise<void> {
       console.log("Čmuchal už běží jinde — tenhle běh nic nedělá.");
       return;
     }
+    // Obnovuje zámek, dokud běží Čmuchal — nastavuje se, jakmile je co
+    // hlídat, a ruší se dole ve `finally` spolu s odemknutím.
+    let srdce: NodeJS.Timeout | undefined;
     try {
       const o = await dalsiReserseKVyrizeni(db);
       if (!o) {
@@ -1289,32 +1292,56 @@ async function cmdReserse(argv: string[]): Promise<void> {
       });
       await zahajReserse(db, o.id, behId);
 
-      const prompt =
-        `${o.zadani}\n\nFirmy (IČO): ${ica.join(", ")}\n` +
-        `Vezmi si je příkazem k-obohaceni, nálezy zapiš příkazem zapis-nalezy.`;
+      // `ZAMEK_CMUCHAL` má TTL 15 minut (VYCHOZI_PRODLEVA_MIN ve
+      // src/fronta.ts), ale čekání na Čmuchala (stropMs) běžně přesáhne
+      // 15 minut už od ~8 firem — jediný dlouhý `await` bez srdce by zámek
+      // nechal vystydnout. `dalsiReserseKVyrizeni` schválně bere i
+      // objednávky ve stavu 'bezi' (zotavení po pádu procesu), takže by si
+      // jiný běh vzal TUTÉŽ rozjetou objednávku a zpracoval stejné firmy
+      // podruhé. Chybu z tepu polykáme — ztracený jeden tep nevadí,
+      // ztracený zámek ano.
+      srdce = setInterval(() => {
+        tep(db, ZAMEK_CMUCHAL, drzitel).catch(() => undefined);
+      }, 5 * 60_000);
 
-      console.log(`Objednávka ${o.id}: ${firmy.length} firem, pouštím Čmuchala…`);
-      const v = await spustCmuchalaProces({
-        prompt,
-        koren: process.cwd(),
-        stropMs: stropMs(firmy.length),
-      });
+      try {
+        const prompt =
+          `${o.zadani}\n\nFirmy (IČO): ${ica.join(", ")}\n` +
+          `Vezmi si je příkazem k-obohaceni, nálezy zapiš příkazem zapis-nalezy.`;
 
-      const potom = await pocetSeSpojenim(db, ica);
-      const pribylo = potom - predtim;
-
-      if (v.ok) {
-        await uzavriReserse(db, o.id, {
-          firemZpracovano: firmy.length,
-          firemSNalezem: pribylo,
+        console.log(`Objednávka ${o.id}: ${firmy.length} firem, pouštím Čmuchala…`);
+        const v = await spustCmuchalaProces({
+          prompt,
+          koren: process.cwd(),
+          stropMs: stropMs(firmy.length),
         });
-        console.log(`  hotovo — spojení přibylo u ${pribylo} z ${firmy.length}`);
-      } else {
-        await selhalaReserse(db, o.id, v.chyba ?? "neznámá chyba");
-        console.log(`  selhalo: ${v.chyba}`);
+
+        const potom = await pocetSeSpojenim(db, ica);
+        const pribylo = potom - predtim;
+
+        if (v.ok) {
+          await uzavriReserse(db, o.id, {
+            firemZpracovano: firmy.length,
+            firemSNalezem: pribylo,
+          });
+          console.log(`  hotovo — spojení přibylo u ${pribylo} z ${firmy.length}`);
+        } else {
+          await selhalaReserse(db, o.id, v.chyba ?? "neznámá chyba");
+          console.log(`  selhalo: ${v.chyba}`);
+        }
+        await ukonciBeh(db, behId, { firem: firmy.length, pribylo }, [], 0);
+      } catch (chyba) {
+        // `ukonciBeh` musí proběhnout i tady — jinak zůstane řádek v
+        // agent_runs navždy otevřený (stejná past jako u rozhlednuti v
+        // src/cmuchal-oblast.ts). Obojí je „nejlepší snaha": když databáze
+        // nejde ani teď, dál se nedá — ale nesmí to schovat původní chybu.
+        const popis = chyba instanceof Error ? chyba.message : String(chyba);
+        await selhalaReserse(db, o.id, popis).catch(() => undefined);
+        await ukonciBeh(db, behId, null, [popis], 0).catch(() => undefined);
+        throw chyba;
       }
-      await ukonciBeh(db, behId, { firem: firmy.length, pribylo }, [], 0);
     } finally {
+      if (srdce) clearInterval(srdce);
       await odemkni(db, ZAMEK_CMUCHAL, drzitel);
     }
   } finally {

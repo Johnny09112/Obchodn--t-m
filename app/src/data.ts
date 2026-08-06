@@ -23,7 +23,12 @@ export interface Firma {
   cz_nace: string[];
   pravni_forma: string | null;
   ma_vlastni_jidelnu: boolean | null;
-  contacts: { count: number }[];
+  /**
+   * Kontakty firmy — jen `email`/`telefon`, aby šlo v `maSpojeni` poznat
+   * spojení, na které se dá napsat, ne jen že u firmy nějaký kontakt je
+   * (nález 8 závěrečné revize).
+   */
+  contacts: { email: string | null; telefon: string | null }[];
   /** Kdy firma naposledy prošla rešerší; `null` = neprošla nikdy. */
   obohaceno_at: string | null;
 }
@@ -60,7 +65,7 @@ export interface RadekOblasti {
 // „koho vůbec chceme oslovit" (src/kvalifikace.ts) v kroku 2 průvodce.
 const SLOUPCE_FIRMY =
   "ico,nazev,obec,lat,lng,velikost_kategorie,zamestnanci_odhad,kategorie,skore,stav," +
-  "cz_nace,pravni_forma,ma_vlastni_jidelnu,contacts(count),obohaceno_at";
+  "cz_nace,pravni_forma,ma_vlastni_jidelnu,contacts(email,telefon),obohaceno_at";
 
 /**
  * Načte všechny firmy najednou.
@@ -322,8 +327,19 @@ export async function nactiDetailFirmy(ico: string): Promise<DetailFirmy> {
   };
 }
 
+/**
+ * Má firma spojení, na které se dá napsat — e-mail nebo telefon u
+ * *nějakého* kontaktu, ne jen jakýkoli kontakt.
+ *
+ * `src/kontakty.ts` zakládá kontakty na jednatele z rejstříku i bez e-mailu
+ * a telefonu, a takových firem jsou tisíce — dřív se počítal jen počet
+ * kontaktů (`contacts.count`), takže se tyhle firmy v tabulce ukazovaly
+ * zeleně jako „prošla · spojení", přestože na ně napsat nešlo (nález 8
+ * závěrečné revize). Srovnáno s `pocetSeSpojenim` v jádře (src/reserse.ts),
+ * které tohle počítá správně.
+ */
 export function maSpojeni(f: Firma): boolean {
-  return (f.contacts[0]?.count ?? 0) > 0;
+  return f.contacts.some((k) => k.email !== null || k.telefon !== null);
 }
 
 /** Stav rešerše u firmy — tři možnosti, které majitel chtěl rozlišit. */

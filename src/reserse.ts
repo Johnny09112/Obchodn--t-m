@@ -106,3 +106,25 @@ export async function pocetSeSpojenim(db: Db, ica: readonly string[]): Promise<n
   );
   return r[0]?.pocet ?? 0;
 }
+
+/**
+ * Kolik z daných firem agent doopravdy zpracoval — má razítko
+ * `obohaceno_at`, které nastaví `zapisDavku` (src/nalezy.ts) u nálezu,
+ * kontaktu i položky v `bezNalezu`.
+ *
+ * `firmyProReserse` vybírá jen firmy s `obohaceno_at is null`, takže před
+ * během nemá žádná z nich razítko — kdo ho po běhu má, toho se agent
+ * doopravdy dotkl. Bez tohohle rozlišení `reserse.firem_zpracovano` tvrdilo
+ * počet firem, které se agentovi jen předaly, ne kolik jich stihl — když
+ * doběhl na tři z dvaceti, objednávka hlásila dvacet (nález 7 závěrečné
+ * revize).
+ */
+export async function pocetZpracovanych(db: Db, ica: readonly string[]): Promise<number> {
+  if (ica.length === 0) return 0;
+  const r = await db.query<{ pocet: number }>(
+    `select count(*)::int as pocet from companies
+     where ico = any($1) and obohaceno_at is not null`,
+    [ica as string[]],
+  );
+  return r[0]?.pocet ?? 0;
+}

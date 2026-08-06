@@ -268,7 +268,7 @@ export function SeznamFirem({
                       : "—"}
                   </td>
                   <td className="cislo">{f.zamestnanci_odhad ?? "—"}</td>
-                  <td className="cislo">{f.contacts[0]?.count ?? 0}</td>
+                  <td className="cislo">{f.contacts.length}</td>
                   <td className="cislo">{f.skore ?? "—"}</td>
                   <td>
                     <Stav stav={f.stav} />

@@ -48,8 +48,8 @@ import {
 import { rozhlednuti, vyridPruzkum } from "./cmuchal-oblast.js";
 import { dalsiKVyrizeni, odemkni, tep, zamkni } from "./fronta.js";
 import {
-  dalsiReserseKVyrizeni, firmyProReserse, pocetSeSpojenim, selhalaReserse, uzavriReserse,
-  zahajReserse,
+  dalsiReserseKVyrizeni, firmyProReserse, pocetSeSpojenim, pocetZpracovanych, selhalaReserse,
+  uzavriReserse, zahajReserse,
 } from "./reserse.js";
 // Aliasováno — `spustCmuchala` už je jméno funkce z cmuchal.ts (obohacení
 // nad jídelnou), tohle je jiná věc: spuštění Čmuchala jako procesu.
@@ -1338,11 +1338,16 @@ async function cmdReserse(argv: string[]): Promise<void> {
         const pribylo = potom - predtim;
 
         if (v.ok) {
+          // Kolik firem agent doopravdy stihl, ne kolik se mu jen předalo
+          // (nález 7 závěrečné revize) — `firmyProReserse` vybírá jen firmy
+          // s `obohaceno_at is null`, takže razítko po běhu znamená, že se
+          // agent té firmy doopravdy dotkl.
+          const zpracovano = await pocetZpracovanych(db, ica);
           await uzavriReserse(db, o.id, {
-            firemZpracovano: firmy.length,
+            firemZpracovano: zpracovano,
             firemSNalezem: pribylo,
           });
-          console.log(`  hotovo — spojení přibylo u ${pribylo} z ${firmy.length}`);
+          console.log(`  hotovo — zpracováno ${zpracovano} z ${firmy.length}, spojení přibylo u ${pribylo}`);
         } else {
           await selhalaReserse(db, o.id, v.chyba ?? "neznámá chyba");
           console.log(`  selhalo: ${v.chyba}`);

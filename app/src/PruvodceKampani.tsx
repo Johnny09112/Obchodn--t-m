@@ -873,7 +873,7 @@ export function PruvodceKampani({
     ).length;
     const davkaReserse = Math.min(20, neprozkoumanych);
     const zbytekReserse = neprozkoumanych - davkaReserse;
-    const bezicíObjednavka = objednavka && ["ceka", "bezi"].includes(objednavka.stav);
+    const beziciObjednavka = objednavka && ["ceka", "bezi"].includes(objednavka.stav);
 
     return (
       <>
@@ -977,7 +977,7 @@ export function PruvodceKampani({
               )}
 
               {neprozkoumanych > 0 && (
-                bezicíObjednavka && objednavka ? (
+                beziciObjednavka && objednavka ? (
                   <p>
                     <strong>
                       AI průzkum {objednavka.stav === "bezi" ? "běží" : "čeká ve frontě"}

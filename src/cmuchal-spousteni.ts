@@ -15,10 +15,12 @@
  * rozbít.
  *
  * Ověřeno 2026-08-06 na Claude Code 2.1.220: `-p` bez zadaného promptu čte
- * prompt ze stdin, `--agent` vybere agenta z `.claude/agents/`,
- * `--output-format json` vrátí strojově čitelný výsledek.
+ * prompt ze stdin, `--agent` vybere agenta z `.claude/agents/`.
+ * `--output-format json` se schválně nepoužívá — nic ten výsledek nečte
+ * a slibovat „strojově čitelný výsledek" v komentáři bylo zavádějící
+ * (nález 3 závěrečné revize).
  */
-import { spawn, type ChildProcess } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import { delimiter, dirname, join } from "node:path";
 
@@ -30,18 +32,46 @@ export interface VysledekSpusteni {
 /**
  * Nástroje, které agent při rešerši dostane. Nic víc spustit nesmí.
  *
+ * `Read`/`Write` jsou zúžené na pracovní soubory Čmuchala — bez toho by
+ * agent bez dozoru směl číst cokoli v repozitáři včetně `.env` (přístup do
+ * databáze) a zapisovat kamkoli (nález 5 závěrečné revize). Playbook si
+ * agent smí upravovat sám, to je záměr (viz `.claude/agents/cmuchal.md`).
+ *
  * Z příkazové řádky jen dva příkazy: vzít si práci a zapsat nálezy. Oba
  * procházejí kontrolou, která vyžaduje zdroj a doslovnou citaci — proto na
  * nich nezáleží, co si model myslí.
  */
-const POVOLENE_NASTROJE = [
+export const POVOLENE_NASTROJE = [
   "WebSearch",
   "WebFetch",
-  "Read",
-  "Write",
+  "Read(playbook-cmuchal.md)",
+  "Read(nalezy*.json)",
+  "Write(playbook-cmuchal.md)",
+  "Write(nalezy*.json)",
   "Bash(npm run cli -- k-obohaceni*)",
   "Bash(npm run cli -- zapis-nalezy*)",
-];
+] as const;
+
+/**
+ * Druhá pojistka vedle `POVOLENE_NASTROJE` výše — pro případ, že by
+ * definice agenta (`.claude/agents/cmuchal.md`) někdy povolila víc, než má
+ * (nález 5 závěrečné revize: „zvaž i výslovný zákaz nástrojů na úpravu
+ * souborů").
+ */
+export const ZAKAZANE_NASTROJE = ["Edit", "MultiEdit", "NotebookEdit"] as const;
+
+/** Argumenty pro `claude` — čistá funkce, ať jde v testu ověřit beze spuštění. */
+export function sestavArgumenty(): string[] {
+  return [
+    "-p",
+    "--agent",
+    "cmuchal",
+    "--allowedTools",
+    ...POVOLENE_NASTROJE,
+    "--disallowedTools",
+    ...ZAKAZANE_NASTROJE,
+  ];
+}
 
 /** Strop: dvojnásobek naměřených 64 s na firmu, nejméně deset minut. */
 export function stropMs(firem: number): number {
@@ -95,9 +125,11 @@ export interface VysledekProcesu {
 
 /**
  * Spustí proces bez shellu, pošle mu `prompt` na stdin a odebere stdout
- * i stderr (jinak by se u delší dávky ucpala roura OS a proces zablokoval
- * při zápisu — riziko popsané v nálezu 3 závěrečné revize; drénování stdout
- * je tu od začátku, protože ho potřebuje i test níž).
+ * i stderr.
+ *
+ * Odebírat se musí obojí — jinak se u delší dávky (`--output-format json`
+ * dřív, teď i tak) naplní roura operačního systému a proces se zablokuje
+ * při zápisu, tedy pověsí (nález 3 závěrečné revize).
  *
  * Nízkoúrovňová stavební jednotka `spustCmuchala` — vyexportovaná zvlášť,
  * ať jde v testu ověřit přenos argumentů a zadání se skutečným procesem
@@ -110,10 +142,6 @@ export function spustSurovyProces(
   v: { cwd: string; prompt: string },
 ): { proces: ChildProcess; beh: Promise<VysledekProcesu> } {
   const proces = spawn(soubor, argumenty, { cwd: v.cwd, shell: false });
-
-  // Zadání jde na stdin, ne jako argument — v argumentu by ho useklo první
-  // nové řádky přes shell (nález 1), a i bez shellu je stdin bezpečnější
-  // volba pro libovolně dlouhý text.
   proces.stdin.write(v.prompt);
   proces.stdin.end();
 
@@ -134,6 +162,24 @@ export function spustSurovyProces(
   return { proces, beh };
 }
 
+/**
+ * Ukončí proces i jeho případné potomky.
+ *
+ * Bez shellu už `proces.kill()` míří rovnou na `claude`, ne na `cmd.exe`
+ * jako dřív (nález 4 závěrečné revize — s `shell: true` `kill()` ukončil
+ * jen cmd.exe a osiřelý `claude` běžel dál, objednávka mezitím spadla do
+ * `selhalo` a zámek se uvolnil). I tak si ale Claude Code může spouštět
+ * vlastní podprocesy (nástroje) — na Windows je ukončí `taskkill /t`, který
+ * zabije celý strom, ne jen kořen.
+ */
+function ukonciStrom(proces: ChildProcess): void {
+  if (process.platform === "win32" && proces.pid !== undefined) {
+    spawnSync("taskkill", ["/pid", String(proces.pid), "/t", "/f"]);
+  } else {
+    proces.kill();
+  }
+}
+
 export async function spustCmuchala(v: {
   prompt: string;
   koren: string;
@@ -150,19 +196,12 @@ export async function spustCmuchala(v: {
     };
   }
 
-  const argumenty = [
-    "-p",
-    "--agent",
-    "cmuchal",
-    "--output-format",
-    "json",
-    "--allowedTools",
-    ...POVOLENE_NASTROJE,
-  ];
-
   let spusteno: ReturnType<typeof spustSurovyProces>;
   try {
-    spusteno = spustSurovyProces(spustitelny, argumenty, { cwd: v.koren, prompt: v.prompt });
+    spusteno = spustSurovyProces(spustitelny, sestavArgumenty(), {
+      cwd: v.koren,
+      prompt: v.prompt,
+    });
   } catch (e) {
     return {
       ok: false,
@@ -175,7 +214,7 @@ export async function spustCmuchala(v: {
 
   return new Promise((hotovo) => {
     const casovac = setTimeout(() => {
-      proces.kill();
+      ukonciStrom(proces);
       hotovo({
         ok: false,
         chyba:
@@ -192,7 +231,9 @@ export async function spustCmuchala(v: {
         } else {
           hotovo({
             ok: false,
-            chyba: `Čmuchal skončil s chybou ${vysledek.kod}: ${vysledek.stderr.slice(0, 500) || "bez výstupu"}`,
+            chyba:
+              `Čmuchal skončil s chybou ${vysledek.kod}: ` +
+              `${vysledek.stderr.slice(0, 500) || vysledek.stdout.slice(0, 500) || "bez výstupu"}`,
           });
         }
       })

@@ -3,7 +3,12 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { spustSurovyProces, zjistiSpustitelnyClaude } from "../src/cmuchal-spousteni.js";
+import {
+  POVOLENE_NASTROJE,
+  sestavArgumenty,
+  spustSurovyProces,
+  zjistiSpustitelnyClaude,
+} from "../src/cmuchal-spousteni.js";
 
 const TENTO_ADRESAR = dirname(fileURLToPath(import.meta.url));
 const POMOCNY_SKRIPT = join(TENTO_ADRESAR, "pomocne", "vypis-argv.mjs");
@@ -19,21 +24,7 @@ const POMOCNY_SKRIPT = join(TENTO_ADRESAR, "pomocne", "vypis-argv.mjs");
 describe("přenos argumentů a zadání bez shellu (nález 1)", () => {
   it("dorazí všechny argumenty beze změny — i vzory se závorkami a mezerami — a zadání s novými řádky dorazí na stdin", async () => {
     const prompt = "Dohledej\n\nu každé firmy kontakt.";
-    const argumenty = [
-      "-p",
-      "--agent",
-      "cmuchal",
-      "--output-format",
-      "json",
-      "--allowedTools",
-      "WebSearch",
-      "WebFetch",
-      "Read",
-      "Write",
-      "Bash(npm run cli -- k-obohaceni*)",
-      "Bash(npm run cli -- zapis-nalezy*)",
-    ];
-    const { beh } = spustSurovyProces(process.execPath, [POMOCNY_SKRIPT, ...argumenty], {
+    const { beh } = spustSurovyProces(process.execPath, [POMOCNY_SKRIPT, ...sestavArgumenty()], {
       cwd: process.cwd(),
       prompt,
     });
@@ -42,15 +33,31 @@ describe("přenos argumentů a zadání bez shellu (nález 1)", () => {
     expect(vysledek.kod).toBe(0);
     const vystup = JSON.parse(vysledek.stdout) as { argv: string[]; stdin: string };
 
-    expect(vystup.argv).toEqual(argumenty);
+    // Celé pole beze změny — ne jen namátkou pár prvků.
+    expect(vystup.argv).toEqual(sestavArgumenty());
     expect(vystup.argv).toContain("--agent");
     expect(vystup.argv).toContain("cmuchal");
     // Vzor se závorkami i mezerami — přesně to, co se dřív rozpadlo na pět
     // samostatných argumentů.
     expect(vystup.argv).toContain("Bash(npm run cli -- k-obohaceni*)");
+    expect(POVOLENE_NASTROJE).toContain(vystup.argv.find((a) => a.startsWith("Bash(npm run cli -- k-obohaceni")));
 
     // Zadání dorazilo celé a beze zkrácení na prvním novém řádku.
     expect(vystup.stdin).toBe(prompt);
+  });
+
+  it("nepověsí se ani na delší výstup na stdout (nález 3 — nutné odebírat obě roury)", async () => {
+    // Skript, který zaplní stdout víc, než se vejde do bufferu roury OS
+    // (typicky 64 KiB na Windows) — dřív by proces při zápisu čekal na
+    // vyprázdnění, které bez odebírání stdout nikdy nepřišlo.
+    const velkyVystupSkript = join(TENTO_ADRESAR, "pomocne", "velky-vystup.mjs");
+    const { beh } = spustSurovyProces(process.execPath, [velkyVystupSkript], {
+      cwd: process.cwd(),
+      prompt: "",
+    });
+    const vysledek = await beh;
+    expect(vysledek.kod).toBe(0);
+    expect(vysledek.stdout.length).toBeGreaterThan(200_000);
   });
 });
 

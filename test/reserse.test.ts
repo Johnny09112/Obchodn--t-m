@@ -7,6 +7,7 @@ import {
   dalsiReserseKVyrizeni,
   firmyProReserse,
   pocetSeSpojenim,
+  pocetZpracovanych,
   selhalaReserse,
   uzavriReserse,
 } from "../src/reserse.js";
@@ -205,5 +206,70 @@ describe("počet firem se spojením", () => {
 
     expect(await pocetSeSpojenim(db, [])).toBe(0);
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe("počet firem doopravdy zpracovaných", () => {
+  // `firemZpracovano` musí říkat, kolik firem agent doopravdy stihl, ne
+  // kolik se mu jen předalo (nález 7 závěrečné revize).
+  it("počítá jen firmy s razítkem obohaceno_at, ne všechny předané", async () => {
+    const { ica } = await pripravKampan(db, [
+      { ico: "25232657", obohaceno: true },
+      { ico: "48362956", obohaceno: false },
+      { ico: "17439523", obohaceno: true },
+    ]);
+    expect(await pocetZpracovanych(db, ica)).toBe(2);
+  });
+
+  it("prázdný seznam IČO vrátí 0 a nesáhne do databáze", async () => {
+    const spy = vi.spyOn(db, "query");
+    expect(await pocetZpracovanych(db, [])).toBe(0);
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+// Obnoveno po revizi (nález 6): commit 4c44412 přepsal soubor a tyhle tři
+// testy databázových omezení a výchozího stavu cestou ztratil.
+// Viz `git show df3add6:test/reserse.test.ts`.
+describe("tabulka objednávek rešerše", () => {
+  it("nová objednávka je ve stavu ceka", async () => {
+    const k = await db.query<{ id: string }>(
+      `insert into kampane (nazev, spravce) values ('K1','a@b.cz') returning id`,
+    );
+    const r = await db.query<{ stav: string; firem_zadano: number }>(
+      `insert into reserse (kampan_id, firem_zadano, zadani, pozadal)
+       values ($1, 20, 'dohledej kontakt', 'a@b.cz')
+       returning stav, firem_zadano`,
+      [k[0]!.id],
+    );
+    expect(r[0]!.stav).toBe("ceka");
+    expect(r[0]!.firem_zadano).toBe(20);
+  });
+
+  // Bez téhle podmínky by selhaná objednávka nikomu neřekla proč.
+  it("selhání bez důvodu databáze nepustí", async () => {
+    const k = await db.query<{ id: string }>(
+      `insert into kampane (nazev, spravce) values ('K2','a@b.cz') returning id`,
+    );
+    await expect(
+      db.query(
+        `insert into reserse (kampan_id, firem_zadano, zadani, pozadal, stav)
+         values ($1, 5, 'z', 'a@b.cz', 'selhalo')`,
+        [k[0]!.id],
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("dávka musí být kladná", async () => {
+    const k = await db.query<{ id: string }>(
+      `insert into kampane (nazev, spravce) values ('K3','a@b.cz') returning id`,
+    );
+    await expect(
+      db.query(
+        `insert into reserse (kampan_id, firem_zadano, zadani, pozadal)
+         values ($1, 0, 'z', 'a@b.cz')`,
+        [k[0]!.id],
+      ),
+    ).rejects.toThrow();
   });
 });

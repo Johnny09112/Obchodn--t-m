@@ -967,52 +967,55 @@ export function PruvodceKampani({
             zdroj. Zamčená kampaň nabídku nedostane vůbec, stejně jako panel
             výš.
           */}
-          {!zamcena && neprozkoumanych > 0 && (
+          {!zamcena && (neprozkoumanych > 0 || objednavka?.stav === "selhalo") && (
             <div className="hlaska je-klid">
+              {/* Vytaženo mimo `neprozkoumanych > 0` schválně — jinak by
+                  zpráva o selhání zmizela, jakmile by počet mezitím klesl
+                  na nulu, a majitel by nevěděl, proč se nic nestalo. */}
               {objednavka && objednavka.stav === "selhalo" && (
-                <p className="hlaska" role="alert">
-                  Poslední AI průzkum se nepovedl: {objednavka.chyba}
-                </p>
+                <p role="alert">Poslední AI průzkum se nepovedl: {objednavka.chyba}</p>
               )}
 
-              {bezicíObjednavka && objednavka ? (
-                <p className="hlaska je-klid">
-                  <strong>
-                    AI průzkum {objednavka.stav === "bezi" ? "běží" : "čeká ve frontě"}
-                  </strong>{" "}
-                  — {objednavka.firemZadano.toLocaleString("cs")}{" "}
-                  {cesky(objednavka.firemZadano, "firma", "firmy", "firem")}. Hlídka u hodin
-                  se na frontu dívá třikrát denně. Okno můžete zavřít.
-                </p>
-              ) : (
-                <>
+              {neprozkoumanych > 0 && (
+                bezicíObjednavka && objednavka ? (
                   <p>
-                    {neprozkoumanych.toLocaleString("cs")}{" "}
-                    {cesky(neprozkoumanych, "firma v seznamu ještě nemá", "firmy v seznamu ještě nemají", "firem v seznamu ještě nemá")}{" "}
-                    AI rešerši — agent projde web a podle playbooku dohledá jméno
-                    i spojení. Poběží bez dozoru, nic se přitom neodešle.
+                    <strong>
+                      AI průzkum {objednavka.stav === "bezi" ? "běží" : "čeká ve frontě"}
+                    </strong>{" "}
+                    — {objednavka.firemZadano.toLocaleString("cs")}{" "}
+                    {cesky(objednavka.firemZadano, "firma", "firmy", "firem")}. Hlídka u hodin
+                    se na frontu dívá třikrát denně. Okno můžete zavřít.
                   </p>
-                  <div className="tlacitka vlevo">
-                    <button
-                      className="tlacitko"
-                      disabled={uklada}
-                      onClick={() => setReserseZadost(davkaReserse)}
-                    >
-                      Objednat rešerši pro {davkaReserse.toLocaleString("cs")}{" "}
-                      {cesky(davkaReserse, "firmu", "firmy", "firem")}
-                    </button>
-                    {zbytekReserse > 0 && (
+                ) : (
+                  <>
+                    <p>
+                      {neprozkoumanych.toLocaleString("cs")}{" "}
+                      {cesky(neprozkoumanych, "firma v seznamu ještě nemá", "firmy v seznamu ještě nemají", "firem v seznamu ještě nemá")}{" "}
+                      AI rešerši — agent projde web a podle playbooku dohledá jméno
+                      i spojení. Poběží bez dozoru, nic se přitom neodešle.
+                    </p>
+                    <div className="tlacitka vlevo">
                       <button
-                        className="tlacitko tise"
+                        className="tlacitko"
                         disabled={uklada}
-                        onClick={() => setReserseZadost(zbytekReserse)}
+                        onClick={() => setReserseZadost(davkaReserse)}
                       >
-                        A zbytek — {zbytekReserse.toLocaleString("cs")}{" "}
-                        {cesky(zbytekReserse, "firmu", "firmy", "firem")}
+                        Objednat rešerši pro {davkaReserse.toLocaleString("cs")}{" "}
+                        {cesky(davkaReserse, "firmu", "firmy", "firem")}
                       </button>
-                    )}
-                  </div>
-                </>
+                      {zbytekReserse > 0 && (
+                        <button
+                          className="tlacitko tise"
+                          disabled={uklada}
+                          onClick={() => setReserseZadost(zbytekReserse)}
+                        >
+                          A zbytek — {zbytekReserse.toLocaleString("cs")}{" "}
+                          {cesky(zbytekReserse, "firmu", "firmy", "firem")}
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )
               )}
             </div>
           )}

@@ -1315,9 +1315,17 @@ async function cmdReserse(argv: string[]): Promise<void> {
           tep(db, ZAMEK_CMUCHAL, drzitel).catch(() => undefined);
         }, 5 * 60_000);
 
+        // Firmy dostane agent příkazem, ne vypsané v textu (nález 2
+        // závěrečné revize): `k-obohaceni` bez `--kampan` má úplně jinou,
+        // globální frontu (`stav = 'kvalifikovany' and v_zone`), do které
+        // firmy sebrané nad oblastí vůbec nespadají. `--kampan` uvnitř
+        // vybírá přesně tutéž množinu jako `firmyProReserse` o pár řádků
+        // výš — a k tomu agentovi vrátí i `chybi`/`znameOsoby`, které by ve
+        // výpisu IČO chyběly.
         const prompt =
-          `${o.zadani}\n\nFirmy (IČO): ${ica.join(", ")}\n` +
-          `Vezmi si je příkazem k-obohaceni, nálezy zapiš příkazem zapis-nalezy.`;
+          `${o.zadani}\n\n` +
+          `Vezmi si firmy příkazem: npm run cli -- k-obohaceni --kampan ${o.kampanId} --limit ${firmy.length}\n` +
+          `Nálezy zapiš příkazem: npm run cli -- zapis-nalezy --soubor <cesta k JSON souboru s nálezy>.`;
 
         console.log(`Objednávka ${o.id}: ${firmy.length} firem, pouštím Čmuchala…`);
         const v = await spustCmuchalaProces({
@@ -1640,6 +1648,10 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       jidelna: { type: "string" },
       // Území místo zóny jídelny — firmy ze sběru nad oblastí jsou mimo zónu.
       oblast: { type: "string" },
+      // Objednávka AI rešerše — jen firmy vybrané do dané kampaně, stejné
+      // pravidlo jako firmyProReserse (src/reserse.ts). Nepovinné, majitel
+      // dál může použít příkaz ručně beze změny.
+      kampan: { type: "string" },
       // Např. --segmenty stredni,korporat — u drobných se rešerše nevyplatí.
       segmenty: { type: "string" },
       // Firmy, kde známe jméno, ale ne spojení na něj.
@@ -1652,6 +1664,7 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       limit: values.limit ? Number(values.limit) : undefined,
       jidelnaId: values.jidelna,
       oblastId: values.oblast,
+      kampanId: values.kampan,
       segmenty: values.segmenty?.split(",").map((s) => s.trim()) as Segment[] | undefined,
       jenBezSpojeni: values["bez-spojeni"] === true,
     });
@@ -1856,9 +1869,11 @@ switch (prikaz) {
   pruzkum useky <id>               vypíše úseky průzkumu a jejich stav
   reserse obsluz                   vyřídí jednu objednávku AI průzkumu
                                    (spustí Čmuchala neinteraktivně)
-  k-obohaceni [--limit N] [--segmenty stredni,korporat] [--bez-spojeni]
+  k-obohaceni [--limit N] [--kampan <id>] [--segmenty stredni,korporat] [--bez-spojeni]
                                    vypíše firmy čekající na rešerši (pro agenta);
-                                   --bez-spojeni = známe jméno, chybí e-mail i telefon
+                                   --kampan = jen firmy vybrané do dané kampaně (stejné jako
+                                   objednávka AI rešerše); --bez-spojeni = známe jméno, chybí
+                                   e-mail i telefon
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
     process.exit(prikaz ? 1 : 0);

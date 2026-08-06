@@ -30,16 +30,23 @@ export interface VysledekSpusteni {
 }
 
 /**
- * Nástroje, které agent při rešerši dostane. Nic víc spustit nesmí.
+ * Nástroje, které agent při rešerši dostane.
  *
- * `Read`/`Write` jsou zúžené na pracovní soubory Čmuchala — bez toho by
- * agent bez dozoru směl číst cokoli v repozitáři včetně `.env` (přístup do
- * databáze) a zapisovat kamkoli (nález 5 závěrečné revize). Playbook si
- * agent smí upravovat sám, to je záměr (viz `.claude/agents/cmuchal.md`).
+ * **Nespoléhej na to jako na bezpečnostní hranici.** Ověřeno živým pokusem
+ * 6. 8. 2026: cesty v povolovacím seznamu čtení souborů **neomezují** —
+ * s povoleným `Read(playbook-cmuchal.md)` agent přesto přečetl `src/reserse.ts`
+ * a vrátil jeho přesnou délku. Zákaz podle cesty zabírá jen někdy
+ * (`Read(src/**)` ano, `.env` ne). Tenhle seznam je tedy vodítko pro model,
+ * ne zámek.
  *
- * Z příkazové řádky jen dva příkazy: vzít si práci a zapsat nálezy. Oba
- * procházejí kontrolou, která vyžaduje zdroj a doslovnou citaci — proto na
- * nich nezáleží, co si model myslí.
+ * Skutečné hranice, na kterých stojí bezpečnost běhu bez dozoru:
+ * 1. **Tajemství nejsou v pracovní složce** — `.env` leží mimo repozitář
+ *    (`src/env.ts`, `vychoziCestaEnv`). Na co agent nedosáhne, to neunikne.
+ * 2. **Každý zápis prochází `zapis-nalezy`**, které vyžaduje zdroj a doslovnou
+ *    citaci (TP-2) a odmítá atributy mimo whitelist (TP-3).
+ * 3. **Agent nemá čím odeslat** (TP-8) a každý běh je v `agent_runs` (TP-13).
+ *
+ * Playbook si agent smí upravovat sám, to je záměr (`.claude/agents/cmuchal.md`).
  */
 export const POVOLENE_NASTROJE = [
   "WebSearch",
@@ -58,7 +65,7 @@ export const POVOLENE_NASTROJE = [
  * (nález 5 závěrečné revize: „zvaž i výslovný zákaz nástrojů na úpravu
  * souborů").
  */
-export const ZAKAZANE_NASTROJE = ["Edit", "MultiEdit", "NotebookEdit"] as const;
+export const ZAKAZANE_NASTROJE = ["Edit", "NotebookEdit"] as const;
 
 /** Argumenty pro `claude` — čistá funkce, ať jde v testu ověřit beze spuštění. */
 export function sestavArgumenty(): string[] {

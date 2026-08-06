@@ -111,7 +111,9 @@ zdůvodněním; pokud se dá pokračovat na jiné části práce, neblokuj se č
   robots.txt; LinkedIn se nescrapuje nikdy.
 - Migrace: pouze přidávat nové soubory do supabase/migrations/ (po nasazení
   produkce se 0001 needituje).
-- Tajemství jen v .env (nikdy do gitu, nikdy do paměti/vaultu).
+- **Tajemství leží MIMO pracovní složku** — `~/.cantinero/.env`, ne `.env`
+  v projektu. Čmuchal tu běží bez dozoru a omezení nástrojů mu ve čtení
+  souborů nezabrání (ověřeno 6. 8. 2026). Nikdy do gitu, nikdy do paměti.
 
 ## Struktura
 

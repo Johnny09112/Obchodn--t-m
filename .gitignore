@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .env
+.env.*
+!.env.example
 *.log
 
 # Lokální databáze (obsahuje data o firmách — do gitu nepatří).

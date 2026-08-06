@@ -4,9 +4,11 @@ import {
   maSpojeni,
   POPIS_STAVU,
   POPIS_VELIKOSTI,
+  stavReserse,
   VELIKOSTI,
   type Firma,
   type Kategorie,
+  type StavReserse,
 } from "./data";
 
 interface Props {
@@ -35,6 +37,32 @@ function Stav({ stav }: { stav: string }) {
   );
 }
 
+/** Datum pro `title` — jen na najetí myší, vlastní sloupec by tabulku roztáhl. */
+function den(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("cs-CZ");
+}
+
+const POPIS_RESERSE: Record<StavReserse, { popis: string; trida: string }> = {
+  neprosla: { popis: "neprošla", trida: "" },
+  prosla_se_spojenim: { popis: "prošla · spojení", trida: "je-hotovo" },
+  prosla_bez_spojeni: { popis: "prošla · bez stopy", trida: "je-zamitnuty" },
+};
+
+function Reserse({ f }: { f: Firma }) {
+  const s = stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f) });
+  const p = POPIS_RESERSE[s];
+  return (
+    <span
+      className={`stav ${p.trida}`.trim()}
+      title={f.obohaceno_at ? `Naposledy prošla rešerší ${den(f.obohaceno_at)}` : undefined}
+    >
+      <span className="znak" aria-hidden="true" />
+      {p.popis}
+    </span>
+  );
+}
+
 export function SeznamFirem({
   firmy,
   kategorie,
@@ -49,6 +77,7 @@ export function SeznamFirem({
   const [velikost, setVelikost] = useState("");
   const [obor, setObor] = useState("");
   const [spojeni, setSpojeni] = useState("");
+  const [reserse, setReserse] = useState<StavReserse | "">("");
   /**
    * Kolik řádků na stránku. Výchozích sto: třináct tisíc řádků naráz
    * prohlížeč vykresluje vteřiny a stejně je nikdo nepřečte.
@@ -68,6 +97,9 @@ export function SeznamFirem({
       if (obor && f.kategorie !== obor) return false;
       if (spojeni === "ma" && !maSpojeni(f)) return false;
       if (spojeni === "nema" && maSpojeni(f)) return false;
+      if (reserse && stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f) }) !== reserse) {
+        return false;
+      }
       if (!q) return true;
       return (
         f.nazev.toLocaleLowerCase("cs").includes(q) ||
@@ -75,7 +107,7 @@ export function SeznamFirem({
         f.ico.includes(q)
       );
     });
-  }, [firmy, hledani, velikost, obor, spojeni]);
+  }, [firmy, hledani, velikost, obor, spojeni, reserse]);
 
   const souhrn = useMemo(() => {
     const sOdhadem = videt.filter((f) => f.zamestnanci_odhad !== null);
@@ -91,13 +123,13 @@ export function SeznamFirem({
     };
   }, [videt]);
 
-  const filtrujeSe = !!(hledani || velikost || obor || spojeni);
+  const filtrujeSe = !!(hledani || velikost || obor || spojeni || reserse);
 
   // Po změně filtru se vrať na začátek — jinak člověk kouká na prázdno,
   // protože stojí na patnácté stránce výběru, který má dvě.
   useEffect(() => {
     setStranka(0);
-  }, [hledani, velikost, obor, spojeni, naStranku]);
+  }, [hledani, velikost, obor, spojeni, reserse, naStranku]);
 
   const stranek = naStranku > 0 ? Math.max(1, Math.ceil(videt.length / naStranku)) : 1;
   const kde = Math.min(stranka, stranek - 1);
@@ -169,6 +201,18 @@ export function SeznamFirem({
             <option value="nema">chybí kontakt</option>
           </select>
         </label>
+        <label className="pole">
+          <span>Rešerše</span>
+          <select
+            value={reserse}
+            onChange={(e) => setReserse(e.target.value as StavReserse | "")}
+          >
+            <option value="">nerozhoduje</option>
+            <option value="neprosla">neprošla</option>
+            <option value="prosla_se_spojenim">prošla se spojením</option>
+            <option value="prosla_bez_spojeni">prošla bez spojení</option>
+          </select>
+        </label>
       </div>
 
       {bezSouradnic > 0 && (
@@ -201,6 +245,7 @@ export function SeznamFirem({
                 <th className="cislo">Spojení</th>
                 <th className="cislo">Skóre</th>
                 <th>Stav</th>
+                <th>Rešerše</th>
                 {akce && <th>{popisAkce}</th>}
               </tr>
             </thead>
@@ -227,6 +272,9 @@ export function SeznamFirem({
                   <td className="cislo">{f.skore ?? "—"}</td>
                   <td>
                     <Stav stav={f.stav} />
+                  </td>
+                  <td>
+                    <Reserse f={f} />
                   </td>
                   {akce && <td>{akce(f)}</td>}
                 </tr>

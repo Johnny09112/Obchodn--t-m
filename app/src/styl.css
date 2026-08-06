@@ -440,6 +440,16 @@ h2 {
   color: var(--zelen);
 }
 
+/* Stejná zelená jako `.hlaska.je-hotovo` — používá ji i sloupec Rešerše
+   v seznamu firem (app/src/SeznamFirem.tsx), proto vlastní tvar značky,
+   ať se v tabulce nepletou dvě zelené se stejným kolečkem. */
+.stav.je-hotovo {
+  color: var(--zelen);
+}
+.stav.je-hotovo > .znak {
+  border-radius: 50%;
+}
+
 .stav.je-ceka {
   color: var(--horcice);
 }

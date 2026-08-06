@@ -859,7 +859,14 @@ export function PruvodceKampani({
       else if (u === 3) rozpad.jmenna++;
       else rozpad.zadny++;
     }
-    const seSpojenim = vybrane.length - rozpad.zadny;
+    // POZOR: „má kontakt" a „dá se jí napsat" jsou dvě různé věci.
+    // Doplnění z rejstříku zapisuje jednatele jménem, bez e-mailu i telefonu —
+    // u Hrobců tak 48 z 61 firem mělo kontakt, ale napsat nešlo ani jedné.
+    // Dokud se tu počítalo `vybrane.length - rozpad.zadny`, hlásila obrazovka
+    // 48 a `SeznamFirem` hned pod ní 0. Schvalování kampaně se navíc opíralo
+    // o to vyšší číslo.
+    const seSpojenim = vybrane.filter((f) => f.maSpojeni).length;
+    const jenJmeno = vybrane.length - rozpad.zadny - seSpojenim;
 
     // Kolik firem v seznamu ještě nemá AI rešerši. Jen VYBRANÉ — vyřazená
     // firma je vyřazená i pro rešerši (fronta v `src/reserse.ts` bere jen
@@ -1032,10 +1039,24 @@ export function PruvodceKampani({
                 <span className="popisek">Firem v seznamu</span>
                 <span className="hodnota">{vybrane.length}</span>
               </p>
-              <p className="udaj">
-                <span className="popisek">Se spojením</span>
+              <p className="udaj vyrazny">
+                <span className="popisek">Dá se jim napsat</span>
                 <span className="hodnota">{seSpojenim}</span>
               </p>
+              {jenJmeno > 0 && (
+                <>
+                  <p className="udaj">
+                    <span className="popisek">Známe jen jméno, ne adresu</span>
+                    <span className="hodnota">{jenJmeno}</span>
+                  </p>
+                  <p className="poznamka">
+                    U {jenJmeno.toLocaleString("cs")}{" "}
+                    {cesky(jenJmeno, "firmy", "firem", "firem")} máme jméno
+                    z rejstříku, ale žádný e-mail ani telefon. Oslovit je zatím
+                    nejde — od toho je AI průzkum.
+                  </p>
+                </>
+              )}
               <p className="udaj">
                 <span className="popisek">Na jmenovanou osobu</span>
                 <span className="hodnota">{rozpad.jmenna}</span>

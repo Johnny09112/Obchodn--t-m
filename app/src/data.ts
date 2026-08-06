@@ -718,6 +718,16 @@ export interface FirmaKampane {
   duvod_vyrazeni: string | null;
   /** Úrovně adres všech kontaktů firmy. Nejlepší je nejnižší číslo (TP-6). */
   urovne: number[];
+  /**
+   * Má firma kontakt, na který se dá doopravdy napsat?
+   *
+   * Není to totéž co „má kontakt". Doplnění z rejstříku zapisuje jednatele
+   * **jménem, bez e-mailu i telefonu** — u Hrobců tak 48 z 61 firem mělo
+   * kontakt, ale napsat nešlo ani jedné. Dokud se to počítalo jako spojení,
+   * hlásila obrazovka 48 a `SeznamFirem` hned pod ní 0; a schvalování kampaně
+   * se opíralo o to vyšší číslo.
+   */
+  maSpojeni: boolean;
 }
 
 /**
@@ -735,7 +745,9 @@ export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[
     stav: "vybrana" | "vyrazena";
     duvod_vyrazeni: string | null;
     companies: { nazev: string; obec: string | null; skore: number | null } | null;
-    contacts: { contacts: { uroven_adresy: number | null }[] } | null;
+    contacts: {
+      contacts: { uroven_adresy: number | null; email: string | null; telefon: string | null }[];
+    } | null;
   };
 
   const vse: FirmaKampane[] = [];
@@ -744,7 +756,8 @@ export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[
     let dotaz = supabase
       .from("kampan_firmy")
       .select(
-        "ico,stav,duvod_vyrazeni,companies(nazev,obec,skore),contacts:companies(contacts(uroven_adresy))",
+        "ico,stav,duvod_vyrazeni,companies(nazev,obec,skore)," +
+          "contacts:companies(contacts(uroven_adresy,email,telefon))",
       )
       .eq("kampan_id", kampanId)
       .order("ico")
@@ -767,6 +780,9 @@ export async function nactiFirmyKampane(kampanId: string): Promise<FirmaKampane[
         urovne: (r.contacts?.contacts ?? [])
           .map((k) => k.uroven_adresy)
           .filter((u): u is number => u !== null),
+        maSpojeni: (r.contacts?.contacts ?? []).some(
+          (k) => k.email !== null || k.telefon !== null,
+        ),
       })),
     );
     posledni = davka[davka.length - 1]!.ico;

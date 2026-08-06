@@ -59,10 +59,39 @@ Vývojový server: `npm run dev --prefix app` (port 5173).
 - **Mapa**: tažení bodů ([[tazeni-bodu-prerusoval-react]]), přiblížení na
   vybranou oblast, jídelny se počítají ([[jidelna-se-nepriradi-rucne]]).
 
+## Co se stalo 6. 8.
+
+**AI průzkum se objednává tlačítkem a vyřídí se sám.** Objednávka jde do
+fronty (`reserse`, migrace 0034), hlídka u hodin ji v řádném běhu vyzvedne
+a spustí Čmuchala neinteraktivně. Poslední místo, kde byl majitel závislý
+na tom, že někdo píše do chatu.
+
+**Práce se předává soubory, ne příkazy.** Původní návrh nechával agenta vzít
+si ji přes `k-obohaceni` — při první ostré dávce mu Bash zamítlo oprávnění
+a dávka doběhla s nulou. Nálezy zapisuje obsluha přes `zapisDavku`, takže
+agent nepotřebuje shell vůbec.
+
+**Ověřeno naostro na Hrobcích:** 5 z 5 firem, 6 nových kontaktů, spojení
+přibylo u 4, jedna bez nálezu. U všech doložený zdroj i doslovná citace.
+
+Cestou opraveno: „se spojením" počítalo firmy, kterým napsat nejde (a o to
+číslo se opírá schvalování kampaně); úrovně adres se hlásily pootočené proti
+TP-6 ([[pootocene-urovne-adres]]); tajemství se přesunulo mimo pracovní
+složku ([[tajemstvi-mimo-pracovni-slozku]]).
+
+SPEC kap. 5 rozdělena na dvě vrstvy ([[dve-vrstvy-znalost-a-zprava]]).
+
 ## Aktuální focus
 
-**Čachrov je vyřešený** (4. 8.) — majitel může firmy přibrat sám, viz níž.
-Čeká se na volbu dalšího celku.
+**Fáze 1 je z pohledu majitele hotová** — sběr, přibírání firem i AI průzkum
+si objedná sám v aplikaci. Čeká se na volbu dalšího celku.
+
+Dva otevřené body z 6. 8., které stojí za pozornost:
+
+- **Heslo k databázi se má změnit.** Při ověřování bezpečnosti jsem nechal
+  agenta přečíst `.env`; obsah prošel jeho kontextem.
+- **Schválený seznam firem není v databázi zamčený** — drží to jen obrazovka.
+  Viz [[otevrene-pozadavky-majitele]] bod A4.
 
 ## Co se stalo 4. 8.
 

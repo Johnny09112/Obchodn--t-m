@@ -31,6 +31,7 @@ import {
 } from "./blacklist.js";
 import { priradKategorie } from "./kategorie.js";
 import { nactiProfil, seznamProfilu, zvolProfil } from "./profil.js";
+import { profilProKampan } from "./atributy.js";
 import { prenesData } from "./prenos.js";
 import {
   firmyVOblasti, nactiOblast, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
@@ -1332,7 +1333,16 @@ async function cmdReserse(argv: string[]): Promise<void> {
         // firmě schází a koho už u ní známe. Bez toho by agent hledal „nějaký
         // kontakt" místo spojení na konkrétního člověka, což je podle měření
         // z 2. 8. výrazně horší výchozí pozice.
-        const prace = await firmyKObohaceni(db, { kampanId: o.kampanId, limit: firmy.length });
+        //
+        // Profil se bere z KAMPANĚ (profilProKampan), ne z globálně
+        // aktivního — rešerše běží uvnitř kampaně a má se řídit jejím
+        // profilem (viz komentář u `profilProKampan` v src/atributy.ts).
+        const profilKod = await profilProKampan(db, o.kampanId);
+        const prace = await firmyKObohaceni(db, {
+          kampanId: o.kampanId,
+          profilKod,
+          limit: firmy.length,
+        });
         await writeFile(souborPrace, JSON.stringify(prace, null, 2), "utf8");
 
         const prompt =
@@ -1694,6 +1704,11 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       // pravidlo jako firmyProReserse (src/reserse.ts). Nepovinné, majitel
       // dál může použít příkaz ručně beze změny.
       kampan: { type: "string" },
+      // Profil, podle kterého se počítá `chybi`. Nezadaný a bez --kampan =
+      // globálně aktivní profil; s --kampan = profil té kampaně
+      // (profilProKampan) — ať se rešerše řídí profilem kampaně, ne tím,
+      // co je zrovna aktivní globálně.
+      profil: { type: "string" },
       // Např. --segmenty stredni,korporat — u drobných se rešerše nevyplatí.
       segmenty: { type: "string" },
       // Firmy, kde známe jméno, ale ne spojení na něj.
@@ -1702,11 +1717,14 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
   });
   const db = await pripojDb();
   try {
+    const profilKod =
+      values.profil ?? (values.kampan ? await profilProKampan(db, values.kampan) : undefined);
     const firmy = await firmyKObohaceni(db, {
       limit: values.limit ? Number(values.limit) : undefined,
       jidelnaId: values.jidelna,
       oblastId: values.oblast,
       kampanId: values.kampan,
+      profilKod,
       segmenty: values.segmenty?.split(",").map((s) => s.trim()) as Segment[] | undefined,
       jenBezSpojeni: values["bez-spojeni"] === true,
     });
@@ -1911,11 +1929,13 @@ switch (prikaz) {
   pruzkum useky <id>               vypíše úseky průzkumu a jejich stav
   reserse obsluz                   vyřídí jednu objednávku AI průzkumu
                                    (spustí Čmuchala neinteraktivně)
-  k-obohaceni [--limit N] [--kampan <id>] [--segmenty stredni,korporat] [--bez-spojeni]
+  k-obohaceni [--limit N] [--kampan <id>] [--profil <kod>] [--segmenty stredni,korporat] [--bez-spojeni]
                                    vypíše firmy čekající na rešerši (pro agenta);
                                    --kampan = jen firmy vybrané do dané kampaně (stejné jako
-                                   objednávka AI rešerše); --bez-spojeni = známe jméno, chybí
-                                   e-mail i telefon
+                                   objednávka AI rešerše); --profil = podle čeho se počítá
+                                   pole "chybi" (nezadaný a bez --kampan = globálně aktivní
+                                   profil; s --kampan = profil té kampaně); --bez-spojeni =
+                                   známe jméno, chybí e-mail i telefon
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
     process.exit(prikaz ? 1 : 0);

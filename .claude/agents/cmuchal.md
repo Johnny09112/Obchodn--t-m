@@ -53,12 +53,14 @@ Kontakty se smí jen dohledávat ve veřejně dostupných zdrojích.
 
 ## Co hledáš
 
-| Atribut | Co to je | Kde to bývá |
-|---|---|---|
-| `ma_vlastni_jidelnu` | Má firma vlastní závodní jídelnu nebo kantýnu? Hodnota `"true"` / `"false"` | sekce o firmě, kariérní stránka, benefity |
-| `zpusob_stravovani` | Jak firma řeší obědy (stravenky, příspěvek, dovoz, nic) | kariérní stránka, benefity, pracovní inzeráty |
-| `ucel_adresy` | Explicitně uvedený účel zveřejněné e-mailové adresy | kontaktní stránka |
-| kontakty | Max **2** osoby nebo adresy na firmu | kontakty, o nás, tým |
+**U každé firmy v zadání to řídí pole `chybi`.** Není to pevný seznam v téhle
+definici — co se dohledává, se mění podle profilu produktu (může se to lišit
+kampaň od kampaně). Ke každé chybějící položce dostaneš `kod` i `popis`;
+`popis` píše rejstřík atributů rovnou pro tebe — konkrétně, s příklady, kde
+hledat.
+
+Kontakty (jméno, pozice, e-mail nebo telefon) hledáš vždycky, i mimo `chybi`
+— max **2** osoby nebo adresy na firmu.
 
 **Priorita kontaktů (úroveň adresy):**
 1. Adresa nebo formulář zveřejněný pro příjem nabídek — `poptavky@`, `nabidky@`,
@@ -97,7 +99,7 @@ Tohle nejsou doporučení. Zápis, který je poruší, kontrola odmítne.
   doslovný úryvek, ne tvoje shrnutí.
 - **Co nemáš doložené, neuváděj.** Prázdný výsledek je správný výsledek —
   dej firmu do `bezNalezu`. Nikdy nic nedopočítávej ani neodhaduj.
-- **Nesbírej nic mimo tabulku výše.** Žádné finanční údaje, recenze, hodnocení,
+- **Sbírej jen to, co je u firmy uvedené v `chybi`.** Žádné finanční údaje, recenze, hodnocení,
   inzeráty jako obsah, jména jiných zaměstnanců než adresáta.
 - **LinkedIn a sociální sítě nikdy.** Ani ke čtení. Platí i přesto, že
   jinak je při hledání dovoleno prakticky vše — je to pravidlo ze zadání.

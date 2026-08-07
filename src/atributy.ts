@@ -52,6 +52,21 @@ export async function nactiAtributyProfilu(db: Db, profilKod: string): Promise<A
 }
 
 /**
+ * Globálně aktivní profil (`profily where aktivni`).
+ *
+ * Slouží jako výchozí branch tam, kde volající nezadá profil výslovně —
+ * NIKDY se nepadá na celý rejstřík atributů. Kdyby se to spletlo, atribut
+ * zavedený mimo profily by se začal hledat u všech firem přes
+ * `k-obohaceni` bez parametrů (přesně příkaz z playbooku Čmuchala).
+ */
+export async function aktivniProfilKod(db: Db): Promise<string> {
+  const r = await db.query<{ kod: string }>("select kod from profily where aktivni");
+  const kod = r[0]?.kod;
+  if (!kod) throw new Error("Žádný profil není aktivní — nastav ho: profil zvol <kod>.");
+  return kod;
+}
+
+/**
  * Profil kampaně, nebo globálně aktivní, když kampaň žádný nemá.
  *
  * Rešerše bere profil odsud — běží uvnitř kampaně. Sběr naopak zůstává na

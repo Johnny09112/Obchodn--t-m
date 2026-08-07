@@ -106,14 +106,29 @@ podmínka `check` zrušená a nahrazená cizím klíčem, RLS zapnuté.
 - Pasti, které to odhalilo: [[tri-kopie-seznamu-atributu]],
   [[dva-profily-sber-a-reserse]]
 
-**Co zbývá k „hotovo" podle zadání kap. 8: ostrá dávka na Hrobcích s novým
-atributem `smenny_provoz`** — ověřit, že se dohledal aspoň u jedné firmy
-a **má citaci**, nebo že se nedohledal a majitel to ví.
+### Ostrá dávka 7. 8. — mechanismus funguje, výtěžnost ne
 
-**Varování, které majitel zná a přijal:** na dva „zajímavé" atributy
-(`ma_vlastni_jidelnu`, `zpusob_stravovani`) připadají ze 7 256 záznamů
-evidence celkem tři. Mechanismus stojí nad něčím, co se prakticky nikdy
-nepodařilo dohledat. Proto „hotovo" znamená ostrou dávku, ne zelené testy.
+Kampaň Hrobce, 20 firem objednaných z aplikace, **18 zpracovaných**.
+Výpis běhu: `profil cantinero` — profil se do rešerše propsal.
+
+| Co | Výsledek |
+|---|---|
+| Nálezů atributů | **1** (`ucel_adresy`, se zdrojem i doslovnou citací) |
+| Kontaktů | 15, spojení přibylo u 13 firem |
+| Odmítnuto | 0 |
+| **`smenny_provoz`** | **0 z 18** |
+
+**Mechanismus je ověřený na skutečných datech.** `k-obohaceni` prokazatelně
+předává `smenny_provoz` agentovi v poli `chybi` **i s popisem, kde ho
+hledat** — a ten atribut se do systému dostal **jen migrací 0037, bez
+jediného řádku kódu**. To byl cíl celé práce a ten je splněný.
+
+**Výtěžnost je nula a je to zpráva o datech, ne o kódu.** Hrobce jsou
+mikropodniky a obce — kariérní stránky ani inzeráty nemají, takže směny
+není odkud vzít. Zadání (kap. 2) na tuhle sázku předem upozorňovalo:
+na dva „zajímavé" atributy připadaly ze 7 256 záznamů evidence tři.
+**Majitel to ví.** Poctivý test výtěžnosti by chtěl území s výrobou
+a většími firmami, ne Hrobce.
 
 **Otevřené vědomě:** `zapisDavku` profil kampaně nekontroluje — je to rada
 v promptu, ne kontrola v kódu. Mezera v plánu, ne v provedení; podrobnosti

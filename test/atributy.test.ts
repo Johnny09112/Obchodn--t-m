@@ -38,12 +38,20 @@ describe("rejstřík atributů", () => {
   // Tvrdé pravidlo TP-3: databáze nesmí pustit atribut, který nikdo nezavedl.
   // Dřív to hlídala pevná podmínka `check`, nově cizí klíč do rejstříku.
   it("vymyšlený atribut databáze nepustí", async () => {
+    // Firmu je nutné založit předem — jinak insert padne na evidence_ico_fkey
+    // dřív, než se vůbec dostane k atributu, a test by prošel z jiného
+    // důvodu, než tvrdí (nález revize: bez tohohle řádku projde i s platným
+    // atributem, protože selže na cizím klíči na companies, ne na atributy).
+    await db.query(
+      `insert into companies (ico, nazev, stav) values ('25232657','X','kvalifikovany')
+       on conflict do nothing`,
+    );
     await expect(
       db.query(
         `insert into evidence (ico, atribut, hodnota, zdroj_url)
          values ('25232657', 'kdovico', 'x', 'https://e.cz')`,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/evidence_atribut_fk/);
   });
 
   it("atribut z rejstříku projde", async () => {

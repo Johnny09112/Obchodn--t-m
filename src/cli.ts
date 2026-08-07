@@ -1356,7 +1356,7 @@ async function cmdReserse(argv: string[]): Promise<void> {
           `Nespouštěj žádné příkazy; nemáš je povolené a nepotřebuješ je. ` +
           `Do databáze zapíše nálezy sama obsluha, až soubor přečte.`;
 
-        console.log(`Objednávka ${o.id}: ${firmy.length} firem, pouštím Čmuchala…`);
+        console.log(`Objednávka ${o.id}: ${firmy.length} firem, profil ${profilKod}, pouštím Čmuchala…`);
         const v = await spustCmuchalaProces({
           prompt,
           koren: process.cwd(),

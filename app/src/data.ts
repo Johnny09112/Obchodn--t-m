@@ -48,6 +48,22 @@ export interface Kategorie {
   nazev: string;
 }
 
+/** Profil produktu — určuje, co se o firmách zjišťuje (viz `src/atributy.ts`). */
+export interface Profil {
+  kod: string;
+  nazev: string;
+  aktivni: boolean;
+}
+
+export async function nactiProfily(): Promise<Profil[]> {
+  const { data, error } = await supabase
+    .from("profily")
+    .select("kod,nazev,aktivni")
+    .order("nazev");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Profil[];
+}
+
 /** Řádek tabulky `oblasti` tak, jak chodí z databáze. */
 export interface RadekOblasti {
   id: string;
@@ -387,6 +403,8 @@ export interface RadekKampane {
   oblasti: { id: string; nazev: string }[];
   archivovana_at: string | null;
   updated_at: string;
+  /** Profil produktu kampaně (migrace 0036). `null` = použij globálně aktivní. */
+  profil_kod: string | null;
 }
 
 /** Člověk s přístupem do aplikace — pro výběr zástupu. */
@@ -419,7 +437,7 @@ export async function nactiKampane(): Promise<RadekKampane[]> {
   const { data, error } = await supabase
     .from("kampane")
     .select(
-      "id,nazev,stav,spravce,zastupce,krok,archivovana_at,updated_at," +
+      "id,nazev,stav,spravce,zastupce,krok,archivovana_at,updated_at,profil_kod," +
         "kampan_oblasti(poradi,oblasti(id,nazev))",
     )
     .order("updated_at", { ascending: false });

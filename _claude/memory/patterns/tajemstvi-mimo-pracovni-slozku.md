@@ -43,7 +43,9 @@ nástrojů dělá.** Ověř to pokusem, nebo se na to nespoléhej. Hranice, kter
 u tohohle projektu doopravdy drží, jsou v kódu:
 
 1. tajemství nejsou tam, kam agent dosáhne,
-2. každý zápis prochází `zapis-nalezy` (zdroj + doslovná citace, whitelist),
+2. každý zápis prochází `zapis-nalezy` (zdroj + doslovná citace; od 7. 8.
+   se atribut ověřuje proti rejstříku a příznaku `hleda_agent`, ne proti
+   pevnému whitelistu — viz [[tri-kopie-seznamu-atributu]]),
 3. agent nemá čím odeslat a každý běh je v `agent_runs`.
 
 **Poznámka k okolnostem:** při tom ověřování jsem agenta přiměl `.env`

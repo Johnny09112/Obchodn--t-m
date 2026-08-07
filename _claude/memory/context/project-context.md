@@ -4,7 +4,7 @@ description: Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, 
 type: context
 status: active
 created: 2026-08-01
-updated: 2026-08-03
+updated: 2026-08-07
 ---
 
 # obchodni-tym — živý kontext
@@ -81,29 +81,43 @@ složku ([[tajemstvi-mimo-pracovni-slozku]]).
 
 SPEC kap. 5 rozdělena na dvě vrstvy ([[dve-vrstvy-znalost-a-zprava]]).
 
-## Rozdělaná práce (7. 8.) — profil produktu
+## Profil produktu (7. 8.) — hotovo v kódu, migrace nasazené
 
-**Větev `profil-produktu`, odbočená z `main` na 68b944a. Nezačato.**
+**Větev `profil-produktu`, pět úkolů odpracovaných subagentně. Nezmergováno.**
 
-Zadání i plán jsou hotové a **plán prošel revizí ještě před psaním kódu** —
-našla čtyři vážné věci, které by prošly testy a projevily se až ostrou dávkou
-s nulovým výsledkem. Všechny jsou v plánu zapracované.
+**Co to dělá:** pevný seznam povolených atributů se přesunul z kódu do
+tabulky `atributy` s příznaky `do_zpravy` (smí do zprávy) a `hleda_agent`
+(hledá Čmuchal). Profil vybírá, co se o firmě zjišťuje; kampaň si nese svůj
+profil (`kampane.profil_kod`, `NULL` = globálně aktivní). **TP-3 se tím
+rozdělil** — whitelist váže zprávu, sběr určuje profil.
+
+TP-3 po přesunu drží **dvěma nezávislými vrstvami**: běhovou kontrolou
+v `zapisAtribut` a cizím klíčem `evidence_atribut_fk`. Do `evidence` navíc
+zapisuje v produkčním kódu jedině `src/repo.ts` a tabulka má RLS **bez
+jediné politiky**, takže přes datové API se do ní nedostane nikdo.
+
+**Migrace 0035, 0036 a 0037 nasazené 7. 8.** Kontrola před i po: evidence
+beze změny na 7 256 řádcích, žádná hodnota `atribut` mimo rejstřík, stará
+podmínka `check` zrušená a nahrazená cizím klíčem, RLS zapnuté.
 
 - Zadání: `docs/superpowers/specs/2026-08-07-profil-produktu-design.md`
 - Plán: `docs/superpowers/plans/2026-08-07-profil-produktu.md`
-- Ledger a pre-flight: `.superpowers/sdd/2026-08-07-profil-produktu/progress.md`
+- Ledger celého běhu: `.superpowers/sdd/2026-08-07-profil-produktu/progress.md`
+- Pasti, které to odhalilo: [[tri-kopie-seznamu-atributu]],
+  [[dva-profily-sber-a-reserse]]
 
-**Způsob práce:** subagent-driven, pět úkolů. Majitel to zvolil 7. 8.
-
-**Co to dělá:** pevný seznam povolených atributů se přesune z kódu do tabulky
-s příznaky `do_zpravy` (smí do zprávy) a `hleda_agent` (hledá Čmuchal).
-Profil pak vybírá, co se sbírá, a kampaň si nese svůj profil. **Sahá se tím
-na TP-3** — to je nejcitlivější místo celé práce.
+**Co zbývá k „hotovo" podle zadání kap. 8: ostrá dávka na Hrobcích s novým
+atributem `smenny_provoz`** — ověřit, že se dohledal aspoň u jedné firmy
+a **má citaci**, nebo že se nedohledal a majitel to ví.
 
 **Varování, které majitel zná a přijal:** na dva „zajímavé" atributy
 (`ma_vlastni_jidelnu`, `zpusob_stravovani`) připadají ze 7 256 záznamů
-evidence celkem tři. Mechanismus se staví nad něčím, co se prakticky nikdy
+evidence celkem tři. Mechanismus stojí nad něčím, co se prakticky nikdy
 nepodařilo dohledat. Proto „hotovo" znamená ostrou dávku, ne zelené testy.
+
+**Otevřené vědomě:** `zapisDavku` profil kampaně nekontroluje — je to rada
+v promptu, ne kontrola v kódu. Mezera v plánu, ne v provedení; podrobnosti
+v [[dva-profily-sber-a-reserse]].
 
 ## Aktuální focus
 

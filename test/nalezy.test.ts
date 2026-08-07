@@ -325,13 +325,13 @@ describe("chybi podle profilu", () => {
     // implementaci — přidáno k briefu, viz report úkolu 4.
     await db.query(
       `insert into atributy (kod, nazev, popis, do_zpravy, hleda_agent)
-       values ('smenny_provoz', 'směnný provoz', 'jestli firma jede na směny a na kolik', false, true)`,
+       values ('test_nove_atribut', 'testovací nový', 'test nového atributu', false, true)`,
     );
     await db.query(
-      "insert into profil_atributy (profil_kod, atribut_kod) values ('cantinero','smenny_provoz')",
+      "insert into profil_atributy (profil_kod, atribut_kod) values ('cantinero','test_nove_atribut')",
     );
     const f = await firmyKObohaceni(db, { kampanId, profilKod: "cantinero", limit: 5 });
-    expect(f[0]!.chybi.map((c) => c.kod)).toContain("smenny_provoz");
+    expect(f[0]!.chybi.map((c) => c.kod)).toContain("test_nove_atribut");
   });
 });
 

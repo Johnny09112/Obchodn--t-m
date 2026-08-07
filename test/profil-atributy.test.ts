@@ -14,7 +14,7 @@ describe("atributy profilu", () => {
   it("výchozí profil sbírá dnešních devět", async () => {
     const a = await nactiAtributyProfilu(db, "cantinero");
     expect(a.map((x) => x.kod).sort()).toEqual([
-      "adresa", "kontakt", "ma_vlastni_jidelnu", "obor", "pracovni_rezim",
+      "adresa", "kontakt", "ma_vlastni_jidelnu", "obor", "smenny_provoz",
       "ucel_adresy", "velikost_kategorie", "zamestnanci_odhad", "zpusob_stravovani",
     ]);
   });
@@ -23,23 +23,23 @@ describe("atributy profilu", () => {
   it("atribut mimo profil se nesbírá", async () => {
     await db.query(
       `insert into atributy (kod, nazev, popis, do_zpravy)
-       values ('smenny_provoz', 'směnný provoz', 'jestli firma jede na směny', false)`,
+       values ('test_atribut', 'testovací', 'test', false)`,
     );
     const a = await nactiAtributyProfilu(db, "cantinero");
-    expect(a.map((x) => x.kod)).not.toContain("smenny_provoz");
+    expect(a.map((x) => x.kod)).not.toContain("test_atribut");
   });
 
   it("přidání do profilu ho zpřístupní", async () => {
     await db.query(
       `insert into atributy (kod, nazev, popis, do_zpravy)
-       values ('smenny_provoz', 'směnný provoz', 'jestli firma jede na směny', false)`,
+       values ('test_atribut', 'testovací', 'test', false)`,
     );
     await db.query(
-      "insert into profil_atributy (profil_kod, atribut_kod) values ('cantinero','smenny_provoz')",
+      "insert into profil_atributy (profil_kod, atribut_kod) values ('cantinero','test_atribut')",
     );
     const a = await nactiAtributyProfilu(db, "cantinero");
-    expect(a.map((x) => x.kod)).toContain("smenny_provoz");
-    expect(a.find((x) => x.kod === "smenny_provoz")?.popis).toContain("směny");
+    expect(a.map((x) => x.kod)).toContain("test_atribut");
+    expect(a.find((x) => x.kod === "test_atribut")?.popis).toContain("test");
   });
 
   // Rozhodnutí majitele k briefu: návratový typ je Atribut, který od úkolu 2
@@ -50,7 +50,7 @@ describe("atributy profilu", () => {
     const a = await nactiAtributyProfilu(db, "cantinero");
     const hledajiSe = a.filter((x) => x.hledaAgent).map((x) => x.kod).sort();
     expect(hledajiSe).toEqual(
-      ["ma_vlastni_jidelnu", "pracovni_rezim", "ucel_adresy", "zpusob_stravovani"].sort(),
+      ["ma_vlastni_jidelnu", "smenny_provoz", "ucel_adresy", "zpusob_stravovani"].sort(),
     );
     const nehledajiSe = a.filter((x) => !x.hledaAgent).map((x) => x.kod).sort();
     expect(nehledajiSe).toEqual(

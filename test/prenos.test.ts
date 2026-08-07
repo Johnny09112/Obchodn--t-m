@@ -106,31 +106,31 @@ describe("přenos dat do sdílené databáze", { timeout: 60_000 }, () => {
   it("vlastní atribut a jeho zařazení do profilu se přenesou, výchozí osazení nekoliduje", async () => {
     await zdroj.query(
       `insert into atributy (kod, nazev, popis, do_zpravy, hleda_agent)
-       values ('smenny_provoz', 'směnný provoz', 'jestli firma jede na směny', false, true)`,
+       values ('test_custom', 'testovací atribut', 'test přenosu', false, true)`,
     );
     await zdroj.query(
-      "insert into profil_atributy (profil_kod, atribut_kod) values ('cantinero','smenny_provoz')",
+      "insert into profil_atributy (profil_kod, atribut_kod) values ('cantinero','test_custom')",
     );
 
     const v = await prenesData(zdroj, cil);
 
     // Reportuje se jen to, co v cíli skutečně přibylo — ne všech 9 řádků
-    // zdroje, protože 8 z nich už v cíli je z jeho vlastní migrace.
+    // zdroje, protože 9 z nich už v cíli je z jeho vlastní migrace.
     expect(v.find((x) => x.tabulka === "atributy")!.radku).toBe(1);
     expect(v.find((x) => x.tabulka === "profil_atributy")!.radku).toBe(1);
 
     const a = await cil.query<{ kod: string }>(
-      "select kod from atributy where kod = 'smenny_provoz'",
+      "select kod from atributy where kod = 'test_custom'",
     );
     expect(a).toHaveLength(1);
     const pa = await cil.query(
-      "select 1 from profil_atributy where profil_kod = 'cantinero' and atribut_kod = 'smenny_provoz'",
+      "select 1 from profil_atributy where profil_kod = 'cantinero' and atribut_kod = 'test_custom'",
     );
     expect(pa).toHaveLength(1);
 
     // Výchozích devět atributů zůstalo v cíli jen jednou, ne zdvojených.
     const pocetVychozich = await cil.query<{ pocet: number }>(
-      "select count(*)::int as pocet from atributy where kod <> 'smenny_provoz'",
+      "select count(*)::int as pocet from atributy where kod <> 'test_custom'",
     );
     expect(pocetVychozich[0]!.pocet).toBe(9);
   });

@@ -26,7 +26,14 @@ describe("rejstřík atributů", () => {
       "zamestnanci_odhad",
       "zpusob_stravovani",
     ]);
-    expect(r.every((x) => x.do_zpravy)).toBe(true);
+  });
+
+  it("nový atribut smenny_provoz nemá do_zpravy", async () => {
+    const r = await db.query<{ kod: string; do_zpravy: boolean }>(
+      "select kod, do_zpravy from atributy where kod = 'smenny_provoz'",
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0]!.do_zpravy).toBe(false);
   });
 
   it("každý atribut má popis, co se u něj hledá", async () => {
@@ -135,13 +142,13 @@ describe("zápis atributu proti rejstříku (TP-3)", () => {
     await firma("25232657");
     await db.query(
       `insert into atributy (kod, nazev, popis, do_zpravy)
-       values ('smenny_provoz', 'směnný provoz', 'jestli firma jede na směny a na kolik', false)`,
+       values ('custom_atribut', 'vlastní atribut', 'testovací atribut', false)`,
     );
-    await zapisAtribut(db, "25232657", "smenny_provoz", "třísměnný", {
-      zdrojUrl: "https://e.cz/kariera",
-      citace: "Pracujeme ve třísměnném provozu.",
+    await zapisAtribut(db, "25232657", "custom_atribut", "test", {
+      zdrojUrl: "https://e.cz/test",
+      citace: "Test custom atributu.",
     });
-    expect(await jeZnamyAtribut(db, "smenny_provoz")).toBe(true);
+    expect(await jeZnamyAtribut(db, "custom_atribut")).toBe(true);
   });
 
   it("bez zdroje neprojde ani známý atribut (TP-2 platí dál)", async () => {
@@ -165,10 +172,10 @@ describe("zápis atributu proti rejstříku (TP-3)", () => {
   it("atribut s do_zpravy = false do zprávy nepatří", async () => {
     await db.query(
       `insert into atributy (kod, nazev, popis, do_zpravy)
-       values ('smenny_provoz', 'směnný provoz', 'jestli firma jede na směny', false)`,
+       values ('mimo_zpravy', 'atribut mimo zprávu', 'test', false)`,
     );
     const doZpravy = (await nactiAtributy(db)).filter((a) => a.doZpravy).map((a) => a.kod);
-    expect(doZpravy).not.toContain("smenny_provoz");
+    expect(doZpravy).not.toContain("mimo_zpravy");
   });
 
   // Nález revize: hledaAgent v nactiAtributy byl bez testu — nekontrolovaný

@@ -12,9 +12,9 @@ beforeEach(async () => {
 });
 
 describe("rejstřík atributů", () => {
-  it("obsahuje dnešních osm a všechny smějí do zprávy", async () => {
+  it("všechny atributy určené do zprávy jsou právě dnešních osm", async () => {
     const r = await db.query<{ kod: string; do_zpravy: boolean }>(
-      "select kod, do_zpravy from atributy order by kod",
+      "select kod, do_zpravy from atributy where do_zpravy = true order by kod",
     );
     expect(r.map((x) => x.kod)).toEqual([
       "adresa",

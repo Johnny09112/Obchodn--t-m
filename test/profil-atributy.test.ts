@@ -11,10 +11,10 @@ beforeEach(async () => {
 });
 
 describe("atributy profilu", () => {
-  it("výchozí profil sbírá dnešních osm", async () => {
+  it("výchozí profil sbírá dnešních devět", async () => {
     const a = await nactiAtributyProfilu(db, "cantinero");
     expect(a.map((x) => x.kod).sort()).toEqual([
-      "adresa", "kontakt", "ma_vlastni_jidelnu", "obor",
+      "adresa", "kontakt", "ma_vlastni_jidelnu", "obor", "pracovni_rezim",
       "ucel_adresy", "velikost_kategorie", "zamestnanci_odhad", "zpusob_stravovani",
     ]);
   });
@@ -50,7 +50,7 @@ describe("atributy profilu", () => {
     const a = await nactiAtributyProfilu(db, "cantinero");
     const hledajiSe = a.filter((x) => x.hledaAgent).map((x) => x.kod).sort();
     expect(hledajiSe).toEqual(
-      ["ma_vlastni_jidelnu", "ucel_adresy", "zpusob_stravovani"].sort(),
+      ["ma_vlastni_jidelnu", "pracovni_rezim", "ucel_adresy", "zpusob_stravovani"].sort(),
     );
     const nehledajiSe = a.filter((x) => !x.hledaAgent).map((x) => x.kod).sort();
     expect(nehledajiSe).toEqual(
@@ -84,7 +84,7 @@ describe("ověření kódu profilu (overProfilKod)", () => {
   });
 
   it("existující profil se všemi atributy vrátí jejich počet", async () => {
-    expect(await overProfilKod(db, "cantinero")).toBe(8);
+    expect(await overProfilKod(db, "cantinero")).toBe(9);
   });
 
   it("profil bez řádků v profil_atributy vrátí 0, nepadá", async () => {

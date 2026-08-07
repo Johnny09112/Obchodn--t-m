@@ -81,6 +81,30 @@ složku ([[tajemstvi-mimo-pracovni-slozku]]).
 
 SPEC kap. 5 rozdělena na dvě vrstvy ([[dve-vrstvy-znalost-a-zprava]]).
 
+## Rozdělaná práce (7. 8.) — profil produktu
+
+**Větev `profil-produktu`, odbočená z `main` na 68b944a. Nezačato.**
+
+Zadání i plán jsou hotové a **plán prošel revizí ještě před psaním kódu** —
+našla čtyři vážné věci, které by prošly testy a projevily se až ostrou dávkou
+s nulovým výsledkem. Všechny jsou v plánu zapracované.
+
+- Zadání: `docs/superpowers/specs/2026-08-07-profil-produktu-design.md`
+- Plán: `docs/superpowers/plans/2026-08-07-profil-produktu.md`
+- Ledger a pre-flight: `.superpowers/sdd/2026-08-07-profil-produktu/progress.md`
+
+**Způsob práce:** subagent-driven, pět úkolů. Majitel to zvolil 7. 8.
+
+**Co to dělá:** pevný seznam povolených atributů se přesune z kódu do tabulky
+s příznaky `do_zpravy` (smí do zprávy) a `hleda_agent` (hledá Čmuchal).
+Profil pak vybírá, co se sbírá, a kampaň si nese svůj profil. **Sahá se tím
+na TP-3** — to je nejcitlivější místo celé práce.
+
+**Varování, které majitel zná a přijal:** na dva „zajímavé" atributy
+(`ma_vlastni_jidelnu`, `zpusob_stravovani`) připadají ze 7 256 záznamů
+evidence celkem tři. Mechanismus se staví nad něčím, co se prakticky nikdy
+nepodařilo dohledat. Proto „hotovo" znamená ostrou dávku, ne zelené testy.
+
 ## Aktuální focus
 
 **Fáze 1 je z pohledu majitele hotová** — sběr, přibírání firem i AI průzkum

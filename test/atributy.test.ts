@@ -151,7 +151,7 @@ describe("zápis atributu proti rejstříku (TP-3)", () => {
         zdrojUrl: "",
         citace: "",
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/zdroj/i);
   });
 
   it("whitelist pro zprávu odpovídá příznaku do_zpravy", async () => {
@@ -169,5 +169,18 @@ describe("zápis atributu proti rejstříku (TP-3)", () => {
     );
     const doZpravy = (await nactiAtributy(db)).filter((a) => a.doZpravy).map((a) => a.kod);
     expect(doZpravy).not.toContain("smenny_provoz");
+  });
+
+  // Nález revize: hledaAgent v nactiAtributy byl bez testu — nekontrolovaný
+  // cast v db.query<Atribut> by překlep v aliasu "hleda_agent as hledaAgent"
+  // nechal projít typecheckem i celou sadou a projevil by se až v úkolu 4
+  // jako agent, který nehledá vůbec nic. Obě hodnoty ověřeny zvlášť — test
+  // se stejnou hodnotou všude by mapování neotestoval.
+  it("nactiAtributy vrací hledaAgent se správnou hodnotou v obou směrech", async () => {
+    const atributy = await nactiAtributy(db);
+    const maVlastniJidelnu = atributy.find((a) => a.kod === "ma_vlastni_jidelnu");
+    const velikostKategorie = atributy.find((a) => a.kod === "velikost_kategorie");
+    expect(maVlastniJidelnu?.hledaAgent).toBe(true);
+    expect(velikostKategorie?.hledaAgent).toBe(false);
   });
 });

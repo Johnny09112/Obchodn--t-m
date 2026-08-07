@@ -1,0 +1,81 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
+
+let db: Db;
+
+beforeEach(async () => {
+  db = await pripojPglite();
+  await spustMigrace(db);
+});
+
+describe("rejstřík atributů", () => {
+  it("obsahuje dnešních osm a všechny smějí do zprávy", async () => {
+    const r = await db.query<{ kod: string; do_zpravy: boolean }>(
+      "select kod, do_zpravy from atributy order by kod",
+    );
+    expect(r.map((x) => x.kod)).toEqual([
+      "adresa",
+      "kontakt",
+      "ma_vlastni_jidelnu",
+      "obor",
+      "ucel_adresy",
+      "velikost_kategorie",
+      "zamestnanci_odhad",
+      "zpusob_stravovani",
+    ]);
+    expect(r.every((x) => x.do_zpravy)).toBe(true);
+  });
+
+  it("každý atribut má popis, co se u něj hledá", async () => {
+    const r = await db.query<{ kod: string; popis: string | null }>(
+      "select kod, popis from atributy",
+    );
+    // Popis jde rovnou agentovi — prázdný by znamenal, že si musí domyslet,
+    // co hledat, což je přesně dnešní stav a důvod téhle práce.
+    expect(r.filter((x) => !x.popis?.trim()).map((x) => x.kod)).toEqual([]);
+  });
+
+  // Tvrdé pravidlo TP-3: databáze nesmí pustit atribut, který nikdo nezavedl.
+  // Dřív to hlídala pevná podmínka `check`, nově cizí klíč do rejstříku.
+  it("vymyšlený atribut databáze nepustí", async () => {
+    await expect(
+      db.query(
+        `insert into evidence (ico, atribut, hodnota, zdroj_url)
+         values ('25232657', 'kdovico', 'x', 'https://e.cz')`,
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("atribut z rejstříku projde", async () => {
+    await db.query(
+      `insert into companies (ico, nazev, stav) values ('25232657','X','kvalifikovany')
+       on conflict do nothing`,
+    );
+    await db.query(
+      `insert into evidence (ico, atribut, hodnota, zdroj_url)
+       values ('25232657', 'obor', 'pekárna', 'https://e.cz')`,
+    );
+    const r = await db.query<{ pocet: number }>(
+      "select count(*)::int as pocet from evidence where atribut = 'obor'",
+    );
+    expect(r[0]!.pocet).toBe(1);
+  });
+
+  // Nejistota z plánu: „vymyšlený atribut neprojde" by prošel i na staré
+  // podmínce `check`, kdyby migrace zapomněla podmínku zrušit — a nikdo by
+  // si toho nevšiml, dokud by nový atribut nešel přidat. Ověřujeme napřímo
+  // v katalogu, že na evidence.atribut zůstal jen cizí klíč.
+  it("na evidence.atribut nezůstala žádná stará check podmínka", async () => {
+    const r = await db.query<{ conname: string; contype: string }>(
+      `select conname, contype
+       from pg_constraint
+       where conrelid = 'evidence'::regclass
+         and contype = 'c'
+         and conkey = array[
+           (select attnum from pg_attribute
+            where attrelid = 'evidence'::regclass and attname = 'atribut')
+         ]`,
+    );
+    expect(r.map((x) => x.conname)).toEqual([]);
+  });
+});

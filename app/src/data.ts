@@ -1114,15 +1114,19 @@ export interface ObjednavkaReserse {
  * se sbírat.
  *
  * Takhle se to drží v souladu samo — co obsluha označí za chybějící, to se
- * hledá. Nic mimo whitelist se do `chybi` dostat nemůže.
+ * hledá. Do `chybi` se dostane, co určí profil produktu (a co má
+ * `hleda_agent`) — whitelist s tím nemá nic společného, ten řídí jen to,
+ * co smí ven do zprávy (TP-3, `src/whitelist.ts`).
  *
  * Pozor na očekávání: způsob stravování se v měření z 2. 8. dohledal jen
  * u 1 z 20 firem. Weby o tom nepíšou. Levné to je, výtěžnost malá.
  */
 const ZADANI_VYCHOZI =
   "U každé firmy dohledej to, co je u ní uvedené v poli „chybi“ — postupuj " +
-  "podle svého playbooku. Nic mimo „chybi“ nesbírej. Když se něco nepodaří " +
-  "doložit, prostě to vynech; prázdný výsledek je správný výsledek.";
+  "podle svého playbooku. Kontakty (jméno, pozice, e-mail nebo telefon, max " +
+  "2 na firmu) hledej vždycky, i mimo „chybi“. Nic dalšího mimo „chybi“ " +
+  "nesbírej. Když se něco nepodaří doložit, prostě to vynech; prázdný " +
+  "výsledek je správný výsledek.";
 
 /**
  * Objedná dávku AI rešerše pro kampaň. **Agenta to nespustí** — jen zapíše

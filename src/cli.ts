@@ -31,7 +31,7 @@ import {
 } from "./blacklist.js";
 import { priradKategorie } from "./kategorie.js";
 import { nactiProfil, seznamProfilu, zvolProfil } from "./profil.js";
-import { profilProKampan } from "./atributy.js";
+import { nactiAtributyProfilu, overProfilKod, profilProKampan } from "./atributy.js";
 import { prenesData } from "./prenos.js";
 import {
   firmyVOblasti, nactiOblast, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
@@ -1582,6 +1582,20 @@ async function cmdProfil(argv: string[]): Promise<void> {
     if (a.vylouceneObory.size > 0) {
       console.log(`  vyloučené obory: ${[...a.vylouceneObory].sort().join(", ")}`);
     }
+
+    const atributy = await nactiAtributyProfilu(db, a.kod);
+    if (atributy.length === 0) {
+      console.log(
+        "  atributy: ŽÁDNÉ — profil nemá v profil_atributy žádný řádek, " +
+          "rešerše mu nenajde nic (kromě kontaktů, ty se hledají vždy)",
+      );
+    } else {
+      console.log("  co se o firmě zjišťuje:");
+      for (const at of atributy) {
+        const zdroj = at.hledaAgent ? "hledá agent" : "z rejstříku ";
+        console.log(`    [${zdroj}] ${at.kod.padEnd(22)} ${at.nazev}`);
+      }
+    }
   } finally {
     await db.close();
   }
@@ -1719,6 +1733,19 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
   try {
     const profilKod =
       values.profil ?? (values.kampan ? await profilProKampan(db, values.kampan) : undefined);
+    // Neznámý kód profilu (--profil peklplot) i profil bez řádků v
+    // profil_atributy dřív procházely tiše — chybi obsahovalo jen spojeni
+    // a nikdo se to nedozvěděl (nález závěrečné revize). Ověření platí i
+    // pro profil odvozený z kampaně, ne jen zadaný ručně.
+    if (profilKod) {
+      const pocetAtributu = await overProfilKod(db, profilKod);
+      if (pocetAtributu === 0) {
+        console.warn(
+          `POZOR: profil "${profilKod}" nemá v profil_atributy žádný atribut — ` +
+            `„chybi" bude u všech firem obsahovat jen spojení, agent nebude hledat nic dalšího.`,
+        );
+      }
+    }
     const firmy = await firmyKObohaceni(db, {
       limit: values.limit ? Number(values.limit) : undefined,
       jidelnaId: values.jidelna,

@@ -26,7 +26,3 @@ export const ATRIBUTY_SLOUPCE: Record<string, string> = {
   ma_vlastni_jidelnu: "ma_vlastni_jidelnu",
   zpusob_stravovani: "zpusob_stravovani",
 };
-
-export function jePovolenyAtribut(a: string): a is PovolenyAtribut {
-  return (POVOLENE_ATRIBUTY as readonly string[]).includes(a);
-}

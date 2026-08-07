@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
-import { nactiAtributyProfilu, profilProKampan } from "../src/atributy.js";
+import { nactiAtributyProfilu, overProfilKod, profilProKampan } from "../src/atributy.js";
 import { zalozKampan } from "../src/kampan.js";
 
 let db: Db;
@@ -69,5 +69,28 @@ describe("profil kampaně", () => {
     const id = await zalozKampan(db, { nazev: "K2", spravce: "a@b.cz" });
     await db.query("update kampane set profil_kod = 'cantinero-business' where id = $1", [id]);
     expect(await profilProKampan(db, id)).toBe("cantinero-business");
+  });
+});
+
+// Nález závěrečné revize: `--profil peklplot` u neexistujícího kódu i profil
+// založený po migraci 0036 (bez řádků v profil_atributy) dřív procházely
+// tiše — `nactiAtributyProfilu` vrátí prázdné pole, `chybi` obsahuje jen
+// `spojeni` a nikdo se to nedozví. `overProfilKod` se volá vždy, když CLI
+// dostane profilKod (ať z --profil, nebo z profilProKampan), a rozliší obě
+// situace: neznámý kód je pád, prázdný profil je jen varování.
+describe("ověření kódu profilu (overProfilKod)", () => {
+  it("neexistující kód profilu padá se srozumitelnou hláškou", async () => {
+    await expect(overProfilKod(db, "peklplot")).rejects.toThrow(/peklplot/);
+  });
+
+  it("existující profil se všemi atributy vrátí jejich počet", async () => {
+    expect(await overProfilKod(db, "cantinero")).toBe(8);
+  });
+
+  it("profil bez řádků v profil_atributy vrátí 0, nepadá", async () => {
+    await db.query(
+      `insert into profily (kod, nazev) values ('novy-profil', 'Nový profil')`,
+    );
+    expect(await overProfilKod(db, "novy-profil")).toBe(0);
   });
 });

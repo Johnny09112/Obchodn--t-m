@@ -95,4 +95,43 @@ describe("přenos dat do sdílené databáze", { timeout: 60_000 }, () => {
     // Ale existovat musí, jinak by neseděly vazby.
     expect((await cil.query("select 1 from kategorie")).length).toBeGreaterThan(0);
   });
+
+  // Nález závěrečné revize: atributy a profil_atributy chyběly v TABULKY.
+  // Dokud byl rejstřík atributů pevný výčet v kódu, obě databáze měly
+  // schválně totožný obsah, stejně jako kategorie/profily — přenos je proto
+  // vynechával. Jakmile ale někdo zavede VLASTNÍ atribut (přesně smysl téhle
+  // práce), zdroj a cíl se rozejdou a je potřeba ten rozdíl přenést, aniž by
+  // insert spadl na duplicitu osmi výchozích atributů, které cíl má už z
+  // vlastní migrace.
+  it("vlastní atribut a jeho zařazení do profilu se přenesou, výchozí osazení nekoliduje", async () => {
+    await zdroj.query(
+      `insert into atributy (kod, nazev, popis, do_zpravy, hleda_agent)
+       values ('smenny_provoz', 'směnný provoz', 'jestli firma jede na směny', false, true)`,
+    );
+    await zdroj.query(
+      "insert into profil_atributy (profil_kod, atribut_kod) values ('cantinero','smenny_provoz')",
+    );
+
+    const v = await prenesData(zdroj, cil);
+
+    // Reportuje se jen to, co v cíli skutečně přibylo — ne všech 9 řádků
+    // zdroje, protože 8 z nich už v cíli je z jeho vlastní migrace.
+    expect(v.find((x) => x.tabulka === "atributy")!.radku).toBe(1);
+    expect(v.find((x) => x.tabulka === "profil_atributy")!.radku).toBe(1);
+
+    const a = await cil.query<{ kod: string }>(
+      "select kod from atributy where kod = 'smenny_provoz'",
+    );
+    expect(a).toHaveLength(1);
+    const pa = await cil.query(
+      "select 1 from profil_atributy where profil_kod = 'cantinero' and atribut_kod = 'smenny_provoz'",
+    );
+    expect(pa).toHaveLength(1);
+
+    // Výchozích osm atributů zůstalo v cíli jen jednou, ne zdvojených.
+    const pocetVychozich = await cil.query<{ pocet: number }>(
+      "select count(*)::int as pocet from atributy where kod <> 'smenny_provoz'",
+    );
+    expect(pocetVychozich[0]!.pocet).toBe(8);
+  });
 });

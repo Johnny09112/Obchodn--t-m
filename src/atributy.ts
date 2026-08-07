@@ -67,6 +67,38 @@ export async function aktivniProfilKod(db: Db): Promise<string> {
 }
 
 /**
+ * Ověří kód profilu, který CLI dostalo zvenčí (`--profil`, nebo profil
+ * kampaně z `profilProKampan`), a vrátí počet atributů, které pro něj
+ * eviduje `profil_atributy`.
+ *
+ * Bez tohohle volání procházely tiše dvě chybné situace stejným způsobem:
+ * neexistující kód profilu i profil, který existuje, ale nemá v
+ * `profil_atributy` žádný řádek (typicky profil založený po migraci 0036 —
+ * ta osadila `cross join` jen dva tehdejší profily). V obou případech
+ * `nactiAtributyProfilu` vrátí prázdné pole, `chybi` obsahuje jen `spojeni`
+ * a agent nehledá žádný atribut, aniž by si toho kdokoli všiml (nález
+ * závěrečné revize, `--profil peklplot`).
+ *
+ * Neznámý kód je tvrdá chyba — pád se srozumitelnou hláškou. Existující
+ * profil bez atributů se nezakazuje (může to být záměr), jen se vrátí 0, ať
+ * volající vypíše varování místo tichého průchodu.
+ */
+export async function overProfilKod(db: Db, kod: string): Promise<number> {
+  const existuje = await db.query<{ pocet: number }>(
+    "select count(*)::int as pocet from profily where kod = $1",
+    [kod],
+  );
+  if ((existuje[0]?.pocet ?? 0) === 0) {
+    throw new Error(`Profil ${kod} databáze nezná.`);
+  }
+  const atributy = await db.query<{ pocet: number }>(
+    "select count(*)::int as pocet from profil_atributy where profil_kod = $1",
+    [kod],
+  );
+  return atributy[0]?.pocet ?? 0;
+}
+
+/**
  * Profil kampaně, nebo globálně aktivní, když kampaň žádný nemá.
  *
  * Rešerše bere profil odsud — běží uvnitř kampaně. Sběr naopak zůstává na

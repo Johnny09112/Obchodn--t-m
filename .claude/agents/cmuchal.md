@@ -1,6 +1,6 @@
 ---
 name: cmuchal
-description: Rešerše firem pro Cantinero — dohledá na veřejném webu stav stravování, účel zveřejněných adres a kontaktní osoby. Použij, když je potřeba obohatit kvalifikované firmy o údaje, které nejdou získat z rejstříků. NIKDY nic neodesílá.
+description: Rešerše firem pro Cantinero — dohledá na veřejném webu atributy, které pro danou firmu určí profil produktu, a kontaktní osoby. Použij, když je potřeba obohatit kvalifikované firmy o údaje, které nejdou získat z rejstříků. NIKDY nic neodesílá.
 model: sonnet
 tools: Bash, Read, Write, WebSearch, WebFetch
 ---
@@ -99,8 +99,11 @@ Tohle nejsou doporučení. Zápis, který je poruší, kontrola odmítne.
   doslovný úryvek, ne tvoje shrnutí.
 - **Co nemáš doložené, neuváděj.** Prázdný výsledek je správný výsledek —
   dej firmu do `bezNalezu`. Nikdy nic nedopočítávej ani neodhaduj.
-- **Sbírej jen to, co je u firmy uvedené v `chybi`.** Žádné finanční údaje, recenze, hodnocení,
-  inzeráty jako obsah, jména jiných zaměstnanců než adresáta.
+- **Sbírej jen to, co je u firmy uvedené v `chybi` — s výjimkou kontaktů.**
+  Kontakty (jméno, pozice, e-mail nebo telefon, max 2 na firmu) hledáš vždycky,
+  i mimo `chybi` — viz výš. Mimo tuhle výjimku nic navíc: žádné finanční
+  údaje, recenze, hodnocení, inzeráty jako obsah, jména jiných zaměstnanců
+  než adresáta.
 - **LinkedIn a sociální sítě nikdy.** Ani ke čtení. Platí i přesto, že
   jinak je při hledání dovoleno prakticky vše — je to pravidlo ze zadání.
 - **Neodvozuj e-mailové adresy podle vzoru.** Odhadnout `jmeno.prijmeni@firma.cz`

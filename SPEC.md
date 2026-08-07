@@ -389,7 +389,9 @@ Pravidla:
 - Respektuj `robots.txt` a podmínky užití. Scraping LinkedInu je proti
   jeho podmínkám — kontakty odtud pouze ručně.
 - Rozumné tempo dotazů, žádné zahlcování cizích serverů.
-- Sbírej jen to, co je na whitelistu v kapitole 5. Nic navíc.
+- Sbírej jen to, co určuje profil produktu (kap. 5.1, vrstva A). Nic navíc.
+  Whitelist z kap. 5.2 váže obsah zprávy, ne sběr. Zákazy z kap. 5.3 platí
+  i pro sběr.
 
 ---
 
@@ -420,7 +422,7 @@ jídelny, obor s převahou kancelářské práce, dostupnost poptávkové adresy
 do `companies`, `contacts`, `evidence`, upravovat vlastní playbook.
 
 **Nesmí:** zapsat firmu bez ARES nebo mimo zónu, vyplnit atribut bez
-zdroje, sbírat atributy mimo whitelist, odesílat cokoli.
+zdroje, sbírat atributy mimo profil produktu (kap. 5.1), odesílat cokoli.
 
 **Sebezlepšování:** vede `playbook-cmuchal.md` — které dotazy a zdroje
 vedly k ověřenému nálezu a s jakou úspěšností. Playbook mění sám, protože

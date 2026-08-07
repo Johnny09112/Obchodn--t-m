@@ -165,23 +165,32 @@ create table atributy (
   popis text not null check (length(trim(popis)) > 0),
   -- Smí se objevit v oslovení? Tohle je whitelist z SPEC kap. 5.2.
   do_zpravy boolean not null default false,
+  -- Hledá tenhle atribut AGENT na webu?
+  --
+  -- Nahrazuje pevný výčet `OBOHACOVANE_ATRIBUTY` v src/nalezy.ts. Bez toho
+  -- by nový atribut nešlo zapsat vůbec — schéma nálezů ho odmítne dřív, než
+  -- se dostane k `zapisAtribut`, a dávka by doběhla s nulou.
+  --
+  -- Vypnuté u toho, co plyne z rejstříků (velikost, adresa, obor) nebo se
+  -- řeší jinou cestou (kontakt) — hledat to na webu je zbytečná práce.
+  hleda_agent boolean not null default false,
   created_at timestamptz not null default now()
 );
 
-insert into atributy (kod, nazev, popis, do_zpravy) values
+insert into atributy (kod, nazev, popis, do_zpravy, hleda_agent) values
   ('velikost_kategorie', 'velikost firmy',
-   'kategorie podle počtu zaměstnanců (mikro do 24, střední 25–249, korporát 250+)', true),
+   'kategorie podle počtu zaměstnanců (mikro do 24, střední 25–249, korporát 250+)', true, false),
   ('zamestnanci_odhad', 'počet zaměstnanců',
-   'přibližný počet zaměstnanců, pokud ho firma sama uvádí', true),
+   'přibližný počet zaměstnanců, pokud ho firma sama uvádí', true, false),
   ('ma_vlastni_jidelnu', 'vlastní jídelna',
-   'má firma vlastní závodní jídelnu nebo kantýnu? hledej v sekci o firmě, na kariérní stránce a mezi benefity', true),
+   'má firma vlastní závodní jídelnu nebo kantýnu? hledej v sekci o firmě, na kariérní stránce a mezi benefity', true, true),
   ('zpusob_stravovani', 'způsob stravování',
-   'jak firma řeší obědy — stravenky, stravenkový paušál, příspěvek, dovoz, vlastní jídelna, nebo nic', true),
+   'jak firma řeší obědy — stravenky, stravenkový paušál, příspěvek, dovoz, vlastní jídelna, nebo nic', true, true),
   ('ucel_adresy', 'účel zveřejněné adresy',
-   'k čemu firma tu adresu zveřejnila — pro nabídky, pro dodavatele, obecné dotazy', true),
-  ('kontakt', 'kontakt', 'jméno, pozice, e-mail nebo telefon na konkrétní osobu', true),
-  ('obor', 'obor podnikání', 'čím se firma živí, obecně a vlastními slovy z jejího webu', true),
-  ('adresa', 'adresa', 'adresa provozovny nebo sídla', true);
+   'k čemu firma tu adresu zveřejnila — pro nabídky, pro dodavatele, obecné dotazy', true, true),
+  ('kontakt', 'kontakt', 'jméno, pozice, e-mail nebo telefon na konkrétní osobu', true, false),
+  ('obor', 'obor podnikání', 'čím se firma živí, obecně a vlastními slovy z jejího webu', true, false),
+  ('adresa', 'adresa', 'adresa provozovny nebo sídla', true, false);
 
 -- Cizí klíč místo dosavadní podmínky. Podmínku je nutné napřed zrušit —
 -- jinak by platila obojí a rejstřík by šlo rozšířit jen naoko.
@@ -189,8 +198,23 @@ alter table evidence drop constraint if exists evidence_atribut_check;
 alter table evidence add constraint evidence_atribut_fk
   foreign key (atribut) references atributy(kod);
 
+-- RLS: bez tohohle je tabulka přes datové API čitelná i ZAPISOVATELNÁ
+-- komukoli s veřejným klíčem projektu — kdokoli by si zavedl atribut a tím
+-- rozšířil, co se o firmách sbírá. Obejití TP-3 bez zásahu do kódu.
+-- (A `test/pravidla.test.ts` hlídá, že RLS je zapnuté na všech tabulkách.)
+alter table atributy enable row level security;
+
+create policy atributy_cteni on atributy
+  for select to authenticated using (true);
+
+-- Rejstřík mění jen admin. Není to nastavení kampaně, je to hranice systému.
+create policy atributy_zapis on atributy
+  for all to authenticated
+  using (public.role_uzivatele() in ('super-admin', 'admin'))
+  with check (public.role_uzivatele() in ('super-admin', 'admin'));
+
 comment on table atributy is
-  'Co se o firmě smí vědět. `do_zpravy` je whitelist pro oslovení (SPEC kap. 5.2); co se SBÍRÁ, určuje profil produktu.';
+  'Co se o firmě smí vědět. `do_zpravy` je whitelist pro oslovení (SPEC kap. 5.2); `hleda_agent` říká, co hledá Čmuchal; co se SBÍRÁ, určuje profil produktu.';
 ```
 
 **Pozor na název podmínky.** `evidence_atribut_check` je odhad podle zvyklosti
@@ -398,9 +422,21 @@ V `src/repo.ts`:
   }
 ```
 
-3. `ATRIBUTY_SLOUPCE` **nech, jak je**. Vlastní atributy sloupec v `companies`
-   nemají a mít nemají — žijí jen v evidenci. Vyhledávání ve `sloupec` prostě
-   nic nenajde a propis se přeskočí, což je správné chování.
+3. `ATRIBUTY_SLOUPCE` v `src/whitelist.ts` je dnes
+   `Partial<Record<PovolenyAtribut, string>>`. Po změně parametru na `string`
+   by ho **nešlo indexovat** — pod `strict` je to chyba TS7053. Změň typ na
+   `Record<string, string>`; obsah nech, jak je.
+
+   Vlastní atributy sloupec v `companies` nemají a mít nemají — žijí jen
+   v evidenci. Vyhledání prostě nic nenajde a propis se přeskočí, což je
+   správné chování.
+
+4. **Tři existující testy spadnou a je to očekávané, ne nález:**
+   - `test/repo.test.ts` kolem ř. 74 čeká hlášku `/whitelist/i`; nová zní
+     „není v rejstříku". Uprav očekávání.
+   - `test/nalezy.test.ts` kolem ř. 43 a 89 dělá `expect(f[0]!.chybi).toContain("…")`
+     nad `string[]`. Po úkolu 4 je `chybi` pole objektů — uprav je až
+     v úkolu 4, ne teď.
 
 **Ve `src/whitelist.ts` neměň seznam** — zůstává jako seznam pro zprávu.
 Přepiš jen komentář nahoře, ať netvrdí, že omezuje sběr:
@@ -545,6 +581,19 @@ select p.kod, a.kod from profily p cross join atributy a;
 -- ještě není, takže musí mít globální profil. Rešerše naopak běží uvnitř
 -- kampaně, a tam má rozhodovat ona.
 alter table kampane add column profil_kod text references profily(kod) on delete set null;
+
+-- RLS jako u `atributy` — a ze stejného důvodu. `0015_rls.sql` zapnul RLS
+-- jednorázově na tabulkách, které tehdy existovaly; každá pozdější migrace
+-- si to musí udělat sama (viz 0018, 0022, 0034).
+alter table profil_atributy enable row level security;
+
+create policy profil_atributy_cteni on profil_atributy
+  for select to authenticated using (true);
+
+create policy profil_atributy_zapis on profil_atributy
+  for all to authenticated
+  using (public.role_uzivatele() in ('super-admin', 'admin'))
+  with check (public.role_uzivatele() in ('super-admin', 'admin'));
 
 comment on column kampane.profil_kod is
   'Profil produktu kampaně. NULL = globálně aktivní profil.';
@@ -693,15 +742,21 @@ a v `FirmaKObohaceni` nahraď `chybi: string[]` za `chybi: ChybejiciAtribut[]`.
 3. Nahraď dosavadní pevný výpočet:
 
 ```ts
-  // Co u firmy chybí, určuje PROFIL, ne pevný seznam. „Chybí" znamená
-  // „není o tom v evidenci ani řádek" — jednotně pro dnešních osm i pro
-  // nově zavedené atributy, které sloupec v `companies` nemají.
+  // Co u firmy chybí, určuje PROFIL — ale jen z atributů, které agent
+  // doopravdy hledá (`hleda_agent`). Velikost, adresa a obor plynou
+  // z rejstříků a hledat je na webu je zbytečná práce; kdyby se do `chybi`
+  // dostaly, agent by dávku protopil sháněním něčeho, co dávno víme.
+  //
+  // Zdrojem pravdy o tom, jestli údaj máme, je EVIDENCE, ne sloupec —
+  // nově zavedené atributy sloupec v `companies` nemají.
   //
   // `spojeni` je výjimka: není to atribut a profil ho neřídí. Bez spojení
   // nemá celý systém výstup, takže se hledá vždycky.
-  const atributy = opts.profilKod
-    ? await nactiAtributyProfilu(db, opts.profilKod)
-    : await nactiAtributy(db);
+  const atributy = (
+    opts.profilKod
+      ? await nactiAtributyProfilu(db, opts.profilKod)
+      : await nactiAtributyProfilu(db, await aktivniProfilKod(db))
+  ).filter((a) => a.hledaAgent);
 
   const maEvidenci = new Set(
     (
@@ -722,8 +777,46 @@ a v mapování na výstup:
     if (r.spojeni === 0) chybi.push({ kod: "spojeni", popis: "e-mail nebo telefon na osobu" });
 ```
 
-**Pozor na prázdný seznam IČO** — `= any('{}')` je v Postgresu past. Když
-`radky` nic neobsahují, funkce stejně vrací prázdno dřív; ověř to.
+**Výchozí větev padá na aktivní profil, ne na celý rejstřík** — jinak by se
+atribut zavedený mimo profily začal hledat u všech firem přes `k-obohaceni`
+bez parametrů, což je přesně příkaz z playbooku Čmuchala. Doplň si k tomu do
+`src/atributy.ts` funkci `aktivniProfilKod(db): Promise<string>`, která vrátí
+`kod` z `profily where aktivni` a vyhodí srozumitelnou chybu, když žádný není.
+
+- [ ] **Krok 3b: Nahraď pevný výčet ve schématu nálezů**
+
+**Tohle je jádro celého úkolu.** `src/nalezy.ts` má kolem řádku 24 druhý,
+přísnější seznam:
+
+```ts
+export const OBOHACOVANE_ATRIBUTY = ["ma_vlastni_jidelnu","zpusob_stravovani","ucel_adresy"] as const;
+const nalezSchema = z.object({ atribut: z.enum(OBOHACOVANE_ATRIBUTY), … });
+```
+
+Je to **živá cesta** — prochází jí `reserse obsluz` i příkaz `zapis-nalezy`.
+Dokud tam je, nově zavedený atribut se odmítne dřív, než se dostane
+k `zapisAtribut`, a **ostrá dávka doběhne s nulou, přestože všechno ostatní
+bude vypadat hotově.**
+
+Nahraď enum kontrolou proti rejstříku za běhu: `atribut: z.string().min(1)`
+ve schématu, a v `zapisDavku` u každé položky ověř, že je to atribut
+s `hleda_agent = true`. Odmítnutou položku zahoď se srozumitelným důvodem,
+jak to `zapisDavku` dělá dnes — **nesmí to shodit celou dávku**.
+
+`OBOHACOVANE_ATRIBUTY` smaž. Kdyby na něj něco odkazovalo, ať to spadne při
+překladu — tichá druhá kopie seznamu je přesně to, co tuhle past vytvořilo.
+
+- [ ] **Krok 3c: Sroven definici agenta**
+
+`.claude/agents/cmuchal.md` má kolem řádků 54–61 vlastní tabulku „Co hledáš"
+s týmiž třemi atributy a na řádku ~100 větu *„Nesbírej nic mimo tabulku
+výše."* To je **třetí kopie seznamu** a blokuje cíl práce stejně jako ta
+druhá.
+
+Nahraď tabulku odkazem na to, co agent dostane v zadání — tedy na pole
+`chybi` a jeho `popis`. Větu o tabulce přepiš na *„Sbírej jen to, co je
+u firmy uvedené v `chybi`."* Ostatní železná pravidla (zdroj a citace,
+zákaz sociálních sítí, nikoho neoslovovat) **nech beze změny**.
 
 - [ ] **Krok 4: Sroven volání, ať se to přeloží**
 
@@ -849,9 +942,13 @@ git commit -m "feat: rešerše se řídí profilem kampaně a jde vybrat v prův
 ## Nasazení a ověření s majitelem
 
 - [ ] **Nasaď migrace:** `npm run cli -- migrate`.
-- [ ] **Ověř, že na `evidence` nezbyla stará podmínka na `atribut`** — jinak
-      by nový atribut neprošel a poznalo by se to až pozdě.
-- [ ] Zaveď atribut **směnný provoz** a přidej ho profilu `cantinero`.
+- [ ] **Spočítej řádky `evidence` před a po** (`select count(*) from evidence`).
+      Musí sedět — zadání kap. 7 bod 7. Migrace na nich nic nemění, ale
+      doložit se to má, ne předpokládat.
+- [ ] Zaveď atribut **směnný provoz** migrací `0037_smenny_provoz.sql`
+      (`insert into atributy … hleda_agent = true` + `insert into
+      profil_atributy` pro `cantinero`). **Ne ručním SQL do ostré databáze** —
+      to projektová pravidla zakazují a nebyla by po tom stopa.
 - [ ] `npm run dev --prefix app`, majitel se přihlásí v panelu Browser.
 - [ ] Otevři **Kampaň Hrobce**, objednej rešerši na 5 firem, pusť
       `npm run cli -- reserse obsluz`. Ve výpisu musí být, který profil se použil.
@@ -873,18 +970,49 @@ git commit -m "feat: rešerše se řídí profilem kampaně a jde vybrat v prův
 | 9. Rizika | Úkol 2 je označený jako nejrizikovější; výtěžnost je v ověření |
 | 10. Neřeší (zpráva, obrazovka profilů, zámek) | Záměrně mimo plán |
 
-### Nejistoty, které jsem v plánu nechal vědomě
+### Co našla revize plánu (2026-08-07) a je opravené
 
-**Název podmínky `evidence_atribut_check` je odhad**, ne ověřený fakt.
-Postgres ji pojmenovává podle zvyklosti, ale nemusí sedět. V úkolu 1 je na
-to upozornění i způsob, jak to poznat — ale jistota bude až po `migrate`.
+Plán prošel před psaním kódu revizí. Našla **čtyři vážné věci** — všechny by
+prošly testy a projevily se až ostrou dávkou, která by doběhla s nulou.
+Stálo to za to; opraveno v plánu:
 
-**Kopie seznamu atributů v `src/enrich.ts`** (`ENRICH_ATRIBUTY`) se plánem
-nemění. Ta cesta nikdy neběžela naostro (0 USD, klíč v `.env` není), takže
-ji nechávám být — ale je to druhé místo se seznamem a zaslouží si vlastní
-úklid. Úkol 2 krok 5 na to implementátora upozorňuje.
+1. **`OBOHACOVANE_ATRIBUTY` v `src/nalezy.ts`** — druhý, přísnější výčet tří
+   atributů v zodu. Nově zavedený atribut by se odmítl dřív, než se dostane
+   k zápisu. Řeší úkol 4, krok 3b (příznak `hleda_agent` místo výčtu).
+2. **`.claude/agents/cmuchal.md`** — třetí kopie seznamu, plus věta „nesbírej
+   nic mimo tabulku výše". Řeší úkol 4, krok 3c.
+3. **„Chybí = není v evidenci" by rozšířilo práci agenta** na adresu, obor
+   a velikost, které máme z rejstříků (`zamestnanci_odhad` má v evidenci
+   nula řádků). Řeší příznak `hleda_agent`.
+4. **Nové tabulky bez RLS** — přes datové API by je mohl zapisovat kdokoli
+   s veřejným klíčem, tedy obejít TP-3 bez zásahu do kódu. A `test/pravidla.test.ts`
+   hlídá RLS na všech tabulkách, takže by sada spadla hned v úkolu 1.
+   Doplněno do obou migrací.
 
-**Pomocníci v testech** (`pripravKampanSFirmou`) se v úkolu 4 neuvádějí
-celí — odkazuje se na existující testy. Je to vědomá výjimka z pravidla
-„žádné placeholdery": opsat je naslepo by znamenalo hádat tvar falešného
-záznamu z ARESu, který se v projektu už několikrát změnil.
+K tomu opraveno: typování `ATRIBUTY_SLOUPCE`, výchozí větev padá na aktivní
+profil (ne na celý rejstřík), tři existující testy jsou dopředu vyjmenované,
+nový atribut se zavádí migrací (ne ručním SQL), a počet řádků evidence se
+před a po migraci doloží.
+
+### Nejistoty, které v plánu zůstávají vědomě
+
+**Název podmínky `evidence_atribut_check`.** Postgres pojmenovává sloupcové
+podmínky deterministicky `<tabulka>_<sloupec>_check` a kolize v `evidence`
+není, takže odhad skoro jistě sedí. `drop constraint if exists` navíc
+nespadne, ani kdyby ne — jen by podmínka zůstala a rejstřík by šel rozšířit
+jen naoko. **Přidej proto do úkolu 1 test**, že na `evidence` nezůstala žádná
+`check` podmínka nad sloupcem `atribut` (dotaz do `pg_constraint`) — je to
+levnější a spolehlivější než ruční krok po nasazení.
+
+**Kopie seznamu v `src/enrich.ts`** (`ENRICH_ATRIBUTY`) se nemění. Ta cesta
+nikdy neběžela naostro (0 USD, klíč v `.env` není). Revize potvrdila, že je
+mrtvá — na rozdíl od `nalezy.ts`, která živá je a řeší se v úkolu 4.
+
+**Pomocníci v testech** (`pripravKampanSFirmou`) se uvádějí odkazem na
+existující testy, ne doslova. Vědomá výjimka: opsat je naslepo by znamenalo
+hádat tvar falešného záznamu z ARESu, který se v projektu už měnil.
+
+**Úkol 5 nemá vlastní test** — že `cmdReserse` doopravdy předá profil kampaně
+do `firmyKObohaceni`, neověřuje nic než proklikání. Poslední dvě selhání byla
+právě v předávání práce, ne v jádru. Ověřuje to ostrá dávka v sekci Nasazení,
+kde se vypisuje použitý profil.

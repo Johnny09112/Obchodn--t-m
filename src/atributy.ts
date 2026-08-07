@@ -31,3 +31,39 @@ export async function jeZnamyAtribut(db: Db, kod: string): Promise<boolean> {
   );
   return (r[0]?.pocet ?? 0) > 0;
 }
+
+/**
+ * Atributy, které daný profil o firmě zjišťuje.
+ *
+ * Návratový typ je `Atribut`, který od úkolu 2 obsahuje `hledaAgent` — musí
+ * se tedy načítat i tady, ne jen `kod, nazev, popis, do_zpravy`. Bez toho by
+ * bylo `hledaAgent` vždy `undefined`, filtr v úkolu 4 by vyházel všechno
+ * a ostrá dávka by doběhla s nulou (rozhodnutí k briefu, viz report).
+ */
+export async function nactiAtributyProfilu(db: Db, profilKod: string): Promise<Atribut[]> {
+  return db.query<Atribut>(
+    `select a.kod, a.nazev, a.popis, a.do_zpravy as "doZpravy", a.hleda_agent as "hledaAgent"
+     from profil_atributy pa
+     join atributy a on a.kod = pa.atribut_kod
+     where pa.profil_kod = $1
+     order by a.kod`,
+    [profilKod],
+  );
+}
+
+/**
+ * Profil kampaně, nebo globálně aktivní, když kampaň žádný nemá.
+ *
+ * Rešerše bere profil odsud — běží uvnitř kampaně. Sběr naopak zůstává na
+ * globálním profilu, protože běží nad územím, kde kampaň ještě není.
+ */
+export async function profilProKampan(db: Db, kampanId: string): Promise<string> {
+  const r = await db.query<{ kod: string }>(
+    `select coalesce(k.profil_kod, (select kod from profily where aktivni)) as kod
+     from kampane k where k.id = $1`,
+    [kampanId],
+  );
+  const kod = r[0]?.kod;
+  if (!kod) throw new Error(`Kampaň ${kampanId} nemá profil a žádný není aktivní.`);
+  return kod;
+}

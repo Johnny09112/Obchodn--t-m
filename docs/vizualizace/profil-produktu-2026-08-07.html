@@ -1,0 +1,323 @@
+<meta charset="utf-8">
+<title>Profil produktu — co se o kom zjišťuje</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 50rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.75rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce h3 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-lg); font-weight: 600;
+    margin: .5rem 0 0; text-wrap: balance;
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  /* Předtím / potom */
+  .prevrat { display: grid; gap: .9rem; grid-template-columns: 1fr; }
+  @media (min-width: 40rem) { .prevrat { grid-template-columns: 1fr 1fr; } }
+  .karta {
+    border: 1px solid var(--linka); border-radius: 6px; padding: 1rem 1.1rem;
+    background: var(--papir-2); display: flex; flex-direction: column; gap: .5rem;
+  }
+  .karta .stitek {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .12em;
+    text-transform: uppercase; color: var(--tlumene);
+  }
+  .karta p { font-size: var(--fs-sm); }
+  .karta.ted { border-color: var(--zelena); background: var(--zelena-tl); }
+
+  /* Čísla z běhu */
+  .cisla { display: grid; gap: .75rem; grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 44rem) { .cisla { grid-template-columns: repeat(4, 1fr); } }
+  .udaj {
+    border: 1px solid var(--linka); border-left: 4px solid var(--tlumene);
+    border-radius: 5px; padding: .75rem .9rem; background: var(--papir-2);
+    display: flex; flex-direction: column; gap: .15rem;
+  }
+  .udaj .hodnota {
+    font-family: var(--pismo-udaj); font-size: 1.75rem; font-weight: 600;
+    line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .udaj .co { font-size: var(--fs-xs); color: var(--tlumene); line-height: 1.35; }
+  .udaj.dobre { border-left-color: var(--zelena); }
+  .udaj.dobre .hodnota { color: var(--zelena); }
+  .udaj.pozor { border-left-color: var(--jantar); background: var(--jantar-tl); }
+  .udaj.pozor .hodnota { color: var(--jantar); }
+
+  /* Vypínač stavu — tvar i barva, ne jen číslo */
+  .radky { display: flex; flex-direction: column; gap: .5rem; }
+  .radek {
+    display: grid; grid-template-columns: auto 1fr; gap: .7rem; align-items: start;
+    border: 1px solid var(--linka); border-radius: 5px; padding: .6rem .8rem;
+    background: var(--papir-2); font-size: var(--fs-sm);
+  }
+  .znak {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); font-weight: 700;
+    width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    display: grid; place-items: center; flex: none;
+  }
+  .radek.hotovo .znak { background: var(--zelena); color: var(--papir); }
+  .radek.hotovo { border-left: 4px solid var(--zelena); }
+  .radek.oteph .znak { background: var(--jantar); color: var(--papir); }
+  .radek.oteph { border-left: 4px solid var(--jantar); }
+
+  .obal { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: var(--fs-sm); }
+  th, td { text-align: left; padding: .45rem .7rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500;
+  }
+  td.cislo { font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums; text-align: right; }
+  .ano { color: var(--zelena); font-weight: 600; }
+  .ne { color: var(--tlumene); }
+
+  pre {
+    font-family: var(--pismo-udaj); font-size: var(--fs-sm); line-height: 1.5;
+    background: var(--papir-2); border: 1px solid var(--linka); border-radius: 6px;
+    padding: .9rem 1rem; margin: 0; overflow-x: auto;
+  }
+  pre .zvyraz { color: var(--zelena); font-weight: 600; }
+
+  blockquote {
+    margin: 0; padding: .8rem 1.1rem; border-left: 4px solid var(--razitko);
+    background: var(--razitko-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+  }
+  blockquote .zdroj {
+    display: block; margin-top: .45rem; font-family: var(--pismo-udaj);
+    font-size: var(--fs-xs); color: var(--tlumene); word-break: break-all;
+  }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .4rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · 7. srpna 2026 · skutečná data, ne ukázka</div>
+    <h1>Profil produktu</h1>
+    <p class="podtitul">Co se má o firmách zjišťovat, se nově dá změnit zavedením řádku
+      do tabulky — bez sahání do kódu. A kampaň si může nést vlastní profil, takže
+      vedle sebe můžou běžet různé projekty.</p>
+  </header>
+
+  <section class="sekce">
+    <h2>Co se změnilo</h2>
+    <div class="prevrat">
+      <div class="karta">
+        <span class="stitek">Do včerejška</span>
+        <p>Seznam osmi povolených údajů byl <strong>napevno v kódu</strong> a na dalších
+          třech místech v jeho kopiích. Přidat devátý znamenalo programovat — a snadno
+          zapomenout na některou kopii.</p>
+        <p>Tentýž seznam zároveň hlídal <strong>dvě různé věci naráz</strong>: co se smí
+          o firmě zjišťovat a co se smí napsat do oslovení.</p>
+      </div>
+      <div class="karta ted">
+        <span class="stitek">Od dneška</span>
+        <p>Údaje jsou v <strong>tabulce</strong>. U každého je napsáno, co se u něj hledá —
+          a ten popis jde rovnou agentovi do zadání.</p>
+        <p>Rozdělilo se to na dvě otázky: <strong>co se smí zjišťovat</strong> určuje profil
+          produktu, <strong>co smí do zprávy</strong> hlídá dál užší seznam. Do zprávy se
+          nový údaj sám nedostane.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Důkaz, že to funguje</h2>
+    <p>Nový údaj <strong>směnný provoz</strong> jsme zavedli jedinou migrací — žádný řádek
+      kódu se kvůli němu nezměnil. Takhle ho pak dostal agent v zadání pro kampaň Hrobce:</p>
+    <pre>{
+  "ico": "...",
+  "chybi": [
+    { "kod": "ma_vlastni_jidelnu", "popis": "má firma vlastní závodní jídelnu…" },
+    { "kod": <span class="zvyraz">"smenny_provoz"</span>,      "popis": <span class="zvyraz">"kolik směn denně se ve firmě pracuje —</span>
+                                     <span class="zvyraz">jednosměnná (9–17), dvousměnná, třísměnná, nebo</span>
+                                     <span class="zvyraz">nepřetržitý provoz; hledej na kariérní stránce,</span>
+                                     <span class="zvyraz">v inzerátech na volné pozice…"</span> },
+    { "kod": "ucel_adresy",   "popis": "k čemu firma tu adresu zveřejnila…" },
+    { "kod": "zpusob_stravovani", "popis": "jak firma řeší obědy — stravenky…" },
+    { "kod": "spojeni",       "popis": "e-mail nebo telefon na osobu" }
+  ]
+}</pre>
+    <p class="poznamka">Ten popis je nejcennější část celé změny. Dřív agent dostal holé
+      slovo <code>zpusob_stravovani</code> a musel si domyslet, co s ním.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Ostrá dávka — kampaň Hrobce</h2>
+    <p>Objednáno z aplikace, 20 firem. Agent běžel bez dozoru zhruba dvacet minut.
+      <strong>Nic se přitom neodeslalo.</strong></p>
+    <div class="cisla">
+      <div class="udaj dobre"><span class="hodnota">18</span><span class="co">firem zpracováno z 20</span></div>
+      <div class="udaj dobre"><span class="hodnota">15</span><span class="co">nových kontaktů</span></div>
+      <div class="udaj dobre"><span class="hodnota">13</span><span class="co">firem, kterým nově jde napsat</span></div>
+      <div class="udaj pozor"><span class="hodnota">0</span><span class="co">nálezů směnného provozu</span></div>
+    </div>
+    <p>Jeden údaj mimo kontakty se dohledat podařilo — a má u sebe zdroj i doslovnou
+      citaci, jak pravidla vyžadují:</p>
+    <blockquote>
+      <strong>EVS Reality s.r.o.</strong> — účel zveřejněné adresy: obecné dotazy
+      a bezplatná úvodní konzultace pro klienty, ne poptávková adresa pro dodavatele.
+      <span class="zdroj">„Rádi Vám poskytneme vstupní konzultaci zdarma, neváhejte se na nás obrátit.“ — evsinvestment.cz</span>
+    </blockquote>
+  </section>
+
+  <section class="sekce">
+    <h2>Co ta nula znamená</h2>
+    <p><strong>Mechanismus funguje, výtěžnost je jiná otázka.</strong> Směnný provoz byl
+      agentovi prokazatelně zadán — i s návodem, kde ho hledat. Že ho nenašel, je zpráva
+      o tom, co je na webech k nalezení, ne o kódu.</p>
+    <p>Hrobce jsou mikropodniky a obecní úřady. Kariérní stránky ani inzeráty na volné
+      pozice nemají, takže informace o směnách <em>není odkud vzít</em>. Zadání téhle
+      práce na tuhle sázku dopředu upozorňovalo: na dva „zajímavé“ údaje připadaly
+      v celé kartotéce tři záznamy.</p>
+    <p><strong>Poctivý test výtěžnosti chce jiné území</strong> — s výrobou a většími
+      firmami, které nabírají na směny. To je návrh, ne hotová věc.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Nasazení proběhlo bez ztráty dat</h2>
+    <p>Před nasazením i po něm proběhla kontrola ostré databáze.</p>
+    <div class="obal">
+      <table>
+        <thead>
+          <tr><th>Co se kontrolovalo</th><th>Před</th><th>Po</th><th>Sedí</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Řádků v evidenci</td><td class="cislo">7 256</td><td class="cislo">7 256</td><td class="ano">ano</td></tr>
+          <tr><td>Údajů v rejstříku</td><td class="cislo">—</td><td class="cislo">9</td><td class="ano">ano</td></tr>
+          <tr><td>Z toho smí do zprávy</td><td class="cislo">8</td><td class="cislo">8</td><td class="ano">beze změny</td></tr>
+          <tr><td>Hodnot mimo rejstřík</td><td class="cislo">0</td><td class="cislo">0</td><td class="ano">ano</td></tr>
+          <tr><td>Stará pojistka v databázi</td><td>byla</td><td>nahrazena</td><td class="ano">ověřeno</td></tr>
+          <tr><td>Kampaní s vlastním profilem</td><td class="cislo">0</td><td class="cislo">0</td><td class="ne">zatím žádná</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="poznamka">Po dávce má evidence 7 272 řádků — přibylo těch 16 nových nálezů.
+      Migrace samy na datech nezměnily nic.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Kde to stojí</h2>
+    <div class="radky">
+      <div class="radek hotovo">
+        <span class="znak">✓</span>
+        <div><strong>Údaje se dají zavést bez programování.</strong> Ověřeno naostro —
+          nový údaj došel od migrace až do zadání pro agenta.</div>
+      </div>
+      <div class="radek hotovo">
+        <span class="znak">✓</span>
+        <div><strong>Agent si nemůže vymyslet vlastní údaj.</strong> Drží to dvě nezávislé
+          pojistky v databázi; revize je prošla zvlášť, protože je to nejcitlivější místo.</div>
+      </div>
+      <div class="radek hotovo">
+        <span class="znak">✓</span>
+        <div><strong>Kampaň si umí vybrat profil</strong> v prvním kroku průvodce.
+          Prázdná volba znamená „použij ten, co je zrovna aktivní“.</div>
+      </div>
+      <div class="radek hotovo">
+        <span class="znak">✓</span>
+        <div><strong>606 testů zeleně</strong>, aplikace se staví, migrace nasazené.</div>
+      </div>
+      <div class="radek oteph">
+        <span class="znak">!</span>
+        <div><strong>„Profil hlídá sběr“ platí jen z poloviny.</strong> Profil určuje, co se
+          agentovi zadá hledat, ale při zápisu nálezů se kontroluje jen to, že údaj je
+          v rejstříku. Dnes to nevadí — oba profily mají tytéž údaje. Až se začnou lišit,
+          tohle se musí dodělat.</div>
+      </div>
+      <div class="radek oteph">
+        <span class="znak">!</span>
+        <div><strong>Výtěžnost nového údaje je zatím neznámá.</strong> Nula z osmnácti
+          v Hrobcích nic nevyvrací ani nepotvrzuje. Chce to území s výrobou.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Na co se přišlo cestou</h2>
+    <p>Práci dělalo pět agentů, každý úkol prošel vlastní revizí. Za pozornost stojí
+      dvě věci, které by jinak prošly:</p>
+    <ul>
+      <li><strong>Tentýž seznam žil na šesti místech</strong>, ne na jednom. Zrušit ho jen
+        v kódu by znamenalo, že dávka doběhne s nulou a bude to vypadat, že se prostě nic
+        nenašlo. Nula je totiž legitimní výsledek — z výstupu nepoznáte rozdíl mezi
+        „nenašlo se to“ a „nikdy se to nehledalo“.</li>
+      <li><strong>Pět testů procházelo ze špatného důvodu.</strong> Jeden měl hlídat, že si
+        agent nevymyslí vlastní údaj — a prošel by, i kdyby ta pojistka v databázi vůbec
+        neexistovala. Chytly se zpřísněním a schválnou sabotáží: pojistka se dočasně
+        vypnula a ověřilo se, že test spadne.</li>
+    </ul>
+    <p class="poznamka">Obojí je zapsané v paměti projektu, aby to příště nikdo neobjevoval znovu.</p>
+  </section>
+
+</div>

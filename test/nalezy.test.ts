@@ -14,6 +14,22 @@ const firma = (ico: string, nazev: string): AresZaznam => ({
   czNace: ["62010"], velikostKategorie: "mikro", kodObce: 560740,
 });
 
+/**
+ * Firma založená a rovnou zařazená do nové kampaně (stav 'vybrana') —
+ * `firmyKObohaceni` s `kampanId` podmínku na stav/zónu firmy nemá (kopíruje
+ * `firmyProReserse`), takže tomuhle pomocníkovi stačí jen založení a zápis
+ * do `kampan_firmy`.
+ */
+async function pripravKampanSFirmou(
+  db: Db,
+  ico: string,
+): Promise<{ kampanId: string }> {
+  await zalozFirmu(db, firma(ico, `Testovací firma ${ico} s.r.o.`));
+  const kampanId = await zalozKampan(db, { nazev: `Kampaň ${ico}`, spravce: "a@b.cz" });
+  await db.query("insert into kampan_firmy (kampan_id, ico) values ($1,$2)", [kampanId, ico]);
+  return { kampanId };
+}
+
 beforeEach(async () => {
   db = await pripojPglite();
   await spustMigrace(db);
@@ -40,7 +56,7 @@ describe("firmyKObohaceni", () => {
     const f = await firmyKObohaceni(db, {});
     expect(f).toHaveLength(2);
     expect(f[0]).toMatchObject({ nazev: expect.any(String), obec: "Bezdružice" });
-    expect(f[0]!.chybi).toContain("zpusob_stravovani");
+    expect(f[0]!.chybi.map((c) => c.kod)).toContain("zpusob_stravovani");
   });
 
   it("po zápisu dávky už firmu podruhé nenabídne", async () => {
@@ -86,7 +102,7 @@ describe("firmyKObohaceni", () => {
 
     const f = await firmyKObohaceni(db, { jenBezSpojeni: true });
     expect(f.map((x) => x.ico)).toEqual(["25242407"]); // ta s e-mailem už je hotová
-    expect(f[0]!.chybi).toContain("spojeni");
+    expect(f[0]!.chybi.map((c) => c.kod)).toContain("spojeni");
     expect(f[0]!.znameOsoby).toEqual(["Tomáš Honzík (jednatel)"]);
   });
 
@@ -142,6 +158,27 @@ describe("zapisDavku", () => {
     expect(v.zapsanoNalezu).toBe(0);
     expect(v.odmitnuto).toHaveLength(4);
     expect(v.odmitnuto.map((o) => o.duvod).join(" ")).toMatch(/zdroj|citac|whitelist|url/i);
+  });
+
+  // Nález 1 revize: "obrat_firmy" v testu výš vůbec není v rejstříku —
+  // ten případ by odmítl i zapisAtribut, takže samotný nesejde poznat, jestli
+  // kontrola opravdu hlídá `hleda_agent`, nebo jen holou existenci v tabulce
+  // `atributy`. Tenhle test bere atribut, který V REJSTŘÍKU JE (`obor`, viz
+  // 0035_atributy.sql), ale má `hleda_agent = false` — kdyby se kontrola
+  // v zapisDavku zeslabila na pouhé "je v rejstříku" (`r.length > 0` místo
+  // `r[0]?.hleda_agent === true`), tenhle nález by tiše prošel a přepsal by
+  // hodnotu doloženou z ARESu údajem, který agent na webu nikdy neměl hledat.
+  it("odmítne atribut, který je v rejstříku, ale agent ho nehledá (hleda_agent = false)", async () => {
+    const v = await zapisDavku(db, {
+      nalezy: [{
+        ico: "25242407", atribut: "obor", hodnota: "výroba nábytku",
+        zdrojUrl: "https://a.cz/o-nas", citace: "Vyrábíme nábytek na míru.",
+      }],
+      kontakty: [],
+    });
+    expect(v.zapsanoNalezu).toBe(0);
+    expect(v.odmitnuto).toHaveLength(1);
+    expect(v.odmitnuto[0]!.duvod).toMatch(/hleda_agent/i);
   });
 
   it("jedna vadná položka nezruší zápis ostatních", async () => {
@@ -226,6 +263,75 @@ describe("fronta rešerše nad oblastí", () => {
 
     expect(vychozi).not.toContain("25232657");
     expect(nadOblasti).toEqual(["25232657"]);
+  });
+});
+
+describe("chybi podle profilu", () => {
+  it("nese kód i popis, aby agent věděl, co hledat", async () => {
+    const { kampanId } = await pripravKampanSFirmou(db, "25232657");
+    const f = await firmyKObohaceni(db, { kampanId, profilKod: "cantinero", limit: 5 });
+    const stravovani = f[0]!.chybi.find((c) => c.kod === "zpusob_stravovani");
+    expect(stravovani?.popis).toContain("stravenky");
+  });
+
+  it("atribut mimo profil se v chybi neobjeví", async () => {
+    const { kampanId } = await pripravKampanSFirmou(db, "25232657");
+    await db.query("delete from profil_atributy where atribut_kod = 'zpusob_stravovani'");
+    const f = await firmyKObohaceni(db, { kampanId, profilKod: "cantinero", limit: 5 });
+    expect(f[0]!.chybi.map((c) => c.kod)).not.toContain("zpusob_stravovani");
+  });
+
+  // Spojení není atribut a profil ho neřídí — bez něj nemá systém výstup.
+  it("spojeni se hledá i u profilu bez atributů", async () => {
+    const { kampanId } = await pripravKampanSFirmou(db, "25232657");
+    await db.query("delete from profil_atributy where profil_kod = 'cantinero'");
+    const f = await firmyKObohaceni(db, { kampanId, profilKod: "cantinero", limit: 5 });
+    expect(f[0]!.chybi.map((c) => c.kod)).toContain("spojeni");
+  });
+
+  // Nález 2 revize: nic dosud neověřovalo, že atribut se skutečnou evidencí
+  // z `chybi` zmizí — "po zápisu dávky už firmu podruhé nenabídne" vyřazuje
+  // firmu razítkem `obohaceno_at`, ne evidencí. Kdyby se `maEvidenci`
+  // (src/nalezy.ts) rozbilo — překlep v klíči `ico|atribut`, špatný název
+  // sloupce — celá sada zůstane zelená a `chybi` bude tvrdit, že firma nemá
+  // nic, i když je to dávno doloženo; agent by pak sháněl, co už víme.
+  it("firma s evidencí pro zpusob_stravovani ho v chybi nemá", async () => {
+    const { kampanId } = await pripravKampanSFirmou(db, "25232657");
+    await db.query(
+      `insert into evidence (ico, atribut, hodnota, zdroj_url, citace)
+       values ('25232657', 'zpusob_stravovani', 'stravenky', 'https://a.cz/kariera', 'text')`,
+    );
+    const f = await firmyKObohaceni(db, { kampanId, profilKod: "cantinero", limit: 5 });
+    expect(f[0]!.chybi.map((c) => c.kod)).not.toContain("zpusob_stravovani");
+  });
+
+  // Zrcadlo předchozího testu: zdrojem pravdy je EVIDENCE, ne sloupec
+  // v `companies`. Vyplněný sloupec bez evidence firmu hotovou nedělá —
+  // kdyby se výpočet vrátil k dřívějšímu čtení sloupce (`r.zpusob_stravovani
+  // === null`), tenhle test by spadl, protože sloupec je vyplněný, ale
+  // evidence chybí.
+  it("sloupec vyplněný bez evidence nestačí — zdrojem pravdy je evidence, ne sloupec", async () => {
+    const { kampanId } = await pripravKampanSFirmou(db, "25232657");
+    await db.query("update companies set zpusob_stravovani = 'stravenky' where ico = '25232657'");
+    const f = await firmyKObohaceni(db, { kampanId, profilKod: "cantinero", limit: 5 });
+    expect(f[0]!.chybi.map((c) => c.kod)).toContain("zpusob_stravovani");
+  });
+
+  it("nově zavedený atribut se objeví v chybi", async () => {
+    const { kampanId } = await pripravKampanSFirmou(db, "25232657");
+    // POZOR — rozpor s briefem: brief tenhle insert píše bez `hleda_agent`,
+    // ten ale defaultuje na false (migrace 0035). Bez explicitního `true`
+    // by atribut do `chybi` nikdy nespadl a test by padal i proti správné
+    // implementaci — přidáno k briefu, viz report úkolu 4.
+    await db.query(
+      `insert into atributy (kod, nazev, popis, do_zpravy, hleda_agent)
+       values ('test_nove_atribut', 'testovací nový', 'test nového atributu', false, true)`,
+    );
+    await db.query(
+      "insert into profil_atributy (profil_kod, atribut_kod) values ('cantinero','test_nove_atribut')",
+    );
+    const f = await firmyKObohaceni(db, { kampanId, profilKod: "cantinero", limit: 5 });
+    expect(f[0]!.chybi.map((c) => c.kod)).toContain("test_nove_atribut");
   });
 });
 

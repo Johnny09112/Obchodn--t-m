@@ -71,7 +71,7 @@ describe("zapisAtribut (TP-2, TP-3)", () => {
         zdrojUrl: "https://example.com",
         citace: "y",
       }),
-    ).rejects.toThrow(/whitelist/i);
+    ).rejects.toThrow(/není v rejstříku/i);
   });
 
   it("odmítne zápis bez zdroje", async () => {

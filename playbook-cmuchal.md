@@ -32,6 +32,15 @@ příspěvkové organizace města) adresy tohoto typu prakticky nemá, převažo
 doplněné o e-mail nebo telefon** (přímé vyřešení „spojeni") u 8 z 20 firem.
 Stav stravování doložen u 1 z 20, vlastní jídelna u 0 z 20.
 
+Měření (dávka 20 firem, Hrobce/Židovice/Libotenice/Oleško, 2026-08-07 —
+malé s.r.o., zemědělské a úklidové firmy plus 4 obce): kontakt doložen
+u **13 z 20** firem, z toho jmenná osoba (úroveň 3, shodná se známým
+jednatelem/starostou z rejstříku) u 7. Poptávková adresa úrovně 1 opět
+**0 z 20**. Žádný z pěti sledovaných atributů kromě „spojeni" a jednou
+„ucel_adresy" se nepodařilo doložit — u malých výrobních/zemědělských/
+úklidových s.r.o. bez kariérní stránky nejsou informace o jídelně, směnném
+provozu ani způsobu stravování veřejně vůbec zveřejňované.
+
 ## Odkud kontakty brát — pořadí podle výtěžnosti
 
 Body 1 a 2 zajišťuje kód automaticky při sběru. Body 3 a dál jsou tvoje práce.
@@ -62,6 +71,10 @@ Body 1 a 2 zajišťuje kód automaticky při sběru. Body 3 a dál jsou tvoje pr
    měl českou kontaktní stránku až na `mea-metal.com/cs/kontakt/`, ne na
    samostatné `.cz` doméně, a schambeck bohemia na `schambeck-group.com`).
 9. **Archiv webu** u firem, jejichž stránky už neexistují.
+10. **Nabídková stránka firmy na burze poptávek (epoptavka.cz apod.)** —
+    když firma sama nabízí své služby/zboží na `dodavatele.epoptavka.cz`
+    nebo obdobném tržišti, stránka nese telefon i web přímo od firmy a je
+    to funkční náhrada, když má vlastní web rozbitý certifikát (viz níže).
 
 **Registr smluv se neosvědčil** — metadata nesou jen název, IČO, adresu a
 datovou schránku, žádnou kontaktní osobu. Jména by byla až uvnitř PDF smluv.
@@ -77,7 +90,11 @@ vzoru je vymýšlení, které se v kartotéce tváří jako fakt.
 Je to opačný směr než hledáme — příjem objednávek OD zákazníků, ne příjem
 nabídek OD dodavatelů. Snadno se plete s `poptavky@`/`nabidky@`. Zapisuje
 se jako `ucel_adresy`, kontakt se ale řadí do úrovně 2, ne 1 (ověřeno u
-IMONT spol. s r.o. a TJ Slavoj Plzeň, 2026-08-02).
+IMONT spol. s r.o. a TJ Slavoj Plzeň, 2026-08-02). Stejná logika platí i pro
+realitní/finanční poradenské firmy, kde je kontaktní formulář určený
+zákazníkům („poskytneme vstupní konzultaci zdarma") — pořád je to poptávka
+SMĚREM K firmě, ne od ní k dodavatelům, takže úroveň 2 (EVS Investment /
+EVS Reality s.r.o., 2026-08-07).
 
 **Skupinový kariérní/firemní portál sdílený víc IČy pod jednou značkou**
 (např. `kariera.ave.cz` pro celou skupinu AVE) se **nepřiřazuje ke
@@ -87,20 +104,26 @@ ke konkrétnímu s.r.o./a.s. Radši nezapsat, i když je nález lákavý (rozdí
 oproti bodu 8 výše, kde web mateřské firmy popisuje přímo tu jednu dceřinou
 firmu, ne celou skupinu najednou).
 
+**Dvě různé firmy na stejné adrese se stejným jednatelem mohou sdílet web
+i telefon, ale ne e-mail** — nepřiřazuj automaticky kontakt jedné firmy
+druhé jen podle shody adresy/osoby; drž se zdroje, který výslovně jmenuje
+shodující se IČO (viz LITOUKLID/Proclean Facilities níže).
+
 ## Co funguje podle typu subjektu
 
 | typ subjektu | co zabírá | co je slepé |
 |---|---|---|
-| Obce a města | stránka Kontakty s rozpisem podle agend; tajemník = nejbližší obdoba HR, podatelna = obecná adresa; odkaz z Kontaktů na **epusa.cz** (Portál veřejné správy) dá u jmenované osoby přímý e-mail, často označený „[oficiální]" | stravování zaměstnanců úřadu se neuvádí nikdy |
+| Obce a města | stránka Kontakty s rozpisem podle agend; tajemník = nejbližší obdoba HR, podatelna = obecná adresa; odkaz z Kontaktů na **epusa.cz** (Portál veřejné správy) dá u jmenované osoby přímý e-mail, často označený „[oficiální]"; **risy.cz** (Regionální informační servis) je spolehlivá náhrada, když přímý web obce nejde načíst (spojení resetováno) nebo je nepřehledný | stravování zaměstnanců úřadu se neuvádí nikdy |
 | Příspěvkové organizace města (zoo, divadlo, turismus, koncepční útvary) | vlastní stránka Kontakty s telefonním seznamem podle jmen a funkcí, obdoba úřadu — často jde dohledat přímo osobu odpovídající známému statutárovi z rejstříku | stravování zaměstnanců se na webu neřeší vůbec (ověřeno u zoo, divadla, turismu i ÚKR Plzně, 2026-08-02) |
 | Bytová družstva (SBD) | stránka Kontakty bývá rozpadlá po jednotlivých pracovnicích/pracovnících se jmény, telefony i e-maily včetně předsedy představenstva | — |
 | Výroba s víc provozy | podstránka provozovny; sekce obchodních zástupců | obecné Kontakty vedou jen na ústředí |
 | Sociální a pobytová zařízení | konkrétní podstránka o stravě („Přihláška a odhláška stravy") | obecné „O nás" jen odkáže bez detailu |
 | Školy | stránka školní jídelny (`/informace-sj`) doloží vlastní jídelnu | — |
-| Nově vzniklé s.r.o. bez webu | statutární orgán z rejstříku | nulová webová stopa — stavební/podnikatelské portály i katalogy typu merk.cz nenašly nic navíc (ověřeno na I.U.STAVBY i EXTETO s.r.o.) |
+| Nově vzniklé s.r.o. bez webu | statutární orgán z rejstříku | nulová webová stopa — stavební/podnikatelské portály i katalogy typu merk.cz nenašly nic navíc (ověřeno na I.U.STAVBY, EXTETO s.r.o. a znovu na dávce malých s.r.o. z Hrobce/Židovic 2026-08-07: Sejeto, Infinity Avenue, NORDIC TECHNOLOGY GROUP, Small Wonders, PORTA BOHEMICA EUROPE v likvidaci, SaJeTe) |
 | Spolky sdílející adresu s jinou organizací | **nevzdávej se u obecné stránky Kontakty** — hledej vlastní podstránku typu „Podpora a sponzoring", „Dary", „Výroční zpráva"; tam bývá kontakt na spolek samotný, oddělený od kontaktu na hlavní organizaci | obecná stránka Kontakty spolek často vůbec nezmíní — nedomýšlet, že sdílí kontakt s hlavní organizací, dokud to není doložené na jeho vlastní podstránce |
 | Sportovní tělovýchovné jednoty (TJ, z.s.) | stránka Kontakty rozpadlá po funkcích (předseda/předsedkyně, ekonom, provozní manažer), i s mailem přímo na předsedu | pozor na adresu s účelem „objednávky" (rezervace haly apod.) — není totéž co poptávková adresa |
 | Firmy vlastněné zahraniční skupinou | kontaktní stránka bývá na mezinárodní doméně mateřské firmy (`.com/cs/kontakt`), ne na samostatné české doméně; hledej podle jména skupiny | samostatná `.cz` doména často vůbec neexistuje |
+| Malé rodinné s.r.o. (řemeslo, zemědělství, úklid) s jedním jednatelem | katalogy typu info-cechy.cz, ifirmy.cz nebo nabídková stránka na epoptavka.cz často nesou telefon/e-mail přímo od firmy, i když vlastní web chybí nebo má rozbitý certifikát; hledej podle jednatele i podle „provozního" jména firmy (může se lišit od zapsaného obchodního jména) | vlastní web, pokud existuje, bývá jen vizitka bez zmínky o stravování/směnách/jídelně |
 
 ## Technické fígle
 
@@ -128,16 +151,39 @@ firmu, ne celou skupinu najednou).
   obsah je stejný. Je to přímo web firmy, tedy lepší zdroj než firmy.cz,
   i když stránka vypadá provizorně.
 - **Souhrny z WebSearch mohou halucinovat konkrétní údaje** (telefonní
-  čísla, e-maily), které na cílové stránce vůbec nejsou — ověřeno u
-  kurzy.cz, kde souhrn tvrdil telefon na osobu, ale přímé načtení stránky
-  žádný telefon neobsahovalo. Telefon/e-mail se **nikdy nezapisuje jen
-  z textového souhrnu vyhledávače** — vždy až po přímém načtení a nalezení
-  doslovné citace na stránce.
+  čísla, e-maily, ale i celé věcné popisy činnosti firmy) které na cílové
+  stránce vůbec nejsou — ověřeno u kurzy.cz, kde souhrn tvrdil telefon na
+  osobu, ale přímé načtení stránky žádný telefon neobsahovalo; podobně u
+  „Infinity Avenue s.r.o." souhrn vymyslel popis činnosti („nabízí investiční
+  nemovitosti mimo běžné portály"), který se nepodařilo dohledat na žádné
+  indexované stránce (2026-08-07). Telefon/e-mail/popis se **nikdy
+  nezapisuje jen z textového souhrnu vyhledávače** — vždy až po přímém
+  načtení a nalezení doslovné citace na stránce.
 - **IČO uvedené přímo v patičce/tiráži webu** je nejjistší způsob, jak
   potvrdit, že nalezený web opravdu patří firmě z rejstříku — obzvlášť
   když se provozní název domény liší od zapsaného obchodního jména
-  (ověřeno u spravnyuklid.cz → Správná databáze s.r.o. a dazs.cz →
-  Dopravní a záchranná služba s.r.o.).
+  (ověřeno u spravnyuklid.cz → Správná databáze s.r.o., dazs.cz →
+  Dopravní a záchranná služba s.r.o., a evsinvestment.cz → EVS Reality
+  s.r.o., kde patička výslovně uváděla „IČ: 06943586" pod jiným, marketingovým
+  jménem „EVS Investment s.r.o.").
+- **Rozbitý/neshodující se TLS certifikát blokuje přímé načtení** u řady
+  malých firemních webů (ověřeno na benacz.cz, azfirma.cz, pro-clean.cz —
+  chyba „unable to verify the first certificate" i na `www.` variantě).
+  Funkční náhrada: nabídková stránka firmy na tržišti typu
+  `dodavatele.epoptavka.cz`, kde firma sama zveřejnila telefon/web, nebo
+  katalogový výpis (kurzy.cz rejstrik-firem, info-cechy.cz) — ale jen
+  pokud výslovně uvádí shodné IČO, ne jen podobné jméno.
+- **Dvě obce se stejným názvem** existují na více místech ČR zároveň
+  (Židovice v okrese Jičín i v okrese Litoměřice) a jejich domény si můžou
+  být nápadně podobné (`obeczidovice.cz` vs. `zidovice.cz`) — před citací
+  vždy ověřit, že adresa/okres na stránce sedí s obcí ze zadání, ne jen
+  podle názvu domény.
+- **Automatizovaná extrakce textu z nepřehledně strukturovaných stránek
+  (např. staré Webnode weby) může být nestabilní** — opakované načtení
+  téže stránky (`olesko.cz/kontakt/`) přiřadilo stejné telefonní číslo
+  jednou starostovi, podruhé místostarostce. Když se výsledek mezi pokusy
+  liší, nezapisovat konkrétní jméno+telefon, spokojit se s tím, co zůstává
+  stabilní (typicky obecný e-mail).
 
 ## Vyjasněno
 
@@ -187,3 +233,29 @@ firmu, ne celou skupinu najednou).
   organizace, ne obchodní/dodavatelské firmy. Pro měřítko „podíl kontaktů
   úrovně 1" bude nutné počítat s tím, že u některých typů subjektů je
   reálně nedosažitelné, a nehodnotit to jako selhání rešerše.
+
+### Běh 2026-08-07 — 20 firem a obcí z okolí Hrobce/Židovic/Libotenic/Oleška
+
+- **LITOUKLID s.r.o. (05594260) a Proclean Facilities s.r.o. (08940096)**:
+  stejná adresa (Oleško 38), stejná jednatelka Šárka Dreslerová, stejný web
+  `www.pro-clean.cz` a stejné telefonní číslo, ale KAŽDÁ firma má jinou
+  e-mailovou adresu podle zdroje, který výslovně jmenuje její IČO
+  (LITOUKLID → `dreslerova.sarka@seznam.cz` dle info-cechy.cz; Proclean
+  Facilities → `info@pro-clean.cz` dle kurzy.cz rejstřík firem s uvedenou
+  datovou schránkou). Nepřiřazovat kontakt podle shody adresy/osoby, ale
+  podle explicitní shody IČO u zdroje.
+- **Obec Židovice — pozor na záměnu se stejnojmennou obcí v jiném okrese**:
+  `obeczidovice.cz` je oficiální web Židovic v okrese Jičín, ne hledané
+  obce v okrese Litoměřice (IČO 00526479). Správný web je `zidovice.cz`.
+  Bez kontroly adresy/okresu na stránce hrozí zápis kontaktu ke špatnému IČO.
+- **U šesti z dvaceti firem (malé s.r.o. s jedním jednatelem, základní
+  kapitál řádově 10-20 tis. Kč, žádná vlastní provozovna)** se nenašla
+  žádná webová stopa nad rámec rejstříku ani v katalozích — potvrzuje to
+  vzorec z EXTETO/I.U.STAVBY: Sejeto s.r.o., Infinity Avenue s.r.o.,
+  NORDIC TECHNOLOGY GROUP spol. s r.o., Small Wonders s.r.o.,
+  PORTA BOHEMICA EUROPE s.r.o. v likvidaci, SaJeTe s.r.o.
+- **Atributy `ma_vlastni_jidelnu`, `smenny_provoz` a `zpusob_stravovani`
+  se u malých výrobních/zemědělských/úklidových s.r.o. bez kariérní
+  stránky nepodařilo doložit ani jednou z dvaceti** — na rozdíl od obcí,
+  kde je to očekávaně slepé, tady prostě tento typ firmy takové informace
+  veřejně nezveřejňuje vůbec (vlastní web bývá jen jednostránková vizitka).

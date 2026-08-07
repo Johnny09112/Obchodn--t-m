@@ -15,9 +15,21 @@ import type { Db } from "./db.js";
  * Pořadí je závazné: tabulka se přenese až po tom, na co se odkazuje.
  * Číselníky (kategorie, profily) tu schválně NEJSOU — cíl si je založil
  * migrací sám a jsou v obou databázích totožné.
+ *
+ * `atributy` a `profil_atributy` jsou jiný případ, i když taky vypadají
+ * jako číselník: cíl si sice výchozí osazení taky zakládá migrací, ale
+ * rejstřík se navíc smí RUČNĚ ROZŠIŘOVAT (celý smysl profilu produktu —
+ * ADR 0002). Zdroj a cíl se tak časem rozejdou a rozdíl je potřeba přenést.
+ * Proto jsou v seznamu, ale s tolerancí duplicit (`CISELNIKY_S_DUPLICITOU`
+ * níž) — jinak by insert osmi výchozích atributů, které cíl už má, spadl na
+ * `atributy_pkey`. `atributy` musí být před `evidence` (cizí klíč
+ * `evidence_atribut_fk`), `profil_atributy` hned za ní — odkazuje na ni i na
+ * `profily`, které v cíli existují vždy.
  */
 const TABULKY = [
   "jidelny",
+  "atributy",
+  "profil_atributy",
   "companies",
   "oblasti",
   "agent_runs",
@@ -28,6 +40,14 @@ const TABULKY = [
   "oblast_firmy",
   "blacklist",
 ] as const;
+
+/**
+ * Tabulky, kde cíl může mít stejný řádek už z vlastní migrace (výchozí
+ * osazení číselníku) — insert proto ignoruje duplicity podle primárního
+ * klíče místo aby na nich spadl. `radku` ve výsledku pak značí, kolik řádků
+ * v cíli OPRAVDU PŘIBYLO, ne kolik jich bylo ve zdroji.
+ */
+const CISELNIKY_S_DUPLICITOU = new Set<string>(["atributy", "profil_atributy"]);
 
 /** Tabulky, jejichž neprázdnost znamená, že se do cíle už zapisovalo. */
 const KONTROLOVANE = ["jidelny", "companies", "oblasti", "agent_runs"] as const;
@@ -59,7 +79,9 @@ export async function prenesData(zdroj: Db, cil: Db): Promise<PrenosRadek[]> {
 
     const sloupce = Object.keys(radky[0]!);
     const seznamSloupcu = sloupce.map((s) => `"${s}"`).join(", ");
+    const tolerujDuplicity = CISELNIKY_S_DUPLICITOU.has(tabulka);
 
+    let vlozeno = 0;
     for (const radek of radky) {
       const zastupci = sloupce.map((_, i) => `$${i + 1}`).join(", ");
       const hodnoty = sloupce.map((s) => {
@@ -71,12 +93,14 @@ export async function prenesData(zdroj: Db, cil: Db): Promise<PrenosRadek[]> {
         }
         return h;
       });
-      await cil.query(
-        `insert into ${tabulka} (${seznamSloupcu}) values (${zastupci})`,
+      const vysledekInsertu = await cil.query(
+        `insert into ${tabulka} (${seznamSloupcu}) values (${zastupci})` +
+          (tolerujDuplicity ? " on conflict do nothing returning 1" : ""),
         hodnoty,
       );
+      if (!tolerujDuplicity || vysledekInsertu.length > 0) vlozeno++;
     }
-    vysledek.push({ tabulka, radku: radky.length });
+    vysledek.push({ tabulka, radku: tolerujDuplicity ? vlozeno : radky.length });
   }
 
   return vysledek;

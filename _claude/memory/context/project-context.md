@@ -4,7 +4,7 @@ description: Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, 
 type: context
 status: active
 created: 2026-08-01
-updated: 2026-08-03
+updated: 2026-08-07
 ---
 
 # obchodni-tym — živý kontext
@@ -80,6 +80,59 @@ TP-6 ([[pootocene-urovne-adres]]); tajemství se přesunulo mimo pracovní
 složku ([[tajemstvi-mimo-pracovni-slozku]]).
 
 SPEC kap. 5 rozdělena na dvě vrstvy ([[dve-vrstvy-znalost-a-zprava]]).
+
+## Profil produktu (7. 8.) — hotovo v kódu, migrace nasazené
+
+**Větev `profil-produktu`, pět úkolů odpracovaných subagentně. Nezmergováno.**
+
+**Co to dělá:** pevný seznam povolených atributů se přesunul z kódu do
+tabulky `atributy` s příznaky `do_zpravy` (smí do zprávy) a `hleda_agent`
+(hledá Čmuchal). Profil vybírá, co se o firmě zjišťuje; kampaň si nese svůj
+profil (`kampane.profil_kod`, `NULL` = globálně aktivní). **TP-3 se tím
+rozdělil** — whitelist váže zprávu, sběr určuje profil.
+
+TP-3 po přesunu drží **dvěma nezávislými vrstvami**: běhovou kontrolou
+v `zapisAtribut` a cizím klíčem `evidence_atribut_fk`. Do `evidence` navíc
+zapisuje v produkčním kódu jedině `src/repo.ts` a tabulka má RLS **bez
+jediné politiky**, takže přes datové API se do ní nedostane nikdo.
+
+**Migrace 0035, 0036 a 0037 nasazené 7. 8.** Kontrola před i po: evidence
+beze změny na 7 256 řádcích, žádná hodnota `atribut` mimo rejstřík, stará
+podmínka `check` zrušená a nahrazená cizím klíčem, RLS zapnuté.
+
+- Zadání: `docs/superpowers/specs/2026-08-07-profil-produktu-design.md`
+- Plán: `docs/superpowers/plans/2026-08-07-profil-produktu.md`
+- Ledger celého běhu: `.superpowers/sdd/2026-08-07-profil-produktu/progress.md`
+- Pasti, které to odhalilo: [[tri-kopie-seznamu-atributu]],
+  [[dva-profily-sber-a-reserse]]
+
+### Ostrá dávka 7. 8. — mechanismus funguje, výtěžnost ne
+
+Kampaň Hrobce, 20 firem objednaných z aplikace, **18 zpracovaných**.
+Výpis běhu: `profil cantinero` — profil se do rešerše propsal.
+
+| Co | Výsledek |
+|---|---|
+| Nálezů atributů | **1** (`ucel_adresy`, se zdrojem i doslovnou citací) |
+| Kontaktů | 15, spojení přibylo u 13 firem |
+| Odmítnuto | 0 |
+| **`smenny_provoz`** | **0 z 18** |
+
+**Mechanismus je ověřený na skutečných datech.** `k-obohaceni` prokazatelně
+předává `smenny_provoz` agentovi v poli `chybi` **i s popisem, kde ho
+hledat** — a ten atribut se do systému dostal **jen migrací 0037, bez
+jediného řádku kódu**. To byl cíl celé práce a ten je splněný.
+
+**Výtěžnost je nula a je to zpráva o datech, ne o kódu.** Hrobce jsou
+mikropodniky a obce — kariérní stránky ani inzeráty nemají, takže směny
+není odkud vzít. Zadání (kap. 2) na tuhle sázku předem upozorňovalo:
+na dva „zajímavé" atributy připadaly ze 7 256 záznamů evidence tři.
+**Majitel to ví.** Poctivý test výtěžnosti by chtěl území s výrobou
+a většími firmami, ne Hrobce.
+
+**Otevřené vědomě:** `zapisDavku` profil kampaně nekontroluje — je to rada
+v promptu, ne kontrola v kódu. Mezera v plánu, ne v provedení; podrobnosti
+v [[dva-profily-sber-a-reserse]].
 
 ## Aktuální focus
 

@@ -10,6 +10,7 @@
  * adresa zahodila hodinu práce.
  */
 import { z } from "zod";
+import { aktivniProfilKod, nactiAtributyProfilu } from "./atributy.js";
 import type { Db } from "./db.js";
 import { jeValidniIco } from "./ico.js";
 import type { Segment } from "./res.js";
@@ -20,20 +21,36 @@ import {
   zapisKontakt,
 } from "./repo.js";
 
-/** Atributy, které smí agent dohledávat na webu (podmnožina whitelistu kap. 5). */
-export const OBOHACOVANE_ATRIBUTY = [
-  "ma_vlastni_jidelnu",
-  "zpusob_stravovani",
-  "ucel_adresy",
-] as const;
-
+/**
+ * Co smí agent dohledávat na webu, už neurčuje pevný výčet v kódu, ale
+ * rejstřík atributů (`atributy.hleda_agent`) — nahrazuje dřívější
+ * `OBOHACOVANE_ATRIBUTY`. Ten byl druhá, přísnější kopie whitelistu vedle
+ * `zapisAtribut` (TP-3): dokud existoval, nový atribut se odmítl tady, dřív
+ * než se vůbec dostal k opravdové kontrole, a ostrá dávka doběhla s nulou.
+ *
+ * Zod tedy jen ověří tvar (neprázdný řetězec); jestli je atribut opravdu
+ * v rejstříku a smí ho hledat agent, se řeší za běhu v `zapisDavku`.
+ */
 const nalezSchema = z.object({
   ico: z.string().refine(jeValidniIco, "neplatné IČO"),
-  atribut: z.enum(OBOHACOVANE_ATRIBUTY),
+  atribut: z.string().min(1, "prázdný atribut"),
   hodnota: z.string().min(1, "prázdná hodnota"),
   zdrojUrl: z.string().url("zdrojUrl musí být platná adresa stránky"),
   citace: z.string().min(1, "chybí doslovná citace ze zdroje"),
 });
+
+/**
+ * Smí agent tenhle atribut dohledávat na webu? Kontrola za běhu proti
+ * rejstříku (`atributy.hleda_agent`) — nahrazuje dřívější zod `z.enum`
+ * nad `OBOHACOVANE_ATRIBUTY` (viz komentář výš).
+ */
+async function jeObohacovanyAtribut(db: Db, atribut: string): Promise<boolean> {
+  const r = await db.query<{ hleda_agent: boolean }>(
+    "select hleda_agent from atributy where kod = $1",
+    [atribut],
+  );
+  return r[0]?.hleda_agent === true;
+}
 
 const kontaktSchema = z.object({
   ico: z.string().refine(jeValidniIco, "neplatné IČO"),
@@ -98,6 +115,17 @@ export async function zapisDavku(db: Db, vstup: Davka): Promise<VysledekZapisu> 
         continue;
       }
       const n = r.data;
+      // Whitelist se dřív hlídal enumem v zod schématu (`OBOHACOVANE_ATRIBUTY`);
+      // teď je to tahle kontrola za běhu proti rejstříku — atribut musí být
+      // známý A musí ho agent doopravdy hledat (`hleda_agent`). Odmítnutí
+      // nezruší dávku, jen se přeskočí tahle položka.
+      if (!(await jeObohacovanyAtribut(db, n.atribut))) {
+        vysledek.odmitnuto.push({
+          polozka: syrovy,
+          duvod: `atribut '${n.atribut}' agent nehledá — není v rejstříku, nebo má hleda_agent = false`,
+        });
+        continue;
+      }
       if (!(await firmaExistuje(db, n.ico))) {
         vysledek.odmitnuto.push({ polozka: syrovy, duvod: `firma ${n.ico} není v kartotéce` });
         continue;
@@ -156,6 +184,12 @@ async function oznacProverenou(db: Db, ico: string): Promise<void> {
   await db.query("update companies set obohaceno_at = now() where ico = $1", [ico]);
 }
 
+export interface ChybejiciAtribut {
+  kod: string;
+  /** Co se u něj hledá. Jde agentovi do zadání. */
+  popis: string;
+}
+
 export interface FirmaKObohaceni {
   ico: string;
   nazev: string;
@@ -163,7 +197,7 @@ export interface FirmaKObohaceni {
   skore: number | null;
   vzdalenostM: number | null;
   /** Co u firmy ještě chybí — vodítko, co má agent hledat. */
-  chybi: string[];
+  chybi: ChybejiciAtribut[];
   /**
    * Osoby, které už u firmy známe — typicky jednatel z rejstříku.
    * Agent pak nehledá „nějaký kontakt", ale spojení na konkrétního člověka,
@@ -210,6 +244,17 @@ export async function firmyKObohaceni(
      * ta fronta je jiná, nezávislá potřeba.
      */
     kampanId?: string;
+    /**
+     * Profil produktu, podle kterého se počítá `chybi` — o atributech
+     * rozhoduje profil (`nactiAtributyProfilu`), `spojeni` se hledá vždycky
+     * bez ohledu na profil (viz komentář u výpočtu `chybi` níž).
+     *
+     * Nezadaný profil padá na globálně aktivní (`aktivniProfilKod`), NIKDY
+     * na celý rejstřík atributů — jinak by atribut zavedený mimo profily
+     * začal chodit do `chybi` u všech firem přes `k-obohaceni` bez
+     * parametrů, což je přesně příkaz z playbooku Čmuchala.
+     */
+    profilKod?: string;
   },
 ): Promise<FirmaKObohaceni[]> {
   const podminky: string[] = [];
@@ -265,15 +310,10 @@ export async function firmyKObohaceni(
     obec: string | null;
     skore: number | null;
     vzdalenost_m: number | null;
-    ma_vlastni_jidelnu: boolean | null;
-    zpusob_stravovani: string | null;
-    kontaktu: number;
     spojeni: number;
     osoby: string[] | null;
   }>(
     `select f.ico, f.nazev, f.obec, f.skore, f.vzdalenost_m,
-            f.ma_vlastni_jidelnu, f.zpusob_stravovani,
-            (select count(*)::int from contacts c where c.ico = f.ico) as kontaktu,
             (select count(*)::int from contacts c where c.ico = f.ico
                and (c.email is not null or c.telefon is not null)) as spojeni,
             (select array_agg(
@@ -287,13 +327,36 @@ export async function firmyKObohaceni(
     params,
   );
 
+  // Co u firmy chybí, určuje PROFIL — ale jen z atributů, které agent
+  // doopravdy hledá (`hleda_agent`). Velikost, adresa a obor plynou
+  // z rejstříků a hledat je na webu je zbytečná práce; kdyby se do `chybi`
+  // dostaly, agent by dávku protopil sháněním něčeho, co dávno víme.
+  //
+  // Zdrojem pravdy o tom, jestli údaj máme, je EVIDENCE, ne sloupec —
+  // nově zavedené atributy sloupec v `companies` nemají.
+  //
+  // `spojeni` je výjimka: není to atribut a profil ho neřídí. Bez spojení
+  // nemá celý systém výstup, takže se hledá vždycky.
+  const atributy = (
+    opts.profilKod
+      ? await nactiAtributyProfilu(db, opts.profilKod)
+      : await nactiAtributyProfilu(db, await aktivniProfilKod(db))
+  ).filter((a) => a.hledaAgent);
+
+  const maEvidenci = new Set(
+    (
+      await db.query<{ ico: string; atribut: string }>(
+        `select distinct ico, atribut from evidence where ico = any($1)`,
+        [radky.map((r) => r.ico)],
+      )
+    ).map((e) => `${e.ico}|${e.atribut}`),
+  );
+
   return radky.map((r) => {
-    const chybi: string[] = [];
-    if (r.ma_vlastni_jidelnu === null) chybi.push("ma_vlastni_jidelnu");
-    if (r.zpusob_stravovani === null) chybi.push("zpusob_stravovani");
-    if (r.kontaktu === 0) chybi.push("kontakt");
-    // Firma je hotová se jménem A spojením — tohle je ta druhá půlka.
-    if (r.spojeni === 0) chybi.push("spojeni");
+    const chybi: ChybejiciAtribut[] = atributy
+      .filter((a) => !maEvidenci.has(`${r.ico}|${a.kod}`))
+      .map((a) => ({ kod: a.kod, popis: a.popis }));
+    if (r.spojeni === 0) chybi.push({ kod: "spojeni", popis: "e-mail nebo telefon na osobu" });
     return {
       ico: r.ico,
       nazev: r.nazev,

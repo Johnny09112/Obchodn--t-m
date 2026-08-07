@@ -18,6 +18,7 @@ import {
   nactiFirmyKampane,
   nactiKategorie,
   naplnKampanZOblasti,
+  nactiProfily,
   nejlepsiUroven,
   posledniReserse,
   schvalKampan,
@@ -33,6 +34,7 @@ import {
   type ObjednavkaReserse,
   type PocetKosu,
   type PrehledOblasti,
+  type Profil,
   type PruzkumOblasti,
   type RadekKampane,
 } from "./data";
@@ -95,6 +97,8 @@ export function PruvodceKampani({
   const [nazev, setNazev] = useState(kampan?.nazev ?? "");
   const [kontext, setKontext] = useState("");
   const [zastupce, setZastupce] = useState(kampan?.zastupce ?? "");
+  const [profilKod, setProfilKod] = useState(kampan?.profil_kod ?? "");
+  const [profily, setProfily] = useState<Profil[]>([]);
   const [oblastiIds, setOblastiIds] = useState<string[]>(
     (kampan?.oblasti ?? []).map((o) => o.id),
   );
@@ -179,6 +183,14 @@ export function PruvodceKampani({
     nactiLidi()
       .then(setLide)
       .catch(() => setLide([]));
+  }, []);
+
+  useEffect(() => {
+    // Seznam profilů pro výběr v 1. kroku. Když se nenačte, průvodce funguje
+    // dál — jen s prázdnou nabídkou, což znamená „použij aktivní profil".
+    nactiProfily()
+      .then(setProfily)
+      .catch(() => setProfily([]));
   }, []);
 
   // Přehled oblastí pro výběr území. Načítá se jednou; kdo mezitím nakreslí
@@ -455,6 +467,7 @@ export function PruvodceKampani({
       nazev: nazev.trim(),
       kontext: kontext.trim() || null,
       zastupce: zastupce || null,
+      profil_kod: profilKod || null,
     };
 
     // `select("id")` je tu podstatné: bez zapamatovaného id by druhý krok
@@ -1365,6 +1378,23 @@ export function PruvodceKampani({
       <p className="poznamka">
         Kdo smí kampaň upravovat, když nebudete k dispozici. Schvalovat kampaň
         může dál jen admin. Změnit jde kdykoli později.
+      </p>
+
+      <label className="pole">
+        <span>Profil produktu (nepovinné)</span>
+        <select value={profilKod} onChange={(e) => setProfilKod(e.target.value)}>
+          <option value="">použít aktivní profil</option>
+          {profily.map((p) => (
+            <option key={p.kod} value={p.kod}>
+              {p.nazev}
+              {p.aktivni ? " (aktivní)" : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="poznamka">
+        Určuje, co se o firmách zjišťuje při AI průzkumu. Když necháte prázdné,
+        použije se profil, který je zrovna aktivní pro sběr.
       </p>
 
       {chyba && (

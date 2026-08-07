@@ -4,7 +4,7 @@
 > Plný katalog on-demand záznamů. Always-load vrstvu viz auto-memory/MEMORY.md.
 
 ## Context
-- [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-03
+- [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-07
 
 ## Decisions
 - [[dve-vrstvy-znalost-a-zprava]] — Whitelist váže obsah zprávy, ne sběr — SPEC kap. 5 rozdělena na znalost o firmě a obsah oslovení · active · 2026-08-06
@@ -27,6 +27,8 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[dva-profily-sber-a-reserse]] — Profil se čte ze dvou míst — sběr bere globálně aktivní, rešerše profil kampaně; kdo ho čte, musí říct který · active · 2026-08-07
+- [[tri-kopie-seznamu-atributu]] — Pevný seznam žil ve čtyřech kopiích — zrušit ho v jedné znamená ostrou dávku s nulou, která vypadá hotově · active · 2026-08-07
 - [[tajemstvi-mimo-pracovni-slozku]] — Omezení nástrojů agenta není bezpečnostní hranice — tajemství musí ležet mimo pracovní složku · active · 2026-08-06
 - [[zamykej-vyjmenovanim-zamcenych-stavu]] — Zámek psaný jako „otevřený je jen jeden stav" zamkne i pracovní stavy — vyjmenuj stavy zamčené · active · 2026-08-04
 - [[ares-nedoplni-velikost]] — Dotaz do ARESu na velikost firmy nevrátí nic navíc proti souboru ČSÚ — je to tentýž registr · active · 2026-08-02

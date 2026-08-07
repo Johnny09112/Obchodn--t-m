@@ -1,10 +1,7 @@
 import type { AresZaznam } from "./ares.js";
+import { jeZnamyAtribut } from "./atributy.js";
 import type { Db } from "./db.js";
-import {
-  ATRIBUTY_SLOUPCE,
-  jePovolenyAtribut,
-  type PovolenyAtribut,
-} from "./whitelist.js";
+import { ATRIBUTY_SLOUPCE } from "./whitelist.js";
 
 export interface EvidenceVstup {
   zdrojUrl: string;
@@ -51,17 +48,25 @@ const CAST_SLOUPCE: Record<string, string> = {
 
 /**
  * TP-2 + TP-3: zápis atributu vždy atomicky s evidencí (zdroj + doslovná
- * citace). Atribut mimo whitelist je odmítnut.
+ * citace). Atribut mimo rejstřík je odmítnut.
  */
 export async function zapisAtribut(
   db: Db,
   ico: string,
-  atribut: PovolenyAtribut,
+  atribut: string,
   hodnota: string,
   evidence: EvidenceVstup,
 ): Promise<void> {
-  if (!jePovolenyAtribut(atribut)) {
-    throw new Error(`TP-3: atribut '${atribut}' není na whitelistu`);
+  // TP-3 se dělí (ADR 0002): sbírat se smí, co je v rejstříku; do zprávy
+  // jen to, co má `do_zpravy`. Ověřuje se proti databázi, protože rejstřík
+  // je nově daty, ne kódem. Cizí klíč na `evidence.atribut` je druhá
+  // pojistka — tahle kontrola je tu proto, aby chyba přišla se srozumitelnou
+  // hláškou, ne jako porušení cizího klíče.
+  if (!(await jeZnamyAtribut(db, atribut))) {
+    throw new Error(
+      `TP-3: atribut '${atribut}' není v rejstříku. Zaveď ho do tabulky 'atributy', ` +
+        `nebo oprav překlep — sbírat se smí jen to, co někdo vědomě zavedl.`,
+    );
   }
   overZdroj(evidence);
 

@@ -46,7 +46,7 @@ describe("role a pravidla přístupu", () => {
   });
 
   it("blacklist a jídelny mění jen správci", async () => {
-    for (const tabulka of ["blacklist", "jidelny", "profily"]) {
+    for (const tabulka of ["blacklist", "jidelny", "profily", "atributy", "profil_atributy"]) {
       const p = await db.query<{ qual: string | null; cmd: string }>(
         `select qual, cmd from pg_policies where tablename = $1 and cmd = 'ALL'`,
         [tabulka],

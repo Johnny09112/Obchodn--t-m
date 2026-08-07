@@ -1084,10 +1084,27 @@ export interface ObjednavkaReserse {
   chyba: string | null;
 }
 
-/** Výchozí zadání. Odkazuje na playbook schválně — ten se mění, tohle ne. */
+/**
+ * Výchozí zadání. Odkazuje na playbook schválně — ten se mění, tohle ne.
+ *
+ * **Váže se na pole `chybi`**, které obsluha ke každé firmě do souboru
+ * s prací zapisuje. Dřív tu stálo „dohledej kontaktní osobu, nic navíc
+ * nesbírej" — jenže soubor u každé firmy hlásil, že chybí tři věci
+ * (`ma_vlastni_jidelnu`, `zpusob_stravovani`, `spojeni`). Zadání a data si
+ * odporovaly a agent poslechl zadání: první ostrá dávka zapsala šest
+ * kontaktů a **nula atributů**, ačkoli oba zbylé jsou na whitelistu a smějí
+ * se sbírat.
+ *
+ * Takhle se to drží v souladu samo — co obsluha označí za chybějící, to se
+ * hledá. Nic mimo whitelist se do `chybi` dostat nemůže.
+ *
+ * Pozor na očekávání: způsob stravování se v měření z 2. 8. dohledal jen
+ * u 1 z 20 firem. Weby o tom nepíšou. Levné to je, výtěžnost malá.
+ */
 const ZADANI_VYCHOZI =
-  "Dohledej u každé firmy kontaktní osobu a spojení na ni podle svého " +
-  "playbooku. Nic navíc nesbírej.";
+  "U každé firmy dohledej to, co je u ní uvedené v poli „chybi“ — postupuj " +
+  "podle svého playbooku. Nic mimo „chybi“ nesbírej. Když se něco nepodaří " +
+  "doložit, prostě to vynech; prázdný výsledek je správný výsledek.";
 
 /**
  * Objedná dávku AI rešerše pro kampaň. **Agenta to nespustí** — jen zapíše

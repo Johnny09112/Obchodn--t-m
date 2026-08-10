@@ -1,0 +1,249 @@
+<meta charset="utf-8">
+<title>Hrobce podruhé — agent poprvé popsal, čím se firmy živí</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 52rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.75rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  /* Předtím / potom — vedle sebe, se stejnou stupnicí */
+  .srovnani { display: grid; gap: .75rem; grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 44rem) { .srovnani { grid-template-columns: repeat(4, 1fr); } }
+  .par {
+    border: 1px solid var(--linka); border-radius: 5px; padding: .75rem .9rem;
+    background: var(--papir-2); display: flex; flex-direction: column; gap: .3rem;
+  }
+  .par .co { font-size: var(--fs-xs); color: var(--tlumene); line-height: 1.35; }
+  .par .cisla {
+    display: flex; align-items: baseline; gap: .45rem;
+    font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums;
+  }
+  .par .pred { font-size: 1.05rem; color: var(--tlumene); text-decoration: line-through; }
+  .par .sip { color: var(--tlumene); font-size: .8rem; }
+  .par .po { font-size: 1.75rem; font-weight: 600; line-height: 1; color: var(--zelena); }
+  .par.stejne .po { color: var(--jantar); }
+
+  /* Popisy firem */
+  .popisy { display: flex; flex-direction: column; gap: .55rem; }
+  .radek {
+    border: 1px solid var(--linka); border-left: 4px solid var(--zelena);
+    border-radius: 5px; padding: .6rem .85rem; background: var(--papir-2);
+    display: flex; flex-direction: column; gap: .2rem;
+  }
+  .radek .jmeno { font-family: var(--pismo-nadpis); font-weight: 620; font-size: .98rem; }
+  .radek .obor { font-size: var(--fs-sm); }
+  .radek .zdroj {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); color: var(--tlumene);
+    word-break: break-all;
+  }
+  .radek.katalog { border-left-color: var(--jantar); }
+
+  /* Kontroly */
+  .kontroly { display: flex; flex-direction: column; gap: .4rem; }
+  .kontrola {
+    display: grid; grid-template-columns: auto 1fr auto; gap: .7rem; align-items: center;
+    border: 1px solid var(--linka); border-radius: 5px; padding: .5rem .8rem;
+    background: var(--papir-2); font-size: var(--fs-sm);
+  }
+  .kontrola .znak {
+    font-family: var(--pismo-udaj); font-weight: 700; font-size: var(--fs-xs);
+    width: 1.4rem; height: 1.4rem; border-radius: 50%; display: grid; place-items: center;
+    background: var(--zelena); color: var(--papir);
+  }
+  .kontrola .vysledek {
+    font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums;
+    font-weight: 600; color: var(--zelena); white-space: nowrap;
+  }
+
+  blockquote {
+    margin: 0; padding: .8rem 1.1rem; border-left: 4px solid var(--jantar);
+    background: var(--jantar-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .4rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · Hrobce · 10. srpna 2026 · živá data</div>
+    <h1>Agent poprvé popsal, čím se firmy živí</h1>
+    <p class="podtitul">Dvě změny — zapnout agentovi „obor“ a dát kartotéce sloupec na web.
+      Do kódu se u té první nesáhlo vůbec. Dávka na týchž firmách vrátila
+      <strong>28 nálezů místo jednoho</strong>.</p>
+  </header>
+
+  <section class="sekce">
+    <h2>Táž kampaň, táž velikost dávky, jiný výsledek</h2>
+    <div class="srovnani">
+      <div class="par">
+        <span class="cisla"><span class="pred">1</span><span class="sip">→</span><span class="po">28</span></span>
+        <span class="co">nálezů celkem</span>
+      </div>
+      <div class="par">
+        <span class="cisla"><span class="pred">0</span><span class="sip">→</span><span class="po">12</span></span>
+        <span class="co">popisů, čím se firma živí</span>
+      </div>
+      <div class="par">
+        <span class="cisla"><span class="pred">0</span><span class="sip">→</span><span class="po">15</span></span>
+        <span class="co">uložených webů firem</span>
+      </div>
+      <div class="par stejne">
+        <span class="cisla"><span class="pred">0</span><span class="sip">→</span><span class="po">0</span></span>
+        <span class="co">nálezů směnného provozu</span>
+      </div>
+    </div>
+    <p class="poznamka">Vlevo dávka ze 7. 8., vpravo z 10. 8. Obě dvacet firem, tatáž
+      kampaň, tentýž agent. Rozdíl je jen v tom, co měl v zadání.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co teď o firmách víme — vlastními slovy z jejich webů</h2>
+    <div class="popisy">
+      <div class="radek"><span class="jmeno">PLUSPAP a.s.</span><span class="obor">výroba kartonových obalů — zpracování vlnité lepenky, kartonové krabice</span><span class="zdroj">pluspap.cz/o-nas</span></div>
+      <div class="radek"><span class="jmeno">Stavební stroje a doprava, s.r.o.</span><span class="obor">pronájem jeřábů (autojeřáby do 450 t, pásové, halové, mini), manipulace s těžkými břemeny, zemní práce, demolice, nadměrná přeprava</span><span class="zdroj">ssad.cz</span></div>
+      <div class="radek"><span class="jmeno">Gusto Energy s.r.o.</span><span class="obor">projektování a výroba rozvaděčů se specializací na měření a regulaci, IoT a energetiku</span><span class="zdroj">gusto-energy.cz</span></div>
+      <div class="radek"><span class="jmeno">Josef Klement s.r.o.</span><span class="obor">výroba strojů a zařízení, kovovýroba</span><span class="zdroj">josefklement.com</span></div>
+      <div class="radek"><span class="jmeno">GEOVIA s.r.o.</span><span class="obor">geodetické služby a poradenství v oblasti grantů a dotací</span><span class="zdroj">geovia.cz</span></div>
+      <div class="radek"><span class="jmeno">LUMSENSPRO s.r.o.</span><span class="obor">měření, výpočty a studie osvětlení (světelná technika)</span><span class="zdroj">lumsens.cz/sluzby</span></div>
+      <div class="radek"><span class="jmeno">NoRyNo truhlářství spol. s r.o.</span><span class="obor">zakázková výroba nábytku na míru — kuchyně, interiéry, vestavěné skříně</span><span class="zdroj">noryno.com</span></div>
+      <div class="radek"><span class="jmeno">VIDESTAV s.r.o.</span><span class="obor">výstavba a rekonstrukce bytových domů, škol, obchodních center a dalších budov</span><span class="zdroj">videstav.webnode.cz</span></div>
+      <div class="radek"><span class="jmeno">Jurča Service s.r.o.</span><span class="obor">servis manipulační techniky (vysokozdvižné vozíky) — opravy, revize, poradenství</span><span class="zdroj">servis-jurca.cz</span></div>
+      <div class="radek"><span class="jmeno">EVS Reality s.r.o.</span><span class="obor">realitní kancelář — odhady nemovitostí, prodej a pronájem, finanční poradenství, dražby</span><span class="zdroj">evsinvestment.cz/kontakt</span></div>
+      <div class="radek katalog"><span class="jmeno">ROXACO oil s.r.o.</span><span class="obor">velkoobchod s motorovými oleji a mazivy — stáčení a prodej olejů</span><span class="zdroj">firmy.cz — katalog, ne vlastní web</span></div>
+      <div class="radek katalog"><span class="jmeno">DFA Hrobce z.s.</span><span class="obor">spolek podporující kulturní a sportovní, zejména fotbalové vyžití v obci</span><span class="zdroj">rejstrik-firem.kurzy.cz — katalog, ne vlastní web</span></div>
+    </div>
+    <p class="poznamka">Každý popis má u sebe doslovnou citaci z té stránky — bez ní by se
+      nezapsal. Poslední dva mají oranžový pruh: pocházejí z katalogu, ne z webu firmy.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Kontroly, které mě zajímaly nejvíc</h2>
+    <div class="kontroly">
+      <div class="kontrola">
+        <span class="znak">✓</span>
+        <span>Zapsal agent jako „web firmy“ někde katalogový záznam? Drží to jen text
+          v zadání, nic v kódu.</span>
+        <span class="vysledek">0 z 15</span>
+      </div>
+      <div class="kontrola">
+        <span class="znak">✓</span>
+        <span>Propsal se web i do kartotéky, nejen do evidence?</span>
+        <span class="vysledek">15 z 15</span>
+      </div>
+      <div class="kontrola">
+        <span class="znak">✓</span>
+        <span>Má každý nález zdroj i doslovnou citaci?</span>
+        <span class="vysledek">28 z 28</span>
+      </div>
+      <div class="kontrola">
+        <span class="znak">✓</span>
+        <span>Dostalo se všech deset firem, kterým jsem mazal razítko, znovu do dávky?</span>
+        <span class="vysledek">10 z 10</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Co z toho neplyne a co ještě drhne</h2>
+    <blockquote>
+      <div><strong>Směnný provoz je pořád nula.</strong> Na tom se nic nezměnilo a ani
+        nemělo — tahle dávka testovala něco jiného. Mikropodniky v Hrobcích informace
+        o směnách nezveřejňují, protože je nemají.</div>
+    </blockquote>
+    <ul>
+      <li><strong>Dvě firmy popsal z katalogu, ne z jejich webu.</strong> ROXACO a DFA
+        Hrobce vlastní stránky buď nemají, nebo je agent nenašel. Hodnota je pravdivá
+        a doložená, ale je to slabší zdroj. U údaje „web“ je katalog zakázaný, u „oboru“
+        zatím ne — <strong>stojí za rozhodnutí, jestli to tak nechat.</strong></li>
+      <li><strong>Zpracoval 16 z 20 firem.</strong> Čtyři nestihl, ty čekají na příště.</li>
+      <li><strong>Vlastní jídelna se zapisuje pokaždé jinak.</strong> Dřív <code>true</code>,
+        teď „ano – v budově je vlastní kuchyně“. Údaj nemá pevnou sadu hodnot, takže se
+        podle něj zatím nedá spolehlivě filtrovat.</li>
+      <li><strong>Obce dostaly web, ale ne obor.</strong> Dává to smysl, ale nikde to není
+        napsané jako pravidlo — příště se to může chovat jinak.</li>
+    </ul>
+  </section>
+
+  <section class="sekce">
+    <h2>Co to znamená pro zbytek kartotéky</h2>
+    <p>Zapnutí oboru platí plošně, takže ho nově dostane v zadání i <strong>145 dalších
+      kvalifikovaných firem</strong>, které rešerší ještě neprošly. Dávky poběží o něco
+      déle, ale vrátí podstatně víc.</p>
+    <p>Firmy, které rešerší <em>už</em> prošly, se samy nevrátí — u nich obor ani web
+      nepřibude, dokud je někdo znovu nepustí. Těch je zatím pár desítek;
+      až se to rozhodne dělat plošně, je to samostatný krok.</p>
+  </section>
+
+</div>

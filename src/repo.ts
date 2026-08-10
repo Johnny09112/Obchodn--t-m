@@ -2,6 +2,7 @@ import type { AresZaznam } from "./ares.js";
 import { jeZnamyAtribut } from "./atributy.js";
 import type { Db } from "./db.js";
 import { ATRIBUTY_SLOUPCE } from "./whitelist.js";
+import { spolehlivostZdroje } from "./zdroje.js";
 
 export interface EvidenceVstup {
   zdrojUrl: string;
@@ -80,7 +81,10 @@ export async function zapisAtribut(
         hodnota,
         evidence.zdrojUrl,
         evidence.citace.slice(0, 200),
-        evidence.confidence ?? null,
+        // Když spolehlivost nikdo neurčil, odvodí se z toho, ODKUD údaj je
+        // (src/zdroje.ts). Rozhodnutí majitele 10. 8. 2026: údaj z katalogu
+        // se smí zapsat, ale musí být poznat, že je z katalogu.
+        evidence.confidence ?? spolehlivostZdroje(evidence.zdrojUrl),
       ],
     );
     const sloupec = ATRIBUTY_SLOUPCE[atribut];

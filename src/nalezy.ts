@@ -328,9 +328,15 @@ export async function firmyKObohaceni(
   );
 
   // Co u firmy chybí, určuje PROFIL — ale jen z atributů, které agent
-  // doopravdy hledá (`hleda_agent`). Velikost, adresa a obor plynou
-  // z rejstříků a hledat je na webu je zbytečná práce; kdyby se do `chybi`
-  // dostaly, agent by dávku protopil sháněním něčeho, co dávno víme.
+  // doopravdy hledá (`hleda_agent`). Velikost a adresa plynou z rejstříků
+  // a hledat je na webu je zbytečná práce; kdyby se do `chybi` dostaly,
+  // agent by dávku protopil sháněním něčeho, co dávno víme.
+  //
+  // `obor` mezi ně do 7. 8. 2026 patřil taky — dokud se neukázalo, že kód
+  // činnosti z rejstříku stačí na filtrování, ale ne na oslovení. Migrace
+  // 0038 ho zapnula (viz její komentář). Rozhoduje o tom **příznak v datech**,
+  // ne tenhle výčet — ten je jen vysvětlení, proč se u některých atributů
+  // vyplatí hledání vypnout.
   //
   // Zdrojem pravdy o tom, jestli údaj máme, je EVIDENCE, ne sloupec —
   // nově zavedené atributy sloupec v `companies` nemají.

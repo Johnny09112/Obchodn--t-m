@@ -11,12 +11,21 @@ beforeEach(async () => {
 });
 
 describe("atributy profilu", () => {
-  it("výchozí profil sbírá dnešních devět", async () => {
+  it("výchozí profil sbírá dnešních deset", async () => {
     const a = await nactiAtributyProfilu(db, "cantinero");
     expect(a.map((x) => x.kod).sort()).toEqual([
       "adresa", "kontakt", "ma_vlastni_jidelnu", "obor", "smenny_provoz",
-      "ucel_adresy", "velikost_kategorie", "zamestnanci_odhad", "zpusob_stravovani",
+      "ucel_adresy", "velikost_kategorie", "web", "zamestnanci_odhad", "zpusob_stravovani",
     ]);
+  });
+
+  // Migrace 0039: web se přidal do OBOU dnešních profilů, ne jen do
+  // Cantinera — narozdíl od smenny_provoz (0037), který má jen Cantinero.
+  it("web sbírají oba dnešní profily", async () => {
+    const cantinero = await nactiAtributyProfilu(db, "cantinero");
+    const business = await nactiAtributyProfilu(db, "cantinero-business");
+    expect(cantinero.map((x) => x.kod)).toContain("web");
+    expect(business.map((x) => x.kod)).toContain("web");
   });
 
   // Jádro nastavitelnosti: atribut v rejstříku, ale mimo profil, se nesbírá.
@@ -50,11 +59,11 @@ describe("atributy profilu", () => {
     const a = await nactiAtributyProfilu(db, "cantinero");
     const hledajiSe = a.filter((x) => x.hledaAgent).map((x) => x.kod).sort();
     expect(hledajiSe).toEqual(
-      ["ma_vlastni_jidelnu", "smenny_provoz", "ucel_adresy", "zpusob_stravovani"].sort(),
+      ["ma_vlastni_jidelnu", "obor", "smenny_provoz", "ucel_adresy", "web", "zpusob_stravovani"].sort(),
     );
     const nehledajiSe = a.filter((x) => !x.hledaAgent).map((x) => x.kod).sort();
     expect(nehledajiSe).toEqual(
-      ["adresa", "kontakt", "obor", "velikost_kategorie", "zamestnanci_odhad"].sort(),
+      ["adresa", "kontakt", "velikost_kategorie", "zamestnanci_odhad"].sort(),
     );
   });
 });
@@ -84,7 +93,8 @@ describe("ověření kódu profilu (overProfilKod)", () => {
   });
 
   it("existující profil se všemi atributy vrátí jejich počet", async () => {
-    expect(await overProfilKod(db, "cantinero")).toBe(9);
+    // 8 původních + smenny_provoz (0037) + web (0039).
+    expect(await overProfilKod(db, "cantinero")).toBe(10);
   });
 
   it("profil bez řádků v profil_atributy vrátí 0, nepadá", async () => {

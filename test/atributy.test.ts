@@ -36,6 +36,30 @@ describe("rejstřík atributů", () => {
     expect(r[0]!.do_zpravy).toBe(false);
   });
 
+  // Migrace 0038: obor smí agent hledat na webu — dřív měl hleda_agent
+  // false, takže se nikdy nedostal do pole `chybi` a agent ho nesměl
+  // zapsat, i kdyby na firemním webu stál. do_zpravy zůstává true beze
+  // změny (obor je jeden z osmi původních, whitelist se nemění).
+  it("obor smí po migraci 0038 hledat agent, do zprávy patří dál", async () => {
+    const r = await db.query<{ hleda_agent: boolean; do_zpravy: boolean }>(
+      "select hleda_agent, do_zpravy from atributy where kod = 'obor'",
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0]!.hleda_agent).toBe(true);
+    expect(r[0]!.do_zpravy).toBe(true);
+  });
+
+  // Migrace 0039: web firmy se sbírá (hleda_agent), ale do zprávy nepatří
+  // (do_zpravy false) — whitelist pro oslovení se touhle prací nemění.
+  it("nový atribut web má hleda_agent, ale ne do_zpravy", async () => {
+    const r = await db.query<{ kod: string; do_zpravy: boolean; hleda_agent: boolean }>(
+      "select kod, do_zpravy, hleda_agent from atributy where kod = 'web'",
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0]!.do_zpravy).toBe(false);
+    expect(r[0]!.hleda_agent).toBe(true);
+  });
+
   it("každý atribut má popis, co se u něj hledá", async () => {
     const r = await db.query<{ kod: string; popis: string | null }>(
       "select kod, popis from atributy",

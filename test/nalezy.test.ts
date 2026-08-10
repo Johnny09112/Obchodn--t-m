@@ -163,16 +163,20 @@ describe("zapisDavku", () => {
   // Nález 1 revize: "obrat_firmy" v testu výš vůbec není v rejstříku —
   // ten případ by odmítl i zapisAtribut, takže samotný nesejde poznat, jestli
   // kontrola opravdu hlídá `hleda_agent`, nebo jen holou existenci v tabulce
-  // `atributy`. Tenhle test bere atribut, který V REJSTŘÍKU JE (`obor`, viz
+  // `atributy`. Tenhle test bere atribut, který V REJSTŘÍKU JE (`adresa`, viz
   // 0035_atributy.sql), ale má `hleda_agent = false` — kdyby se kontrola
   // v zapisDavku zeslabila na pouhé "je v rejstříku" (`r.length > 0` místo
   // `r[0]?.hleda_agent === true`), tenhle nález by tiše prošel a přepsal by
   // hodnotu doloženou z ARESu údajem, který agent na webu nikdy neměl hledat.
+  //
+  // Dřív tu stál `obor` — migrace 0038 mu ale přepnula `hleda_agent` na
+  // `true` (přesně proto, aby ho agent směl zapisovat), takže by tenhle
+  // test padal ze špatného důvodu. `adresa` má `hleda_agent = false` dál.
   it("odmítne atribut, který je v rejstříku, ale agent ho nehledá (hleda_agent = false)", async () => {
     const v = await zapisDavku(db, {
       nalezy: [{
-        ico: "25242407", atribut: "obor", hodnota: "výroba nábytku",
-        zdrojUrl: "https://a.cz/o-nas", citace: "Vyrábíme nábytek na míru.",
+        ico: "25242407", atribut: "adresa", hodnota: "Nová 5, Bezdružice",
+        zdrojUrl: "https://a.cz/kontakty", citace: "Sídlíme na adrese Nová 5, Bezdružice.",
       }],
       kontakty: [],
     });

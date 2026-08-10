@@ -114,8 +114,8 @@ describe("přenos dat do sdílené databáze", { timeout: 60_000 }, () => {
 
     const v = await prenesData(zdroj, cil);
 
-    // Reportuje se jen to, co v cíli skutečně přibylo — ne všech 9 řádků
-    // zdroje, protože 9 z nich už v cíli je z jeho vlastní migrace.
+    // Reportuje se jen to, co v cíli skutečně přibylo — ne všech 10 řádků
+    // zdroje, protože 10 z nich už v cíli je z jeho vlastní migrace.
     expect(v.find((x) => x.tabulka === "atributy")!.radku).toBe(1);
     expect(v.find((x) => x.tabulka === "profil_atributy")!.radku).toBe(1);
 
@@ -128,10 +128,11 @@ describe("přenos dat do sdílené databáze", { timeout: 60_000 }, () => {
     );
     expect(pa).toHaveLength(1);
 
-    // Výchozích devět atributů zůstalo v cíli jen jednou, ne zdvojených.
+    // Výchozích deset atributů (8 původních + smenny_provoz + web) zůstalo
+    // v cíli jen jednou, ne zdvojených.
     const pocetVychozich = await cil.query<{ pocet: number }>(
       "select count(*)::int as pocet from atributy where kod <> 'test_custom'",
     );
-    expect(pocetVychozich[0]!.pocet).toBe(9);
+    expect(pocetVychozich[0]!.pocet).toBe(10);
   });
 });

@@ -25,4 +25,5 @@ export const ATRIBUTY_SLOUPCE: Record<string, string> = {
   zamestnanci_odhad: "zamestnanci_odhad",
   ma_vlastni_jidelnu: "ma_vlastni_jidelnu",
   zpusob_stravovani: "zpusob_stravovani",
+  web: "web",
 };

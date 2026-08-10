@@ -82,6 +82,28 @@ describe("zapisAtribut (TP-2, TP-3)", () => {
       }),
     ).rejects.toThrow(/zdroj/i);
   });
+
+  // Web firmy se má hromadit v kartotéce, ne mizet mezi běhy (0039_web_firmy).
+  // Stejný mechanismus jako u zpusob_stravovani výš — sloupec companies.web
+  // se plní přes ATRIBUTY_SLOUPCE, ne novou cestou. Citace je věta ze
+  // stránky, ze které je vidět, že web patří právě téhle firmě (ne obecná
+  // fráze, kterou by mohl mít kdokoli).
+  it("propíše web firmy do companies.web", async () => {
+    await zapisAtribut(db, seznam.ico, "web", "https://www.seznam.cz", {
+      zdrojUrl: "https://www.seznam.cz/o-firme",
+      citace: "Seznam.cz, a.s., IČO 25596641 — český internetový vyhledávač.",
+    });
+    const firma = await db.query<{ web: string }>(
+      "select web from companies where ico = $1",
+      [seznam.ico],
+    );
+    expect(firma[0]!.web).toBe("https://www.seznam.cz");
+    const ev = await db.query(
+      "select 1 from evidence where ico = $1 and atribut = 'web'",
+      [seznam.ico],
+    );
+    expect(ev).toHaveLength(1);
+  });
 });
 
 describe("zapisKontakt (TP-6)", () => {

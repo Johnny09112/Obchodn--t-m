@@ -1,0 +1,322 @@
+<meta charset="utf-8">
+<title>Odkud brát směny a jídelny — a jak měřit, čemu věřit</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 52rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.75rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce h3 {
+    font-family: var(--pismo-nadpis); font-size: 1.05rem; font-weight: 620;
+    margin: .3rem 0 0; text-wrap: balance;
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  .verdikt {
+    border-radius: 6px; padding: .9rem 1.1rem; display: flex; flex-direction: column; gap: .5rem;
+    font-size: var(--fs-sm);
+  }
+  .verdikt.ne { border: 1px solid var(--cihla); background: var(--cihla-tl); }
+  .verdikt.ano { border: 1px solid var(--zelena); background: var(--zelena-tl); }
+  .verdikt .stitek {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .verdikt.ne .stitek { color: var(--cihla); }
+  .verdikt.ano .stitek { color: var(--zelena); }
+
+  .zdroje { display: flex; flex-direction: column; gap: .5rem; }
+  .zdroj {
+    display: grid; grid-template-columns: auto 1fr auto; gap: .8rem; align-items: start;
+    border: 1px solid var(--linka); border-radius: 5px; padding: .6rem .85rem;
+    background: var(--papir-2); font-size: var(--fs-sm);
+  }
+  .zdroj .sila {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); font-weight: 700;
+    padding: .12rem .45rem; border-radius: 3px; white-space: nowrap;
+  }
+  .sila.a { background: var(--zelena); color: var(--papir); }
+  .sila.b { background: var(--razitko); color: var(--papir); }
+  .sila.c { background: var(--jantar); color: var(--papir); }
+  .zdroj .stav {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); color: var(--tlumene);
+    white-space: nowrap;
+  }
+  .zdroj .telo { display: flex; flex-direction: column; gap: .15rem; }
+  .zdroj .jmeno { font-weight: 600; }
+
+  .obal { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: var(--fs-sm); }
+  th, td { text-align: left; padding: .45rem .7rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500;
+  }
+  td.cislo { font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  tfoot td { font-weight: 600; border-bottom: none; }
+
+  pre {
+    font-family: var(--pismo-udaj); font-size: var(--fs-sm); line-height: 1.5;
+    background: var(--papir-2); border: 1px solid var(--linka); border-radius: 6px;
+    padding: .8rem 1rem; margin: 0; overflow-x: auto;
+  }
+  blockquote {
+    margin: 0; padding: .8rem 1.1rem; border-left: 4px solid var(--razitko);
+    background: var(--razitko-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+  }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .4rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · 10. srpna 2026 · odpověď na tři otázky + odhad</div>
+    <h1>Odkud brát směny a jídelny</h1>
+    <p class="podtitul">Atmoskop nedoporučuju — a hlavně ho nepotřebujeme.
+      Směnný provoz je v otevřených datech úřadu práce jako <strong>strukturovaný
+      údaj</strong>, který si zaměstnavatel vyplnil sám. A ta data už stahujeme.</p>
+  </header>
+
+  <section class="sekce">
+    <h2>1. Atmoskop</h2>
+    <div class="verdikt ne">
+      <span class="stitek">Doporučuji nepoužít — a je to vaše rozhodnutí, ne moje</span>
+      <div><strong>Technicky by to šlo:</strong> jejich <code>robots.txt</code> profily firem
+        ani hodnocení nezakazuje. Zakázané jsou jen čtyři služební cesty. Za zmínku stojí,
+        že plošně blokují <code>CCBot</code> (crawler pro trénink AI) — o jejich postoji to
+        něco říká, ale na cílené čtení se to nevztahuje.</div>
+      <div><strong>Naráží to ale na tvrdé pravidlo projektu.</strong> SPEC kap. 5.2 zakazuje
+        „odkazy na inzeráty, <em>recenze nebo hodnocení firmy</em>“ a kap. 5.3 říká, že
+        všechny tyhle zákazy platí <strong>i pro sběr</strong> — s jedinou výjimkou, kterou
+        jsou pracovní inzeráty. Atmoskop je hodnocení firmy zaměstnanci, tedy přesně to
+        zakázané.</div>
+      <div><strong>Věcně je to navíc slabý zdroj.</strong> Jsou to názory jednotlivců, často
+        bývalých zaměstnanců a anonymní. „Test pohlednice“ ze SPEC to shrne dobře: kdyby
+        adresát viděl, že o jeho firmě víme z hodnocení jeho lidí, nepůsobilo by to
+        přirozeně.</div>
+      <div>Pustit se do toho by znamenalo <strong>změnit SPEC</strong> — a to smíte jen vy.
+        Než to zvážíte, přečtěte si bod 2: nejspíš to nebude potřeba.</div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>2. Směnný provoz je v otevřených datech — ověřeno</h2>
+    <p>SPEC sám říká, že pracovní inzeráty jsou <em>„nejlepším zdrojem informací o směnném
+      provozu a benefitech“</em> a výslovně je pro sběr povoluje. Stáhl jsem si datovou sadu
+      úřadu práce a podíval se, co v ní u inzerátu je:</p>
+    <pre>"smennost": { "id": "Smennost/jednoSm" }
+"vyhodyVolnehoMista": …          ← benefity, může nést i stravování
+"pocetHodinTydne": …
+"upresnujiciInformace": …        ← volný text od zaměstnavatele
+"zamestnavatel": { "ico": … }    ← napojení na naši kartotéku</pre>
+    <p><strong>Je to číselník, ne volný text.</strong> Žádné hádání jazykovým modelem —
+      zaměstnavatel sám vybral z nabídky, jestli jede na jednu, dvě, tři směny nebo
+      nepřetržitě, a úřad práce to zveřejnil.</p>
+    <div class="verdikt ano">
+      <span class="stitek">Doporučuji udělat tohle místo Atmoskopu</span>
+      <div>Zdroj je <strong>úřední, strukturovaný, zdarma, už stahovaný</strong> a pravidly
+        výslovně povolený. Dnes z té sady bereme jen kontakt a počet míst — směnnost
+        i benefity zahazujeme.</div>
+      <div><strong>Omezení, které musíte znát:</strong> pokryje jen firmy, které <em>zrovna
+        inzerují</em>. Kde inzerát není, směnnost se nedozvíme — a to je i případ většiny
+        Hrobců.</div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>3. Vlastní jídelna — pět cest, žádná sama nestačí</h2>
+    <p>Máte pravdu, že na webu firmy to většinou nebude. Ale je to dohledatelné jinudy —
+      a všechny tyhle cesty jsou veřejné a povolené:</p>
+    <div class="zdroje">
+      <div class="zdroj">
+        <span class="sila a">silný</span>
+        <div class="telo">
+          <span class="jmeno">Registr smluv — smlouvy na stravovací služby</span>
+          <span>Veřejné organizace (obce, školy, nemocnice, úřady) musí smlouvy zveřejnit.
+            Smlouva o závodním stravování jmenuje obě strany.</span>
+        </div>
+        <span class="stav">nepostavené</span>
+      </div>
+      <div class="zdroj">
+        <span class="sila a">silný</span>
+        <div class="telo">
+          <span class="jmeno">Inzerát na kuchaře či kuchařku u firmy, která není restaurace</span>
+          <span>Když strojírenská firma nabírá kuchařku, vaří si sama. Inzeráty smíme číst
+            a data už stahujeme — jen je zatím na tohle nepoužíváme.</span>
+        </div>
+        <span class="stav">nepostavené</span>
+      </div>
+      <div class="zdroj">
+        <span class="sila b">střední</span>
+        <div class="telo">
+          <span class="jmeno">Referenční seznamy dodavatelů stravování</span>
+          <span>Firmy jako Sodexo, Eurest, Aramark nebo Scolarest zveřejňují, komu vaří.
+            Je to jejich vlastní marketing, tedy veřejný web — ne recenze.</span>
+        </div>
+        <span class="stav">nepostavené</span>
+      </div>
+      <div class="zdroj">
+        <span class="sila b">střední</span>
+        <div class="telo">
+          <span class="jmeno">Benefity v inzerátu</span>
+          <span>Pole <code>vyhodyVolnehoMista</code> a volný text inzerátu často rozliší
+            „závodní jídelna“ od „stravenkový paušál“ — což je rovnou i způsob stravování.</span>
+        </div>
+        <span class="stav">nepostavené</span>
+      </div>
+      <div class="zdroj">
+        <span class="sila c">slabý</span>
+        <div class="telo">
+          <span class="jmeno">Živnostenské oprávnění na hostinskou činnost</span>
+          <span>Firma s registrovanou stravovací činností na své adrese pravděpodobně vaří.
+            Ale plete se to s firmami, které mají restauraci jako vedlejší byznys.</span>
+        </div>
+        <span class="stav">nepostavené</span>
+      </div>
+    </div>
+    <blockquote>
+      <strong>Ať už se udělá cokoli, jedna věc se musí změnit napřed:</strong> dnes se
+      „vlastní jídelna“ zapisuje pokaždé jinak — jednou <code>true</code>, jindy
+      „ano – v budově je vlastní kuchyně“. A hlavně: <strong>nenalezení není důkaz, že
+      jídelna není.</strong> Ten údaj potřebuje tři stavy — <em>má</em>, <em>nemá</em>,
+      <em>nevíme</em> — jinak se podle něj nedá filtrovat ani rozhodovat.
+    </blockquote>
+  </section>
+
+  <section class="sekce">
+    <h2>4. Metrika kvality — půl práce je hotová, jen se nepoužívá</h2>
+    <p>V evidenci <strong>už je sloupec <code>confidence</code></strong> s rozsahem 0–1.
+      Je vyplněný u <strong>0 ze 7 321 záznamů</strong> — nikdo ho nikdy nezačal plnit.</p>
+    <h3>Co navrhuju, aby to číslo znamenalo</h3>
+    <ul>
+      <li><strong>Váha podle druhu zdroje.</strong> Úřední rejstřík je něco jiného než
+        katalog. Pořadí: otevřená data úřadu → vlastní web firmy → web dodavatele →
+        katalog (firmy.cz, kurzy.cz).</li>
+      <li><strong>Počet nezávislých potvrzení.</strong> Tentýž údaj ze dvou různých domén
+        váží víc než dvakrát z jedné. Právě o tohle jste žádal.</li>
+      <li><strong>Stáří údaje.</strong> Směnnost z loňského inzerátu není totéž co z toho
+        včerejšího.</li>
+      <li><strong>Vidět to musí být v aplikaci</strong>, ne jen v databázi — u údaje
+        štítek „doloženo dvěma zdroji“ nebo „jen katalog“.</li>
+    </ul>
+    <p class="poznamka">Dva ze dvanácti nových popisů oboru pocházejí z katalogu, ne z webu
+      firmy. Dnes to nikde není vidět — přesně tohle by metrika ukázala.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Kolik to zabere</h2>
+    <h3>Doběhnout rešerši na tom, co už máme</h3>
+    <p>Měřeno na posledním běhu: <strong>1 006 sekund na 16 firem = 63 s na firmu.</strong>
+      Běží to bez dozoru a z předplatného, takže to nestojí nic navíc.</p>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Co doplnit</th><th class="cislo">Firem</th><th class="cislo">Čistý čas</th><th>Poznámka</th></tr></thead>
+        <tbody>
+          <tr><td>Zbytek kampaně Hrobce</td><td class="cislo">26</td><td class="cislo">~30 min</td><td>dá se pustit hned</td></tr>
+          <tr><td>Všechny kvalifikované firmy bez rešerše</td><td class="cislo">145</td><td class="cislo">~2,5 hod</td><td>tady je hlavní užitek</td></tr>
+          <tr><td>Firmy, které rešerší už prošly (doplnit obor a web)</td><td class="cislo">~65</td><td class="cislo">~1,2 hod</td><td>nutný zásah do dat</td></tr>
+          <tr><td>Celá kartotéka</td><td class="cislo">13 844</td><td class="cislo">~240 hod</td><td>nedoporučuju — většina není cílovka</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Rozumný celek (první tři řádky)</td><td class="cislo">236</td><td class="cislo">~4 hod</td><td>ve dvou až třech dávkách</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <h3>Postavit ty tři věci</h3>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Práce</th><th class="cislo">Odhad</th><th>Co v tom je</th></tr></thead>
+        <tbody>
+          <tr><td>Směnnost a benefity z otevřených dat</td><td class="cislo">1 sezení</td><td>rozšířit čtení datové sady, číselník směnnosti, zápis s citací</td></tr>
+          <tr><td>Metrika kvality údaje</td><td class="cislo">1–2 sezení</td><td>návrh, plnění <code>confidence</code>, zobrazení v aplikaci</td></tr>
+          <tr><td>Vlastní jídelna — tři stavy + první dvě cesty</td><td class="cislo">2 sezení</td><td>sjednotit hodnoty, registr smluv, inzeráty na kuchaře</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="poznamka"><strong>Jsou to odhady, ne sliby.</strong> „Sezení“ znamená jeden
+      ucelený blok práce jako dnešní profil produktu — od zadání přes revize po ostré
+      ověření. Dnešní blok trval zhruba tolik. Rešeršní časy jsou naopak měřené, ne
+      odhadované.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co potřebuju od vás</h2>
+    <ul>
+      <li><strong>Atmoskop</strong> — beru jako uzavřené (nedoporučuju), pokud neřeknete jinak.
+        Změna SPEC by byla vaše rozhodnutí.</li>
+      <li><strong>Pořadí</strong> — čím začít z těch tří věcí. Doporučuju směnnost
+        z otevřených dat: je nejlevnější a hned něco přinese.</li>
+      <li><strong>Obor z katalogu</strong> — nechat povolený, nebo vyžadovat vlastní web firmy?</li>
+    </ul>
+  </section>
+
+</div>

@@ -1,0 +1,292 @@
+<meta charset="utf-8">
+<title>Hrobce — proč se nic nenašlo</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 52rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.75rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  /* Důvody — očíslované, protože je to pořadí podle váhy */
+  .duvody { display: flex; flex-direction: column; gap: .9rem; counter-reset: d; }
+  .duvod {
+    display: grid; grid-template-columns: auto 1fr; gap: .9rem;
+    border: 1px solid var(--linka); border-radius: 6px; padding: .9rem 1rem;
+    background: var(--papir-2);
+  }
+  .duvod::before {
+    counter-increment: d; content: counter(d);
+    font-family: var(--pismo-udaj); font-size: 1.1rem; font-weight: 700;
+    width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center;
+    background: var(--tlumene); color: var(--papir); flex: none;
+  }
+  .duvod.hlavni { border-left: 4px solid var(--cihla); }
+  .duvod.hlavni::before { background: var(--cihla); }
+  .duvod.stavba { border-left: 4px solid var(--jantar); }
+  .duvod.stavba::before { background: var(--jantar); }
+  .duvod.data { border-left: 4px solid var(--razitko); }
+  .duvod.data::before { background: var(--razitko); }
+  .duvod .telo { display: flex; flex-direction: column; gap: .45rem; }
+  .duvod h3 {
+    font-family: var(--pismo-nadpis); font-size: 1.05rem; font-weight: 620;
+    margin: 0; text-wrap: balance;
+  }
+  .duvod p { font-size: var(--fs-sm); }
+  .typ {
+    display: inline-block; font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .08em; text-transform: uppercase; color: var(--tlumene);
+  }
+  .cislo-vedle {
+    font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums;
+    font-weight: 600; color: var(--inkoust);
+  }
+
+  .obal { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 32rem; font-size: var(--fs-sm); }
+  th, td { text-align: left; padding: .4rem .7rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500;
+  }
+  td.cislo { font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums; text-align: right; }
+  td.web { font-family: var(--pismo-udaj); font-size: var(--fs-xs); }
+  tr.cil { background: var(--zelena-tl); }
+  tr.mimo { color: var(--tlumene); }
+  .tag {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); padding: .05rem .35rem;
+    border-radius: 3px; white-space: nowrap;
+  }
+  .tag.ano { background: var(--zelena-tl); color: var(--zelena); border: 1px solid var(--zelena); }
+  .tag.ne { background: var(--papir); color: var(--tlumene); border: 1px solid var(--linka); }
+  .tag.stop { background: var(--cihla-tl); color: var(--cihla); border: 1px solid var(--cihla); }
+
+  blockquote {
+    margin: 0; padding: .8rem 1.1rem; border-left: 4px solid var(--cihla);
+    background: var(--cihla-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+  }
+  .navrh {
+    border: 1px solid var(--zelena); background: var(--zelena-tl);
+    border-radius: 6px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: .6rem;
+  }
+  .navrh h3 { font-family: var(--pismo-nadpis); font-size: 1.05rem; margin: 0; font-weight: 620; }
+  .navrh p, .navrh li { font-size: var(--fs-sm); }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .4rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · Hrobce · 7. srpna 2026 · 25 firem po rešerši</div>
+    <h1>Proč se nic nenašlo</h1>
+    <p class="podtitul">Máte pravdu, že tam, kde web je, by měl agent z „O nás“ pochopit,
+      čím se firma živí. Nepochopil — ale ne proto, že by nemohl.
+      <strong>Nikdo ho o to nepožádal.</strong></p>
+  </header>
+
+  <section class="sekce">
+    <h2>Pět důvodů, seřazených podle váhy</h2>
+    <div class="duvody">
+
+      <div class="duvod hlavni">
+        <div class="telo">
+          <span class="typ">nastavení · dá se změnit dnes</span>
+          <h3>Agent nemá „čím se firma živí“ na seznamu toho, co má hledat</h3>
+          <p>Údaj <code>obor</code> má v rejstříku příznak <code>hleda_agent = false</code>.
+            Nedostane se tedy do pole <code>chybi</code> — a železné pravidlo agenta zní
+            „sbírej jen to, co je u firmy uvedené v <code>chybi</code>“.</p>
+          <p><strong>Agent tedy stál na deseti firemních webech, četl je kvůli kontaktům,
+            a ani u jednoho nesměl zapsat, co ta firma dělá.</strong> Nebyla to neschopnost,
+            byl to zákaz.</p>
+          <p class="poznamka">Vzniklo to při migraci rejstříku s odůvodněním „obor plyne
+            z rejstříků, hledat ho na webu je zbytečná práce“. Pro filtrování to platí —
+            pro oslovení ne: kód činnosti není věta, kterou lze někomu napsat.</p>
+        </div>
+      </div>
+
+      <div class="duvod stavba">
+        <div class="telo">
+          <span class="typ">stavba systému · chybí místo pro uložení</span>
+          <h3>Kartotéka si nepamatuje web firmy</h3>
+          <p>Tabulka firem nemá sloupec pro web. Adresa stránky přežije jen jako
+            poznámka u kontaktu, odkud se údaj vzal.</p>
+          <p>Agent přitom weby našel — <span class="cislo-vedle">10</span> z 25 firem má
+            vlastní stránky a on na nich byl (geovia.cz, gusto-energy.cz, ssad.cz,
+            pluspap.cz, lumsens.cz, josefklement.com, evsinvestment.cz a tři obecní).
+            <strong>Příští běh začne zase od nuly</strong> a bude je hledat znovu.</p>
+        </div>
+      </div>
+
+      <div class="duvod data">
+        <div class="telo">
+          <span class="typ">vzorek · Hrobce nejsou cílovka</span>
+          <h3>Z 25 firem je v cílovém segmentu jediná</h3>
+          <p>Čtyři jsou obce, jedna je v likvidaci, jedna střední (PLUSPAP a.s.)
+            a zbytek mikropodniky nebo firmy bez známé velikosti. Cílový segment
+            (25+ zaměstnanců) je tu <strong>zastoupen jednou firmou z pětadvaceti</strong>.</p>
+          <p class="poznamka">Na takovém vzorku se výtěžnost změřit nedá — ať už je
+            mechanismus jakkoli dobrý.</p>
+        </div>
+      </div>
+
+      <div class="duvod">
+        <div class="telo">
+          <span class="typ">data · není odkud číst</span>
+          <h3>Jedenáct firem nemá ani e-mail, natož web</h3>
+          <p>U nich agent skončil v katalozích — ARES, ifirmy.cz, firmy.cz, epoptavka.cz,
+            risy.cz. Ty nesou kontakt a sídlo, ale o provozu firmy neříkají nic.</p>
+          <p>Tady souhlasím s vámi, že bez sociálních sítí není kam sáhnout. Ale i kdyby
+            byly povolené, mikropodnik se dvěma zaměstnanci nemá co zveřejnit.</p>
+        </div>
+      </div>
+
+      <div class="duvod">
+        <div class="telo">
+          <span class="typ">věcně · ten fakt neexistuje</span>
+          <h3>Tři ze čtyř hledaných údajů jsou o stravování zaměstnanců</h3>
+          <p>Vlastní jídelna, způsob stravování, směnný provoz. Firma s jedním až pěti
+            lidmi nemá stravovací politiku, kterou by zveřejňovala — a taky nemá kariérní
+            stránku, kde by se to psalo.</p>
+          <p>Není to selhání hledání. <strong>Ten údaj o té firmě prostě neplatí.</strong></p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Těch 25 firem, jak to u nich vypadalo</h2>
+    <div class="obal">
+      <table>
+        <thead>
+          <tr><th>Firma</th><th>Velikost</th><th>Vlastní web</th><th class="cislo">Spojení</th><th>Cílovka?</th></tr>
+        </thead>
+        <tbody>
+          <tr class="cil"><td>PLUSPAP a.s.</td><td>střední</td><td class="web"><span class="tag ano">pluspap.cz</span></td><td class="cislo">2</td><td><span class="tag ano">ano</span></td></tr>
+          <tr><td>Stavební stroje a doprava</td><td>mikro</td><td class="web"><span class="tag ano">ssad.cz</span></td><td class="cislo">2</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>GEOVIA s.r.o.</td><td>mikro</td><td class="web"><span class="tag ano">geovia.cz</span></td><td class="cislo">1</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>Gusto Energy s.r.o.</td><td>mikro</td><td class="web"><span class="tag ano">gusto-energy.cz</span></td><td class="cislo">2</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>LUMSENSPRO s.r.o.</td><td>mikro</td><td class="web"><span class="tag ano">lumsens.cz</span></td><td class="cislo">1</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>Josef Klement s.r.o.</td><td>mikro</td><td class="web"><span class="tag ano">josefklement.com</span></td><td class="cislo">1</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>EVS Reality s.r.o.</td><td>neznámá</td><td class="web"><span class="tag ano">evsinvestment.cz</span></td><td class="cislo">1</td><td><span class="tag ne">neznámá</span></td></tr>
+          <tr><td>Proclean Facilities s.r.o.</td><td>neznámá</td><td class="web"><span class="tag ano">pro-clean.cz</span></td><td class="cislo">1</td><td><span class="tag ne">neznámá</span></td></tr>
+          <tr class="mimo"><td>Obec Hrobce</td><td>mikro</td><td class="web"><span class="tag ano">hrobce.cz</span></td><td class="cislo">2</td><td><span class="tag stop">obec</span></td></tr>
+          <tr class="mimo"><td>Obec Židovice</td><td>mikro</td><td class="web"><span class="tag ano">zidovice.cz</span></td><td class="cislo">1</td><td><span class="tag stop">obec</span></td></tr>
+          <tr class="mimo"><td>Obec Oleško</td><td>mikro</td><td class="web"><span class="tag ano">olesko.cz</span></td><td class="cislo">1</td><td><span class="tag stop">obec</span></td></tr>
+          <tr class="mimo"><td>Obec Libotenice</td><td>mikro</td><td class="web"><span class="tag ano">libotenice.cz</span></td><td class="cislo">1</td><td><span class="tag stop">obec</span></td></tr>
+          <tr><td>KREJNÝ s.r.o.</td><td>mikro</td><td class="web"><span class="tag ne">jen seznam.cz</span></td><td class="cislo">1</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>LITOUKLID s.r.o.</td><td>mikro</td><td class="web"><span class="tag ne">jen seznam.cz</span></td><td class="cislo">1</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>Petra Tošnerová s.r.o.</td><td>mikro</td><td class="web"><span class="tag ne">jen gmail</span></td><td class="cislo">1</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>BENA CZ s.r.o.</td><td>mikro</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">1</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>LTK - PLAST s.r.o.</td><td>mikro</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">1</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>SaJeTe s.r.o.</td><td>mikro</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">0</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>Pod Bulfem s.r.o.</td><td>mikro</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">0</td><td><span class="tag ne">mikro</span></td></tr>
+          <tr><td>Sejeto s.r.o.</td><td>neznámá</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">0</td><td><span class="tag ne">neznámá</span></td></tr>
+          <tr><td>EVS Finance s.r.o.</td><td>neznámá</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">0</td><td><span class="tag ne">neznámá</span></td></tr>
+          <tr><td>Infinity Avenue s.r.o.</td><td>neznámá</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">0</td><td><span class="tag ne">neznámá</span></td></tr>
+          <tr><td>Small Wonders s.r.o.</td><td>neznámá</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">0</td><td><span class="tag ne">neznámá</span></td></tr>
+          <tr><td>NORDIC TECHNOLOGY GROUP</td><td>neznámá</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">0</td><td><span class="tag ne">neznámá</span></td></tr>
+          <tr class="mimo"><td>PORTA BOHEMICA EUROPE</td><td>neznámá</td><td class="web"><span class="tag ne">—</span></td><td class="cislo">0</td><td><span class="tag stop">v likvidaci</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="poznamka">„Vlastní web“ je odvozený z domény e-mailu a z toho, odkud agent
+      údaj vzal — sloupec pro web v kartotéce zatím není, viz důvod 2.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co navrhuju zkusit — právě na Hrobcích</h2>
+    <div class="navrh">
+      <h3>Dvě změny, obě malé, obě vratné</h3>
+      <ul>
+        <li><strong>Zapnout agentovi „čím se firma živí“.</strong> Jedna migrace, jeden
+          řádek — přepnout <code>obor</code> na <code>hleda_agent = true</code> a dát mu
+          popis ve smyslu „čím se firma živí, vlastními slovy z jejího webu, ze sekce
+          o nás nebo z nabídky služeb“. <strong>Do kódu se nesahá vůbec</strong> — přesně
+          na tohle je nový mechanismus postavený.</li>
+        <li><strong>Zapamatovat si web firmy.</strong> Sloupec v kartotéce plus zápis
+          při rešerši. Nová znalost, která se hromadí místo aby se zahazovala — a příští
+          běh začne tam, kde ten minulý skončil.</li>
+      </ul>
+      <p>Pak pustit Hrobce znovu na těch <strong>10 firem, které web mají</strong>. Nebude
+        to test výtěžnosti stravování (na to je vzorek špatný), ale <strong>test toho,
+        jestli agent umí popsat firmu z jejího webu</strong> — a to je otázka, na kterou
+        se ptáte.</p>
+    </div>
+    <blockquote>
+      <strong>Co to nespraví:</strong> jedenáct firem bez webu zůstane prázdných a údaje
+      o stravování se u mikropodniků nedohledají ani po téhle změně. Na to je potřeba jiné
+      území, ne lepší agent.
+    </blockquote>
+  </section>
+
+</div>

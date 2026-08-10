@@ -8,6 +8,7 @@
 <!-- AUTO:feedback — jeden řádek na soubor z auto-memory/feedback/*.md; formát: - [[slug]] — háček -->
 - [[overuj-obrazovky-v-prohlizeci]] — frontend neodhaduj; řekni si o přihlášení a proklikej to
 - [[agent-jde-z-predplatneho]] — rešerše Čmuchalem nic nestojí navíc, neblokuj ji dotazem na peníze
+- [[pushuj-na-git-sam]] — `git push` dělej sám, nenechávej ho majiteli k odkliknutí
 <!-- /AUTO:feedback -->
 
 ## Jak používat tuto paměť

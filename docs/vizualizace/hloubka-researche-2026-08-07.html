@@ -1,0 +1,356 @@
+<meta charset="utf-8">
+<title>Kde máme skutečný research a kde jen razítko</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 52rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.75rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  /* Trychtýř od kartotéky k opravdovému nálezu */
+  .trychtyr { display: flex; flex-direction: column; gap: .45rem; }
+  .stupen {
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem;
+    border: 1px solid var(--linka); border-radius: 5px; padding: .6rem .9rem;
+    background: var(--papir-2); position: relative; overflow: hidden;
+  }
+  .stupen .pruh {
+    position: absolute; inset: 0 auto 0 0; background: var(--razitko-tl); z-index: 0;
+  }
+  .stupen > * { position: relative; z-index: 1; }
+  .stupen .popis { font-size: var(--fs-sm); }
+  .stupen .n {
+    font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums;
+    font-size: 1.25rem; font-weight: 600; white-space: nowrap;
+  }
+  .stupen.vrchol .pruh { background: var(--zelena-tl); }
+  .stupen.vrchol .n { color: var(--zelena); }
+  .stupen.varovny .pruh { background: var(--jantar-tl); }
+  .stupen.varovny .n { color: var(--jantar); }
+
+  /* Nálezy po firmách */
+  .firmy { display: flex; flex-direction: column; gap: .9rem; }
+  .firma {
+    border: 1px solid var(--linka); border-left: 4px solid var(--zelena);
+    border-radius: 5px; padding: .8rem 1rem; background: var(--papir-2);
+    display: flex; flex-direction: column; gap: .55rem;
+  }
+  .firma > header { display: flex; flex-direction: column; gap: .15rem; }
+  .firma h3 {
+    font-family: var(--pismo-nadpis); font-size: 1.05rem; font-weight: 620;
+    margin: 0; text-wrap: balance;
+  }
+  .firma .meta {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); color: var(--tlumene);
+  }
+  .nalez { display: flex; flex-direction: column; gap: .2rem; font-size: var(--fs-sm); }
+  .nalez .co { font-weight: 600; }
+  .nalez .odkud {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); color: var(--tlumene);
+    word-break: break-all;
+  }
+  .nalez .citace {
+    border-left: 3px solid var(--razitko); padding-left: .65rem;
+    color: var(--inkoust-2); font-style: italic;
+  }
+  .znacka {
+    display: inline-block; font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .06em; text-transform: uppercase; padding: .1rem .45rem;
+    border-radius: 3px; background: var(--zelena-tl); color: var(--zelena);
+    border: 1px solid var(--zelena);
+  }
+  .znacka.jidelna { background: var(--cihla-tl); color: var(--cihla); border-color: var(--cihla); }
+
+  .obal { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 28rem; font-size: var(--fs-sm); }
+  th, td { text-align: left; padding: .45rem .7rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500;
+  }
+  td.cislo { font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums; text-align: right; }
+
+  blockquote {
+    margin: 0; padding: .8rem 1.1rem; border-left: 4px solid var(--jantar);
+    background: var(--jantar-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .4rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · 7. srpna 2026 · živá data z kartotéky</div>
+    <h1>Kde máme skutečný research</h1>
+    <p class="podtitul">Ptal jste se, u kterých firem víme něco navíc. Odpověď je
+      méně příznivá, než vypadá na první pohled: firem s „něčím navíc“ je 132,
+      ale jen <strong>u devíti</strong> to někdo doopravdy dohledal na jejich webu.</p>
+  </header>
+
+  <section class="sekce">
+    <h2>Trychtýř</h2>
+    <div class="trychtyr">
+      <div class="stupen">
+        <span class="popis">Firem v kartotéce</span>
+        <span class="n">13 919</span>
+        <div class="pruh" style="width:100%"></div>
+      </div>
+      <div class="stupen">
+        <span class="popis">Prošlo AI rešerší (mají razítko)</span>
+        <span class="n">65</span>
+        <div class="pruh" style="width:26%"></div>
+      </div>
+      <div class="stupen varovny">
+        <span class="popis">Mají „údaj navíc“ — ale 123 z nich jen hromadné razítko z otevřených dat</span>
+        <span class="n">132</span>
+        <div class="pruh" style="width:34%"></div>
+      </div>
+      <div class="stupen vrchol">
+        <span class="popis">Nález z <strong>vlastního webu firmy</strong> — skutečný research</span>
+        <span class="n">9</span>
+        <div class="pruh" style="width:12%"></div>
+      </div>
+    </div>
+    <p class="poznamka">Pruhy nejsou v měřítku k celku — kartotéka je proti devíti
+      firmám tisíckrát větší a takový graf by nešel přečíst.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Těch devět firem</h2>
+    <div class="firmy">
+
+      <article class="firma">
+        <header>
+          <h3>Centrum pobytových a terénních sociálních služeb Zbůch</h3>
+          <div class="meta">00411949 · Zbůch · střední · sociální péče v domovech · spojení 2</div>
+        </header>
+        <div class="nalez">
+          <span class="co"><span class="znacka jidelna">má vlastní jídelnu</span></span>
+          <span class="citace">„Pro zaměstnance a strávníky z řad klientů slouží aplikace na webu
+            mobilnicygnus.cz pro internetovou přihlášku a odhlášku stravného v Jídelně CPTS Zbůch.“</span>
+          <span class="odkud">centrumzbuch.cz/prihlaska-a-odhlaska-stravy-v-jidelne</span>
+        </div>
+      </article>
+
+      <article class="firma">
+        <header>
+          <h3>Základní škola a mateřská škola Vejprnice</h3>
+          <div class="meta">49745247 · Vejprnice · střední · základní vzdělávání · spojení 1</div>
+        </header>
+        <div class="nalez">
+          <span class="co"><span class="znacka jidelna">má vlastní jídelnu</span></span>
+          <span class="citace">„Ve školní jídelně je zaveden elektronický systém objednávání a výdeje stravy.“</span>
+          <span class="odkud">zsvejprnice.cz/informace-sj</span>
+        </div>
+      </article>
+
+      <article class="firma">
+        <header>
+          <h3>Leuze Engineering Czech s.r.o.</h3>
+          <div class="meta">01908634 · Plzeň · střední · inženýrství a IT služby · spojení 2</div>
+        </header>
+        <div class="nalez">
+          <span class="co"><span class="znacka">způsob stravování: příspěvek na stravování</span></span>
+          <span class="citace">„Příspěvek na stravování“</span>
+          <span class="odkud">posouvamehranice.cz/volna-mista/</span>
+        </div>
+      </article>
+
+      <article class="firma">
+        <header>
+          <h3>B &amp; BC, a. s.</h3>
+          <div class="meta">64832783 · Zbůch · střední · výroba kovových konstrukcí, stavebnictví · spojení 3</div>
+        </header>
+        <div class="nalez">
+          <span class="co">Účel adresy: cenové nabídky</span>
+          <span class="citace">„cenové nabídky — tel: 377 199 133, 180 — nabidky@babc.cz“</span>
+          <span class="odkud">babc.cz/kontakty</span>
+        </div>
+      </article>
+
+      <article class="firma">
+        <header>
+          <h3>BBS OCHRANA MAJETKU s.r.o.</h3>
+          <div class="meta">64358836 · Plzeň · střední · bezpečnostní a správní služby · spojení 2</div>
+        </header>
+        <div class="nalez">
+          <span class="co">Účel adresy: obchodní oddělení</span>
+          <span class="citace">„Richard Bayer — Obchodní oddělení — richardbayer@bbs.eu“</span>
+          <span class="odkud">bbs.eu/kontakt/</span>
+        </div>
+      </article>
+
+      <article class="firma">
+        <header>
+          <h3>MAS Český Západ, z.s.</h3>
+          <div class="meta">26659981 · Bezdružice · střední · spolková činnost · spojení 2</div>
+        </header>
+        <div class="nalez">
+          <span class="co">Účel adresy: hlavní kontaktní osoba</span>
+          <span class="citace">„Manažer MAS — hlavní kontaktní osoba — e-mail: florian@mascz.cz“</span>
+          <span class="odkud">mascz.cz/kontakty.html</span>
+        </div>
+      </article>
+
+      <article class="firma">
+        <header>
+          <h3>IMONT spol. s r.o.</h3>
+          <div class="meta">00516163 · Plzeň · střední · opravy strojů, stavebnictví · spojení 1</div>
+        </header>
+        <div class="nalez">
+          <span class="co">Účel adresy: <strong>objednávky, ne nabídky dodavatelů</strong></span>
+          <span class="citace">„E-mail pro zasílání objednávek: objednavky@imont.cz“</span>
+          <span class="odkud">imont.cz/kontakty.htm</span>
+        </div>
+      </article>
+
+      <article class="firma">
+        <header>
+          <h3>TJ Slavoj Plzeň z.s.</h3>
+          <div class="meta">00480118 · Plzeň · střední · sportovní činnost, pronájem · spojení 2</div>
+        </header>
+        <div class="nalez">
+          <span class="co">Účel adresy: <strong>objednávky, ne nabídky dodavatelů</strong></span>
+          <span class="citace">„telefon – ústředna: 377 236 694, email pro objednávky: provozni@slavojplzen.cz“</span>
+          <span class="odkud">tjslavojplzen.cz/kontakty/</span>
+        </div>
+      </article>
+
+      <article class="firma">
+        <header>
+          <h3>EVS Reality s.r.o.</h3>
+          <div class="meta">06943586 · Židovice · velikost neznámá · realitní a finanční poradenství · spojení 1</div>
+        </header>
+        <div class="nalez">
+          <span class="co">Účel adresy: <strong>obecné dotazy klientů, ne dodavatelů</strong></span>
+          <span class="citace">„Rádi Vám poskytneme vstupní konzultaci zdarma, neváhejte se na nás obrátit.“</span>
+          <span class="odkud">evsinvestment.cz — nález z dávky 7. 8.</span>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Zbylých 123 je hromadné razítko, ne research</h2>
+    <p>Přišly z otevřených dat MPSV o volných místech. Všech 123 má <em>úplně stejnou</em>
+      hodnotu i citaci:</p>
+    <blockquote>
+      <div><strong>účel zveřejněné adresy:</strong> zveřejněno pro uchazeče o zaměstnání</div>
+      <div class="poznamka">„otevřená data MPSV: údaj je v inzerátu na volné místo v poli
+        ‚komu se hlásit‘ — je určený uchazečům o práci, ne dodavatelům“</div>
+    </blockquote>
+    <p>Je to pravdivé a doložené, ale nic to o té konkrétní firmě neříká. Pro rozhodnutí,
+      jestli ji oslovit, je to bezcenné — a v přehledech to nadsazuje, kolik toho víme.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co ta firma dělá — tohle jsme nenašli ani jednou</h2>
+    <p>Ptal jste se právě na tohle a odpověď je: <strong>vlastními slovy z webu firmy
+      to nemáme u jediné.</strong> Údaj „obor“ má v evidenci sedm záznamů a všechny znějí
+      <code>nabírá 4 míst</code>, <code>nabírá 1 míst</code> a podobně — což není obor,
+      ale počet inzerovaných míst zapsaný na špatné místo.</p>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Odkud</th><th>Údaj</th><th>Záznamů</th></tr></thead>
+        <tbody>
+          <tr><td>hromadná data MPSV</td><td>účel adresy</td><td class="cislo">124</td></tr>
+          <tr><td>hromadná data MPSV</td><td>obor <em>(chybně — počty míst)</em></td><td class="cislo">7</td></tr>
+          <tr><td>web firmy (agent)</td><td>účel adresy</td><td class="cislo">6</td></tr>
+          <tr><td>web firmy (agent)</td><td>vlastní jídelna</td><td class="cislo">2</td></tr>
+          <tr><td>web firmy (agent)</td><td>způsob stravování</td><td class="cislo">1</td></tr>
+          <tr><td>—</td><td>směnný provoz</td><td class="cislo">0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Zaměření firem přesto znáte</strong> — u všech 13 919 z rejstříku (kód činnosti),
+      a podle něj filtruje i obrazovka. Chybí jen popis vlastními slovy, který by se dal
+      použít v oslovení.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co s tím</h2>
+    <ul>
+      <li><strong>Opravit zápis oboru z dat MPSV.</strong> Počet volných míst se nemá
+        zapisovat jako obor — plete to statistiky a v oslovení by to byl nesmysl.</li>
+      <li><strong>Rešerši pouštět tam, kde je co najít.</strong> Osm z devíti nálezů je
+        u středních firem s vlastním webem. U mikropodniků a obcí se nenajde nic —
+        potvrdila to i dávka na Hrobcích.</li>
+      <li><strong>Vlastní jídelna je zatím jediný silný signál</strong> — a našel se u dvou
+        firem, které jsou obě vyloučené jako zákazník (domov sociálních služeb a škola
+        vaří samy). To je užitečné: síto funguje.</li>
+    </ul>
+  </section>
+
+</div>

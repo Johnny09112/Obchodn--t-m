@@ -11,6 +11,7 @@
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import type { ZdrojInzeratu } from "./inzeraty.js";
 
 const ZDROJ = "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json";
 
@@ -64,6 +65,20 @@ interface ZaznamObce {
   jeAgentura: boolean;
   proKoho: string | null;
   kontakt?: MpsvKontakt;
+  /**
+   * Kód směnnosti → kolik inzerátů ho uvádí.
+   *
+   * Drží se počty, ne jediná hodnota: firma může mít inzerát na
+   * jednosměnnou administrativu i na třísměnnou výrobu a „poslední vyhrává"
+   * by z toho udělalo náhodu. Kdo z toho potřebuje jednu hodnotu, ať si
+   * ji odvodí (`prevazujiciSmennost` v src/inzeraty.ts) a ví, jak vznikla.
+   */
+  smennost: Record<string, number>;
+  /**
+   * Doslovný popis stravovacího benefitu z inzerátu, pokud ho zaměstnavatel
+   * vyplnil. První nalezený vyhrává — je to citace, ne statistika.
+   */
+  stravovani: string | null;
 }
 
 /** obec → IČO → údaje */
@@ -75,6 +90,12 @@ interface SyrovaData {
     souhlasAgenturyAgentura?: boolean;
     souhlasAgenturyUzivatel?: boolean;
     zamestnavatel?: { ico?: string; nazev?: string };
+    /** Číselník `Smennost/*` — zaměstnavatel ho vybral sám při podání inzerátu. */
+    smennost?: { id?: string } | null;
+    vyhodyVolnehoMista?: Array<{
+      vyhoda?: { id?: string } | null;
+      popis?: string | null;
+    }> | null;
     prvniKontaktSeZamestnavatelem?: {
       komuSeHlasit?: {
         jmeno?: string | null;
@@ -172,8 +193,20 @@ export function postavIndex(data: SyrovaData): MpsvIndex {
       index[kod] ??= {};
       const zaznam: ZaznamObce = index[kod]![ico] ?? {
         nazev, mist: 0, inzeratu: 0, cisloDomovni: null,
-        jeAgentura: false, proKoho: null,
+        jeAgentura: false, proKoho: null, smennost: {}, stravovani: null,
       };
+      // Směnnost a stravovací benefit — proč právě odsud: SPEC kap. 5.3
+      // pracovní inzeráty pro sběr povoluje a jmenuje je „nejlepším zdrojem
+      // informací o směnném provozu a benefitech". Údaj tu vyplnil sám
+      // zaměstnavatel, takže se nic nehádá.
+      const kodSmennosti = v.smennost?.id;
+      if (kodSmennosti) {
+        zaznam.smennost[kodSmennosti] = (zaznam.smennost[kodSmennosti] ?? 0) + 1;
+      }
+      for (const vyhoda of v.vyhodyVolnehoMista ?? []) {
+        if (vyhoda?.vyhoda?.id !== "VyhodyVolnehoMista/strav") continue;
+        zaznam.stravovani ??= vyhoda.popis?.trim() || null;
+      }
       zaznam.mist += v.pocetMist ?? 1;
       zaznam.inzeratu += 1;
       zaznam.cisloDomovni ??= p.adresa?.cisloDomovni ?? null;
@@ -202,6 +235,16 @@ export interface MpsvKlient {
    * při běhu přeskakují, takže by se k nim nový zdroj jinak nedostal.
    */
   kontaktZamestnavatele(ico: string): Promise<MpsvKontakt | null>;
+
+  /**
+   * Co o zaměstnavateli říkají jeho inzeráty — směnnost a stravovací
+   * benefit, sečteno přes všechna jeho pracoviště.
+   *
+   * Vrací `null`, když firma v otevřených datech vůbec není. Prázdné počty
+   * naopak znamenají „inzeráty má, ale o režimu ani stravování nic neuvádí" —
+   * a to je jiná informace než „neznáme".
+   */
+  udajeZamestnavatele(ico: string): Promise<ZdrojInzeratu | null>;
 }
 
 export interface MpsvKlientOpts {
@@ -216,7 +259,7 @@ export interface MpsvKlientOpts {
  * jinak by se po nasazení použil starý index bez nových polí a nová logika
  * by tiše nefungovala (stalo se u rozpoznávání agentur).
  */
-const VERZE_INDEXU = 3;
+const VERZE_INDEXU = 4;
 
 interface UlozenyIndex {
   verze?: number;
@@ -285,6 +328,27 @@ export function vytvorMpsvKlienta(opts: MpsvKlientOpts = {}): MpsvKlient {
         if (kontakt) return kontakt;
       }
       return null;
+    },
+
+    async udajeZamestnavatele(ico) {
+      const index = await zajistiIndex();
+      // Na rozdíl od kontaktu se tady NEbere první nález a nekončí se:
+      // firma mívá pracoviště ve víc obcích a směnnost se má sečíst přes
+      // všechna, jinak by výsledek závisel na pořadí obcí v indexu.
+      const smennost: Record<string, number> = {};
+      let stravovani: string | null = null;
+      let naslo = false;
+
+      for (const obec of Object.values(index.obce)) {
+        const z = obec[ico];
+        if (!z) continue;
+        naslo = true;
+        for (const [kod, n] of Object.entries(z.smennost ?? {})) {
+          smennost[kod] = (smennost[kod] ?? 0) + n;
+        }
+        stravovani ??= z.stravovani ?? null;
+      }
+      return naslo ? { smennost, stravovani } : null;
     },
   };
 }

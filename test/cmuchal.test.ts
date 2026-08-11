@@ -73,6 +73,7 @@ const mpsv: MpsvKlient = {
       zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
   ],
     kontaktZamestnavatele: async () => null,
+    udajeZamestnavatele: async () => null,
 };
 
 const osm: OsmKlient = {
@@ -337,6 +338,7 @@ describe("jednatel z obchodního rejstříku", () => {
           zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
       ],
         kontaktZamestnavatele: async () => null,
+    udajeZamestnavatele: async () => null,
     };
     await spustCmuchala(
       { db, ares: aresPocitajici, res, geokoder, mpsv: mpsvSKontaktem }, jidelnaId,
@@ -366,6 +368,7 @@ describe("kontaktní osoba z dat úřadu práce", () => {
         zdrojUrl: "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json" },
     ],
       kontaktZamestnavatele: async () => null,
+    udajeZamestnavatele: async () => null,
   };
 
   it("zapíše jméno, pozici, e-mail i telefon rovnou při sběru", async () => {
@@ -540,6 +543,7 @@ describe("profil projektu řídí, koho vůbec hledáme", () => {
           zdrojUrl: "https://data.mpsv.cz/x.json" },
       ],
       kontaktZamestnavatele: async () => null,
+    udajeZamestnavatele: async () => null,
     };
 
     // S výchozím profilem restaurace vypadne jako nevhodný obor.

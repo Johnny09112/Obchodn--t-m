@@ -28,6 +28,15 @@ const mpsv: MpsvKlient = {
       ? { jmeno: "Radek", prijmeni: "Ondrušek", pozice: "personalista",
           email: "r.ondrusek@a.cz", telefon: "608 200 094" }
       : null,
+  // Tatáž firma má v inzerátech i směnnost a stravovací benefit — ověřuje
+  // se, že se zapíšou vedle kontaktu, ne místo něj.
+  udajeZamestnavatele: async (ico) =>
+    ico === "25242407"
+      ? {
+          smennost: { "Smennost/triSm": 2, "Smennost/jednoSm": 1 },
+          stravovani: "závodní jídelna v areálu",
+        }
+      : null,
 };
 
 beforeEach(async () => {
@@ -114,5 +123,31 @@ describe("doplnění kontaktů u firem, které už v kartotéce jsou", () => {
       "select 1 from contacts where zdroj_url is null or zdroj_url = ''",
     );
     expect(bezZdroje).toHaveLength(0);
+  });
+
+  it("zapíše i směnnost a stravování z inzerátů (SPEC kap. 5.3)", async () => {
+    await doplnKontakty({ db, ares, mpsv }, {});
+    const e = await db.query<{ atribut: string; hodnota: string; citace: string }>(
+      `select atribut, hodnota, citace from evidence
+       where ico = '25242407' and atribut in ('smenny_provoz','zpusob_stravovani')
+       order by atribut`,
+    );
+    const dle = Object.fromEntries(e.map((x) => [x.atribut, x]));
+    // Převažuje třísměnný (2 inzeráty proti jednomu) — obě hodnoty počtů
+    // jsou schválně různé, aby test odlišil „nejčastější" od „první".
+    expect(dle["smenny_provoz"]?.hodnota).toBe("třísměnný provoz");
+    expect(dle["smenny_provoz"]?.citace).toContain("2 z 3");
+    // U stravování musí citace nést doslovný text zaměstnavatele.
+    expect(dle["zpusob_stravovani"]?.hodnota).toBe("závodní jídelna v areálu");
+    expect(dle["zpusob_stravovani"]?.citace).toContain("závodní jídelna v areálu");
+  });
+
+  it("firma, o které inzeráty nic neříkají, žádný údaj nedostane", async () => {
+    await doplnKontakty({ db, ares, mpsv }, {});
+    const e = await db.query(
+      `select 1 from evidence
+       where ico = '25232657' and atribut in ('smenny_provoz','zpusob_stravovani')`,
+    );
+    expect(e).toHaveLength(0);
   });
 });

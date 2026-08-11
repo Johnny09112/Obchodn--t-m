@@ -22,6 +22,7 @@
  */
 import type { AresKlient } from "./ares.js";
 import type { Db } from "./db.js";
+import { udajeZInzeratu } from "./inzeraty.js";
 import type { MpsvKlient } from "./mpsv.js";
 import { ukonciBeh, zacniBeh, zapisAtribut, zapisKontakt } from "./repo.js";
 
@@ -42,6 +43,35 @@ export interface DoplnKontaktySouhrn {
 }
 
 const ZDROJ_MPSV = "https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json";
+
+/**
+ * Zapíše, co o firmě říkají její pracovní inzeráty — směnnost a stravovací
+ * benefit (SPEC kap. 5.3 je pro sběr povoluje).
+ *
+ * **Selhání tady nesmí shodit doplňování kontaktů.** Kontakt je hlavní účel
+ * běhu; tohle je přídavek. Kdyby na něm celá firma spadla, přišli bychom
+ * i o kontakt, který se už podařilo najít.
+ */
+async function zapisUdajeZInzeratu(
+  db: Db,
+  ico: string,
+  mpsv: MpsvKlient | undefined,
+): Promise<void> {
+  if (!mpsv) return;
+  try {
+    const z = await mpsv.udajeZamestnavatele(ico);
+    if (!z) return;
+    for (const u of udajeZInzeratu(z)) {
+      await zapisAtribut(db, ico, u.atribut, u.hodnota, {
+        zdrojUrl: ZDROJ_MPSV,
+        citace: u.citace,
+      });
+    }
+  } catch {
+    // Vědomě spolknuto — viz komentář výše. Chyba se projeví tím, že údaj
+    // prostě nepřibude, ne ztrátou kontaktu.
+  }
+}
 
 export async function doplnKontakty(
   deps: DoplnKontaktyDeps,
@@ -128,9 +158,15 @@ export async function doplnKontakty(
               "otevřená data MPSV: údaj je v inzerátu na volné místo v poli " +
               "„komu se hlásit“ — je určený uchazečům o práci, ne dodavatelům",
           });
+          await zapisUdajeZInzeratu(db, f.ico, deps.mpsv);
           souhrn.zMpsv++;
           continue;
         }
+
+        // Firma bez kontaktu v inzerátu může mít inzeráty i tak — směnnost
+        // a stravování se z nich dají vzít nezávisle na tom, jestli
+        // zaměstnavatel zveřejnil kontaktní osobu.
+        await zapisUdajeZInzeratu(db, f.ico, deps.mpsv);
 
         const organy = (await deps.ares.najdiStatutarniOrgany(f.ico)).slice(0, 2);
         if (organy.length === 0) {

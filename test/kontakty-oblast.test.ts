@@ -33,6 +33,7 @@ const ares: AresKlient = {
 const mpsv: MpsvKlient = {
   zamestnavateleVObci: async () => [],
   kontaktZamestnavatele: async () => null,
+    udajeZamestnavatele: async () => null,
 };
 
 /** Firma sebraná nad oblastí: bez jídelny, bez zóny, čeká na jídelnu. */

@@ -1,0 +1,366 @@
+<meta charset="utf-8">
+<title>Od seznamu firem k signálům — co převzít od BizMachine</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 52rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.75rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce h3 {
+    font-family: var(--pismo-nadpis); font-size: 1.05rem; font-weight: 620;
+    margin: .3rem 0 0; text-wrap: balance;
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  .teze {
+    border: 1px solid var(--razitko); background: var(--razitko-tl);
+    border-radius: 6px; padding: 1rem 1.15rem; font-size: var(--fs-sm);
+    display: flex; flex-direction: column; gap: .55rem;
+  }
+
+  /* Signály */
+  .signaly { display: flex; flex-direction: column; gap: .6rem; }
+  .signal {
+    border: 1px solid var(--linka); border-radius: 5px; padding: .7rem .9rem;
+    background: var(--papir-2); display: grid; gap: .5rem;
+    grid-template-columns: 1fr; font-size: var(--fs-sm);
+  }
+  @media (min-width: 40rem) { .signal { grid-template-columns: 1fr auto; align-items: start; } }
+  .signal .telo { display: flex; flex-direction: column; gap: .25rem; }
+  .signal .jmeno { font-family: var(--pismo-nadpis); font-weight: 620; font-size: 1rem; }
+  .signal .zdroj {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); color: var(--tlumene);
+  }
+  .stitky { display: flex; gap: .35rem; flex-wrap: wrap; }
+  .stitek {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); padding: .1rem .45rem;
+    border-radius: 3px; white-space: nowrap; border: 1px solid;
+  }
+  .stitek.mame { background: var(--zelena-tl); color: var(--zelena); border-color: var(--zelena); }
+  .stitek.blizko { background: var(--razitko-tl); color: var(--razitko); border-color: var(--razitko); }
+  .stitek.daleko { background: var(--jantar-tl); color: var(--jantar); border-color: var(--jantar); }
+
+  .obal { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 32rem; font-size: var(--fs-sm); }
+  th, td { text-align: left; padding: .45rem .7rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500;
+  }
+  td.cislo { font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  tfoot td { font-weight: 600; border-bottom: none; }
+
+  pre {
+    font-family: var(--pismo-udaj); font-size: var(--fs-sm); line-height: 1.5;
+    background: var(--papir-2); border: 1px solid var(--linka); border-radius: 6px;
+    padding: .8rem 1rem; margin: 0; overflow-x: auto;
+  }
+  blockquote {
+    margin: 0; padding: .8rem 1.1rem; border-left: 4px solid var(--cihla);
+    background: var(--cihla-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .4rem; }
+  ol { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: .5rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · 10. srpna 2026 · návrh, ne rozhodnutí</div>
+    <h1>Od seznamu firem k signálům</h1>
+    <p class="podtitul">BizMachine neprodává data o firmách. Prodává odpověď na otázku
+      <em>„komu mám volat tento týden“</em>. To je jediná věc, kterou bych od nich
+      převzal — a většinu dílů na ni už máme.</p>
+  </header>
+
+  <section class="sekce">
+    <h2>Co je u nich vlastně ten produkt</h2>
+    <div class="teze">
+      <div>Mají 11,7 mil. firem a 5,4 mil. kontaktů. To ale není důvod, proč jim někdo
+        platí — databázi firem koupíte levně kdekoli.</div>
+      <div><strong>Platí se za 55+ „obchodních signálů“:</strong> firma nabírá, vyhlásila
+        tendr, mění vedení, stěhuje se, investuje. Signál znamená <em>„právě teď se u nich
+        něco děje, kvůli čemu tě vyslechnou“</em>.</div>
+      <div>Rozdíl je v tom, co uživatel ráno otevře. Databáze mu ukáže <strong>seznam,
+        který vypadá stejně jako včera</strong>. Signály mu ukážou <strong>deset firem,
+        u kterých se od včera něco změnilo</strong>.</div>
+    </div>
+    <p class="poznamka">Zdroje: <a href="https://www.bizmachine.com/en/data">přehled dat</a>,
+      <a href="https://www.bizmachine.com/en/signals">obchodní signály</a>,
+      <a href="https://www.bizmachine.com/en/bizmachine-api">API do CRM</a>.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Šest signálů, které dávají smysl pro obědy</h2>
+    <p>Nekopíroval bych jich 55. Pro prodej obědů z jídelen jich stačí pár — ale musí být
+      ty správné. U každého je, odkud by se bral a jak daleko k němu máme:</p>
+    <div class="signaly">
+
+      <div class="signal">
+        <div class="telo">
+          <span class="jmeno">Firma nabírá do provozu</span>
+          <span>Nový člověk na směny = další strávník. Nejsilnější signál, jaký pro obědy
+            existuje — a od dneška máme i to, na kolik směn se jede.</span>
+          <span class="zdroj">otevřená data úřadu práce — už stahujeme</span>
+        </div>
+        <div class="stitky"><span class="stitek mame">data máme</span></div>
+      </div>
+
+      <div class="signal">
+        <div class="telo">
+          <span class="jmeno">Nabírá kuchaře, ačkoli není restaurace</span>
+          <span>Skoro jistý důkaz vlastní jídelny — tedy firma, kterou <strong>nemá smysl
+            oslovovat</strong>. Signál, který šetří práci místo aby ji přidával.</span>
+          <span class="zdroj">tatáž data, jiné čtení</span>
+        </div>
+        <div class="stitky"><span class="stitek mame">data máme</span></div>
+      </div>
+
+      <div class="signal">
+        <div class="telo">
+          <span class="jmeno">Nová provozovna v dojezdu jídelny</span>
+          <span>Firma, která se do zóny nastěhovala, ještě obědy vyřešené nemá. Nejlepší
+            možný okamžik k oslovení.</span>
+          <span class="zdroj">porovnání dvou běhů sběru — stačí ukládat historii</span>
+        </div>
+        <div class="stitky"><span class="stitek blizko">blízko</span></div>
+      </div>
+
+      <div class="signal">
+        <div class="telo">
+          <span class="jmeno">Smlouva na stravovací služby končí</span>
+          <span>U veřejných organizací je smlouva veřejná i s dobou platnosti. Rok předem
+            víte, kdy se bude soutěžit znovu.</span>
+          <span class="zdroj">registr smluv — nepostavené, ale volně dostupné</span>
+        </div>
+        <div class="stitky"><span class="stitek blizko">blízko</span></div>
+      </div>
+
+      <div class="signal">
+        <div class="telo">
+          <span class="jmeno">Změna jednatele nebo vedení</span>
+          <span>Nové vedení mění dodavatele. Klasický signál, u nás použitelný hlavně
+            u středních firem.</span>
+          <span class="zdroj">obchodní rejstřík — vyžaduje hlídání změn</span>
+        </div>
+        <div class="stitky"><span class="stitek daleko">dál</span></div>
+      </div>
+
+      <div class="signal">
+        <div class="telo">
+          <span class="jmeno">Jídelna má volnou kapacitu</span>
+          <span>Signál z <em>naší</em> strany, ne o firmě. Když partnerská jídelna uvolní
+            místa, systém má sám říct, koho v jejím dosahu oslovit.</span>
+          <span class="zdroj">vlastní data — máme, jen se z toho nedělá podnět</span>
+        </div>
+        <div class="stitky"><span class="stitek mame">data máme</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Jak by se to postavilo</h2>
+    <h3>1. Tabulka signálů — jádro celé věci</h3>
+    <pre>signaly (
+  ico, druh, sila, popis,
+  zjisteno_at, plati_do,      ← signál má životnost, seznam ne
+  zdroj_url, citace           ← TP-2 platí i tady
+)</pre>
+    <p>Signál je <strong>událost s datem a platností</strong>, ne vlastnost firmy. To je
+      celý rozdíl proti dnešku: atribut „má 30 zaměstnanců“ platí pořád, signál „minulý
+      týden vypsala 4 místa na směny“ za tři měsíce vyprchá. Proto vlastní tabulka, ne
+      další sloupec v kartotéce.</p>
+
+    <h3>2. Detektory nad zdroji, které už máme</h3>
+    <p>Každý signál je malá funkce, která se dívá na data a řekne „tohle je podnět“.
+      Žádný nový nákup dat — všech šest stojí na otevřených datech, obchodním rejstříku
+      nebo naší vlastní kartotéce.</p>
+
+    <h3>3. Obrazovka „co je nového“</h3>
+    <p>Místo seznamu firem <strong>seznam podnětů seřazený podle síly a stáří</strong>.
+      U každého firma, důvod, doslovná citace a tlačítko „přidat do kampaně“. Tohle je ta
+      část, kterou uvidí zákazník — zbytek je vodovod.</p>
+
+    <h3>4. Skóre se rozdělí na dvě čísla</h3>
+    <p>Dnes jedno skóre míchá <em>„hodí se nám“</em> (velikost, vzdálenost, obor)
+      a <em>„je teď vhodná chvíle“</em>. Firma, která se hodí a zrovna nabírá, má být jinde
+      než firma, která se hodí a půl roku se u ní nic neděje. Dvě čísla to rozliší, jedno ne.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Kdy to dělat</h2>
+    <p>Ne teď hned celé. Pořadí podle toho, co odemyká co:</p>
+    <ol>
+      <li><strong>Hned</strong> — dočistit, co běží: doběhnout rešerši na 145 firmách,
+        zviditelnit značku kvality údaje v aplikaci. Bez toho jsou signály stavěné na písku.</li>
+      <li><strong>Potom</strong> — tabulka signálů a první tři detektory (nábor, kuchař,
+        volná kapacita jídelny). Všechny tři stojí na datech, která už máme v ruce.</li>
+      <li><strong>Až s fází 3</strong> — obrazovka podnětů a rozdělené skóre. Dřív nemá
+        smysl: signál je podnět k oslovení a oslovovat se zatím nesmí.</li>
+      <li><strong>Nejdřív po fázi 3</strong> — registr smluv, hlídání změn ve vedení, API.
+        To jsou věci, které dávají smysl, až systém někdo denně používá.</li>
+    </ol>
+    <blockquote>
+      <strong>Jedno tvrdé omezení:</strong> signály jsou podněty k oslovení a
+      <code>sending_enabled</code> je vypnuté. Do fáze 3 se nesmí. Postavit se dají —
+      použít naostro ne, dokud nejsou hotová tvrzení, šablony, doména a právní konzultace.
+    </blockquote>
+  </section>
+
+  <section class="sekce">
+    <h2>Co bych nepřebíral</h2>
+    <ul>
+      <li><strong>Finanční ukazatele z výkazů.</strong> BizMachine jich má přes dvacet.
+        SPEC je zakazuje a u obědů stejně nic neříkají — tržby nevypovídají o tom, jestli
+        lidé chodí na oběd.</li>
+      <li><strong>Objem za každou cenu.</strong> 11,7 mil. firem je jejich byznys model,
+        ne náš. Nám stačí těch pár set v dojezdu jídelen — a kvalita každého záznamu je
+        pro nás cennější než jejich počet.</li>
+      <li><strong>Kontakty ze sociálních sítí.</strong> Zakázané v obou vrstvách, bez výjimky.</li>
+    </ul>
+  </section>
+
+  <section class="sekce">
+    <h2>Kolik by to stálo</h2>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Práce</th><th class="cislo">Odhad</th><th>Peníze navíc</th></tr></thead>
+        <tbody>
+          <tr><td>Tabulka signálů + první tři detektory</td><td class="cislo">3 sezení</td><td>0 Kč</td></tr>
+          <tr><td>Obrazovka „co je nového“</td><td class="cislo">2 sezení</td><td>0 Kč</td></tr>
+          <tr><td>Rozdělení skóre na fit a načasování</td><td class="cislo">1 sezení</td><td>0 Kč</td></tr>
+          <tr><td>Registr smluv jako zdroj</td><td class="cislo">2 sezení</td><td>0 Kč</td></tr>
+          <tr><td>Hlídání změn v rejstříku</td><td class="cislo">2 sezení</td><td>0 Kč</td></tr>
+        </tbody>
+        <tfoot><tr><td>Celkem</td><td class="cislo">10 sezení</td><td>0 Kč navíc</td></tr></tfoot>
+      </table>
+    </div>
+    <p><strong>Peněžní náklad je nula</strong> a to není optimismus — všechny zdroje jsou
+      otevřená data nebo veřejné rejstříky a agent jde z předplatného, které už platíte.
+      Zatím systém spotřeboval 0 USD na placené API a tohle to nemění.</p>
+    <p class="poznamka"><strong>„Sezení“ je odhad, ne slib.</strong> Znamená jeden ucelený
+      blok práce jako dnešní profil produktu — zadání, revize, ostré ověření. Dnešní den
+      měl zhruba dvě.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Jak moc to zvedne prodejnost — a proč je ten odhad měkký</h2>
+    <blockquote>
+      <strong>Tohle je nejméně podložená část celého dokumentu.</strong> Nemám data
+      o trhu, o cenách konkurence ani o tom, kolik by kdo zaplatil. Co následuje je
+      úvaha, ne měření — berte to jako podklad k rozhovoru, ne jako číslo do plánu.
+    </blockquote>
+    <h3>Co se změní na tom, co vlastně prodáváte</h3>
+    <div class="obal">
+      <table>
+        <thead><tr><th></th><th>Dnes</th><th>Se signály</th></tr></thead>
+        <tbody>
+          <tr><td>Co zákazník kupuje</td><td>seznam firem s kontakty</td><td>denní pracovní frontu</td></tr>
+          <tr><td>S čím se to srovnává</td><td>databáze firem od 500 Kč/měs.</td><td>nástroje pro obchodníky</td></tr>
+          <tr><td>Kdy to otevře podruhé</td><td>když potřebuje seznam</td><td>ráno, protože se něco změnilo</td></tr>
+          <tr><td>Proč by přestal platit</td><td>seznam si stáhl, hotovo</td><td>přišel by o podněty</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Ten poslední řádek je podstatnější než cena. <strong>Seznam se koupí jednou.
+      Signály se předplácejí</strong>, protože zastarávají. To je rozdíl mezi jednorázovým
+      prodejem a opakovaným příjmem — a je to hlavní důvod, proč bych do toho šel.</p>
+    <h3>Odhad, s vyznačenou nejistotou</h3>
+    <ul>
+      <li><strong>Cena za místo: řádově vyšší.</strong> Nástroj, který obchodníkovi říká,
+        komu volat, se v Česku prodává v jiné cenové hladině než výpis firem. Odhaduju
+        <strong>násobek 2–4×</strong>, ale je to odhad z pozorování trhu, ne z jednání
+        s klientem.</li>
+      <li><strong>Udržení zákazníka: tady je největší zisk.</strong> Produkt, který má
+        důvod se otevřít každý den, se neruší tak snadno jako databáze. Číslo neodhadnu.</li>
+      <li><strong>Šíře trhu: menší, ne větší.</strong> Signály jsou užší a oborovější.
+        Prodáte je líp, ale menšímu počtu lidí. To je proti tomu prvnímu bodu.</li>
+    </ul>
+    <p><strong>Co by ten odhad zpřesnilo:</strong> tři rozhovory s někým, kdo dnes obědy
+      do firem prodává. Za hodinu takového hovoru se dozvíte víc než z celé téhle stránky —
+      a hlavně zjistíte, jestli jsou to opravdu tyhle signály, nebo úplně jiné.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Hotovo mezitím</h2>
+    <p>Zatímco jste byl pryč, přibylo do systému čtení <strong>směnnosti a stravovacího
+      benefitu z inzerátů úřadu práce</strong> — první z těch šesti signálů má tím pádem
+      datový základ hotový. Číselník směnnosti vyplňuje sám zaměstnavatel, takže se nic
+      nehádá, a u stravování se ukládá doslovný text z inzerátu.</p>
+    <p class="poznamka">631 testů zeleně. Ověřeno sabotáží, že nové testy doopravdy hlídají.
+      Sběru firem se změna nedotýká — zapisuje se v cestě „doplnit kontakty“, která běží
+      nad firmami, co už v kartotéce jsou.</p>
+  </section>
+
+</div>

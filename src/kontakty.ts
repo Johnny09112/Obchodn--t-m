@@ -22,6 +22,7 @@
  */
 import type { AresKlient } from "./ares.js";
 import type { Db } from "./db.js";
+import { zaznamenejObjem } from "./hlidac.js";
 import { udajeZInzeratu } from "./inzeraty.js";
 import type { MpsvKlient } from "./mpsv.js";
 import { ukonciBeh, zacniBeh, zapisAtribut, zapisKontakt } from "./repo.js";
@@ -194,6 +195,18 @@ export async function doplnKontakty(
       }
     }
   } finally {
+    // Hlídač: kolik firem běh doopravdy obohatil. Nula ze šedesáti vypadá
+    // úplně stejně jako „ty firmy prostě nikde nejsou" — a bez tohohle
+    // srovnání s obvyklým výsledkem se to nepozná.
+    //
+    // Měří se VÝSLEDEK, ne velikost zdroje: rozbít se může kterýkoli
+    // článek řetězu (stažení, index, ARES) a projeví se to tady.
+    try {
+      const h = await zaznamenejObjem(db, "doplneni-kontaktu", souhrn.zMpsv + souhrn.zRejstriku);
+      if (h.duvod) souhrn.chyby.push({ kdo: "hlídač zdrojů", chyba: h.duvod });
+    } catch {
+      // Hlídač nesmí shodit běh, který jinak proběhl v pořádku.
+    }
     const { chyby, ...vystup } = souhrn;
     await ukonciBeh(db, behId, vystup, chyby, 0);
   }

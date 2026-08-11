@@ -32,6 +32,8 @@ import {
 import { priradKategorie } from "./kategorie.js";
 import { nactiProfil, seznamProfilu, zvolProfil } from "./profil.js";
 import { nactiAtributyProfilu, overProfilKod, profilProKampan } from "./atributy.js";
+import { stavZdroju } from "./hlidac.js";
+import { detekujSmennyProvoz, detekujVlastniJidelnu, platneSignaly } from "./signaly.js";
 import { prenesData } from "./prenos.js";
 import {
   firmyVOblasti, nactiOblast, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
@@ -1550,6 +1552,63 @@ async function cmdUzivatel(argv: string[]): Promise<void> {
 }
 
 /** Profily projektu — koho vlastně hledáme. */
+/**
+ * Obchodní signály — co je nového a proč zrovna tuhle firmu.
+ *
+ * `detekuj` je bezpečné pouštět opakovaně: podnět má stabilní klíč, takže
+ * druhý běh nad týmiž daty nezaloží duplicitu.
+ */
+async function cmdSignaly(argv: string[]): Promise<void> {
+  const { positionals, values } = parseArgs({
+    args: argv, allowPositionals: true,
+    options: { limit: { type: "string" } },
+  });
+  const db = await pripojDb();
+  try {
+    if (positionals[0] === "detekuj") {
+      const smeny = await detekujSmennyProvoz(db);
+      const jidelny = await detekujVlastniJidelnu(db);
+      console.log(`Vícesměnný provoz: nalezeno ${smeny.nalezeno}, nových podnětů ${smeny.noveZapsano}`);
+      console.log(`Vlastní jídelna:   nalezeno ${jidelny.nalezeno}, nových podnětů ${jidelny.noveZapsano}`);
+      console.log("\nNic se neodeslalo — podnět je důvod k oslovení, ne oslovení.");
+      return;
+    }
+
+    if (positionals[0] === "zdroje") {
+      const s = await stavZdroju(db);
+      if (s.length === 0) {
+        console.log("Hlídač zatím nic nezaznamenal — zdroje se přihlásí samy při prvním čtení.");
+        return;
+      }
+      for (const z of s) {
+        const podezrele = z.posledniPodezreniAt !== null;
+        console.log(
+          `${z.zdroj.padEnd(24)} naposledy ${String(z.posledni).padStart(7)} ` +
+            `(obvykle ${String(Math.round(z.obvykly)).padStart(7)}, běhů ${z.behu})` +
+            (podezrele ? "  ⚠ někdy hlásil podezření" : ""),
+        );
+      }
+      return;
+    }
+
+    const s = await platneSignaly(db, { limit: values.limit ? Number(values.limit) : 40 });
+    if (s.length === 0) {
+      console.log("Žádné platné podněty. Zkus: npm run cli -- signaly detekuj");
+      return;
+    }
+    for (const x of s) {
+      const znak = x.vylucovaci ? "✕" : "→";
+      console.log(`\n${znak} ${x.nazev ?? x.ico} (${x.ico}) — ${x.nazevDruhu}, síla ${x.sila}`);
+      console.log(`  ${x.popis}`);
+      console.log(`  „${x.citace}"`);
+      console.log(`  ${x.zdrojUrl}`);
+    }
+    console.log(`\nCelkem ${s.length} podnětů. ✕ znamená „neoslovovat".`);
+  } finally {
+    await db.close();
+  }
+}
+
 async function cmdProfil(argv: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
     args: argv, allowPositionals: true, options: { kod: { type: "string" } },
@@ -1848,6 +1907,9 @@ switch (prikaz) {
   case "profil":
     await cmdProfil(zbytek);
     break;
+  case "signaly":
+    await cmdSignaly(zbytek);
+    break;
   case "kategorie":
     await cmdKategorie();
     break;
@@ -1898,6 +1960,9 @@ switch (prikaz) {
   uzivatel role --email … --role super-admin|admin|uzivatel
   profil [seznam]                  vypíše profily projektu (koho hledáme)
   profil zvol <kod>                přepne aktivní profil
+  signaly [seznam]                 vypíše platné podněty — co je nového a proč
+  signaly detekuj                  projede data a založí podněty (nic neodesílá)
+  signaly zdroje                   stav hlídače: kolik který zdroj obvykle vydá
   kategorie                        doplní firmám kategorii podle oboru
   blacklist [seznam]               vypíše ruční pravidla
   blacklist pridej --typ ico|nazev|nace|pravni_forma --hodnota … --duvod …

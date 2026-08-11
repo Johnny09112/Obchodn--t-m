@@ -1,6 +1,7 @@
 import type { AresZaznam } from "./ares.js";
 import { jeZnamyAtribut } from "./atributy.js";
 import type { Db } from "./db.js";
+import { naTriStav, TRISTAVOVE_SLOUPCE } from "./tristav.js";
 import { ATRIBUTY_SLOUPCE } from "./whitelist.js";
 import { spolehlivostZdroje } from "./zdroje.js";
 
@@ -89,11 +90,26 @@ export async function zapisAtribut(
     );
     const sloupec = ATRIBUTY_SLOUPCE[atribut];
     if (sloupec) {
-      const cast = CAST_SLOUPCE[sloupec] ?? "";
-      await t.query(
-        `update companies set ${sloupec} = $1${cast} where ico = $2`,
-        [hodnota, ico],
-      );
+      // Třístavové sloupce se NEPŘEVÁDĚJÍ typem. Převod `= $1::boolean`
+      // by na „ano – v budově je vlastní kuchyně" spadl, a starší varianta
+      // `hodnota === "true"` z toho tiše dělala `false` — tedy pravý opak
+      // toho, co evidence dokládá. Nalezeno v ostrých datech 10. 8. 2026
+      // u mateřské školy, která jídelnu má.
+      //
+      // Když se hodnota přečíst nedá, zůstává ve sloupci `null` („nevíme").
+      // Evidence si doslovné znění drží tak jako tak.
+      if (TRISTAVOVE_SLOUPCE.has(sloupec)) {
+        await t.query(`update companies set ${sloupec} = $1 where ico = $2`, [
+          naTriStav(hodnota),
+          ico,
+        ]);
+      } else {
+        const cast = CAST_SLOUPCE[sloupec] ?? "";
+        await t.query(
+          `update companies set ${sloupec} = $1${cast} where ico = $2`,
+          [hodnota, ico],
+        );
+      }
     }
   });
 }

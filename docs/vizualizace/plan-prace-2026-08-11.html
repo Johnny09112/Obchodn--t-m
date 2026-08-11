@@ -1,0 +1,341 @@
+<meta charset="utf-8">
+<title>Plán práce — co je hotové, co čeká a na co se čeká</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 54rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.5rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: .9rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .sekce > h2 .souhrn {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); font-weight: 500;
+    color: var(--tlumene); letter-spacing: .06em; text-transform: uppercase;
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  /* Položka práce */
+  .polozky { display: flex; flex-direction: column; gap: .5rem; }
+  .polozka {
+    border: 1px solid var(--linka); border-radius: 5px; padding: .65rem .9rem;
+    background: var(--papir-2); display: grid; gap: .2rem .9rem;
+    grid-template-columns: 1fr; align-items: start;
+  }
+  @media (min-width: 40rem) {
+    .polozka { grid-template-columns: 1fr auto; }
+    .polozka .odhad { grid-row: 1 / span 2; }
+  }
+  .polozka .jmeno { font-family: var(--pismo-nadpis); font-weight: 620; font-size: 1rem; }
+  .polozka .proc { font-size: var(--fs-sm); color: var(--inkoust-2); }
+  .polozka .odhad {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); font-weight: 700;
+    padding: .15rem .5rem; border-radius: 3px; white-space: nowrap;
+    align-self: start;
+  }
+  .polozka.hotovo { border-left: 4px solid var(--zelena); }
+  .polozka.hotovo .odhad { background: var(--zelena); color: var(--papir); }
+  .polozka.dalsi { border-left: 4px solid var(--razitko); }
+  .polozka.dalsi .odhad { background: var(--razitko); color: var(--papir); }
+  .polozka.ceka { border-left: 4px solid var(--jantar); }
+  .polozka.ceka .odhad { background: var(--jantar); color: var(--papir); }
+  .polozka.blok { border-left: 4px solid var(--cihla); }
+  .polozka.blok .odhad { background: var(--cihla); color: var(--papir); }
+
+  .obal { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: var(--fs-sm); }
+  th, td { text-align: left; padding: .4rem .7rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500;
+  }
+  td.cislo { font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+  blockquote {
+    margin: 0; padding: .8rem 1.1rem; border-left: 4px solid var(--razitko);
+    background: var(--razitko-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+  }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .35rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · 11. srpna 2026 · stav práce</div>
+    <h1>Co je hotové, co čeká a na co se čeká</h1>
+    <p class="podtitul">„Sezení“ je jeden ucelený blok práce — zadání, provedení,
+      revize, ostré ověření. Časy u rešerší jsou <strong>měřené</strong>
+      (63 s na firmu), počty sezení jsou <strong>odhad</strong>.</p>
+  </header>
+
+  <section class="sekce">
+    <h2>Hotovo <span class="souhrn">7. – 11. 8. · 668 testů zeleně</span></h2>
+    <div class="polozky">
+      <div class="polozka hotovo">
+        <div>
+          <div class="jmeno">Profil produktu</div>
+          <div class="proc">Co se o firmě zjišťuje, je v tabulce, ne v kódu. Kampaň si nese svůj profil. Ověřeno ostrou dávkou.</div>
+        </div>
+        <span class="odhad">nasazeno</span>
+      </div>
+      <div class="polozka hotovo">
+        <div>
+          <div class="jmeno">Obor a web firmy</div>
+          <div class="proc">Agent smí zapsat, čím se firma živí, a kartotéka si pamatuje její web. Dávka vrátila 28 nálezů místo jednoho.</div>
+        </div>
+        <span class="odhad">nasazeno</span>
+      </div>
+      <div class="polozka hotovo">
+        <div>
+          <div class="jmeno">Směnnost a stravování z inzerátů</div>
+          <div class="proc">Číselník od úřadu práce, který vyplnil sám zaměstnavatel. Nic se nehádá.</div>
+        </div>
+        <span class="odhad">v kódu</span>
+      </div>
+      <div class="polozka hotovo">
+        <div>
+          <div class="jmeno">Známka kvality údaje</div>
+          <div class="proc">U každého údaje je poznat, jestli je z úřadu, z webu firmy, nebo z katalogu.</div>
+        </div>
+        <span class="odhad">v kódu</span>
+      </div>
+      <div class="polozka hotovo">
+        <div>
+          <div class="jmeno">Signály — úroveň 1 a 2 + hlídač zdrojů</div>
+          <div class="proc">Podněty jako události s platností, obecné porovnání běhů, hlídač rozbitých zdrojů. Tři vylučovací podněty už v datech.</div>
+        </div>
+        <span class="odhad">nasazeno</span>
+      </div>
+      <div class="polozka hotovo">
+        <div>
+          <div class="jmeno">Ano / ne / nevíme u vlastní jídelny</div>
+          <div class="proc">Opravena chyba, kvůli které se „nevíme“ tiše měnilo na „ne“ — v ostrých datech byla škola s jídelnou vedená jako škola bez ní.</div>
+        </div>
+        <span class="odhad">opraveno</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Naplánovaná sezení <span class="souhrn">8 sezení</span></h2>
+    <p class="poznamka">Pořadí je moje doporučení — každé sezení stojí samo o sobě,
+      takže se dá přeskládat.</p>
+    <div class="polozky">
+      <div class="polozka dalsi">
+        <div>
+          <div class="jmeno">1. Obrazovka „co je nového“</div>
+          <div class="proc">Seznam podnětů podle síly a stáří, u každého firma, důvod, citace a tlačítko do kampaně. <strong>Tohle je ta část, kterou uvidí zákazník</strong> — zbytek je vodovod.</div>
+        </div>
+        <span class="odhad">2 sezení</span>
+      </div>
+      <div class="polozka dalsi">
+        <div>
+          <div class="jmeno">2. Známka kvality vidět v aplikaci</div>
+          <div class="proc">Dnes je v databázi, ne na obrazovce. U údaje má být štítek „doloženo dvěma zdroji“ nebo „jen katalog“.</div>
+        </div>
+        <span class="odhad">1 sezení</span>
+      </div>
+      <div class="polozka dalsi">
+        <div>
+          <div class="jmeno">3. Registr smluv jako zdroj</div>
+          <div class="proc">Měsíční hromadný soubor, ověřeno. Pro obce a docházkové systémy nejcennější zdroj, jaký máme na dosah — končící smlouva je nejsilnější signál. <strong>Napřed ale právní konzultace kvůli GDPR.</strong></div>
+        </div>
+        <span class="odhad">2 sezení</span>
+      </div>
+      <div class="polozka dalsi">
+        <div>
+          <div class="jmeno">4. Skóre se rozdělí na „hodí se“ a „je vhodná chvíle“</div>
+          <div class="proc">Dnes jedno číslo míchá obojí. Firma, která se hodí a zrovna nabírá, má být jinde než firma, u které se půl roku nic neděje.</div>
+        </div>
+        <span class="odhad">1 sezení</span>
+      </div>
+      <div class="polozka dalsi">
+        <div>
+          <div class="jmeno">5. Vlastní jídelna z dalších cest</div>
+          <div class="proc">Inzerát na kuchařku u firmy, která není restaurace; referenční seznamy dodavatelů stravování.</div>
+        </div>
+        <span class="odhad">2 sezení</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Rešerše k doběhnutí <span class="souhrn">měřeno, ne odhadnuto</span></h2>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Co</th><th class="cislo">Firem</th><th class="cislo">Čas</th><th>Poznámka</th></tr></thead>
+        <tbody>
+          <tr><td>Zbytek kampaně Hrobce</td><td class="cislo">26</td><td class="cislo">~30 min</td><td>dá se pustit hned</td></tr>
+          <tr><td>Kvalifikované firmy bez rešerše</td><td class="cislo">145</td><td class="cislo">~2,5 hod</td><td>tady je hlavní užitek</td></tr>
+          <tr><td>Doplnit obor a web u už prošlých</td><td class="cislo">~65</td><td class="cislo">~1,2 hod</td><td>vyžaduje zásah do dat</td></tr>
+          <tr><td>Rešerše plzeňských firem</td><td class="cislo">432</td><td class="cislo">~7,5 hod</td><td>otevřené od 3. 8., nerozhodnuto</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="poznamka">Běží bez dozoru a z předplatného — nestojí to nic navíc.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Čeká na vaše rozhodnutí <span class="souhrn">6 bodů</span></h2>
+    <div class="polozky">
+      <div class="polozka ceka">
+        <div>
+          <div class="jmeno">Obor z katalogu — nechat, nebo vyžadovat vlastní web?</div>
+          <div class="proc">Zatím povolený a označený jako katalogový. Dva ze dvanácti popisů takové jsou.</div>
+        </div>
+        <span class="odhad">rozhodnout</span>
+      </div>
+      <div class="polozka ceka">
+        <div>
+          <div class="jmeno">Které use-casy kromě obědů a docházky</div>
+          <div class="proc">Ovlivnilo by to, které signály stavět první. Zapsal jsem si, že produkt na obor vázaný není.</div>
+        </div>
+        <span class="odhad">rozhodnout</span>
+      </div>
+      <div class="polozka ceka">
+        <div>
+          <div class="jmeno">Heslo k databázi změnit</div>
+          <div class="proc">Otevřené od 6. 8. — při ověřování bezpečnosti prošel obsah <code>.env</code> kontextem agenta.</div>
+        </div>
+        <span class="odhad">udělat</span>
+      </div>
+      <div class="polozka ceka">
+        <div>
+          <div class="jmeno">Schválený seznam firem není v databázi zamčený</div>
+          <div class="proc">Drží to jen obrazovka. Otevřeno od 3. 8.</div>
+        </div>
+        <span class="odhad">1 sezení</span>
+      </div>
+      <div class="polozka ceka">
+        <div>
+          <div class="jmeno">Rešerše 432 plzeňských firem</div>
+          <div class="proc">Doporučeno napřed sto, ať se ověří, že úspěšnost drží i mimo nejlepší skóre.</div>
+        </div>
+        <span class="odhad">rozhodnout</span>
+      </div>
+      <div class="polozka ceka">
+        <div>
+          <div class="jmeno">Až přibude druhý ostrý profil: whitelist pro zprávu je globální</div>
+          <div class="proc">Co se sbírá, si profil určuje sám; co smí do zprávy, je rozhodnuté pro celý systém. Dokud běží jeden produkt, stačí to.</div>
+        </div>
+        <span class="odhad">až bude</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Blokuje fázi 3 <span class="souhrn">bez toho se neodesílá</span></h2>
+    <blockquote>
+      Signály, návrhy e-mailů i celá obrazovka podnětů se dají postavit hned.
+      <strong>Použít je naostro ale nejde</strong>, dokud tyhle čtyři věci nejsou
+      hotové — a žádnou z nich neudělá agent za vás.
+    </blockquote>
+    <div class="polozky">
+      <div class="polozka blok">
+        <div>
+          <div class="jmeno">Tvrzení o produktu</div>
+          <div class="proc">Co přesně smíme o nabídce tvrdit. Rozhoduje majitel, ne systém.</div>
+        </div>
+        <span class="odhad">majitel</span>
+      </div>
+      <div class="polozka blok">
+        <div>
+          <div class="jmeno">Šablony zpráv</div>
+          <div class="proc">Jak oslovení vypadá. Návrh umí připravit systém, schválit ho musí člověk.</div>
+        </div>
+        <span class="odhad">majitel</span>
+      </div>
+      <div class="polozka blok">
+        <div>
+          <div class="jmeno">Odesílací doména</div>
+          <div class="proc">Vlastní doména s ověřením, ať zprávy nekončí ve spamu.</div>
+        </div>
+        <span class="odhad">majitel</span>
+      </div>
+      <div class="polozka blok">
+        <div>
+          <div class="jmeno">Právní konzultace</div>
+          <div class="proc">Oslovování i sběr osobních údajů. Nově se přidal registr smluv — kdo si ta data stáhne, stává se správcem osobních údajů.</div>
+        </div>
+        <span class="odhad">majitel</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Starší plány v repozitáři</h2>
+    <p class="poznamka">Devět dokončených plánů od 24. 7. — fáze 1 (Čmuchal), jádro kampaní,
+      sběr nad oblastmi, průvodce kampaní ve třech etapách, kampaň nad více oblastmi,
+      dodatečné rozšíření kampaně, fronta AI průzkumu a profil produktu.
+      Všechny leží v <code>docs/superpowers/plans/</code> i se zadáními.</p>
+  </section>
+
+</div>

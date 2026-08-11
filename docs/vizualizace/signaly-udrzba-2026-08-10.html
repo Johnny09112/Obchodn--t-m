@@ -1,0 +1,381 @@
+<meta charset="utf-8">
+<title>Signály bez údržbového pekla — a jak je vysvětlit klientovi</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 52rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.75rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: 1rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce h3 {
+    font-family: var(--pismo-nadpis); font-size: 1.05rem; font-weight: 620;
+    margin: .3rem 0 0; text-wrap: balance;
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  .oprava {
+    border: 1px solid var(--cihla); background: var(--cihla-tl);
+    border-radius: 6px; padding: .9rem 1.1rem; font-size: var(--fs-sm);
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .oprava .stitek {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; font-weight: 600; color: var(--cihla);
+  }
+
+  /* Tři úrovně nákladu na údržbu */
+  .urovne { display: flex; flex-direction: column; gap: .7rem; }
+  .uroven {
+    border: 1px solid var(--linka); border-radius: 6px; padding: .85rem 1rem;
+    background: var(--papir-2); display: flex; flex-direction: column; gap: .45rem;
+  }
+  .uroven.levna { border-left: 5px solid var(--zelena); }
+  .uroven.stredni { border-left: 5px solid var(--jantar); }
+  .uroven.draha { border-left: 5px solid var(--cihla); }
+  .uroven .hlava {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 1rem; flex-wrap: wrap;
+  }
+  .uroven h3 { margin: 0; }
+  .uroven .cena {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); font-weight: 700;
+    padding: .12rem .5rem; border-radius: 3px; white-space: nowrap;
+  }
+  .levna .cena { background: var(--zelena); color: var(--papir); }
+  .stredni .cena { background: var(--jantar); color: var(--papir); }
+  .draha .cena { background: var(--cihla); color: var(--papir); }
+  .uroven p, .uroven li { font-size: var(--fs-sm); }
+
+  /* Příklady pro klienta */
+  .priklad {
+    border: 1px solid var(--linka); border-radius: 6px; padding: .9rem 1.05rem;
+    background: var(--papir-2); display: flex; flex-direction: column; gap: .5rem;
+  }
+  .priklady { display: flex; flex-direction: column; gap: .8rem; }
+  .priklad .obor {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene);
+  }
+  .priklad .veta { font-size: 1.05rem; text-wrap: pretty; }
+  .priklad .rozpad {
+    display: grid; gap: .3rem .8rem; grid-template-columns: auto 1fr;
+    font-size: var(--fs-sm); align-items: start;
+  }
+  .priklad .rozpad dt {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); color: var(--tlumene);
+    text-transform: uppercase; letter-spacing: .06em; padding-top: .18rem;
+  }
+  .priklad .rozpad dd { margin: 0; }
+
+  .obal { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 32rem; font-size: var(--fs-sm); }
+  th, td { text-align: left; padding: .45rem .7rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500;
+  }
+  td.cislo { font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+  pre {
+    font-family: var(--pismo-udaj); font-size: var(--fs-sm); line-height: 1.5;
+    background: var(--papir-2); border: 1px solid var(--linka); border-radius: 6px;
+    padding: .8rem 1rem; margin: 0; overflow-x: auto;
+  }
+  blockquote {
+    margin: 0; padding: .8rem 1.1rem; border-left: 4px solid var(--razitko);
+    background: var(--razitko-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .4rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · 10. srpna 2026 · návrh k rozhodnutí</div>
+    <h1>Signály bez údržbového pekla</h1>
+    <p class="podtitul">Máte pravdu, že 55 signálů znamená datový tým. Ale náklad na
+      údržbu nedělá <em>počet signálů</em> — dělá ho <strong>počet zdrojů, ze kterých
+      se čtou</strong>. A to je dobrá zpráva.</p>
+  </header>
+
+  <section class="sekce">
+    <h2>Nejdřív oprava mé vlastní úvahy</h2>
+    <div class="oprava">
+      <span class="stitek">Tohle jsem v minulém návrhu napsal špatně</span>
+      <div>Napsal jsem „finanční ukazatele nepřebírat, u obědů nic neříkají“.
+        <strong>To je chybná úvaha</strong> — hodnotil jsem obecný produkt podle jednoho
+        use-casu.</div>
+      <div>Správně je: <em>u profilu „obědy“ se finanční údaje nesbírají</em>. Je to
+        nastavení profilu, ne vlastnost systému. Pro leasingovou firmu, pojišťovnu nebo
+        faktoring je finanční situace naopak to hlavní, co potřebují vědět.</div>
+      <div>Zapsal jsem si to natrvalo do paměti projektu, ať se to neopakuje: žádný zdroj
+        ani údaj se neodepisuje jako nepotřebný podle jednoho oboru.</div>
+    </div>
+    <p class="poznamka">Poznámka pro budoucnost: <code>do_zpravy</code> je dnes globální
+      příznak, ne per profil. Co se <em>sbírá</em>, si profil určuje sám; co smí <em>do
+      zprávy</em>, je rozhodnuté pro celý systém. Dokud běží jeden produkt, stačí to.
+      Až přibude druhý ostrý profil, je to první místo k předělání.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co v takovém systému doopravdy stojí údržbu</h2>
+    <p>Ne signály. <strong>Zdroje.</strong> Signál je pravidlo — pár řádků, které se samy
+      od sebe nerozbijí. Zdroj je cizí web nebo soubor, který <strong>někdo jiný kdykoli
+      změní bez ohlášení</strong>, a vaše čtení přestane fungovat.</p>
+    <div class="obal">
+      <table>
+        <thead><tr><th></th><th class="cislo">BizMachine</th><th class="cislo">My</th></tr></thead>
+        <tbody>
+          <tr><td>Signálů</td><td class="cislo">55+</td><td class="cislo">6</td></tr>
+          <tr><td>Zemí</td><td class="cislo">5</td><td class="cislo">1</td></tr>
+          <tr><td>Různých zdrojů k hlídání</td><td class="cislo">desítky</td><td class="cislo">3–4</td></tr>
+          <tr><td>Kdo to opravuje, když se zdroj změní</td><td class="cislo">datový tým</td><td class="cislo">jeden agent</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Klíč je v tom třetím řádku.</strong> Čtyři z našich šesti signálů čtou
+      <em>tentýž</em> zdroj — otevřená data úřadu práce. Přidat pátý signál nad ním stojí
+      skoro nic. Přidat první signál z nového webu stojí trvale.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Tři úrovně, podle toho, co údržbu stojí</h2>
+    <div class="urovne">
+
+      <div class="uroven levna">
+        <div class="hlava">
+          <h3>1. Signál jako pravidlo nad daty, která už máme</h3>
+          <span class="cena">údržba ≈ 0</span>
+        </div>
+        <p>Nic se nestahuje navíc. Signál je uložený dotaz: „firma má směnný provoz
+          a v posledním měsíci přibyl inzerát“. Zdroj se hlídá jeden a už teď.</p>
+        <p><strong>Sem patří čtyři z šesti signálů.</strong> Když se změní datová sada
+          úřadu práce, opravuje se <em>jedno</em> místo — a všechny čtyři signály se
+          spraví naráz.</p>
+      </div>
+
+      <div class="uroven stredni">
+        <div class="hlava">
+          <h3>2. Signál jako změna mezi dvěma běhy</h3>
+          <span class="cena">jednorázově střední, pak ≈ 0</span>
+        </div>
+        <p>Systém si u každého běhu zapamatuje stav a příště porovná: co přibylo, co
+          zmizelo, co se změnilo. „Nová firma v zóně“, „firma změnila adresu“,
+          „přestala inzerovat“.</p>
+        <p><strong>Postaví se jednou a pak z toho žijí všechny další signály.</strong>
+          Nový signál tohoto druhu je pak <em>nastavení</em>, ne programování — přesně
+          jako u profilu produktu, kde nový údaj znamená jeden řádek v tabulce.</p>
+      </div>
+
+      <div class="uroven draha">
+        <div class="hlava">
+          <h3>3. Signál z nového cizího webu</h3>
+          <span class="cena">trvalý náklad, každý zvlášť</span>
+        </div>
+        <p>Registr smluv, hlídání změn v rejstříku, cokoli dalšího. Každý takový zdroj
+          je <strong>vlastní čtečka, kterou někdo jednou rozbije</strong> — a je jedno,
+          že je to úřad.</p>
+        <p><strong>Doporučení: přidávat po jednom a jen když je za tím jasný užitek.</strong>
+          Tohle je přesně to, co u BizMachine dělá datový tým a co my mít nechceme.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Jediná věc, která rozhodne, jestli to bude noční můra</h2>
+    <blockquote>
+      <div><strong>Čtečka, která se rozbije, nehlásí chybu. Vrátí nulu.</strong></div>
+      <div>A nula vypadá úplně stejně jako „tento týden se nic nedělo“. Systém běží dál,
+        obrazovka je prázdná, nikdo nic nepozná — a vy si měsíc myslíte, že je na trhu
+        klid.</div>
+      <div>Tohle už nás jednou stálo celý cyklus: agent dostal zadání, které mu bránilo
+        cokoli zapsat, dávka doběhla s nulou a vypadalo to jako hotová práce.</div>
+    </blockquote>
+    <h3>Řešení je jednoduché a musí být v základu, ne dodělané potom</h3>
+    <p>Ke každému zdroji se pamatuje, <strong>kolik obvykle vydá</strong>. Když vydá
+      výrazně míň nebo nic, systém to <strong>ohlásí jako podezření na rozbitý zdroj</strong>,
+      ne jako ticho na trhu. Je to pár řádků u každé čtečky a je to rozdíl mezi
+      systémem, který se udržuje sám, a systémem, který musíte hlídat.</p>
+    <p class="poznamka">V praxi: „úřad práce dnes vrátil 39 000 inzerátů, obvykle 38–40 tis.
+      — v pořádku“ proti „vrátil 0, obvykle 39 000 — něco je špatně“.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co z toho plyne pro rozhodnutí, jak to postavit</h2>
+    <ul>
+      <li><strong>Postavit úroveň 1 a 2, úroveň 3 velmi opatrně.</strong> Dvě úrovně
+        pokryjí čtyři až pět ze šesti signálů a jejich údržba je prakticky nulová.</li>
+      <li><strong>Signál má být nastavení, ne kód.</strong> Stejný princip, jaký se dnes
+        osvědčil u profilu produktu — nový údaj se zavedl jednou migrací a agent ho
+        začal hledat, aniž se sáhlo do programu.</li>
+      <li><strong>Hlídač zdrojů od začátku.</strong> Bez něj je celý systém tichý
+        a nedůvěryhodný.</li>
+      <li><strong>Žádné signály, které vyžadují cizí web na každý týden.</strong> Tam
+        začíná ten datový tým, kterému se chcete vyhnout.</li>
+    </ul>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Práce</th><th class="cislo">Postavit</th><th class="cislo">Údržba ročně</th></tr></thead>
+        <tbody>
+          <tr><td>Úroveň 1 — pravidla nad daty, co máme</td><td class="cislo">2 sezení</td><td class="cislo">≈ 0</td></tr>
+          <tr><td>Úroveň 2 — porovnávání běhů</td><td class="cislo">2 sezení</td><td class="cislo">≈ 0</td></tr>
+          <tr><td>Hlídač zdrojů</td><td class="cislo">1 sezení</td><td class="cislo">≈ 0</td></tr>
+          <tr><td>Obrazovka podnětů</td><td class="cislo">2 sezení</td><td class="cislo">≈ 0</td></tr>
+          <tr><td><em>Každý další cizí zdroj</em></td><td class="cislo"><em>2 sezení</em></td><td class="cislo"><em>0,5–1 sezení</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="poznamka">Odhad, ne slib. Podstatné je to poslední řádek: první čtyři řádky
+      se udržují samy, pátý se udržuje pořád.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Jak to vysvětlit klientovi — na konkrétních případech</h2>
+    <p>Věta, kterou má klient slyšet jako první: <strong>„Neprodáváme vám seznam firem.
+      Prodáváme vám důvod, proč právě téhle firmě volat právě teď.“</strong> Pak stačí
+      jeden příklad z jeho oboru.</p>
+    <div class="priklady">
+
+      <div class="priklad">
+        <span class="obor">Firemní stravování</span>
+        <div class="veta">„Tahle strojírna v Rokycanech minulý týden vypsala osm míst
+          do třísměnného provozu. Osm nových lidí, kteří budou od příštího měsíce chtít
+          obědvat — a vaše partnerská jídelna je čtyři minuty chůze od brány.“</div>
+        <dl class="rozpad">
+          <dt>Zdroj</dt><dd>otevřená data úřadu práce — inzerát a směnnost vyplnil sám zaměstnavatel</dd>
+          <dt>Proč teď</dt><dd>nábor běží; za tři měsíce už obědy vyřešené mají</dd>
+        </dl>
+      </div>
+
+      <div class="priklad">
+        <span class="obor">Pracovní oděvy a BOZP</span>
+        <div class="veta">„Tahle firma otevřela novou provozovnu v Plzni a nabírá dvacet
+          lidí do výroby. Dvacet nových lidí znamená dvacet kompletů oděvů a školení —
+          a rozhodne se o tom v příštích týdnech.“</div>
+        <dl class="rozpad">
+          <dt>Zdroj</dt><dd>porovnání dvou běhů — provozovna, která v území minule nebyla</dd>
+          <dt>Proč teď</dt><dd>dodavatele si vybírají při rozjezdu, pak to roky nemění</dd>
+        </dl>
+      </div>
+
+      <div class="priklad">
+        <span class="obor">Úklidové služby</span>
+        <div class="veta">„Téhle nemocnici končí v březnu smlouva na úklid. Je veřejná
+          i s částkou a s datem — máte devět měsíců na to, abyste se ozvali dřív než
+          ostatní.“</div>
+        <dl class="rozpad">
+          <dt>Zdroj</dt><dd>registr smluv — veřejný ze zákona</dd>
+          <dt>Proč teď</dt><dd>o dodavateli se rozhoduje měsíce před koncem smlouvy</dd>
+        </dl>
+      </div>
+
+      <div class="priklad">
+        <span class="obor">Firemní vzdělávání a jazykové kurzy</span>
+        <div class="veta">„Tahle firma za poslední dva měsíce nabrala pětadvacet lidí.
+          To je nová skupina, která potřebuje zaškolit — a rozpočet na vzdělávání se
+          plánuje právě v téhle chvíli.“</div>
+        <dl class="rozpad">
+          <dt>Zdroj</dt><dd>otevřená data úřadu práce, součet inzerátů v čase</dd>
+          <dt>Proč teď</dt><dd>onboarding se řeší hned, ne za rok</dd>
+        </dl>
+      </div>
+
+      <div class="priklad">
+        <span class="obor">Kde signál znamená „nevolat“</span>
+        <div class="veta">„Tahle firma nabírá kuchařku, a přitom není restaurace. Skoro
+          jistě si vaří sama — nevolejte tam, ušetříte si hodinu.“</div>
+        <dl class="rozpad">
+          <dt>Zdroj</dt><dd>tatáž data, jiné čtení</dd>
+          <dt>Proč to prodává</dt><dd>obchodník ocení ušetřený hovor stejně jako nalezený</dd>
+        </dl>
+      </div>
+
+    </div>
+    <p><strong>Co má klient vidět na obrazovce:</strong> firmu, jednu větu proč,
+      <strong>doslovnou citaci ze zdroje</strong> a odkaz. Ta citace je to, co odliší
+      váš systém od nástrojů, které tvrdí věci bez doložení — klient si může kliknout
+      a přesvědčit se sám.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>Co potřebuju od vás</h2>
+    <ul>
+      <li><strong>Jdeme na úroveň 1 a 2?</strong> Je to pět sezení, údržba prakticky
+        nulová, a odemkne to čtyři signály.</li>
+      <li><strong>Které use-casy kromě obědů</strong> mám brát v úvahu při návrhu?
+        Zapsal jsem si, že produkt na obor vázaný není — ale konkrétní tři projekty
+        neznám a ovlivnilo by to, které signály stavět první.</li>
+    </ul>
+  </section>
+
+</div>

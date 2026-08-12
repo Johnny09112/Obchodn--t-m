@@ -286,6 +286,17 @@ describe("chybi podle profilu", () => {
   });
 
   // Spojení není atribut a profil ho neřídí — bez něj nemá systém výstup.
+  // Agent při ostré dávce 12. 8. poslal `spojeni` mezi nálezy a kontrola ho
+  // odmítla. Odmítnutí bylo správné — zadání ale vypadalo, jako by `spojeni`
+  // bylo totéž co obor. Popis proto musí říct, kam ho hlásit.
+  it("popis u spojeni říká, že to není atribut a patří mezi kontakty", async () => {
+    const { kampanId } = await pripravKampanSFirmou(db, "25232657");
+    const f = await firmyKObohaceni(db, { kampanId, profilKod: "cantinero", limit: 5 });
+    const spojeni = f[0]!.chybi.find((c) => c.kod === "spojeni");
+    expect(spojeni?.popis).toMatch(/není atribut/i);
+    expect(spojeni?.popis).toMatch(/kontakt/i);
+  });
+
   it("spojeni se hledá i u profilu bez atributů", async () => {
     const { kampanId } = await pripravKampanSFirmou(db, "25232657");
     await db.query("delete from profil_atributy where profil_kod = 'cantinero'");

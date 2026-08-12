@@ -362,7 +362,19 @@ export async function firmyKObohaceni(
     const chybi: ChybejiciAtribut[] = atributy
       .filter((a) => !maEvidenci.has(`${r.ico}|${a.kod}`))
       .map((a) => ({ kod: a.kod, popis: a.popis }));
-    if (r.spojeni === 0) chybi.push({ kod: "spojeni", popis: "e-mail nebo telefon na osobu" });
+    // `spojeni` NENÍ atribut — proto popis rovnou říká, kam ho hlásit.
+    // Bez té věty ho agent při ostré dávce 12. 8. poslal mezi nálezy, kde
+    // ho kontrola správně odmítla („atribut 'spojeni' agent nehledá").
+    // Odmítnutí bylo správné; chyba byla v zadání, které vypadalo, jako by
+    // `spojeni` bylo totéž co obor nebo web.
+    if (r.spojeni === 0) {
+      chybi.push({
+        kod: "spojeni",
+        popis:
+          "e-mail nebo telefon na osobu — POZOR: tohle není atribut. " +
+          "Hlas ho v poli „kontakty“, ne mezi nálezy.",
+      });
+    }
     return {
       ico: r.ico,
       nazev: r.nazev,

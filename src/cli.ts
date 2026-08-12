@@ -34,6 +34,7 @@ import { nactiProfil, seznamProfilu, zvolProfil } from "./profil.js";
 import { nactiAtributyProfilu, overProfilKod, profilProKampan } from "./atributy.js";
 import { stavZdroju } from "./hlidac.js";
 import { detekujSmennyProvoz, detekujVlastniJidelnu, platneSignaly } from "./signaly.js";
+import { doplnUdajeZInzeratu } from "./udaje-inzeraty.js";
 import { prenesData } from "./prenos.js";
 import {
   firmyVOblasti, nactiOblast, prepocitejOblastFirmy, prirad, seznamOblasti, zalozOblast,
@@ -1553,6 +1554,40 @@ async function cmdUzivatel(argv: string[]): Promise<void> {
 
 /** Profily projektu — koho vlastně hledáme. */
 /**
+ * Směnnost a stravování z otevřených dat úřadu práce.
+ *
+ * Vlastní běh, ne součást doplňování kontaktů: to prochází jen firmy bez
+ * jmenného kontaktu, takže po velké dávce rešerše by údaj nedostal skoro
+ * nikdo.
+ */
+async function cmdUdajeZInzeratu(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: { limit: { type: "string" }, "jen-kvalifikovane": { type: "boolean" } },
+  });
+  const db = await pripojDb();
+  try {
+    const s = await doplnUdajeZInzeratu(
+      { db, mpsv: vytvorMpsvKlienta() },
+      {
+        limit: values.limit ? Number(values.limit) : undefined,
+        jenKvalifikovane: values["jen-kvalifikovane"],
+      },
+    );
+    console.log(`Údaje z inzerátů — běh ${s.behId}`);
+    console.log(`  firem prošlo: ${s.zpracovano}`);
+    console.log(`  z toho něco uvádí: ${s.sNalezem}`);
+    console.log(`  údajů zapsáno: ${s.udaju}`);
+    if (s.chyby.length > 0) {
+      console.log(`  chyb: ${s.chyby.length}`);
+      for (const c of s.chyby.slice(0, 5)) console.log(`    ${c.kdo}: ${c.chyba}`);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
  * Obchodní signály — co je nového a proč zrovna tuhle firmu.
  *
  * `detekuj` je bezpečné pouštět opakovaně: podnět má stabilní klíč, takže
@@ -1910,6 +1945,9 @@ switch (prikaz) {
   case "signaly":
     await cmdSignaly(zbytek);
     break;
+  case "udaje-z-inzeratu":
+    await cmdUdajeZInzeratu(zbytek);
+    break;
   case "kategorie":
     await cmdKategorie();
     break;
@@ -1963,6 +2001,8 @@ switch (prikaz) {
   signaly [seznam]                 vypíše platné podněty — co je nového a proč
   signaly detekuj                  projede data a založí podněty (nic neodesílá)
   signaly zdroje                   stav hlídače: kolik který zdroj obvykle vydá
+  udaje-z-inzeratu [--limit N] [--jen-kvalifikovane]
+                                   doplní směnnost a stravování z otevřených dat úřadu práce
   kategorie                        doplní firmám kategorii podle oboru
   blacklist [seznam]               vypíše ruční pravidla
   blacklist pridej --typ ico|nazev|nace|pravni_forma --hodnota … --duvod …

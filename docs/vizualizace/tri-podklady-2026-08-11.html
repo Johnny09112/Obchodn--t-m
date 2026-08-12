@@ -1,0 +1,277 @@
+<meta charset="utf-8">
+<title>Tři dlužné podklady — agenti, advokát, produktizace</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+
+    --pismo-nadpis: ui-sans-serif, "Segoe UI Variable Display", "Segoe UI",
+                    system-ui, "Helvetica Neue", sans-serif;
+    --pismo-text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --pismo-udaj: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+    --fs-xs: .72rem; --fs-sm: .84rem; --fs-b: 1.0625rem;
+    --fs-lg: 1.3rem; --fs-xl: 1.9rem; --fs-2xl: 2.5rem;
+    --sirka: 52rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+      --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+      --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+      --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+      --razitko: #8fb3e8; --razitko-tl: #17263d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --papir: #101c21; --papir-2: #16262c; --inkoust: #e7ede9;
+    --inkoust-2: #b9c8c9; --tlumene: #8ba0a4; --linka: #2b3f46;
+    --zelena: #6cc4a5; --zelena-tl: #16302b; --jantar: #d9a05a;
+    --jantar-tl: #2f2415; --cihla: #e08b78; --cihla-tl: #331c17;
+    --razitko: #8fb3e8; --razitko-tl: #17263d;
+  }
+  :root[data-theme="light"] {
+    --papir: #f1f3ef; --papir-2: #e6eae4; --inkoust: #14262c;
+    --inkoust-2: #2c4149; --tlumene: #5c7178; --linka: #c8d2cc;
+    --zelena: #1f6f5c; --zelena-tl: #e2ece7; --jantar: #9a5c14;
+    --jantar-tl: #f4ead9; --cihla: #92382a; --cihla-tl: #f5e5e1;
+    --razitko: #2e4a7d; --razitko-tl: #e4eaf4;
+  }
+
+  body {
+    margin: 0; background: var(--papir); color: var(--inkoust);
+    font-family: var(--pismo-text); font-size: var(--fs-b); line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+  .stranka {
+    max-width: var(--sirka); margin-inline: auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+    display: flex; flex-direction: column; gap: 2.5rem;
+  }
+  .datum {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs);
+    letter-spacing: .14em; text-transform: uppercase; color: var(--tlumene);
+  }
+  h1 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-2xl); font-weight: 660;
+    letter-spacing: -.025em; line-height: 1.08; text-wrap: balance; margin: .6rem 0 0;
+  }
+  .podtitul {
+    font-size: var(--fs-lg); color: var(--inkoust-2); margin: .7rem 0 0; text-wrap: pretty;
+  }
+  .sekce { display: flex; flex-direction: column; gap: .9rem; }
+  .sekce > h2 {
+    font-family: var(--pismo-nadpis); font-size: var(--fs-xl); font-weight: 620;
+    letter-spacing: -.018em; line-height: 1.15; text-wrap: balance; margin: 0;
+    padding-top: 1rem; border-top: 1px solid var(--linka);
+  }
+  .sekce > h3 {
+    font-family: var(--pismo-nadpis); font-size: 1.05rem; font-weight: 620;
+    margin: .4rem 0 -.2rem;
+  }
+  .sekce p { margin: 0; text-wrap: pretty; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--pismo-udaj); font-size: .86em;
+    background: var(--papir-2); padding: .1em .35em; border-radius: 3px;
+  }
+
+  .agenti { display: flex; flex-direction: column; gap: .45rem; }
+  .agent {
+    border: 1px solid var(--linka); border-radius: 5px; padding: .6rem .85rem;
+    background: var(--papir-2); display: grid; gap: .15rem .9rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 40rem) {
+    .agent { grid-template-columns: 1fr auto; }
+    .agent .faze { grid-row: 1 / span 2; align-self: start; }
+  }
+  .agent .jmeno { font-family: var(--pismo-nadpis); font-weight: 620; font-size: 1rem; }
+  .agent .co { font-size: var(--fs-sm); color: var(--inkoust-2); }
+  .agent .faze {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); font-weight: 700;
+    padding: .15rem .5rem; border-radius: 3px; white-space: nowrap;
+    background: var(--tlumene); color: var(--papir);
+  }
+  .agent.bezi { border-left: 4px solid var(--zelena); }
+  .agent.bezi .faze { background: var(--zelena); }
+  .agent.novy { border-left: 4px solid var(--razitko); }
+  .agent.novy .faze { background: var(--razitko); }
+
+  .obal { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: var(--fs-sm); }
+  th, td { text-align: left; padding: .4rem .7rem; border-bottom: 1px solid var(--linka); vertical-align: top; }
+  th {
+    font-family: var(--pismo-udaj); font-size: var(--fs-xs); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tlumene); font-weight: 500;
+  }
+  td.cislo { font-family: var(--pismo-udaj); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+  blockquote {
+    margin: 0; padding: .85rem 1.1rem; border-left: 4px solid var(--cihla);
+    background: var(--cihla-tl); border-radius: 0 5px 5px 0; font-size: var(--fs-sm);
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .doporuceni {
+    border: 1px solid var(--zelena); background: var(--zelena-tl);
+    border-radius: 6px; padding: 1rem 1.15rem; display: flex; flex-direction: column; gap: .6rem;
+  }
+  .doporuceni h3 { margin: 0; font-family: var(--pismo-nadpis); font-size: 1.05rem; font-weight: 620; }
+  .doporuceni p, .doporuceni li { font-size: var(--fs-sm); }
+  .poznamka { font-size: var(--fs-sm); color: var(--tlumene); }
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .35rem; }
+  ol { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: .4rem; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <div class="datum">Cantinero · 11. srpna 2026 · tři dlužné podklady</div>
+    <h1>Agenti, advokát, produktizace</h1>
+    <p class="podtitul">Tři kusy, které měly být hotové ve fázi 0 a nebyly.
+      Dva z nich odblokovávají další práci, třetí odpovídá na otázku, kterou
+      jste položil — <strong>a odpovídá jinak, než jste možná čekal.</strong></p>
+  </header>
+
+  <section class="sekce">
+    <h2>1. Pět chybějících agentů</h2>
+    <p>Zadání popisuje šest rolí; definici měl jedinou. Zbylých pět je teď
+      napsaných v <code>.claude/agents/</code> — se svými smí a nesmí, eskalacemi
+      a fází, od které se probouzejí.</p>
+    <div class="agenti">
+      <div class="agent bezi">
+        <div><div class="jmeno">Čmuchal</div><div class="co">Sběr a kvalifikace. Beze změny.</div></div>
+        <span class="faze">běží</span>
+      </div>
+      <div class="agent novy">
+        <div><div class="jmeno">Spojka</div>
+        <div class="co">Obce, komory, business parky. Připraví oslovení tak, aby ho člověk poslal skoro beze změny — odeslat ho ale musí člověk vždycky.</div></div>
+        <span class="faze">fáze 2</span>
+      </div>
+      <div class="agent novy">
+        <div><div class="jmeno">Obchodník</div>
+        <div class="co">Skládá zprávu ze schválených šablon a tvrzení. <strong>Sám neodesílá</strong> — připravuje k odeslání. Znalost z inzerátů se do zprávy nedostane ani narážkou.</div></div>
+        <span class="faze">fáze 3</span>
+      </div>
+      <div class="agent novy">
+        <div><div class="jmeno">Statistik</div>
+        <div class="co">Měří odpovědi, schůzky a náklad na schůzku. Otevření zpráv vědomě nesleduje. Smí zastavit odesílání.</div></div>
+        <span class="faze">fáze 4</span>
+      </div>
+      <div class="agent novy">
+        <div><div class="jmeno">Marketér</div>
+        <div class="co">Navrhuje varianty. Nasadit smí jen tu, která zvítězila na 150 zprávách a nezavádí nic nového — jinak schvaluje člověk.</div></div>
+        <span class="faze">fáze 4</span>
+      </div>
+      <div class="agent novy">
+        <div><div class="jmeno">Ředitel</div>
+        <div class="co">Týdenní hlášení, namátková kontrola 20 zpráv. Hlídá i to, jestli některý agent neobchází pravidlo, protože mu překáželo.</div></div>
+        <span class="faze">fáze 5</span>
+      </div>
+    </div>
+    <p class="poznamka">Žádný z nich nemá nástroj na odesílání a mít ho nebude,
+      dokud to člověk vědomě nezapne.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>2. Podklad pro advokáta</h2>
+    <p>Sedmnáct konkrétních otázek ve čtyřech okruzích, aby advokát nemusel
+      systém zjišťovat z rozhovoru. Soubor: <code>docs/pravni-brief.md</code>.</p>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Okruh</th><th>Na co se ptáme</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A. Oslovování</strong></td><td>Je 10 zpráv denně, každé firmě jednou, mimo pojem „hromadně nebo opakovaně"? Jakou váhu má poptávková adresa? Režim adresného dopisu.</td></tr>
+          <tr><td><strong>B. Osobní údaje</strong></td><td>Je oprávněný zájem správný titul? Informační povinnost, doba uchování. <strong>Registr smluv</strong> — stažením se stáváme správcem.</td></tr>
+          <tr><td><strong>C. Produktizace</strong></td><td>Co se mění při nabídnutí jiným firmám, jak se dělí odpovědnost, co musí být ve smlouvě.</td></tr>
+          <tr><td><strong>D. Míra rizika</strong></td><td>Kde na škále jsme — <em>upřímný odhad, ne ujištění</em>. A co změnit jako první.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Podklad zároveň vypisuje <strong>deset omezení vestavěných v systému</strong>
+      — limit, zákaz sekvencí, priorita poptávkových adres, žádné sledování otevření.
+      Nejsou to sliby: jsou vynucená v databázi a kódu, takže se nedají obejít pokynem.</p>
+  </section>
+
+  <section class="sekce">
+    <h2>3. Má smysl systém prodávat?</h2>
+    <blockquote>
+      <div><strong>Doporučení: neotevírat produktizaci teď.</strong> Ne proto,
+        že je to špatný nápad — protože je předčasný.</div>
+      <div>Chybí jediná věc, která by celou tu analýzu nahradila fakty:
+        <strong>ověření, že systém funguje pro vás.</strong> Dosud neodeslal
+        jedinou zprávu, takže nevíme, jestli to, co bychom prodávali, vůbec
+        zabírá.</div>
+    </blockquote>
+
+    <h3>Dvě ekonomiky, ne jedna</h3>
+    <div class="obal">
+      <table>
+        <thead><tr><th></th><th>Pro sebe</th><th>Pro klienty</th></tr></thead>
+        <tbody>
+          <tr><td>Mezní náklad běhu</td><td><strong>0 Kč</strong> — z předplatného</td><td>tokeny za každého klienta</td></tr>
+          <tr><td>Hosting a provoz</td><td>běží lokálně</td><td>server, zálohy, dostupnost</td></tr>
+          <tr><td>Podpora</td><td>žádná</td><td>nikdy neskončí</td></tr>
+          <tr><td>Právní odpovědnost</td><td>vaše</td><td><strong>sdílená se zákazníkem</strong></td></tr>
+          <tr><td>Správa souhlasů</td><td>nepotřeba</td><td><strong>nevypnutelná součást</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Systém dosud spotřeboval <strong>0 USD</strong> na placené API. Produktizací
+      se z toho stane vaše první nákladová položka.</p>
+
+    <h3>Čím se Cantinero liší od toho, co existuje</h3>
+    <ul>
+      <li><strong>U každého údaje je zdroj a doslovná citace</strong> a dá se na ně
+        kliknout. Když se někdo zeptá „odkud to víte", je to rozdíl mezi odpovědí
+        a rozpaky.</li>
+      <li><strong>Pravidla jsou vynucená v databázi, ne v instrukci.</strong> Systém
+        neumí odeslat víc než limit — ne proto, že by se to nemělo, ale protože to nejde.</li>
+    </ul>
+    <p class="poznamka">Na objemu s BizMachine nevyhrajete — mají 11,7 mil. firem
+      a tým. Na doložitelnosti a úzkém záběru možná ano.</p>
+
+    <h3>Co by se muselo doprogramovat</h3>
+    <div class="obal">
+      <table>
+        <thead><tr><th>Co</th><th class="cislo">Odhad</th></tr></thead>
+        <tbody>
+          <tr><td>Správa souhlasů jako nevypnutelná součást</td><td class="cislo">3 sezení</td></tr>
+          <tr><td>Izolace dat mezi klienty</td><td class="cislo">4</td></tr>
+          <tr><td>Onboarding zákazníka bez nás</td><td class="cislo">3</td></tr>
+          <tr><td>Napojení na CRM</td><td class="cislo">3</td></tr>
+          <tr><td>Účtování a limity API</td><td class="cislo">2</td></tr>
+          <tr><td>Hosting, zálohy, dostupnost</td><td class="cislo">2 + průběžně</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Zhruba 17 sezení</strong> na první prodejnou verzi — měsíce, ne týdny.
+      A podpora pak už jen začíná.</p>
+
+    <div class="doporuceni">
+      <h3>Co udělat místo toho</h3>
+      <ol>
+        <li><strong>Dokončit fázi 0</strong> — tvrzení, šablony, doména, právní konzultace. Nutné tak jako tak.</li>
+        <li><strong>Projít fází 3 s vlastním produktem</strong> a změřit, kolik oslovení vede ke kolika schůzkám. <strong>Tohle číslo je jediný prodejní argument, který bude mít váhu.</strong></li>
+        <li><strong>Tři rozhovory</strong> s dodavateli služeb pro firmy — čím to řeší dnes, co by je přimělo změnit, kolik platí.</li>
+      </ol>
+      <p>Ten třetí bod jde udělat <strong>hned a bez jediného řádku kódu</strong>
+        — a odpoví na víc otázek než celá ta analýza. Kdybyste z toho měl udělat
+        jednu jedinou věc, je to tahle.</p>
+    </div>
+  </section>
+
+  <section class="sekce">
+    <h2>Poctivá poznámka k té analýze</h2>
+    <p class="poznamka">O trhu nemám data. Nemám ceny konkurence z jednání, nemám
+      rozhovory se zákazníky, nemám čísla o tom, kolik kdo za co platí. Každý odhad
+      v tom dokumentu je označený jako odhad — a poslední kapitola vypisuje, čím
+      přesně by šel nahradit něčím podloženým. Radši vám to napíšu takhle natvrdo,
+      než abych vám dal jistotu, kterou nemám.</p>
+  </section>
+
+</div>

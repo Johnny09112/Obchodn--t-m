@@ -29,6 +29,7 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[firma-bez-razitka-se-vraci-navzdy]] — Firmu, kterou agent tiše přeskočí, nikdo nerazítkuje — vrací se do každé další dávky a fronta nikdy nedojde · active · 2026-08-13
 - [[dva-profily-sber-a-reserse]] — Profil se čte ze dvou míst — sběr bere globálně aktivní, rešerše profil kampaně; kdo ho čte, musí říct který · active · 2026-08-07
 - [[tri-kopie-seznamu-atributu]] — Pevný seznam žil ve čtyřech kopiích — zrušit ho v jedné znamená ostrou dávku s nulou, která vypadá hotově · active · 2026-08-07
 - [[tajemstvi-mimo-pracovni-slozku]] — Omezení nástrojů agenta není bezpečnostní hranice — tajemství musí ležet mimo pracovní složku · active · 2026-08-06

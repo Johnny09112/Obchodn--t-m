@@ -4,7 +4,7 @@ description: Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, 
 type: context
 status: active
 created: 2026-08-01
-updated: 2026-08-07
+updated: 2026-08-13
 ---
 
 # obchodni-tym — živý kontext
@@ -105,6 +105,41 @@ podmínka `check` zrušená a nahrazená cizím klíčem, RLS zapnuté.
 - Ledger celého běhu: `.superpowers/sdd/2026-08-07-profil-produktu/progress.md`
 - Pasti, které to odhalilo: [[tri-kopie-seznamu-atributu]],
   [[dva-profily-sber-a-reserse]]
+
+## Milník 13. 8. — rešerše dokončená na všech kvalifikovaných firmách
+
+**V kartotéce není jediná kvalifikovaná firma bez rešerše.** Za den prošlo
+zhruba 230 firem ve dvanácti dávkách.
+
+| Údaj | Hodnota |
+|---|---|
+| Firem s popisem oboru vlastními slovy | **214** |
+| Firem s uloženým webem | **156** |
+| Firem se spojením | **356** |
+| Záznamů v evidenci | 7 946 |
+| Obchodních signálů | 12 |
+| Kvalifikovaných bez rešerše | **0** |
+
+Nová kampaň **Bezdružice** (`a5658560`) nad územím „Průzkum Bezdružice" —
+založena 13. 8., aby šly dobrat zbylé firmy z prvního ostrého běhu. Většinu
+tvoří fyzické osoby a mikropodniky; majitel je přidal vědomě.
+
+### Čtyři chyby odhalené a opravené během toho dne
+
+1. **Firma bez razítka se vracela do fronty donekonečna** — razítko se
+   nastavovalo jen při nálezu, takže firmu, kterou agent tiše vynechal,
+   nikdo neoznačil. Řeší `reserse_pokusu` (migrace 0042, tři pokusy)
+   — [[firma-bez-razitka-se-vraci-navzdy]].
+2. **Rešerše jezdila na firmy mimo dosah jídelny.** Výběr nekoukal na stav;
+   v jedné kampani stálo 216 čekajících proti sedmi kvalifikovaným. Filtr je
+   psaný jako výčet **zakázaných** stavů.
+3. **Výběr firem byl na dvou místech a rozešel se** — `firmyProReserse`
+   a `firmyKObohaceni`. Filtr přidaný jen do prvního způsobil, že agent
+   dostával jiné firmy, než kterým se počítaly pokusy. Duplicita zrušena:
+   `firmyKObohaceni` dostává hotový seznam IČO. **Komentář v kódu tuhle
+   chybu předpovídal** — napsala ho revize předchozího celku.
+4. **`spojeni` se agentovi nabízelo jako atribut** a kontrola ho odmítala.
+   Opraveno zadání, ne pojistka.
 
 ### Ostrá dávka 7. 8. — mechanismus funguje, výtěžnost ne
 

@@ -75,6 +75,19 @@ export async function firmyProReserse(
        -- Bez tohohle se firma, u které agent nikdy nic nenajde, vrací do
        -- každé další dávky a fronta nikdy nedojde (13. 8. 2026).
        and c.reserse_pokusu < ${MAX_POKUSU_RESERSE}
+       -- Stavy, na které se agentní čas vydávat NEMÁ. Rozhodnutí majitele
+       -- 13. 8. 2026: firma ve stavu cekajici_na_jidelnu je mimo dosah
+       -- jakékoli jídelny — dokud se v jejím okolí nějaká neotevře, nemá jí
+       -- co nabídnout, a až se otevře, dá se dohnat cíleně. Do té doby by to
+       -- byly hodiny práce za nic (v kampani Zkouška průzkumu jich bylo
+       -- 216 proti sedmi kvalifikovaným).
+       --
+       -- Psáno jako výčet ZAKÁZANÝCH stavů, ne povolených
+       -- ([[zamykej-vyjmenovanim-zamcenych-stavu]]): kdyby přibyl nový
+       -- pracovní stav, seznam povolených by ho tiše vyřadil z fronty
+       -- a nikdo by si toho nevšiml. Takhle se nanejvýš zbytečně zpracuje —
+       -- což je vidět ve výpisu dávky.
+       and c.stav not in ('cekajici_na_jidelnu', 'zamitnuty')
      order by c.skore desc nulls last, c.ico
      limit $2`,
     [kampanId, limit],

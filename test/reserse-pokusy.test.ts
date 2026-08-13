@@ -101,6 +101,32 @@ describe("pokusy o rešerši", () => {
     expect(await vycerpanePokusy(db, kampanId)).toBe(1);
   });
 
+  it("firma čekající na jídelnu do fronty nepatří", async () => {
+    await firmaVKampani("25232657", 50);
+    await firmaVKampani("25242407", 40);
+    await db.query(
+      "update companies set stav = 'cekajici_na_jidelnu' where ico = '25242407'",
+    );
+    const f = await firmyProReserse(db, kampanId, 10);
+    // Obě strany zvlášť: kvalifikovaná zůstává, čekající vypadne. Test,
+    // který tvrdí jen jedno, by neodlišil filtr od úplného vyprázdnění.
+    expect(f.map((x) => x.ico)).toEqual(["25232657"]);
+  });
+
+  it("zamítnutá firma do fronty nepatří", async () => {
+    await firmaVKampani("25232657", 50);
+    await db.query("update companies set stav = 'zamitnuty' where ico = '25232657'");
+    expect(await firmyProReserse(db, kampanId, 10)).toHaveLength(0);
+  });
+
+  // Filtr je psaný jako výčet ZAKÁZANÝCH stavů. Kdyby byl obráceně, nový
+  // pracovní stav by z fronty tiše vypadl a nikdo by si toho nevšiml.
+  it("firma dál ve trychtýři z fronty tiše nezmizí", async () => {
+    await firmaVKampani("25232657", 50);
+    await db.query("update companies set stav = 'jednani' where ico = '25232657'");
+    expect(await firmyProReserse(db, kampanId, 10)).toHaveLength(1);
+  });
+
   it("firma, u které se něco našlo, se mezi vyčerpané nepočítá", async () => {
     await firmaVKampani("25232657", 50);
     for (let i = 0; i < MAX_POKUSU_RESERSE; i++) {

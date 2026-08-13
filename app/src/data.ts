@@ -1365,3 +1365,20 @@ export async function pridejFirmuDoKampane(
   if (error) throw new Error(error.message);
   return "pridano";
 }
+
+/**
+ * Jedna firma podle IČO — pro otevření detailu odjinud než z kartotéky.
+ *
+ * Používá **tentýž** seznam sloupců jako `nactiFirmy`. Kdyby si tahle
+ * funkce psala vlastní, rozešly by se — a detail otevřený z podnětů by
+ * ukazoval něco jiného než detail otevřený z kartotéky.
+ */
+export async function nactiFirmu(ico: string): Promise<Firma | null> {
+  const { data, error } = await supabase
+    .from("companies")
+    .select(SLOUPCE_FIRMY)
+    .eq("ico", ico)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data ?? null) as unknown as Firma | null;
+}

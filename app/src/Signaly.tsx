@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { DetailFirmy } from "./DetailFirmy";
 import {
+  nactiFirmu,
   nactiKampaneProVyber,
   nactiSignaly,
   oznacSignalVyrizeny,
   pridejFirmuDoKampane,
+  type Firma,
   type KampanProVyber,
   type Signal,
 } from "./data";
@@ -87,6 +90,27 @@ export function Signaly({ email }: { email: string }) {
   const [nacita, setNacita] = useState(true);
   const [chyba, setChyba] = useState<string | null>(null);
   const [vyber, setVyber] = useState<Vyber>("prilezitosti");
+  /**
+   * Firma otevřená v detailu. Dotahuje se až při kliknutí — podnět nese
+   * jen název a obec, kdežto detail chce celý řádek firmy. Načíst je
+   * dopředu ke všem podnětům by byl dotaz navíc za něco, co si člověk
+   * otevře u jedné firmy z dvanácti.
+   */
+  const [detail, setDetail] = useState<Firma | null>(null);
+  const [otviram, setOtviram] = useState<string | null>(null);
+
+  async function otevriDetail(ico: string): Promise<void> {
+    setOtviram(ico);
+    try {
+      const f = await nactiFirmu(ico);
+      if (f) setDetail(f);
+      else setChyba(`Firmu ${ico} se nepodařilo najít v kartotéce.`);
+    } catch (e: unknown) {
+      setChyba(e instanceof Error ? e.message : String(e));
+    } finally {
+      setOtviram(null);
+    }
+  }
 
   // Vyřízené se stahují taky — jinak by po odškrtnutí nešlo omyl vrátit
   // bez obnovení stránky. Rozdělují se až při zobrazení.
@@ -274,7 +298,15 @@ export function Signaly({ email }: { email: string }) {
               className={s.vylucovaci ? "signal je-vylucovaci" : "signal"}
             >
               <div className="signal-hlava">
-                <span className="signal-firma">{s.nazev ?? s.ico}</span>
+                {/* Název je odkaz na detail — první, na co člověk sáhne,
+                    když chce vědět víc, je jméno firmy. */}
+                <button
+                  className="signal-firma jako-odkaz"
+                  disabled={otviram === s.ico}
+                  onClick={() => void otevriDetail(s.ico)}
+                >
+                  {s.nazev ?? s.ico}
+                </button>
                 {s.obec && <span className="poznamka">{s.obec}</span>}
                 <span className="odsazovac" />
                 <span className="stitek">{s.nazevDruhu}</span>
@@ -321,6 +353,9 @@ export function Signaly({ email }: { email: string }) {
           ))}
         </ul>
       )}
+      {/* Detail je dialog nad seznamem, ne přechod na jinou obrazovku —
+          obchodník se po zavření vrátí přesně tam, kde byl, i s filtry. */}
+      {detail && <DetailFirmy firma={detail} onZavri={() => setDetail(null)} />}
     </section>
   );
 }

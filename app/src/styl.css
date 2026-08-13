@@ -1656,3 +1656,30 @@ h3 {
   font-size: var(--t-mikro);
   color: var(--cihla);
 }
+
+/* Název firmy v podnětu je tlačítko, ale má vypadat a chovat se jako odkaz
+   — je to první místo, kam člověk sáhne, když chce vědět víc. */
+.jako-odkaz {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--razitko);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.jako-odkaz:hover:not(:disabled) {
+  color: var(--razitko-tmave);
+}
+
+.jako-odkaz:disabled {
+  color: var(--inkoust-slaby);
+  cursor: progress;
+}
+
+.jako-odkaz:focus-visible {
+  outline: 2px solid var(--razitko);
+  outline-offset: 2px;
+}

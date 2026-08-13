@@ -4,9 +4,11 @@
 > Plný katalog on-demand záznamů. Always-load vrstvu viz auto-memory/MEMORY.md.
 
 ## Context
+- [[use-casy]] — Které use-casy dnes systém obsluhuje — stravování pro střední a větší firmy, docházkové systémy pro obce i firmy · active · 2026-08-10
 - [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-07
 
 ## Decisions
+- [[produkt-neni-vazany-na-obor]] — Cantinero se prodává firmám z jakéhokoli oboru — jídelny jsou jen jeden z use-caseů, žádná data se nesmí odepsat jako nepotřebná · active · 2026-08-10
 - [[dve-vrstvy-znalost-a-zprava]] — Whitelist váže obsah zprávy, ne sběr — SPEC kap. 5 rozdělena na znalost o firmě a obsah oslovení · active · 2026-08-06
 - [[male-firmy-a-nezname-jde-pribrat]] — Firmy bez známé velikosti i firmy do 24 zaměstnanců jde do kampaně přibrat dodatečně, každé vlastním tlačítkem · active · 2026-08-04
 - [[jidelna-se-nepriradi-rucne]] — Jídelna se k oblasti nevybírá ručně — ukazuje se, které v tom tvaru leží · active · 2026-08-03

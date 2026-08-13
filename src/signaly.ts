@@ -107,9 +107,12 @@ export interface PlatnySignal {
  */
 export async function platneSignaly(
   db: Db,
-  opts: { limit?: number; vylucovaci?: boolean } = {},
+  opts: { limit?: number; vylucovaci?: boolean; iVyrizene?: boolean } = {},
 ): Promise<PlatnySignal[]> {
   const podminky = ["(s.plati_do is null or s.plati_do > now())"];
+  // Odškrtnutý podnět je vyřízená práce, ne neplatná informace — proto se
+  // nemaže, jen se přestane nabízet.
+  if (!opts.iVyrizene) podminky.push("s.vyrizeno_at is null");
   const params: unknown[] = [];
   if (opts.vylucovaci !== undefined) {
     params.push(opts.vylucovaci);
@@ -127,6 +130,31 @@ export async function platneSignaly(
      ${opts.limit ? `limit ${Number(opts.limit)}` : ""}`,
     params,
   );
+}
+
+/**
+ * Odškrtne podnět jako vyřízený, nebo odškrtnutí vrátí (`kdo = null`).
+ *
+ * Vrací `true`, když se stav doopravdy změnil — opakované odškrtnutí
+ * téhož podnětu nic nepřepisuje, aby se neposouval čas u něčeho, co je
+ * vyřízené týden.
+ */
+export async function oznacVyrizeno(
+  db: Db,
+  id: string,
+  kdo: string | null,
+): Promise<boolean> {
+  const r = await db.query<{ id: string }>(
+    `update signaly
+     set vyrizeno_at = case when $2::text is null then null else now() end,
+         vyrizeno_kym = $2
+     where id = $1
+       and (($2::text is null and vyrizeno_at is not null)
+         or ($2::text is not null and vyrizeno_at is null))
+     returning id`,
+    [id, kdo],
+  );
+  return r.length > 0;
 }
 
 // ── Úroveň 1: pravidla nad daty, která už máme ────────────────────────

@@ -5,6 +5,7 @@ import {
   detekujSmennyProvoz,
   detekujVlastniJidelnu,
   nactiDruhySignalu,
+  oznacVyrizeno,
   platneSignaly,
   zapisSignal,
 } from "../src/signaly.js";
@@ -120,6 +121,56 @@ describe("zápis signálu", () => {
     expect(await platneSignaly(db)).toHaveLength(1);
     await db.query("update signaly set plati_do = now() - interval '1 day'");
     expect(await platneSignaly(db)).toHaveLength(0);
+  });
+
+  it("odškrtnutý podnět se přestane nabízet, ale nezmizí", async () => {
+    await zapisSignal(db, {
+      ico: "25232657", druh: "nabira_lidi", klic: "a",
+      popis: "p", zdrojUrl: "https://a.cz", citace: "c",
+    });
+    const [s] = await db.query<{ id: string }>("select id from signaly");
+
+    expect(await oznacVyrizeno(db, s!.id, "obchodnik@firma.cz")).toBe(true);
+    expect(await platneSignaly(db)).toHaveLength(0);
+    // Nezmizel — jen se nenabízí. Smazaný by se při dalším běhu detektoru
+    // založil znovu, takže by odškrtnutí nic neznamenalo.
+    expect(await platneSignaly(db, { iVyrizene: true })).toHaveLength(1);
+  });
+
+  it("zapamatuje si, kdo odškrtl", async () => {
+    await zapisSignal(db, {
+      ico: "25232657", druh: "nabira_lidi", klic: "a",
+      popis: "p", zdrojUrl: "https://a.cz", citace: "c",
+    });
+    const [s] = await db.query<{ id: string }>("select id from signaly");
+    await oznacVyrizeno(db, s!.id, "obchodnik@firma.cz");
+    const r = await db.query<{ vyrizeno_kym: string; vyrizeno_at: Date }>(
+      "select vyrizeno_kym, vyrizeno_at from signaly",
+    );
+    expect(r[0]!.vyrizeno_kym).toBe("obchodnik@firma.cz");
+    expect(r[0]!.vyrizeno_at).not.toBeNull();
+  });
+
+  it("odškrtnutí jde vrátit zpět", async () => {
+    await zapisSignal(db, {
+      ico: "25232657", druh: "nabira_lidi", klic: "a",
+      popis: "p", zdrojUrl: "https://a.cz", citace: "c",
+    });
+    const [s] = await db.query<{ id: string }>("select id from signaly");
+    await oznacVyrizeno(db, s!.id, "obchodnik@firma.cz");
+    expect(await oznacVyrizeno(db, s!.id, null)).toBe(true);
+    expect(await platneSignaly(db)).toHaveLength(1);
+  });
+
+  // Aby opakované kliknutí neposouvalo čas u něčeho, co je vyřízené týden.
+  it("druhé odškrtnutí téhož podnětu už nic nemění", async () => {
+    await zapisSignal(db, {
+      ico: "25232657", druh: "nabira_lidi", klic: "a",
+      popis: "p", zdrojUrl: "https://a.cz", citace: "c",
+    });
+    const [s] = await db.query<{ id: string }>("select id from signaly");
+    expect(await oznacVyrizeno(db, s!.id, "a@b.cz")).toBe(true);
+    expect(await oznacVyrizeno(db, s!.id, "a@b.cz")).toBe(false);
   });
 
   it("vylučovací signály jdou vyfiltrovat, ale nezahazují se", async () => {

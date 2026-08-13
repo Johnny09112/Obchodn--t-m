@@ -71,7 +71,7 @@ export function App() {
         </button>
       </header>
       <main>
-        {pohled === "signaly" && <Signaly />}
+        {pohled === "signaly" && <Signaly email={session.user.email ?? ""} />}
         {pohled === "oblasti" && <Oblasti role={role} />}
         {pohled === "kartoteka" && <Kartoteka />}
         {pohled === "kampane" && (

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   nactiKampaneProVyber,
   nactiSignaly,
+  oznacSignalVyrizeny,
   pridejFirmuDoKampane,
   type KampanProVyber,
   type Signal,
@@ -21,7 +22,7 @@ import {
  * Nic se odsud neodesílá (TP-8). Podnět je důvod k oslovení, ne oslovení.
  */
 
-type Vyber = "prilezitosti" | "vylucovaci" | "vse";
+type Vyber = "prilezitosti" | "vylucovaci" | "vse" | "vyrizene";
 
 function stari(iso: string): string {
   const dnu = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
@@ -77,7 +78,7 @@ function TlacitkoPridat({
   );
 }
 
-export function Signaly() {
+export function Signaly({ email }: { email: string }) {
   const [signaly, setSignaly] = useState<Signal[]>([]);
   const [kampane, setKampane] = useState<KampanProVyber[]>([]);
   const [kampanId, setKampanId] = useState("");
@@ -86,8 +87,10 @@ export function Signaly() {
   const [chyba, setChyba] = useState<string | null>(null);
   const [vyber, setVyber] = useState<Vyber>("prilezitosti");
 
+  // Vyřízené se stahují taky — jinak by po odškrtnutí nešlo omyl vrátit
+  // bez obnovení stránky. Rozdělují se až při zobrazení.
   useEffect(() => {
-    Promise.all([nactiSignaly(), nactiKampaneProVyber()])
+    Promise.all([nactiSignaly(true), nactiKampaneProVyber()])
       .then(([s, k]) => {
         setSignaly(s);
         setKampane(k);
@@ -114,16 +117,32 @@ export function Signaly() {
     }
   }
 
-  const videt = useMemo(
-    () =>
-      signaly.filter((s) =>
-        vyber === "vse" ? true : vyber === "vylucovaci" ? s.vylucovaci : !s.vylucovaci,
-      ),
-    [signaly, vyber],
-  );
+  const cekajici = useMemo(() => signaly.filter((s) => !s.vyrizenoAt), [signaly]);
+  const hotove = useMemo(() => signaly.filter((s) => s.vyrizenoAt), [signaly]);
 
-  const prilezitosti = signaly.filter((s) => !s.vylucovaci).length;
-  const vylucovaci = signaly.length - prilezitosti;
+  const videt = useMemo(() => {
+    if (vyber === "vyrizene") return hotove;
+    if (vyber === "vse") return cekajici;
+    return cekajici.filter((s) => (vyber === "vylucovaci" ? s.vylucovaci : !s.vylucovaci));
+  }, [cekajici, hotove, vyber]);
+
+  const prilezitosti = cekajici.filter((s) => !s.vylucovaci).length;
+  const vylucovaci = cekajici.length - prilezitosti;
+
+  async function vyriz(id: string, hotovo: boolean): Promise<void> {
+    try {
+      await oznacSignalVyrizeny(id, hotovo ? email : null);
+      setSignaly((p) =>
+        p.map((s) =>
+          s.id === id
+            ? { ...s, vyrizenoAt: hotovo ? new Date().toISOString() : null }
+            : s,
+        ),
+      );
+    } catch (e: unknown) {
+      setChyba(e instanceof Error ? e.message : String(e));
+    }
+  }
 
   if (nacita) return <p className="nacitani">Moment…</p>;
   if (chyba) return <p className="hlaska">Nepodařilo se načíst podněty: {chyba}</p>;
@@ -156,7 +175,13 @@ export function Signaly() {
           Neoslovovat ({vylucovaci})
         </button>
         <button className={vyber === "vse" ? "aktivni" : ""} onClick={() => setVyber("vse")}>
-          Vše ({signaly.length})
+          Vše ({cekajici.length})
+        </button>
+        <button
+          className={vyber === "vyrizene" ? "aktivni" : ""}
+          onClick={() => setVyber("vyrizene")}
+        >
+          Vyřízené ({hotove.length})
         </button>
 
         <span className="odsazovac" />
@@ -187,7 +212,9 @@ export function Signaly() {
         <p className="prazdno">
           {vyber === "vylucovaci"
             ? "Žádné firmy k vyloučení. To je v pořádku — znamená to, že se u nikoho nenašla vlastní jídelna."
-            : "Zatím žádné podněty. Vznikají z toho, co agent najde při rešerši."}
+            : vyber === "vyrizene"
+              ? "Zatím jste nic neodškrtl. Odškrtnuté podněty se sem odkládají, nemažou se."
+              : "Zatím žádné podněty. Vznikají z toho, co agent najde při rešerši."}
         </p>
       ) : (
         <ul className="seznam-signalu">
@@ -222,11 +249,23 @@ export function Signaly() {
                 {/* U vylučovacího podnětu tlačítko schválně NENÍ. „Neoslovovat"
                     a „přidat do kampaně" jsou protiklady; nabídnout obojí vedle
                     sebe by zvalo k omylu, který se pak těžko hledá. */}
-                {!s.vylucovaci && <TlacitkoPridat
+                {!s.vylucovaci && !s.vyrizenoAt && <TlacitkoPridat
                   stav={pridano[s.ico]}
                   muze={kampanId !== ""}
                   onPridej={() => void pridej(s.ico)}
                 />}
+
+                {/* Odškrtnutí jde vždycky vrátit — omyl při klikání je
+                    běžnější než rozmyšlené odškrtnutí a nemá stát za trest. */}
+                {s.vyrizenoAt ? (
+                  <button className="tlacitko tise" onClick={() => void vyriz(s.id, false)}>
+                    Vrátit mezi čekající
+                  </button>
+                ) : (
+                  <button className="tlacitko tise" onClick={() => void vyriz(s.id, true)}>
+                    Vyřízeno
+                  </button>
+                )}
               </div>
             </li>
           ))}

@@ -1171,6 +1171,7 @@ export async function posledniReserse(kampanId: string): Promise<ObjednavkaReser
 // ── Obchodní signály ──────────────────────────────────────────────────
 
 export interface Signal {
+  id: string;
   ico: string;
   nazev: string | null;
   obec: string | null;
@@ -1184,6 +1185,30 @@ export interface Signal {
   zjistenoAt: string;
   /** Kolik má firma doložených spojení — bez nich se stejně psát nedá. */
   spojeni: number;
+  /** Kdy a kým byl podnět odškrtnut. `null` = ještě čeká. */
+  vyrizenoAt: string | null;
+  vyrizenoKym: string | null;
+}
+
+/**
+ * Odškrtne podnět jako vyřízený, nebo odškrtnutí vrátí (`kdo = null`).
+ *
+ * Zapisují se jen tyhle dva sloupce — na víc uživatel nemá oprávnění
+ * (migrace 0043 dává `authenticated` právo měnit pouze je). Citaci ani
+ * zdroj tedy přes datové API přepsat nejde.
+ */
+export async function oznacSignalVyrizeny(
+  id: string,
+  kdo: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("signaly")
+    .update({
+      vyrizeno_at: kdo === null ? null : new Date().toISOString(),
+      vyrizeno_kym: kdo,
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 /**
@@ -1193,14 +1218,19 @@ export interface Signal {
  * platností se nemá ani stáhnout. `plati_do is null` znamená „nevyprší"
  * (typicky vylučovací podněty — „vaří si sama" nepřestane platit).
  */
-export async function nactiSignaly(): Promise<Signal[]> {
-  const { data, error } = await supabase
+export async function nactiSignaly(iVyrizene = false): Promise<Signal[]> {
+  let dotaz = supabase
     .from("signaly")
     .select(
-      "ico,druh,sila,popis,citace,zdroj_url,zjisteno_at," +
+      "id,ico,druh,sila,popis,citace,zdroj_url,zjisteno_at,vyrizeno_at,vyrizeno_kym," +
         "druhy_signalu(nazev,vylucovaci),companies(nazev,obec)",
     )
-    .or(`plati_do.is.null,plati_do.gt.${new Date().toISOString()}`)
+    .or(`plati_do.is.null,plati_do.gt.${new Date().toISOString()}`);
+  // Odškrtnutý podnět je vyřízená práce, ne neplatná informace — proto se
+  // nemaže, jen se přestane nabízet.
+  if (!iVyrizene) dotaz = dotaz.is("vyrizeno_at", null);
+
+  const { data, error } = await dotaz
     .order("sila", { ascending: false })
     .order("zjisteno_at", { ascending: false })
     .limit(200);
@@ -1229,7 +1259,10 @@ export async function nactiSignaly(): Promise<Signal[]> {
     const druh = r.druhy_signalu as { nazev?: string; vylucovaci?: boolean } | null;
     const firma = r.companies as { nazev?: string; obec?: string } | null;
     return {
+      id: r.id as string,
       ico: r.ico as string,
+      vyrizenoAt: (r.vyrizeno_at as string | null) ?? null,
+      vyrizenoKym: (r.vyrizeno_kym as string | null) ?? null,
       nazev: firma?.nazev ?? null,
       obec: firma?.obec ?? null,
       druh: r.druh as string,

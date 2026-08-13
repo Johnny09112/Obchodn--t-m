@@ -51,6 +51,15 @@ export async function dalsiReserseKVyrizeni(db: Db): Promise<Reserse | null> {
  * neoslovovat" a dohledávat na ni kontakt je zbytečná práce (rozhodnutí
  * majitele 2026-08-04).
  */
+/**
+ * Kolikrát se firma zkusí, než ji fronta pustí k vodě.
+ *
+ * Tři pokusy proto, že jeden bývá málo (agentovi může dojít čas dřív, než
+ * se k ní dostane) a pátý už nic nepřinese — u firmy bez webu a bez
+ * inzerátu není co najít ani napodesáté.
+ */
+export const MAX_POKUSU_RESERSE = 3;
+
 export async function firmyProReserse(
   db: Db,
   kampanId: string,
@@ -63,10 +72,55 @@ export async function firmyProReserse(
      where kf.kampan_id = $1
        and kf.stav = 'vybrana'
        and c.obohaceno_at is null
+       -- Bez tohohle se firma, u které agent nikdy nic nenajde, vrací do
+       -- každé další dávky a fronta nikdy nedojde (13. 8. 2026).
+       and c.reserse_pokusu < ${MAX_POKUSU_RESERSE}
      order by c.skore desc nulls last, c.ico
      limit $2`,
     [kampanId, limit],
   );
+}
+
+/**
+ * Zaznamená, že firmy dávkou prošly — **bez ohledu na to, jestli z nich
+ * něco vypadlo**.
+ *
+ * Tohle je ten rozdíl, na kterém celá oprava stojí: `obohaceno_at` říká
+ * „něco jsme zjistili", tenhle čítač říká „zkoušeli jsme to". Dokud
+ * existovalo jen to první, nešlo „nenašlo se" odlišit od „nezkusilo se".
+ *
+ * Volá se až po doběhnutí agenta, ne před ním — kdyby běh spadl na výpadku
+ * spojení, nemá se to firmám počítat jako pokus.
+ */
+export async function zaznamenejPokusReserse(
+  db: Db,
+  ica: readonly string[],
+): Promise<void> {
+  if (ica.length === 0) return;
+  await db.query(
+    `update companies
+     set reserse_pokusu = reserse_pokusu + 1, reserse_naposledy_at = now()
+     where ico = any($1)`,
+    [ica as string[]],
+  );
+}
+
+/**
+ * Kolik firem v kampani vyčerpalo pokusy, aniž by se u nich cokoli našlo.
+ *
+ * Není to chyba — je to zpráva o území. Ale musí být vidět, jinak se
+ * prázdná fronta tváří stejně jako fronta, do které se ještě nesáhlo.
+ */
+export async function vycerpanePokusy(db: Db, kampanId: string): Promise<number> {
+  const r = await db.query<{ pocet: number }>(
+    `select count(*)::int as pocet
+     from kampan_firmy kf join companies c on c.ico = kf.ico
+     where kf.kampan_id = $1 and kf.stav = 'vybrana'
+       and c.obohaceno_at is null
+       and c.reserse_pokusu >= ${MAX_POKUSU_RESERSE}`,
+    [kampanId],
+  );
+  return r[0]?.pocet ?? 0;
 }
 
 export async function zahajReserse(db: Db, id: string, runId: string): Promise<void> {

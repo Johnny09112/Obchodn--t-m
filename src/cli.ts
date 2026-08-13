@@ -54,7 +54,7 @@ import { rozhlednuti, vyridPruzkum } from "./cmuchal-oblast.js";
 import { dalsiKVyrizeni, odemkni, tep, zamkni } from "./fronta.js";
 import {
   dalsiReserseKVyrizeni, firmyProReserse, pocetSeSpojenim, pocetZpracovanych, selhalaReserse,
-  uzavriReserse, zahajReserse,
+  uzavriReserse, vycerpanePokusy, zahajReserse, zaznamenejPokusReserse,
 } from "./reserse.js";
 // Aliasováno — `spustCmuchala` už je jméno funkce z cmuchal.ts (obohacení
 // nad jídelnou), tohle je jiná věc: spuštění Čmuchala jako procesu.
@@ -1393,11 +1393,22 @@ async function cmdReserse(argv: string[]): Promise<void> {
           // s `obohaceno_at is null`, takže razítko po běhu znamená, že se
           // agent té firmy doopravdy dotkl.
           const zpracovano = await pocetZpracovanych(db, ica);
+          // Pokus se počítá VŠEM nabídnutým firmám, i těm, které agent
+          // tiše vynechal — jinak se vracejí do každé další dávky a fronta
+          // nikdy nedojde. Až tady, ne před během: kdyby dávka spadla na
+          // výpadku spojení, nemá se to firmám počítat.
+          await zaznamenejPokusReserse(db, ica);
           await uzavriReserse(db, o.id, {
             firemZpracovano: zpracovano,
             firemSNalezem: pribylo,
           });
           console.log(`  hotovo — zpracováno ${zpracovano} z ${firmy.length}, spojení přibylo u ${pribylo}`);
+          const vycerpane = await vycerpanePokusy(db, o.kampanId);
+          if (vycerpane > 0) {
+            console.log(
+              `  ${vycerpane} firem vyčerpalo pokusy bez nálezu — už se nabízet nebudou.`,
+            );
+          }
         } else {
           await selhalaReserse(db, o.id, v.chyba ?? "neznámá chyba");
           console.log(`  selhalo: ${v.chyba}`);

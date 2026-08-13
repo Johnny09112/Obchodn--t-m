@@ -1167,3 +1167,80 @@ export async function posledniReserse(kampanId: string): Promise<ObjednavkaReser
     chyba: (r.chyba as string | null) ?? null,
   };
 }
+
+// ── Obchodní signály ──────────────────────────────────────────────────
+
+export interface Signal {
+  ico: string;
+  nazev: string | null;
+  obec: string | null;
+  druh: string;
+  nazevDruhu: string;
+  vylucovaci: boolean;
+  sila: number;
+  popis: string;
+  citace: string;
+  zdrojUrl: string;
+  zjistenoAt: string;
+  /** Kolik má firma doložených spojení — bez nich se stejně psát nedá. */
+  spojeni: number;
+}
+
+/**
+ * Platné podněty — co je nového a proč zrovna tuhle firmu.
+ *
+ * Filtr na platnost je v dotazu, ne v prohlížeči: signál s prošlou
+ * platností se nemá ani stáhnout. `plati_do is null` znamená „nevyprší"
+ * (typicky vylučovací podněty — „vaří si sama" nepřestane platit).
+ */
+export async function nactiSignaly(): Promise<Signal[]> {
+  const { data, error } = await supabase
+    .from("signaly")
+    .select(
+      "ico,druh,sila,popis,citace,zdroj_url,zjisteno_at," +
+        "druhy_signalu(nazev,vylucovaci),companies(nazev,obec)",
+    )
+    .or(`plati_do.is.null,plati_do.gt.${new Date().toISOString()}`)
+    .order("sila", { ascending: false })
+    .order("zjisteno_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+
+  const radky = (data ?? []) as unknown as Array<Record<string, unknown>>;
+  const ica = radky.map((r) => r.ico as string);
+
+  // Spojení se dotahuje zvlášť — vnořený count přes PostgREST by znamenal
+  // další vztah v dotazu a tenhle způsob je čitelnější i rychlejší.
+  const spojeni = new Map<string, number>();
+  if (ica.length > 0) {
+    const { data: k } = await supabase
+      .from("contacts")
+      .select("ico,email,telefon")
+      .in("ico", ica);
+    for (const c of (k ?? []) as Array<Record<string, unknown>>) {
+      if (c.email || c.telefon) {
+        const ico = c.ico as string;
+        spojeni.set(ico, (spojeni.get(ico) ?? 0) + 1);
+      }
+    }
+  }
+
+  return radky.map((r) => {
+    const druh = r.druhy_signalu as { nazev?: string; vylucovaci?: boolean } | null;
+    const firma = r.companies as { nazev?: string; obec?: string } | null;
+    return {
+      ico: r.ico as string,
+      nazev: firma?.nazev ?? null,
+      obec: firma?.obec ?? null,
+      druh: r.druh as string,
+      nazevDruhu: druh?.nazev ?? (r.druh as string),
+      vylucovaci: druh?.vylucovaci === true,
+      sila: Number(r.sila),
+      popis: r.popis as string,
+      citace: r.citace as string,
+      zdrojUrl: r.zdroj_url as string,
+      zjistenoAt: r.zjisteno_at as string,
+      spojeni: spojeni.get(r.ico as string) ?? 0,
+    };
+  });
+}

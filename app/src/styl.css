@@ -1499,3 +1499,124 @@ h3 {
   font-weight: 600;
   margin: 1.5rem 0 0.5rem;
 }
+
+/* ── Co je nového: obchodní podněty ────────────────────────────────────
+   Podnět není řádek tabulky — je to tvrzení s dokladem. Proto karta
+   s citací, ne sloupec. Vylučovací („neoslovovat") má odlišený pruh:
+   čte se obráceně než ostatní a splynout s nimi nesmí. */
+
+.seznam-signalu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--o2);
+}
+
+.signal {
+  background: var(--karta);
+  border: 1px solid var(--linka);
+  border-left: 3px solid var(--zelen);
+  border-radius: var(--r);
+  padding: var(--o3) var(--o4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--o2);
+}
+
+.signal.je-vylucovaci {
+  border-left-color: var(--cihla);
+  background: var(--cihla-svetle);
+}
+
+.signal-hlava {
+  display: flex;
+  align-items: baseline;
+  gap: var(--o2);
+  flex-wrap: wrap;
+}
+
+.signal-firma {
+  font-family: var(--pismo-display);
+  font-size: var(--t-drobny);
+  font-weight: 600;
+}
+
+.signal-duvod {
+  margin: 0;
+  font-size: var(--t-maly);
+}
+
+.signal-patka {
+  display: flex;
+  align-items: center;
+  gap: var(--o3);
+  flex-wrap: wrap;
+  font-size: var(--t-mikro);
+}
+
+/* Vlastní odsazovač — ten v liště platí jen pro přímé potomky .lista. */
+.signal-hlava > .odsazovac,
+.signal-patka > .odsazovac {
+  flex: 1;
+}
+
+/* Podnět bez spojení je k ničemu: není komu napsat. Proto se to říká
+   nahlas, ne šedivým textem mezi ostatními údaji. */
+.spojeni {
+  font-family: var(--pismo-data);
+  font-size: var(--t-mikro);
+  padding: 0 var(--o2);
+  border-radius: var(--r);
+  white-space: nowrap;
+}
+
+.spojeni.ma {
+  background: var(--zelen-svetle);
+  color: var(--zelen);
+}
+
+.spojeni.nema {
+  background: var(--papir);
+  color: var(--inkoust-slaby);
+  border: 1px solid var(--linka);
+}
+
+/* Přepínač pohledu na podněty. Vlastní, ne sdílená `.prepinace` — ta jinde
+   nese odkazová tlačítka bez stavu. Aktivní volba musí být poznat na první
+   pohled; bez toho uživatel neví, co vlastně vidí. */
+.filtr-podnetu {
+  display: flex;
+  gap: var(--o2);
+  margin-bottom: var(--o3);
+  flex-wrap: wrap;
+}
+
+.filtr-podnetu button {
+  font-family: var(--pismo-text);
+  font-size: var(--t-maly);
+  padding: var(--o1) var(--o3);
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  background: var(--karta);
+  color: var(--inkoust-slaby);
+  cursor: pointer;
+}
+
+.filtr-podnetu button:hover {
+  border-color: var(--razitko);
+  color: var(--inkoust);
+}
+
+.filtr-podnetu button.aktivni {
+  background: var(--razitko);
+  border-color: var(--razitko);
+  color: var(--bila);
+  font-weight: 600;
+}
+
+.filtr-podnetu button:focus-visible {
+  outline: 2px solid var(--razitko);
+  outline-offset: 2px;
+}

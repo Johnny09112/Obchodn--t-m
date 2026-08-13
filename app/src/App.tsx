@@ -5,13 +5,16 @@ import { Kartoteka } from "./Kartoteka";
 import { Kampane } from "./Kampane";
 import { Oblasti } from "./Oblasti";
 import { Provoz } from "./Provoz";
+import { Signaly } from "./Signaly";
 import { POPIS_ROLE, roleZeSession, supabase } from "./supabase";
 
-type Pohled = "oblasti" | "kartoteka" | "kampane" | "provoz";
+type Pohled = "signaly" | "oblasti" | "kartoteka" | "kampane" | "provoz";
 
 export function App() {
   const { session, nacita } = usePrihlaseni();
-  const [pohled, setPohled] = useState<Pohled>("oblasti");
+  // Podněty jsou první obrazovka schválně: kartotéka odpovídá „koho máme",
+  // ale ráno rozhoduje „komu volat dnes a proč".
+  const [pohled, setPohled] = useState<Pohled>("signaly");
 
   // Než se ověří uložené přihlášení, neukazuj ani kartotéku, ani přihlašovací
   // lístek — problikávání by vypadalo jako odhlášení.
@@ -26,6 +29,12 @@ export function App() {
       <header className="lista">
         <span className="znacka">Cantinero</span>
         <nav className="rozcestnik">
+          <button
+            className={pohled === "signaly" ? "aktivni" : ""}
+            onClick={() => setPohled("signaly")}
+          >
+            Co je nového
+          </button>
           <button
             className={pohled === "oblasti" ? "aktivni" : ""}
             onClick={() => setPohled("oblasti")}
@@ -62,6 +71,7 @@ export function App() {
         </button>
       </header>
       <main>
+        {pohled === "signaly" && <Signaly />}
         {pohled === "oblasti" && <Oblasti role={role} />}
         {pohled === "kartoteka" && <Kartoteka />}
         {pohled === "kampane" && (

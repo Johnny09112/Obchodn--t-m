@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { nactiSignaly, type Signal } from "./data";
+import {
+  nactiKampaneProVyber,
+  nactiSignaly,
+  pridejFirmuDoKampane,
+  type KampanProVyber,
+  type Signal,
+} from "./data";
 
 /**
  * Co je nového — obchodní podněty seřazené podle síly a stáří.
@@ -35,21 +41,78 @@ function domena(url: string): string {
   }
 }
 
+/** Co se u které firmy stalo po kliknutí — ať je vidět výsledek, ne ticho. */
+type StavPridani = "pridavam" | "pridano" | "uz_tam_je" | { chyba: string };
+
+/**
+ * Tlačítko i jeho výsledek na jednom místě.
+ *
+ * Po přidání se **nemění zpátky na tlačítko** — obchodník musí vidět, že
+ * se to povedlo, jinak klikne podruhé a neví, jestli firmu přidal jednou
+ * nebo dvakrát.
+ */
+function TlacitkoPridat({
+  stav,
+  muze,
+  onPridej,
+}: {
+  stav: StavPridani | undefined;
+  muze: boolean;
+  onPridej: () => void;
+}) {
+  if (stav === "pridano") return <span className="pridano-ok">přidáno do kampaně</span>;
+  if (stav === "uz_tam_je") return <span className="poznamka">v kampani už je</span>;
+  if (stav && typeof stav === "object") {
+    return <span className="pridano-chyba">nepovedlo se: {stav.chyba}</span>;
+  }
+  return (
+    <button
+      className="tlacitko tise"
+      disabled={!muze || stav === "pridavam"}
+      title={muze ? undefined : "Nejdřív vyberte kampaň nahoře"}
+      onClick={onPridej}
+    >
+      {stav === "pridavam" ? "přidávám…" : "Přidat do kampaně"}
+    </button>
+  );
+}
+
 export function Signaly() {
   const [signaly, setSignaly] = useState<Signal[]>([]);
+  const [kampane, setKampane] = useState<KampanProVyber[]>([]);
+  const [kampanId, setKampanId] = useState("");
+  const [pridano, setPridano] = useState<Record<string, StavPridani>>({});
   const [nacita, setNacita] = useState(true);
   const [chyba, setChyba] = useState<string | null>(null);
   const [vyber, setVyber] = useState<Vyber>("prilezitosti");
 
   useEffect(() => {
-    nactiSignaly()
-      .then((s) => {
+    Promise.all([nactiSignaly(), nactiKampaneProVyber()])
+      .then(([s, k]) => {
         setSignaly(s);
+        setKampane(k);
+        // Když je nezamčená kampaň jediná, předvyplní se — jinak by uživatel
+        // musel vybírat z jediné možnosti.
+        if (k.length === 1) setKampanId(k[0]!.id);
         setChyba(null);
       })
       .catch((e: unknown) => setChyba(e instanceof Error ? e.message : String(e)))
       .finally(() => setNacita(false));
   }, []);
+
+  async function pridej(ico: string): Promise<void> {
+    if (!kampanId) return;
+    setPridano((p) => ({ ...p, [ico]: "pridavam" }));
+    try {
+      const v = await pridejFirmuDoKampane(kampanId, ico);
+      setPridano((p) => ({ ...p, [ico]: v }));
+    } catch (e: unknown) {
+      setPridano((p) => ({
+        ...p,
+        [ico]: { chyba: e instanceof Error ? e.message : String(e) },
+      }));
+    }
+  }
 
   const videt = useMemo(
     () =>
@@ -95,7 +158,30 @@ export function Signaly() {
         <button className={vyber === "vse" ? "aktivni" : ""} onClick={() => setVyber("vse")}>
           Vše ({signaly.length})
         </button>
+
+        <span className="odsazovac" />
+
+        {/* Kampaň se vybírá jednou nahoře, ne u každého podnětu zvlášť —
+            obchodník obvykle plní jednu kampaň, ne dvanáct. */}
+        <label className="volba-kampane">
+          <span className="poznamka">Přidávat do kampaně:</span>
+          <select value={kampanId} onChange={(e) => setKampanId(e.target.value)}>
+            <option value="">vyberte kampaň</option>
+            {kampane.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.nazev}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
+
+      {kampane.length === 0 && (
+        <p className="poznamka">
+          Žádná kampaň, do které by šlo přidávat. Schválené a uzavřené kampaně se
+          už neupravují — založte novou v Kampaních.
+        </p>
+      )}
 
       {videt.length === 0 ? (
         <p className="prazdno">
@@ -132,6 +218,15 @@ export function Signaly() {
                 <span className={s.spojeni > 0 ? "spojeni ma" : "spojeni nema"}>
                   {s.spojeni > 0 ? `spojení: ${s.spojeni}` : "bez spojení"}
                 </span>
+
+                {/* U vylučovacího podnětu tlačítko schválně NENÍ. „Neoslovovat"
+                    a „přidat do kampaně" jsou protiklady; nabídnout obojí vedle
+                    sebe by zvalo k omylu, který se pak těžko hledá. */}
+                {!s.vylucovaci && <TlacitkoPridat
+                  stav={pridano[s.ico]}
+                  muze={kampanId !== ""}
+                  onPridej={() => void pridej(s.ico)}
+                />}
               </div>
             </li>
           ))}

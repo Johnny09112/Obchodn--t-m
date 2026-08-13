@@ -1244,3 +1244,69 @@ export async function nactiSignaly(): Promise<Signal[]> {
     };
   });
 }
+
+/**
+ * Stavy, ve kterých se kampaň už neupravuje.
+ *
+ * Psáno jako výčet **zamčených** stavů, ne otevřených
+ * ([[zamykej-vyjmenovanim-zamcenych-stavu]]): kdyby přibyl nový pracovní
+ * stav, seznam otevřených by ho omylem zamkl a nikdo by nepoznal proč.
+ *
+ * Bydlí tady, ne v průvodci, protože stejné pravidlo potřebuje i obrazovka
+ * podnětů. Totéž pravidlo na dvou místech se dřív nebo později rozejde —
+ * 13. 8. 2026 se to v tomhle projektu právě stalo u výběru firem.
+ */
+export const ZAMCENE_STAVY_KAMPANE = ["schvalena", "bezi", "uzavrena", "zrusena"];
+
+export function jeKampanZamcena(stav: string): boolean {
+  return ZAMCENE_STAVY_KAMPANE.includes(stav);
+}
+
+export interface KampanProVyber {
+  id: string;
+  nazev: string;
+  stav: string;
+}
+
+/**
+ * Kampaně, do kterých jde firmu přidat — tedy nezamčené.
+ *
+ * Kdo do které smí zapsat, hlídá RLS (`smi_do_kampane`); tenhle seznam
+ * jen neukazuje ty, u kterých by zápis stejně neprošel kvůli stavu.
+ */
+export async function nactiKampaneProVyber(): Promise<KampanProVyber[]> {
+  const { data, error } = await supabase
+    .from("kampane")
+    .select("id,nazev,stav")
+    .order("nazev");
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as KampanProVyber[]).filter((k) => !jeKampanZamcena(k.stav));
+}
+
+export type VysledekPridani = "pridano" | "uz_tam_je";
+
+/**
+ * Přidá firmu do kampaně.
+ *
+ * Firma, která už v kampani je, se **nepřepisuje** — jinak by se z vyřazené
+ * firmy stala znovu vybraná a majitelovo rozhodnutí „tuhle ne" by se tiše
+ * ztratilo (vyřazení je rozhodnutí, ne stav k přepsání).
+ */
+export async function pridejFirmuDoKampane(
+  kampanId: string,
+  ico: string,
+): Promise<VysledekPridani> {
+  const { data: uz } = await supabase
+    .from("kampan_firmy")
+    .select("ico")
+    .eq("kampan_id", kampanId)
+    .eq("ico", ico)
+    .maybeSingle();
+  if (uz) return "uz_tam_je";
+
+  const { error } = await supabase
+    .from("kampan_firmy")
+    .insert({ kampan_id: kampanId, ico, stav: "vybrana" });
+  if (error) throw new Error(error.message);
+  return "pridano";
+}

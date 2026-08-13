@@ -1620,3 +1620,39 @@ h3 {
   outline: 2px solid var(--razitko);
   outline-offset: 2px;
 }
+
+/* Výběr kampaně sedí v liště přepínačů — vybírá se jednou, ne u každého
+   podnětu zvlášť. */
+.volba-kampane {
+  display: flex;
+  align-items: center;
+  gap: var(--o2);
+  font-size: var(--t-mikro);
+}
+
+.volba-kampane select {
+  font-family: var(--pismo-text);
+  font-size: var(--t-maly);
+  padding: var(--o1) var(--o2);
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  background: var(--karta);
+  color: var(--inkoust);
+}
+
+.filtr-podnetu > .odsazovac {
+  flex: 1;
+}
+
+/* Výsledek akce zůstane na místě tlačítka. Kdyby se vrátilo tlačítko,
+   obchodník neví, jestli firmu přidal jednou nebo dvakrát. */
+.pridano-ok {
+  font-size: var(--t-mikro);
+  color: var(--zelen);
+  font-weight: 600;
+}
+
+.pridano-chyba {
+  font-size: var(--t-mikro);
+  color: var(--cihla);
+}

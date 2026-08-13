@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Krokovnik } from "./Krokovnik";
 import { MapaOblasti } from "./MapaOblasti";
 import {
+  jeKampanZamcena,
   maSpojeni,
   nactiFirmy,
   nactiJidelny,
@@ -156,8 +157,9 @@ export function PruvodceKampani({
    *
    * Nová kampaň (`kampan === null`) zamčená není.
    */
-  const ZAMCENE_STAVY = ["schvalena", "bezi", "uzavrena", "zrusena"];
-  const zamcena = kampan !== null && ZAMCENE_STAVY.includes(kampan.stav);
+  // Seznam zamčených stavů bydlí v `data.ts` — potřebuje ho i obrazovka
+  // podnětů a totéž pravidlo na dvou místech se dřív nebo později rozejde.
+  const zamcena = kampan !== null && jeKampanZamcena(kampan.stav);
 
   /** Složení vybraných oblastí dohromady. */
   const slozeniVyberu = useMemo(() => {

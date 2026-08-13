@@ -1341,8 +1341,13 @@ async function cmdReserse(argv: string[]): Promise<void> {
         // aktivního — rešerše běží uvnitř kampaně a má se řídit jejím
         // profilem (viz komentář u `profilProKampan` v src/atributy.ts).
         const profilKod = await profilProKampan(db, o.kampanId);
+        // Soubor s prací dostane PŘESNĚ ta IČO, která vybrala
+        // `firmyProReserse` — ne vlastní výběr nad kampaní. Dokud si je
+        // odvozoval sám, mohly se oba dotazy rozejít, a 13. 8. 2026 se
+        // rozešly: agent dostal firmy čekající na jídelnu, zatímco pokusy
+        // se počítaly sedmi kvalifikovaným, které nikdy neviděl.
         const prace = await firmyKObohaceni(db, {
-          kampanId: o.kampanId,
+          ica,
           profilKod,
           limit: firmy.length,
         });

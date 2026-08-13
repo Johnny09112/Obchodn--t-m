@@ -245,6 +245,24 @@ export async function firmyKObohaceni(
      */
     kampanId?: string;
     /**
+     * **Přesný seznam firem**, na kterých má agent pracovat.
+     *
+     * Když se zadá, přebíjí veškerý výběr — žádná jiná firma se do souboru
+     * s prací nedostane. Rešerše ho používá, aby soubor s prací obsahoval
+     * PŘESNĚ ty firmy, které vybrala `firmyProReserse`.
+     *
+     * Vzniklo z chyby 13. 8. 2026: výběr byl na dvou místech (`firmyProReserse`
+     * a tenhle dotaz) a když se filtr na stav přidal jen do prvního, rozešly
+     * se. Agent dostal firmy čekající na jídelnu, zatímco pokusy se počítaly
+     * sedmi kvalifikovaným, které nikdy neviděl — a ty pak z fronty vypadly
+     * jako „vyčerpané". Komentář o tom, že se to jednou rozejde, tu stál už
+     * předtím (nález 2 závěrečné revize); rozešlo se to přesně tak.
+     *
+     * Duplicitu tedy neřešíme dalším opisem podmínky, ale tím, že seznam
+     * vybírá **jedno místo** a druhé ho jen dostane.
+     */
+    ica?: readonly string[];
+    /**
      * Profil produktu, podle kterého se počítá `chybi` — o atributech
      * rozhoduje profil (`nactiAtributyProfilu`), `spojeni` se hledá vždycky
      * bez ohledu na profil (viz komentář u výpočtu `chybi` níž).
@@ -260,7 +278,14 @@ export async function firmyKObohaceni(
   const podminky: string[] = [];
   const params: unknown[] = [];
 
-  if (opts.kampanId) {
+  // Přesný seznam přebíjí veškerý výběr. Když ho volající zná (rešerše ho
+  // dostane z `firmyProReserse`), nemá smysl ho tady odvozovat znovu —
+  // právě z toho odvozování vznikl rozchod 13. 8. 2026.
+  if (opts.ica) {
+    if (opts.ica.length === 0) return [];
+    params.push(opts.ica as string[]);
+    podminky.push(`f.ico = any($${params.length})`);
+  } else if (opts.kampanId) {
     params.push(opts.kampanId);
     podminky.push(
       `exists (select 1 from kampan_firmy kf where kf.kampan_id = $${params.length}
@@ -281,7 +306,7 @@ export async function firmyKObohaceni(
   // `--kampan` už podmínku „neprošla rešerší" nese sám (musí přesně
   // odpovídat firmyProReserse) — druhé přidání by bylo jen neškodně
   // duplicitní, ale `jenBezSpojeni` s kampaní kombinovat nedává smysl.
-  if (!opts.kampanId) {
+  if (!opts.kampanId && !opts.ica) {
     if (!opts.jenBezSpojeni) {
       // Standardní fronta jde po firmách, které rešerší ještě neprošly.
       podminky.push("f.obohaceno_at is null");

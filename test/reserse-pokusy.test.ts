@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { zalozKampan } from "../src/kampan.js";
+import { firmyKObohaceni } from "../src/nalezy.js";
 import { zalozFirmu } from "../src/repo.js";
 import {
   MAX_POKUSU_RESERSE,
@@ -125,6 +126,34 @@ describe("pokusy o rešerši", () => {
     await firmaVKampani("25232657", 50);
     await db.query("update companies set stav = 'jednani' where ico = '25232657'");
     expect(await firmyProReserse(db, kampanId, 10)).toHaveLength(1);
+  });
+
+  // Chyba 13. 8. 2026: výběr firem byl na dvou místech a rozešel se —
+  // agent dostal jiné firmy, než kterým se počítaly pokusy. Tenhle test
+  // hlídá, že soubor s prací obsahuje PŘESNĚ to, co vybrala fronta.
+  it("soubor s prací dostane přesně firmy z fronty, ne vlastní výběr", async () => {
+    await firmaVKampani("25232657", 50);
+    await firmaVKampani("25242407", 40);
+    await db.query(
+      "update companies set stav = 'cekajici_na_jidelnu' where ico = '25242407'",
+    );
+
+    const fronta = await firmyProReserse(db, kampanId, 10);
+    expect(fronta.map((x) => x.ico)).toEqual(["25232657"]);
+
+    const prace = await firmyKObohaceni(db, {
+      ica: fronta.map((f) => f.ico),
+      profilKod: "cantinero",
+      limit: fronta.length,
+    });
+    // Čekající firma se do práce nesmí dostat, i když je v kampani.
+    expect(prace.map((p) => p.ico)).toEqual(["25232657"]);
+  });
+
+  it("prázdná fronta znamená prázdnou práci, ne práci nade všemi", async () => {
+    await firmaVKampani("25232657", 50);
+    const prace = await firmyKObohaceni(db, { ica: [], profilKod: "cantinero" });
+    expect(prace).toEqual([]);
   });
 
   it("firma, u které se něco našlo, se mezi vyčerpané nepočítá", async () => {

@@ -1188,6 +1188,11 @@ export interface Signal {
   /** Kdy a kým byl podnět odškrtnut. `null` = ještě čeká. */
   vyrizenoAt: string | null;
   vyrizenoKym: string | null;
+  /**
+   * Území, do kterých firma spadá. Podnět sám území nemá — nese ho firma,
+   * a ta může ležet ve víc oblastech naráz (překryvy jsou běžné).
+   */
+  oblasti: Array<{ id: string; nazev: string }>;
 }
 
 /**
@@ -1242,6 +1247,7 @@ export async function nactiSignaly(iVyrizene = false): Promise<Signal[]> {
   // Spojení se dotahuje zvlášť — vnořený count přes PostgREST by znamenal
   // další vztah v dotazu a tenhle způsob je čitelnější i rychlejší.
   const spojeni = new Map<string, number>();
+  const oblastiFirmy = new Map<string, Array<{ id: string; nazev: string }>>();
   if (ica.length > 0) {
     const { data: k } = await supabase
       .from("contacts")
@@ -1252,6 +1258,21 @@ export async function nactiSignaly(iVyrizene = false): Promise<Signal[]> {
         const ico = c.ico as string;
         spojeni.set(ico, (spojeni.get(ico) ?? 0) + 1);
       }
+    }
+
+    // Území se ptá jen na firmy, které mají podnět — `oblast_firmy` má přes
+    // 12 tisíc řádků pro samotnou Plzeň a tahat je celé by nedávalo smysl.
+    const { data: of } = await supabase
+      .from("oblast_firmy")
+      .select("ico,oblasti(id,nazev)")
+      .in("ico", ica);
+    for (const r of (of ?? []) as Array<Record<string, unknown>>) {
+      const o = r.oblasti as { id?: string; nazev?: string } | null;
+      if (!o?.id || !o.nazev) continue;
+      const ico = r.ico as string;
+      const dosud = oblastiFirmy.get(ico) ?? [];
+      dosud.push({ id: o.id, nazev: o.nazev });
+      oblastiFirmy.set(ico, dosud);
     }
   }
 
@@ -1274,6 +1295,7 @@ export async function nactiSignaly(iVyrizene = false): Promise<Signal[]> {
       zdrojUrl: r.zdroj_url as string,
       zjistenoAt: r.zjisteno_at as string,
       spojeni: spojeni.get(r.ico as string) ?? 0,
+      oblasti: oblastiFirmy.get(r.ico as string) ?? [],
     };
   });
 }

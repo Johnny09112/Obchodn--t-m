@@ -82,6 +82,7 @@ export function Signaly({ email }: { email: string }) {
   const [signaly, setSignaly] = useState<Signal[]>([]);
   const [kampane, setKampane] = useState<KampanProVyber[]>([]);
   const [kampanId, setKampanId] = useState("");
+  const [oblastId, setOblastId] = useState("");
   const [pridano, setPridano] = useState<Record<string, StavPridani>>({});
   const [nacita, setNacita] = useState(true);
   const [chyba, setChyba] = useState<string | null>(null);
@@ -117,8 +118,23 @@ export function Signaly({ email }: { email: string }) {
     }
   }
 
-  const cekajici = useMemo(() => signaly.filter((s) => !s.vyrizenoAt), [signaly]);
-  const hotove = useMemo(() => signaly.filter((s) => s.vyrizenoAt), [signaly]);
+  /**
+   * Území se filtruje **před** ostatními počty, ne až nad výsledkem.
+   *
+   * Kdyby se filtrovalo až na konci, čísla v přepínačích by ukazovala
+   * podněty z celé republiky, zatímco seznam pod nimi jen jedno území —
+   * a nesouhlasící čísla vedle sebe jsou horší než žádná.
+   */
+  const vUzemi = useMemo(
+    () =>
+      oblastId === ""
+        ? signaly
+        : signaly.filter((s) => s.oblasti.some((o) => o.id === oblastId)),
+    [signaly, oblastId],
+  );
+
+  const cekajici = useMemo(() => vUzemi.filter((s) => !s.vyrizenoAt), [vUzemi]);
+  const hotove = useMemo(() => vUzemi.filter((s) => s.vyrizenoAt), [vUzemi]);
 
   const videt = useMemo(() => {
     if (vyber === "vyrizene") return hotove;
@@ -128,6 +144,24 @@ export function Signaly({ email }: { email: string }) {
 
   const prilezitosti = cekajici.filter((s) => !s.vylucovaci).length;
   const vylucovaci = cekajici.length - prilezitosti;
+
+  /**
+   * Nabízí se jen území, ve kterých doopravdy nějaký podnět je — prázdná
+   * volba by jen zaváděla. U každého je počet čekajících, ať je vidět,
+   * kam se vyplatí jít.
+   */
+  const uzemiVNabidce = useMemo(() => {
+    const pocty = new Map<string, { nazev: string; pocet: number }>();
+    for (const s of signaly.filter((x) => !x.vyrizenoAt)) {
+      for (const o of s.oblasti) {
+        const dosud = pocty.get(o.id);
+        pocty.set(o.id, { nazev: o.nazev, pocet: (dosud?.pocet ?? 0) + 1 });
+      }
+    }
+    return [...pocty.entries()]
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => b.pocet - a.pocet || a.nazev.localeCompare(b.nazev, "cs"));
+  }, [signaly]);
 
   async function vyriz(id: string, hotovo: boolean): Promise<void> {
     try {
@@ -185,6 +219,22 @@ export function Signaly({ email }: { email: string }) {
         </button>
 
         <span className="odsazovac" />
+
+        {/* Území se nabízí jen když je z čeho vybírat. U jediné oblasti by
+            to byl přepínač s jednou možností. */}
+        {uzemiVNabidce.length > 1 && (
+          <label className="volba-kampane">
+            <span className="poznamka">Území:</span>
+            <select value={oblastId} onChange={(e) => setOblastId(e.target.value)}>
+              <option value="">všechna</option>
+              {uzemiVNabidce.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.nazev} ({o.pocet})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         {/* Kampaň se vybírá jednou nahoře, ne u každého podnětu zvlášť —
             obchodník obvykle plní jednu kampaň, ne dvanáct. */}

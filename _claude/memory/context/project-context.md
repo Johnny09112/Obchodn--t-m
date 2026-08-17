@@ -27,7 +27,7 @@ odesílací doména, právní konzultace.
 | Oblastí · kampaní | 7 · 5 |
 | Náklady na API | **0 USD** — placené nikdy neběželo, agent jde z předplatného |
 | Migrace | po `0033_indexy_rychlost.sql`, nasazeno |
-| Testy | **540 zelených, 62 souborů** |
+| Testy | **696 zelených, 76 souborů** (k 17. 8.) |
 | Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -228,6 +228,11 @@ nasazená). Podrobnosti: [[kapacita-se-upravuje-v-aplikaci]].
 
 **Prodat jde 80 obědů/den, dalších 40 je v přípravě.** Proti 165
 kvalifikovaným firmám. Tlučnou a Zbůch přepnul majitel 17. 8.
+
+**Obrazovka proklikaná v prohlížeči (17. 8., Playwright MCP).** Čísla i stavy
+sedí s ostrou databází, editace kapacity se otevře a zruší bez zápisu. Našla
+se přitom jedna vada vzhledu — popisky v souhrnu se překrývaly s čísly;
+opraveno a nasazeno ([[nowrap-v-gridu-pretece-pres-sousedy]]).
 
 ## Aktuální focus
 

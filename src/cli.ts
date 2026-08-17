@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { nactiEnv } from "./env.js";
 
 // Hned na začátku, ať nastavení ze souboru vidí i klienti vytvářené níž.
@@ -14,6 +14,8 @@ import { vytvorEnricher, type Enricher } from "./enrich.js";
 import { spustCmuchala } from "./cmuchal.js";
 import { metrikyFaze1, prehledStavu } from "./metriky.js";
 import { vygenerujMapu } from "./mapa.js";
+import { vyberVzorek, type FirmaVzorku } from "./vzorek.js";
+import { vygenerujKontrolu, type ZaznamKontroly } from "./vzorek-html.js";
 import { vytvorResKlienta, type Segment } from "./res.js";
 import { vytvorMpsvKlienta } from "./mpsv.js";
 import { vytvorOsmKlienta } from "./osm.js";
@@ -1936,6 +1938,132 @@ async function cmdMetriky(): Promise<void> {
   }
 }
 
+/**
+ * Vzorek ke kontrole kvality (SPEC kap. 12, fáze 1 — „ruční kontrola vzorku
+ * 30 firem"). Metriku „podíl chybných záznamů" nespočítá dotaz, musí ji
+ * změřit člověk; tenhle příkaz mu k tomu připraví stránku.
+ *
+ * Soubor zůstává na disku a **nikam se neodesílá** — jsou v něm kontakty na
+ * konkrétní lidi.
+ */
+async function cmdVzorekKontroly(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      pocet: { type: "string", default: "30" },
+      vystup: { type: "string", default: "docs/vizualizace/kontrola-vzorku.html" },
+    },
+  });
+  const pocet = Number(values.pocet);
+  const db = await pripojDb();
+  try {
+    const firmy = await db.query<FirmaVzorku>(
+      `select c.ico, c.nazev, c.velikost_kategorie,
+              (select count(*) from contacts k
+                where k.ico = c.ico and (k.email is not null or k.telefon is not null))::int
+                as spojeni
+         from companies c
+        where c.stav = 'kvalifikovany'
+          and exists (select 1 from evidence e where e.ico = c.ico)`,
+    );
+    const vzorek = vyberVzorek(firmy, pocet);
+    if (vzorek.length === 0) {
+      console.log("Není z čeho vybírat — žádná kvalifikovaná firma s doloženým údajem.");
+      return;
+    }
+
+    const ica = vzorek.map((f) => f.ico);
+    const detaily = await db.query<{
+      ico: string;
+      nazev: string;
+      obec: string | null;
+      velikost_kategorie: string | null;
+      skore: number | null;
+    }>(
+      `select ico, nazev, obec, velikost_kategorie, skore
+         from companies where ico = any($1)`,
+      [ica],
+    );
+    const udaje = await db.query<{
+      ico: string;
+      atribut: string;
+      hodnota: string;
+      citace: string | null;
+      zdroj_url: string;
+      ziskano_at: string;
+    }>(
+      `select ico, atribut, hodnota, citace, zdroj_url, ziskano_at
+         from evidence where ico = any($1) and contact_id is null
+        order by ico, atribut`,
+      [ica],
+    );
+    const kontakty = await db.query<{
+      ico: string;
+      jmeno: string | null;
+      prijmeni: string | null;
+      pozice: string | null;
+      email: string | null;
+      telefon: string | null;
+      uroven_adresy: number | null;
+      zdroj_url: string | null;
+      ziskano_at: string;
+    }>(
+      `select ico, jmeno, prijmeni, pozice, email, telefon, uroven_adresy, zdroj_url, ziskano_at
+         from contacts where ico = any($1)
+        order by ico, uroven_adresy nulls last`,
+      [ica],
+    );
+
+    const den = (iso: string) => {
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("cs-CZ");
+    };
+
+    const zaznamy: ZaznamKontroly[] = vzorek.map((f) => {
+      const d = detaily.find((x) => x.ico === f.ico);
+      return {
+        ico: f.ico,
+        nazev: d?.nazev ?? f.nazev,
+        obec: d?.obec ?? null,
+        velikost: d?.velikost_kategorie ?? null,
+        skore: d?.skore ?? null,
+        udaje: udaje
+          .filter((u) => u.ico === f.ico)
+          .map((u) => ({
+            atribut: u.atribut,
+            hodnota: u.hodnota,
+            citace: u.citace,
+            zdrojUrl: u.zdroj_url,
+            den: den(u.ziskano_at),
+          })),
+        kontakty: kontakty
+          .filter((k) => k.ico === f.ico)
+          .map((k) => ({
+            kdo:
+              [k.jmeno, k.prijmeni].filter(Boolean).join(" ") ||
+              (k.pozice ?? "kontakt bez jména"),
+            spojeni: [k.email, k.telefon].filter(Boolean).join(" · ") || "bez spojení",
+            uroven: k.uroven_adresy,
+            citace: null,
+            zdrojUrl: k.zdroj_url,
+            den: den(k.ziskano_at),
+          })),
+      };
+    });
+
+    const html = vygenerujKontrolu(zaznamy, new Date().toLocaleDateString("cs-CZ"));
+    await mkdir(dirname(values.vystup!), { recursive: true });
+    await writeFile(values.vystup!, html, "utf8");
+
+    const zaznamu = zaznamy.reduce((s, z) => s + z.udaje.length + z.kontakty.length, 0);
+    console.log(`Vzorek ${zaznamy.length} firem, ${zaznamu} záznamů ke kontrole.`);
+    console.log(`Stránka: ${values.vystup}`);
+    console.log("Soubor zůstává na disku — jsou v něm kontakty na konkrétní lidi.");
+  } finally {
+    await db.close();
+  }
+}
+
 const [prikaz, ...zbytek] = process.argv.slice(2);
 switch (prikaz) {
   case "migrate":
@@ -2009,6 +2137,9 @@ switch (prikaz) {
     break;
   case "metriky":
     await cmdMetriky();
+    break;
+  case "vzorek-kontroly":
+    await cmdVzorekKontroly(zbytek);
     break;
   default:
     console.log(`Cantinero — fáze 1 (Čmuchal). Příkazy:
@@ -2097,6 +2228,10 @@ switch (prikaz) {
                                    --ico = přesně tyhle firmy, i když už rešerší prošly
                                    (cílená oprava jednoho údaje)
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
-  metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
+  metriky                          metriky fáze 1 (cíl: 200 ověřených firem)
+  vzorek-kontroly [--pocet 30] [--vystup cesta.html]
+                                   připraví vzorek k ruční kontrole kvality —
+                                   různorodý výběr firem s hodnotami, citacemi
+                                   a zdroji; soubor zůstává na disku`);
     process.exit(prikaz ? 1 : 0);
 }

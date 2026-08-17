@@ -14,6 +14,9 @@ docs/vizualizace/mapa.html
 
 docs/vizualizace/kartoteka.html
 
+# Vzorek ke kontrole kvality — obsahuje kontakty na konkrétní lidi
+docs/vizualizace/kontrola-vzorku*.html
+
 # Jednorázové průzkumné skripty
 src/tmp-*.ts
 

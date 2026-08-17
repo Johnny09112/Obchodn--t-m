@@ -1,0 +1,714 @@
+<title>Detail firmy — návrh nanečisto</title>
+<style>
+  :root {
+    --ground: #edece6;
+    --karta: #fbfaf6;
+    --karta2: #f4f3ed;
+    --inkoust: #1d211b;
+    --inkoust-slaby: #5c6157;
+    --linka: #cfd0c6;
+    --linka-slaba: #e2e1d8;
+    --zelena: #3c6b48;
+    --zelena-svetla: #e4ede4;
+    --cihla: #a4432c;
+    --cihla-svetla: #f6e6e0;
+    --zlata: #8d6a1a;
+    --zlata-svetla: #f6eed8;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.08);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131610;
+      --karta: #1c2019;
+      --karta2: #232821;
+      --inkoust: #e8e9e2;
+      --inkoust-slaby: #a0a597;
+      --linka: #363a33;
+      --linka-slaba: #2a2e27;
+      --zelena: #7fb98c;
+      --zelena-svetla: #22301f;
+      --cihla: #e08a70;
+      --cihla-svetla: #33211c;
+      --zlata: #d8b25c;
+      --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #131610;
+    --karta: #1c2019;
+    --karta2: #232821;
+    --inkoust: #e8e9e2;
+    --inkoust-slaby: #a0a597;
+    --linka: #363a33;
+    --linka-slaba: #2a2e27;
+    --zelena: #7fb98c;
+    --zelena-svetla: #22301f;
+    --cihla: #e08a70;
+    --cihla-svetla: #33211c;
+    --zlata: #d8b25c;
+    --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    line-height: 1.6;
+  }
+
+  .stranka {
+    max-width: 58rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .eyebrow {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: clamp(2rem, 5vw, 2.6rem);
+    line-height: 1.15;
+    margin: 0.5rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  h2 {
+    font-family: var(--pismo-nadpis);
+    font-size: 1.375rem;
+    margin: 0 0 1rem;
+  }
+
+  .perex { margin: 0; max-width: 42rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+
+  .duvody { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.25rem; }
+
+  .duvod {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 1rem 1.15rem;
+  }
+
+  .duvod h3 { font-size: 0.9375rem; margin: 0 0 0.4rem; }
+  .duvod p { margin: 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .duvod .dnes { display: block; margin-top: 0.5rem; font-size: 0.8125rem; color: var(--cihla); }
+
+  /* ───────────────────────────── mockup panelu, jak vypadá v aplikaci */
+
+  .mockup-ramec {
+    background: repeating-linear-gradient(
+      45deg, transparent, transparent 8px, var(--linka-slaba) 8px, var(--linka-slaba) 9px
+    );
+    border-radius: 6px;
+    padding: 1.5rem;
+  }
+
+  .panel {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    box-shadow: var(--stin);
+    overflow: hidden;
+  }
+
+  .panel + .panel { margin-top: 1.5rem; }
+
+  .panel-hlava {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.15rem 1.35rem 0.9rem;
+    border-bottom: 1px solid var(--linka);
+  }
+
+  .panel-hlava h3 { font-family: var(--pismo-nadpis); font-size: 1.25rem; margin: 0 0 0.35rem; }
+
+  .radek-udaju {
+    font-family: var(--pismo-data);
+    font-size: 0.8125rem;
+    color: var(--inkoust-slaby);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+  }
+
+  .zavrit { margin-left: auto; color: var(--inkoust-slaby); font-size: 1.1rem; }
+
+  .stitek {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .stitek.dobry { background: var(--zelena-svetla); color: var(--zelena); }
+  .stitek.ceka { background: var(--zlata-svetla); color: var(--zlata); }
+  .stitek.pozor { background: var(--cihla-svetla); color: var(--cihla); }
+  .stitek.tichy { background: var(--karta2); color: var(--inkoust-slaby); }
+
+  .sekce { padding: 1.15rem 1.35rem; border-bottom: 1px solid var(--linka-slaba); }
+  .sekce:last-child { border-bottom: 0; }
+
+  .nadpis-sekce {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    margin: 0 0 0.7rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .nadpis-sekce .pocet { color: var(--inkoust-slaby); opacity: 0.75; }
+
+  .obor {
+    font-family: var(--pismo-nadpis);
+    font-size: 1.1875rem;
+    line-height: 1.45;
+    margin: 0 0 0.5rem;
+    text-wrap: pretty;
+  }
+
+  .doklad {
+    font-size: 0.8125rem;
+    color: var(--inkoust-slaby);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+    align-items: baseline;
+  }
+
+  .doklad a { color: var(--zelena); font-family: var(--pismo-data); }
+
+  .citace {
+    margin: 0.4rem 0 0.5rem;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--linka);
+    font-size: 0.875rem;
+    font-style: italic;
+    color: var(--inkoust-slaby);
+  }
+
+  .rozhoduje { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
+
+  .polozka {
+    background: var(--karta2);
+    border-radius: 3px;
+    padding: 0.7rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .polozka .co {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+  }
+
+  .polozka .jak { font-weight: 600; }
+  .polozka.nevime .jak { font-weight: 400; color: var(--inkoust-slaby); font-style: italic; }
+  .polozka .odkud { font-size: 0.75rem; color: var(--inkoust-slaby); }
+
+  .kontakty { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; }
+
+  .kontakt {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.2rem 1rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px dotted var(--linka);
+  }
+
+  .kontakt:last-child { border-bottom: 0; padding-bottom: 0; }
+  .kontakt .kdo { font-weight: 600; }
+  .kontakt .spojeni { font-family: var(--pismo-data); font-size: 0.875rem; }
+  .kontakt .spojeni a { color: var(--zelena); }
+  .kontakt .prazdno { color: var(--inkoust-slaby); font-style: italic; font-size: 0.875rem; }
+  .kontakt .doklad, .kontakt .citace { grid-column: 1 / -1; }
+
+  .zdroje { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+
+  .zdroj-skupina .kde {
+    font-family: var(--pismo-data);
+    font-size: 0.8125rem;
+    color: var(--inkoust);
+    margin-bottom: 0.2rem;
+  }
+
+  .zdroj-skupina .co-odtud { font-size: 0.875rem; color: var(--inkoust-slaby); margin: 0; }
+
+  .chybi { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+  .poznamka-panelu {
+    font-size: 0.8125rem;
+    color: var(--inkoust-slaby);
+    margin: 0.6rem 0 0;
+  }
+
+  .popisek-mockupu {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    margin: 0 0 0.6rem;
+  }
+
+  /* ───────────────────────────────────────────── nálezy a otázky */
+
+  .nalezy { display: flex; flex-direction: column; gap: 0; }
+
+  .nalez {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 0.3rem 1.25rem;
+    padding: 1.1rem 0;
+    border-top: 1px solid var(--linka);
+  }
+
+  .nalez:last-child { border-bottom: 1px solid var(--linka); }
+
+  .nalez .kolik {
+    font-family: var(--pismo-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--cihla);
+  }
+
+  .nalez h3 { font-size: 1rem; margin: 0 0 0.35rem; }
+  .nalez p { margin: 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+
+  .otazky { display: flex; flex-direction: column; gap: 1.1rem; }
+
+  .otazka {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-left: 3px solid var(--zelena);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+  }
+
+  .otazka h3 { font-size: 1rem; margin: 0 0 0.35rem; }
+  .otazka p { margin: 0; font-size: 0.9375rem; }
+  .otazka .doporuceni { margin-top: 0.4rem; color: var(--zelena); font-weight: 600; font-size: 0.9375rem; }
+
+  footer {
+    border-top: 1px solid var(--linka);
+    padding-top: 1.25rem;
+    font-size: 0.875rem;
+    color: var(--inkoust-slaby);
+  }
+
+  @media (max-width: 36rem) {
+    .nalez { grid-template-columns: 1fr; }
+    .kontakt { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="stranka">
+  <header>
+    <span class="eyebrow">Cantinero · návrh k odsouhlasení · 17. srpna 2026</span>
+    <h1>Detail firmy nanečisto</h1>
+    <p class="perex">
+      Takhle by mohl vypadat detail firmy po přestavbě. Zatím je to jen návrh —
+      v aplikaci se nic nezměnilo. Údaje o firmách jsou skutečné z ostré
+      databáze; <strong>jmenné kontakty jsou vymyšlené</strong>, aby se osobní
+      údaje neposílaly ven.
+    </p>
+  </header>
+
+  <section>
+    <h2>Co se mění a proč</h2>
+    <div class="duvody">
+      <article class="duvod">
+        <h3>Nahoře to, co rozhoduje</h3>
+        <p>
+          Čím se firma zabývá, jak řeší obědy a jestli má vlastní jídelnu —
+          to jsou věci, podle kterých se rozhodujete.
+        </p>
+        <span class="dnes">Dnes: splývá to v jednom seznamu.</span>
+      </article>
+      <article class="duvod">
+        <h3>Doklady dolů, ale neschované</h3>
+        <p>
+          Citace a odkaz zůstávají u každého údaje. Navíc přibude přehled
+          „odkud to víme“ seskupený podle zdroje.
+        </p>
+        <span class="dnes">Dnes: deset dokladů v jedné řadě.</span>
+      </article>
+      <article class="duvod">
+        <h3>Vidět i to, co nevíme</h3>
+        <p>
+          Co agent hledal a nenašel, se vypíše. Prázdno je legitimní stav,
+          jen o něm musíte vědět.
+        </p>
+        <span class="dnes">Dnes: chybějící údaj prostě není vidět.</span>
+      </article>
+      <article class="duvod">
+        <h3>Česky, ne strojově</h3>
+        <p>
+          Každý údaj má český název a technické záznamy (třeba poloha na mapě)
+          nepatří mezi údaje o firmě.
+        </p>
+        <span class="dnes">Dnes: „web“, „smenny_provoz“, souřadnice.</span>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Jak by to vypadalo</h2>
+
+    <p class="popisek-mockupu">Ukázka 1 — firma, o které toho víme hodně</p>
+    <div class="mockup-ramec">
+      <div class="panel">
+        <div class="panel-hlava">
+          <div>
+            <h3>B &amp; BC, a. s.</h3>
+            <div class="radek-udaju">
+              <span>IČO 64832783</span>
+              <span>· Zbůch</span>
+              <span>· střední (100–199)</span>
+              <span>· skóre 66</span>
+            </div>
+          </div>
+          <span class="stitek dobry">kvalifikovaná</span>
+          <span class="zavrit" aria-hidden="true">✕</span>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Čím se zabývá</p>
+          <p class="obor" style="color: var(--inkoust-slaby); font-style: italic;">
+            Zatím nevíme — agent obor nedohledal.
+          </p>
+          <p class="poznamka-panelu">
+            V evidenci je zapsané „nabírá 3 míst“ z otevřených dat MPSV. To ale
+            není obor podnikání, a nová struktura to pozná: nábor patří mezi
+            signály, ne sem.
+          </p>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Co rozhoduje o oslovení</p>
+          <div class="rozhoduje">
+            <div class="polozka">
+              <span class="co">Způsob stravování</span>
+              <span class="jak">závodní stravování</span>
+              <span class="odkud">inzerát MPSV · 12. 8.</span>
+            </div>
+            <div class="polozka">
+              <span class="co">Směnný provoz</span>
+              <span class="jak">jednosměnný</span>
+              <span class="odkud">4 z 5 inzerátů MPSV · 12. 8.</span>
+            </div>
+            <div class="polozka nevime">
+              <span class="co">Vlastní jídelna</span>
+              <span class="jak">nevíme</span>
+              <span class="odkud">agent hledal 12. 8., nenašel</span>
+            </div>
+            <div class="polozka">
+              <span class="co">Nejbližší jídelna</span>
+              <span class="jak">ZŠ Zbůch · 0,4 km</span>
+              <span class="odkud">jídelna v přípravě</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Kudy se ozvat <span class="pocet">3 spojení ze 3 kontaktů</span></p>
+          <ul class="kontakty">
+            <li class="kontakt">
+              <span class="kdo">Cenové nabídky <span class="stitek dobry">adresa pro nabídky</span></span>
+              <span class="spojeni"><a href="#">nabidky@babc.cz</a> · 377 199 133</span>
+              <blockquote class="citace">„cenové nabídky — tel: 377 199 133, 180 — nabidky@babc.cz“</blockquote>
+              <span class="doklad"><a href="#">babc.cz/kontakty</a> · 27. 7. 2026</span>
+            </li>
+            <li class="kontakt">
+              <span class="kdo">Zákaznická linka, prodejní sklad <span class="stitek tichy">obecná firemní adresa</span></span>
+              <span class="spojeni"><a href="#">obchod@babc.cz</a> · 377 199 104</span>
+              <blockquote class="citace">„Zákaznická linka: Prodejní sklad Zbůch — tel.: 377 199 104, 111 — obchod@babc.cz“</blockquote>
+              <span class="doklad"><a href="#">babc.cz/kontakty</a> · 27. 7. 2026</span>
+            </li>
+            <li class="kontakt">
+              <span class="kdo">Jan Novák <span class="stitek pozor">jmenná adresa osoby</span></span>
+              <span class="spojeni"><a href="#">novak@babc.cz</a> · 377 199 100</span>
+              <blockquote class="citace">„otevřená data MPSV, inzerát na volné místo: kontaktní osoba“</blockquote>
+              <span class="doklad"><a href="#">data.mpsv.cz</a> · 28. 7. 2026 · <em>ukázkový kontakt</em></span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Odkud to víme <span class="pocet">10 doložených údajů ze 3 zdrojů</span></p>
+          <ul class="zdroje">
+            <li class="zdroj-skupina">
+              <div class="kde">Web firmy — babc.cz</div>
+              <p class="co-odtud">dva firemní kontakty, účel zveřejněné adresy</p>
+            </li>
+            <li class="zdroj-skupina">
+              <div class="kde">Otevřená data MPSV</div>
+              <p class="co-odtud">směnný provoz, závodní stravování, kontaktní osoba, poloha pracoviště</p>
+            </li>
+            <li class="zdroj-skupina">
+              <div class="kde">Statistický registr ČSÚ</div>
+              <p class="co-odtud">velikost firmy (100–199 zaměstnanců)</p>
+            </li>
+          </ul>
+          <p class="poznamka-panelu">
+            Rozklikáním se u každého údaje ukáže doslovná citace i přesný odkaz —
+            tak jako dnes, jen setříděné.
+          </p>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Co ještě nevíme</p>
+          <div class="chybi">
+            <span class="stitek tichy">obor podnikání</span>
+            <span class="stitek tichy">vlastní jídelna</span>
+            <span class="stitek tichy">web firmy</span>
+            <span class="stitek tichy">počet zaměstnanců</span>
+          </div>
+          <p class="poznamka-panelu">Rešerše naposledy 27. 7. 2026.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="popisek-mockupu" style="margin-top: 2rem;">Ukázka 2 — firma s pořádně dohledaným oborem</p>
+    <div class="mockup-ramec">
+      <div class="panel">
+        <div class="panel-hlava">
+          <div>
+            <h3>Stavební stroje a doprava, s.r.o.</h3>
+            <div class="radek-udaju">
+              <span>IČO 28685351</span>
+              <span>· Hrobce</span>
+              <span>· mikropodnik (20–24)</span>
+              <span>· skóre 44</span>
+              <span>· <a href="#" style="color: var(--zelena);">ssad.cz</a></span>
+            </div>
+          </div>
+          <span class="stitek ceka">čeká na jídelnu</span>
+          <span class="zavrit" aria-hidden="true">✕</span>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Čím se zabývá</p>
+          <p class="obor">
+            Pronájem jeřábů (autojeřáby, pásové, halové, mini jeřáby), manipulace
+            s těžkými břemeny, zemní práce, demolice a nadměrná přeprava.
+          </p>
+          <blockquote class="citace">„Autojeřáby do 450 t“</blockquote>
+          <span class="doklad"><a href="#">ssad.cz</a> · 10. 8. 2026</span>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Co rozhoduje o oslovení</p>
+          <div class="rozhoduje">
+            <div class="polozka nevime">
+              <span class="co">Způsob stravování</span>
+              <span class="jak">nevíme</span>
+              <span class="odkud">agent hledal 10. 8., nenašel</span>
+            </div>
+            <div class="polozka nevime">
+              <span class="co">Směnný provoz</span>
+              <span class="jak">nevíme</span>
+              <span class="odkud">firma nemá inzeráty v MPSV</span>
+            </div>
+            <div class="polozka nevime">
+              <span class="co">Vlastní jídelna</span>
+              <span class="jak">nevíme</span>
+              <span class="odkud">agent hledal 10. 8., nenašel</span>
+            </div>
+            <div class="polozka">
+              <span class="co">Nejbližší jídelna</span>
+              <span class="jak">žádná v dosahu</span>
+              <span class="odkud">proto „čeká na jídelnu“</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Kudy se ozvat <span class="pocet">2 spojení ze 4 kontaktů</span></p>
+          <ul class="kontakty">
+            <li class="kontakt">
+              <span class="kdo">Obecný kontakt firmy <span class="stitek tichy">obecná firemní adresa</span></span>
+              <span class="spojeni"><a href="#">info@ssad.cz</a></span>
+              <blockquote class="citace">„SPOJTE SE S NÁMI – info@ssad.cz“</blockquote>
+              <span class="doklad"><a href="#">ssad.cz/kontakty</a> · 10. 8. 2026</span>
+            </li>
+            <li class="kontakt">
+              <span class="kdo">Jan Novák · jednatel <span class="stitek pozor">jmenná adresa osoby</span></span>
+              <span class="spojeni"><a href="#">novak@ssad.cz</a> · 602 155 150</span>
+              <blockquote class="citace">„Ing. Jan Novák — jednatel, konzultant, technik-specialista“</blockquote>
+              <span class="doklad">
+                <a href="#">ssad.cz/kontakty</a> a <a href="#">ssad.cz/kontakt</a> · 10. 8. 2026 ·
+                <em>ukázkový kontakt</em>
+              </span>
+            </li>
+            <li class="kontakt">
+              <span class="kdo">Druhý jednatel z rejstříku <span class="stitek tichy">jen jméno</span></span>
+              <span class="prazdno">jen jméno, adresa ani telefon nejsou</span>
+              <span class="doklad"><a href="#">ares.gov.cz</a> · 10. 8. 2026</span>
+            </li>
+          </ul>
+          <p class="poznamka-panelu">
+            Stejný e-mail nalezený na dvou stránkách je jeden kontakt se dvěma
+            doklady, ne dva kontakty. Dnes se počítá dvakrát.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <p class="popisek-mockupu" style="margin-top: 2rem;">Ukázka 3 — firma, kterou agent ještě neprošel</p>
+    <div class="mockup-ramec">
+      <div class="panel">
+        <div class="panel-hlava">
+          <div>
+            <h3>TVAR, výrobní družstvo Klatovy</h3>
+            <div class="radek-udaju">
+              <span>IČO 00028983</span>
+              <span>· Klatovy</span>
+              <span>· střední (50–99)</span>
+              <span>· skóre 63</span>
+            </div>
+          </div>
+          <span class="stitek ceka">čeká na jídelnu</span>
+          <span class="zavrit" aria-hidden="true">✕</span>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Čím se zabývá</p>
+          <p class="obor" style="color: var(--inkoust-slaby); font-style: italic;">
+            Zatím nevíme — rešerše u téhle firmy ještě neproběhla.
+          </p>
+        </div>
+
+        <div class="sekce">
+          <p class="nadpis-sekce">Co víme z rejstříku</p>
+          <div class="rozhoduje">
+            <div class="polozka">
+              <span class="co">Velikost</span>
+              <span class="jak">50–99 zaměstnanců</span>
+              <span class="odkud">statistický registr ČSÚ</span>
+            </div>
+            <div class="polozka nevime">
+              <span class="co">Spojení</span>
+              <span class="jak">žádné</span>
+              <span class="odkud">rešerše neproběhla</span>
+            </div>
+          </div>
+          <p class="poznamka-panelu">
+            Prázdno tu není chyba — co není doložené, se nezapisuje. Až firma
+            projde rešerší, doplní se obor, web i kontakty.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co jsem cestou našel v datech</h2>
+    <div class="nalezy">
+      <article class="nalez">
+        <span class="kolik">167×</span>
+        <div>
+          <h3>„Adresa“ v evidenci jsou ve skutečnosti souřadnice</h3>
+          <p>
+            Všech 167 zápisů má tvar „49.6855763,13.2254688“ — je to technický
+            záznam o umístění na mapě, ne adresa firmy. Dnes se ukazuje mezi
+            údaji o firmě, kde majiteli nic neříká. V návrhu patří mezi
+            technické doklady, ne mezi údaje.
+          </p>
+        </div>
+      </article>
+      <article class="nalez">
+        <span class="kolik">7×</span>
+        <div>
+          <h3>V „oboru“ je omylem nábor</h3>
+          <p>
+            U sedmi firem stojí místo oboru „nabírá 3 míst“ z otevřených dat
+            MPSV. Zbylých 207 zápisů je v pořádku — skutečný popis vlastními
+            slovy. Opravit to jde dvěma způsoby: přepsat těch sedm, nebo je
+            nechat znovu dohledat agentem.
+          </p>
+        </div>
+      </article>
+      <article class="nalez">
+        <span class="kolik">?</span>
+        <div>
+          <h3>Tentýž e-mail zapsaný jako dva kontakty</h3>
+          <p>
+            U firmy Stavební stroje a doprava je jeden e-mail nalezený na dvou
+            podstránkách webu vedený jako dva kontakty. Nafukuje to počet
+            spojení. Kolika firem se to týká, spočítám, pokud budete chtít.
+          </p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Na co se potřebuji zeptat</h2>
+    <div class="otazky">
+      <article class="otazka">
+        <h3>Sedí pořadí sekcí?</h3>
+        <p>
+          Navrhuju: čím se zabývá → co rozhoduje o oslovení → kudy se ozvat →
+          odkud to víme → co nevíme.
+        </p>
+        <p class="doporuceni">Když se díváte na firmu, co chcete vidět první?</p>
+      </article>
+      <article class="otazka">
+        <h3>Má se ukazovat nejbližší jídelna a vzdálenost?</h3>
+        <p>
+          Dnes v detailu není, přitom rozhoduje o tom, jestli má oslovení vůbec
+          smysl. Data pro to máme.
+        </p>
+        <p class="doporuceni">Doporučuji přidat — je to jeden dotaz navíc.</p>
+      </article>
+      <article class="otazka">
+        <h3>Co s těmi sedmi špatnými obory?</h3>
+        <p>
+          Můžu je smazat a nechat firmy projít rešerší znovu, nebo je nechat být
+          a jen je v detailu neukazovat jako obor.
+        </p>
+        <p class="doporuceni">Doporučuji nechat znovu dohledat — je jich sedm.</p>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    Návrh nanečisto — v aplikaci se zatím nic nezměnilo. Až odsouhlasíte
+    strukturu, přestavím detail firmy a proklikám ho v prohlížeči.
+  </footer>
+</div>

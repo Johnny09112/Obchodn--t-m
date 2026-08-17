@@ -6,8 +6,11 @@ import {
   spoctiKose,
   type PocetKosu,
 } from "../../src/kampan-kandidati";
+// Součet kapacit je společný s příkazovou řádkou — jedno místo, jedno číslo.
+import { soucetKapacit, type StavJidelny } from "../../src/kapacita";
 
-export type { VyuzitiOblasti, PocetKosu };
+export type { VyuzitiOblasti, PocetKosu, StavJidelny };
+export { soucetKapacit };
 
 export interface Firma {
   ico: string;
@@ -42,6 +45,9 @@ export interface Jidelna {
   zona_metru: number;
   /** Kolik obědů denně má jídelna volných; `null` = neuvedeno (ne nula). */
   kapacita_volna: number | null;
+  /** Jestli už jídelna jede, nebo se teprve chystá (migrace 0044). */
+  stav: StavJidelny;
+  /** Jestli se s jídelnou vůbec pracuje — `false` = mimo provoz. */
   aktivni: boolean;
 }
 
@@ -136,7 +142,7 @@ export async function nactiFirmy(): Promise<Firma[]> {
 export async function nactiJidelny(): Promise<Jidelna[]> {
   const { data, error } = await supabase
     .from("jidelny")
-    .select("id,nazev,obec,lat,lng,zona_metru,kapacita_volna,aktivni")
+    .select("id,nazev,obec,lat,lng,zona_metru,kapacita_volna,stav,aktivni")
     .order("nazev");
   if (error) throw new Error(error.message);
   return (data ?? []) as Jidelna[];
@@ -188,6 +194,25 @@ export async function ulozKapacituJidelny(
   if (error) throw new Error(error.message);
   if (!data || data.length === 0) {
     throw new Error("Kapacitu se nepodařilo uložit — měnit ji smí jen admin.");
+  }
+}
+
+/**
+ * Přepne jídelnu mezi „v provozu" a „příprava".
+ *
+ * Se sběrem dat to nehýbe — jídelna v přípravě dál sbírá firmy v okolí,
+ * právě tím se připravuje. Mění se jen to, jestli se její kapacita počítá
+ * mezi obědy, které jde prodat dnes.
+ */
+export async function ulozStavJidelny(id: string, stav: StavJidelny): Promise<void> {
+  const { data, error } = await supabase
+    .from("jidelny")
+    .update({ stav })
+    .eq("id", id)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Stav se nepodařilo uložit — měnit ho smí jen admin.");
   }
 }
 

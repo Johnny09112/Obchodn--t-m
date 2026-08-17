@@ -7,11 +7,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { Db } from "./db.js";
 import { jeOsvc, popisFormy } from "./formy.js";
+import { soucetKapacit, type StavJidelny } from "./kapacita.js";
 
 export interface KartotekaData {
   jidelny: Array<{
     nazev: string; obec: string | null; kapacita_volna: number | null;
-    zona_metru: number; aktivni: boolean;
+    zona_metru: number; aktivni: boolean; stav: StavJidelny;
   }>;
   firmy: Array<{
     ico: string; nazev: string; obec: string | null; stav: string;
@@ -43,7 +44,7 @@ export interface KartotekaData {
 export async function nactiKartoteku(db: Db): Promise<KartotekaData> {
   return {
     jidelny: await db.query(
-      `select nazev, obec, kapacita_volna, zona_metru, aktivni from jidelny order by nazev`,
+      `select nazev, obec, kapacita_volna, zona_metru, aktivni, stav from jidelny order by nazev`,
     ),
     firmy: await db.query(
       `select c.ico, c.nazev, c.obec, c.stav, c.skore, c.vzdalenost_m, c.v_zone,
@@ -105,11 +106,11 @@ const DUVODY: Record<string, string> = {
 };
 
 export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string {
-  const aktivni = d.jidelny.filter((j) => j.aktivni);
-  const znameKapacity = aktivni.filter((j) => j.kapacita_volna !== null);
-  const kapacita = znameKapacity.length === 0
-    ? null
-    : znameKapacity.reduce((s, j) => s + (j.kapacita_volna ?? 0), 0);
+  // Kapacita jídelen v přípravě se do hlavního čísla nepočítá — ještě není
+  // co prodat. Ukazuje se vedle jako potenciál.
+  const soucet = soucetKapacit(d.jidelny);
+  const znameKapacitu = d.jidelny.some((j) => j.aktivni && j.kapacita_volna !== null);
+  const kapacita = znameKapacitu ? soucet.vProvozu : null;
   const seZdrojem = d.evidence.length;
 
   // Seskupení podle oblasti (obce jídelny) — jinak je to jen jeden dlouhý
@@ -358,6 +359,7 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
     <div><b>${seZdrojem}</b>doložených údajů</div>
     <div><b>${d.jidelny.length}</b>jídelen</div>
     <div><b>${kapacita ?? "?"}</b>obědů/den volných</div>
+    ${soucet.priprava > 0 ? `<div><b>${soucet.priprava}</b>obědů/den v přípravě</div>` : ""}
     <div><b>${d.behy.length}</b>běhů agenta</div>
   </div>
 </div></header>
@@ -372,7 +374,7 @@ export function sestavKartoteku(d: KartotekaData, vygenerovano: string): string 
       <td>${esc(j.nazev)}</td><td>${esc(j.obec ?? "—")}</td>
       <td class="num mono">${j.kapacita_volna ?? "neuvedeno"}</td>
       <td class="num mono">${(j.zona_metru / 1000).toFixed(1)} km</td>
-      <td class="tiny">${j.aktivni ? "aktivní" : "neaktivní"}</td></tr>`).join("")}</tbody>
+      <td class="tiny">${!j.aktivni ? "mimo provoz" : j.stav === "priprava" ? "příprava" : "v provozu"}</td></tr>`).join("")}</tbody>
   </table>
 
   <h2>Deník běhů</h2>

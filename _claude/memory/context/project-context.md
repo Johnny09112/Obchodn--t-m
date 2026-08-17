@@ -210,8 +210,14 @@ znamenalo nafouknout frontu, na kterou nemáme odpověď. Překvalifikace je
 technicky triviální — čeká na kapacitu, ne na kód.
 
 **Postaveno 17. 8.:** obrazovka **Jídelny** — kapacita jde konečně měnit
-v aplikaci (dřív jedině při zakládání jídelny příkazem). Ukazuje i počty
-firem v dosahu. Podrobnosti: [[kapacita-se-upravuje-v-aplikaci]].
+v aplikaci (dřív jedině při zakládání jídelny příkazem). Ukazuje počty firem
+v dosahu a **rozlišuje jídelnu v provozu od jídelny v přípravě**, takže volná
+kapacita se dělí na „co jde prodat dnes" a „potenciál" (migrace 0044,
+nasazená). Podrobnosti: [[kapacita-se-upravuje-v-aplikaci]].
+
+**Ověřeno 17. 8. na ostré databázi:** 5 aktivních jídelen, volná kapacita
+**120 obědů/den**, 165 kvalifikovaných firem. Všech pět je zatím vedených
+jako „v provozu" — majitel přepne ty, které se teprve chystají.
 
 ## Aktuální focus
 

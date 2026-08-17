@@ -282,6 +282,11 @@ async function cmdStav(): Promise<void> {
             ? ` (u ${p.jidelenBezKapacity} jídelen neznámá, takže je to spodní odhad)`
             : ""),
       );
+      if (p.kapacitaVPriprave > 0) {
+        console.log(
+          `V přípravě dalších ${p.kapacitaVPriprave} obědů/den — potenciál, prodat je zatím nejde.`,
+        );
+      }
       if (p.kapacitaAktivnichJidelen === 0) {
         console.log("⚠ Kapacita je 0 — prioritou je získávání jídelen, ne firem (SPEC kap. 2).");
       } else {

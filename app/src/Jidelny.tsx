@@ -1,21 +1,28 @@
 import { useEffect, useState } from "react";
-import { nactiFiremVDosahu, nactiJidelny, ulozKapacituJidelny, type Jidelna } from "./data";
+import {
+  nactiFiremVDosahu,
+  nactiJidelny,
+  soucetKapacit,
+  ulozKapacituJidelny,
+  ulozStavJidelny,
+  type Jidelna,
+  type StavJidelny,
+} from "./data";
 import type { Role } from "./supabase";
 
 /**
- * Jídelny a jejich volná kapacita.
+ * Jídelny, jejich stav a volná kapacita.
  *
  * Vzniklo na vyžádání majitele (17. 8. 2026): kapacita se dala zadat jedině
  * při zakládání jídelny příkazem `seed-jidelna`, takže u 34. ZŠ Plzeň zůstala
  * prázdná a nešla doplnit. Přitom je to číslo, které rozhoduje o celém
  * obchodu — kolik obědů vůbec máme co prodat.
  *
- * Kapacita se během roku mění, proto se zadává tady a ne v příkazové řádce.
- * Měnit ji smí admin a výš (migrace 0016); ostatní ji vidí, ale neupraví.
+ * Hned nato přibyl **stav**: jídelna v přípravě ještě nemá co nabídnout, ale
+ * kapacitu už znát můžeme. Proto se součet dělí na „co jde prodat dnes" a
+ * „potenciál". Sečíst to dohromady by tvrdilo, že máme víc, než máme.
  *
- * Kapacita **nemá vliv na sběr dat** ani na to, které firmy se najdou
- * (migrace 0006) — tvrdou podmínkou se stane až u fronty na oslovení
- * ve fázi 3.
+ * Měnit obojí smí admin a výš (migrace 0016); ostatní to vidí, ale neupraví.
  */
 
 interface Props {
@@ -25,6 +32,10 @@ interface Props {
 /** Zóna v metrech se lidsky čte v kilometrech. */
 function zona(metru: number): string {
   return `${(metru / 1000).toFixed(1).replace(".", ",")} km`;
+}
+
+function obedu(n: number): string {
+  return `${n.toLocaleString("cs")} obědů/den`;
 }
 
 export function Jidelny({ role }: Props) {
@@ -77,11 +88,27 @@ export function Jidelny({ role }: Props) {
     }
   }
 
+  async function prepniStav(j: Jidelna) {
+    const novy: StavJidelny = j.stav === "priprava" ? "v_provozu" : "priprava";
+    setPracuje(true);
+    setChyba(null);
+    try {
+      await ulozStavJidelny(j.id, novy);
+      setUlozeno(j.id);
+      await obnov();
+    } catch (e) {
+      setChyba((e as Error).message);
+    } finally {
+      setPracuje(false);
+    }
+  }
+
   if (nacita) return <p className="nacitani">Načítám jídelny…</p>;
 
-  const znameKapacitu = jidelny.filter((j) => j.aktivni && j.kapacita_volna !== null);
+  const soucet = soucetKapacit(jidelny);
+  const vProvozu = jidelny.filter((j) => j.aktivni && j.stav === "v_provozu");
+  const vPriprave = jidelny.filter((j) => j.aktivni && j.stav === "priprava");
   const bezKapacity = jidelny.filter((j) => j.aktivni && j.kapacita_volna === null);
-  const celkem = znameKapacitu.reduce((s, j) => s + (j.kapacita_volna ?? 0), 0);
 
   return (
     <>
@@ -95,26 +122,40 @@ export function Jidelny({ role }: Props) {
 
         <div className="souhrn">
           <p className="udaj">
-            <span className="popisek">Volná kapacita celkem</span>
-            <span className="hodnota">{celkem.toLocaleString("cs")} obědů/den</span>
+            <span className="popisek">Volná kapacita v provozu</span>
+            <span className="hodnota">{obedu(soucet.vProvozu)}</span>
           </p>
           <p className="udaj">
-            <span className="popisek">Jídelen v provozu</span>
-            <span className="hodnota">{jidelny.filter((j) => j.aktivni).length}</span>
+            <span className="popisek">Potenciální kapacita v přípravě</span>
+            <span className="hodnota">{obedu(soucet.priprava)}</span>
+          </p>
+          <p className="udaj">
+            <span className="popisek">Jídelen v provozu · v přípravě</span>
+            <span className="hodnota">
+              {vProvozu.length} · {vPriprave.length}
+            </span>
           </p>
           <p className="udaj">
             <span className="popisek">Bez uvedené kapacity</span>
-            <span className="hodnota">{bezKapacity.length}</span>
+            <span className="hodnota">{soucet.bezUdaje}</span>
           </p>
         </div>
 
-        {bezKapacity.length > 0 && (
-          <p className="poznamka">
-            Součet je jen z jídelen, kde kapacitu známe — {bezKapacity.length}{" "}
-            {bezKapacity.length === 1 ? "jídelna ji nemá uvedenou" : "jídelen ji nemá uvedených"}
-            , takže skutečné číslo bude vyšší.
-          </p>
-        )}
+        <p className="poznamka">
+          Prodat jde jen kapacita <b>v provozu</b>. Jídelny v přípravě se
+          počítají zvlášť — je to potenciál, ne příslib, a sečtené dohromady by
+          tvrdily, že máme víc, než máme.
+          {bezKapacity.length > 0 && (
+            <>
+              {" "}
+              Součty jsou navíc jen z jídelen, kde kapacitu známe —{" "}
+              {bezKapacity.length === 1
+                ? "jedna ji nemá uvedenou"
+                : `${bezKapacity.length} jich ji nemá uvedených`}
+              , takže skutečná čísla budou vyšší.
+            </>
+          )}
+        </p>
 
         {chyba && (
           <p className="hlaska" role="alert">
@@ -133,7 +174,8 @@ export function Jidelny({ role }: Props) {
                 <tr>
                   <th>Jídelna</th>
                   <th>Obec</th>
-                  <th>Zóna</th>
+                  <th>Stav</th>
+                  <th className="cislo">Zóna</th>
                   <th className="cislo">Firem v dosahu</th>
                   <th>Volná kapacita</th>
                   <th></th>
@@ -144,20 +186,37 @@ export function Jidelny({ role }: Props) {
                   const upravuje = upravovana?.id === j.id;
                   return (
                     <tr key={j.id}>
+                      <td>{j.nazev}</td>
+                      <td>{j.obec ?? "—"}</td>
                       <td>
-                        {j.nazev}
-                        {!j.aktivni && (
-                          <span className="stav je-zamitnuty na-radek">
+                        {!j.aktivni ? (
+                          <span className="stav je-zamitnuty">
                             <span className="znak" />
                             mimo provoz
                           </span>
+                        ) : j.stav === "priprava" ? (
+                          <span className="stav je-ceka">
+                            <span className="znak" />
+                            příprava
+                          </span>
+                        ) : (
+                          <span className="stav je-kvalifikovany">
+                            <span className="znak" />
+                            v provozu
+                          </span>
+                        )}
+                        {smiUpravovat && j.aktivni && (
+                          <button
+                            className="jako-odkaz na-radek"
+                            disabled={pracuje}
+                            onClick={() => void prepniStav(j)}
+                          >
+                            {j.stav === "priprava" ? "uvést do provozu" : "vrátit do přípravy"}
+                          </button>
                         )}
                       </td>
-                      <td>{j.obec ?? "—"}</td>
                       <td className="cislo">{zona(j.zona_metru)}</td>
-                      <td className="cislo">
-                        {(vDosahu[j.id] ?? 0).toLocaleString("cs")}
-                      </td>
+                      <td className="cislo">{(vDosahu[j.id] ?? 0).toLocaleString("cs")}</td>
                       <td>
                         {upravuje ? (
                           <input
@@ -169,9 +228,7 @@ export function Jidelny({ role }: Props) {
                             value={upravovana.hodnota}
                             placeholder="neuvedeno"
                             disabled={pracuje}
-                            onChange={(e) =>
-                              setUpravovana({ id: j.id, hodnota: e.target.value })
-                            }
+                            onChange={(e) => setUpravovana({ id: j.id, hodnota: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") void uloz();
                               if (e.key === "Escape") setUpravovana(null);
@@ -183,9 +240,9 @@ export function Jidelny({ role }: Props) {
                             neuvedeno
                           </span>
                         ) : (
-                          <span className="stav je-kvalifikovany">
+                          <span className={`stav ${j.stav === "priprava" ? "je-novy" : "je-kvalifikovany"}`}>
                             <span className="znak" />
-                            {j.kapacita_volna.toLocaleString("cs")} obědů/den
+                            {obedu(j.kapacita_volna)}
                           </span>
                         )}
                         {ulozeno === j.id && !upravuje && (
@@ -195,7 +252,11 @@ export function Jidelny({ role }: Props) {
                       <td>
                         {!smiUpravovat ? null : upravuje ? (
                           <span className="tlacitka vlevo">
-                            <button className="tlacitko" disabled={pracuje} onClick={() => void uloz()}>
+                            <button
+                              className="tlacitko"
+                              disabled={pracuje}
+                              onClick={() => void uloz()}
+                            >
                               Uložit
                             </button>
                             <button
@@ -234,9 +295,9 @@ export function Jidelny({ role }: Props) {
         <p className="poznamka">
           {smiUpravovat
             ? "Prázdné pole znamená „nevím“ — to není totéž co nula. Nula tvrdí, že jídelna nemá volno."
-            : "Kapacitu mění admin. Tobě se tu ukazuje, jak je zapsaná."}{" "}
-          Změna kapacity nepřeřadí ani jednu firmu — sama o sobě jen říká,
-          kolik obědů je k dispozici.
+            : "Kapacitu a stav mění admin. Tobě se tu ukazuje, jak jsou zapsané."}{" "}
+          Ani kapacita, ani přepnutí do přípravy nepřeřadí jedinou firmu —
+          jídelna v přípravě dál sbírá firmy v okolí, právě tím se připravuje.
         </p>
       </div>
     </>

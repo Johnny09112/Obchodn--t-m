@@ -3,8 +3,10 @@ import type { Db } from "./db.js";
 export interface PrehledStavu {
   firmyDleStavu: Record<string, number>;
   aktivnichJidelen: number;
-  /** null = u žádné aktivní jídelny neznáme kapacitu. */
+  /** null = u žádné jídelny v provozu neznáme kapacitu. */
   kapacitaAktivnichJidelen: number | null;
+  /** Kapacita jídelen v přípravě — potenciál, ne co můžeme prodat dnes. */
+  kapacitaVPriprave: number;
   jidelenBezKapacity: number;
 }
 
@@ -12,9 +14,14 @@ export async function prehledStavu(db: Db): Promise<PrehledStavu> {
   const stavy = await db.query<{ stav: string; pocet: string }>(
     "select stav, count(*)::text as pocet from companies group by stav",
   );
-  const jidelny = await db.query<{ pocet: string; kapacita: string | null; bezkapacity: string }>(
+  // Kapacita jídelny v přípravě se nesmí přičíst k tomu, co jde prodat dnes
+  // (migrace 0044) — proto dvě sumy, ne jedna.
+  const jidelny = await db.query<{
+    pocet: string; kapacita: string | null; priprava: string | null; bezkapacity: string;
+  }>(
     `select count(*)::text as pocet,
-            sum(kapacita_volna)::text as kapacita,
+            sum(kapacita_volna) filter (where stav = 'v_provozu')::text as kapacita,
+            sum(kapacita_volna) filter (where stav = 'priprava')::text as priprava,
             count(*) filter (where kapacita_volna is null)::text as bezkapacity
      from jidelny where aktivni`,
   );
@@ -22,6 +29,7 @@ export async function prehledStavu(db: Db): Promise<PrehledStavu> {
     firmyDleStavu: Object.fromEntries(stavy.map((s) => [s.stav, Number(s.pocet)])),
     aktivnichJidelen: Number(jidelny[0]?.pocet ?? 0),
     kapacitaAktivnichJidelen: jidelny[0]?.kapacita == null ? null : Number(jidelny[0].kapacita),
+    kapacitaVPriprave: jidelny[0]?.priprava == null ? 0 : Number(jidelny[0].priprava),
     jidelenBezKapacity: Number(jidelny[0]?.bezkapacity ?? 0),
   };
 }

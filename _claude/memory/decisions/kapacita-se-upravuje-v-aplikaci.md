@@ -1,6 +1,6 @@
 ---
 name: kapacita-se-upravuje-v-aplikaci
-description: Volná kapacita jídelny se mění v aplikaci na obrazovce Jídelny, ne příkazem — a je to jediný údaj, který nejde zjistit z dat
+description: Volná kapacita jídelny se mění v aplikaci na obrazovce Jídelny a dělí se na „v provozu" a „v přípravě" — sečíst je dohromady by tvrdilo, že máme víc, než máme
 type: decision
 status: active
 created: 2026-08-17
@@ -38,4 +38,28 @@ Podstatné detaily, které se nesmí ztratit:
   zastavil strop PostgRESTu.
 
 **Zadaná hodnota:** 34. ZŠ Plzeň (Gerská) = **50 obědů/den** (majitel,
-17. 8. 2026). Předtím `NULL`.
+17. 8. 2026, ověřeno v prohlížeči). Předtím `NULL`. Volná kapacita celkem
+tím vzrostla ze 70 na **120 obědů/den**.
+
+## Stav jídelny: v provozu vs. příprava (17. 8., navazující požadavek)
+
+Migrace **0044** přidala `jidelny.stav` s hodnotami `v_provozu` a `priprava`.
+Součet volné kapacity se tím rozdělil na **„co jde prodat dnes"** a
+**„potenciál v přípravě"**.
+
+**Proč nový sloupec a ne přetížení `aktivni`:** `aktivni` rozhoduje, jestli
+se s jídelnou vůbec pracuje — jestli se jí počítá dosah (`src/dosah.ts`)
+a jestli na ni smí Čmuchal (`src/cmuchal.ts`). **Jídelna v přípravě se
+používat musí** — právě sběrem firem v okolí se připravuje. Jsou to dvě
+různé otázky: `aktivni` = pracujeme s ní? `stav` = má už co prodat?
+
+**Výchozí hodnota `v_provozu`** schválně: zachovává dosavadní význam čísel.
+Kdyby výchozí byla příprava, spadl by součet kapacity na nulu a vypadalo by
+to jako porucha. Které jídelny se teprve chystají, ví jen majitel — přepíná
+je na obrazovce.
+
+Součet žije v **jednom** souboru `src/kapacita.ts` (`soucetKapacit`), který
+používá příkazová řádka (`kartoteka`, `mapa`, `stav`) i aplikace. Dvě kopie
+by se rozešly a majitel by viděl dvě různá čísla o tomtéž. Soubor je
+schválně bez závislostí — aplikace ho importuje přímo a nesmí si přitáhnout
+`db.ts` ([[vercel-instaluje-jen-app-zavislosti]]).

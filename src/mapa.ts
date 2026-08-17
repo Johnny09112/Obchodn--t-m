@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { Db } from "./db.js";
+import { soucetKapacit, type StavJidelny } from "./kapacita.js";
 
 /**
  * Vygeneruje statickou HTML mapu z aktuálního obsahu kartotéky.
@@ -19,6 +20,7 @@ export interface MapaJidelna {
   zona_metru: number;
   kapacita_volna: number | null;
   aktivni: boolean;
+  stav: StavJidelny;
 }
 
 export interface MapaFirma {
@@ -36,7 +38,7 @@ export interface MapaFirma {
 export async function nactiDataProMapu(db: Db) {
   const jidelny = await db.query<MapaJidelna>(
     `select id, nazev, adresa, lat::float8 as lat, lng::float8 as lng,
-            zona_metru, kapacita_volna, aktivni
+            zona_metru, kapacita_volna, aktivni, stav
      from jidelny order by nazev`,
   );
   const firmy = await db.query<MapaFirma>(
@@ -78,9 +80,9 @@ export function sestavHtml(
     .map(([s, n]) => `${STAVY[s]?.popis ?? s}: ${n}`)
     .join(" · ");
 
-  const kapacita = jidelny
-    .filter((j) => j.aktivni)
-    .reduce((s, j) => s + (j.kapacita_volna ?? 0), 0);
+  // Jídelna v přípravě zatím nemá co prodat — do volné kapacity se nepočítá,
+  // ukazuje se vedle jako potenciál.
+  const soucet = soucetKapacit(jidelny);
 
   return `<!doctype html>
 <html lang="cs">
@@ -145,7 +147,7 @@ export function sestavHtml(
 <body>
 <header>
   <h1>Cantinero — mapa území</h1>
-  <span class="meta">jídelen: <b>${jidelny.length}</b> · volná kapacita: <b>${kapacita}</b> obědů/den</span>
+  <span class="meta">jídelen: <b>${jidelny.length}</b> · volná kapacita: <b>${soucet.vProvozu}</b> obědů/den${soucet.priprava > 0 ? ` · v přípravě dalších <b>${soucet.priprava}</b>` : ""}</span>
   <span class="meta">firem na mapě: <b>${firmy.length}</b>${pocty ? " · " + pocty : ""}</span>
   <span class="meta">vygenerováno <b>${vygenerovano}</b></span>
 </header>
@@ -180,7 +182,7 @@ DATA.jidelny.forEach(function (j) {
     "<b>" + j.nazev + "</b><br />" + j.adresa +
     "<dl><dt>volná kapacita</dt><dd>" + (j.kapacita_volna === null ? "neuvedeno" : j.kapacita_volna + " obědů/den") + "</dd>" +
     "<dt>zóna</dt><dd>" + (j.zona_metru / 1000).toFixed(1) + " km</dd>" +
-    "<dt>stav</dt><dd>" + (j.aktivni ? "aktivní" : "neaktivní") + "</dd></dl>"
+    "<dt>stav</dt><dd>" + (!j.aktivni ? "mimo provoz" : j.stav === "priprava" ? "příprava" : "v provozu") + "</dd></dl>"
   );
   body.push([j.lat, j.lng]);
 });

@@ -431,7 +431,18 @@ export async function nactiDetailFirmy(ico: string): Promise<DetailFirmy> {
  * které tohle počítá správně.
  */
 export function maSpojeni(f: Firma): boolean {
-  return f.contacts.some((k) => k.email !== null || k.telefon !== null);
+  return pocetSpojeni(f) > 0;
+}
+
+/**
+ * Kolika kontakty jde firmu oslovit. Pozor: **není to počet kontaktů** —
+ * jednatel bez e-mailu i telefonu se v kartotéce eviduje, ale spojení to
+ * není. Sloupec dřív ukazoval `contacts.length`, takže u firmy stálo
+ * „spojení: 2", zatímco filtr ji poslal do „chybí kontakt" (nalezeno
+ * proklikáním 17. 8. 2026).
+ */
+export function pocetSpojeni(f: Firma): number {
+  return f.contacts.filter((k) => k.email !== null || k.telefon !== null).length;
 }
 
 /** Stav rešerše u firmy — tři možnosti, které majitel chtěl rozlišit. */

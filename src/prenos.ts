@@ -85,13 +85,11 @@ export async function prenesData(zdroj: Db, cil: Db): Promise<PrenosRadek[]> {
     for (const radek of radky) {
       const zastupci = sloupce.map((_, i) => `$${i + 1}`).join(", ");
       const hodnoty = sloupce.map((s) => {
-        const h = radek[s];
-        // Pole a objekty projdou ovladačem správně jen jako JSON textu;
-        // pole (cz_nace) ale ovladač zvládá nativně, takže se nechává.
-        if (h !== null && typeof h === "object" && !Array.isArray(h) && !(h instanceof Date)) {
-          return JSON.stringify(h);
-        }
-        return h;
+        // Objekty i pole se předávají jako hodnota. Dřív se objekty
+        // stringifikovaly v domnění, že jinak ovladačem neprojdou — opak je
+        // pravda: ostrý Postgres by JSON text serializoval podruhé a do jsonb
+        // uložil řetězec místo objektu (ověřeno 17. 8. 2026, viz repo.ts).
+        return radek[s];
       });
       const vysledekInsertu = await cil.query(
         `insert into ${tabulka} (${seznamSloupcu}) values (${zastupci})` +

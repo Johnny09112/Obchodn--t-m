@@ -71,7 +71,9 @@ export async function zalozOblast(
       v.oblast.stred?.lat ?? null,
       v.oblast.stred?.lng ?? null,
       v.oblast.polomerM ?? null,
-      v.oblast.body ? JSON.stringify(v.oblast.body) : null,
+      // Pole bodů se předává jako hodnota — JSON text by se v ostré databázi
+      // serializoval podruhé a uložil se řetězec místo pole (viz repo.ts).
+      v.oblast.body ?? null,
       v.jidelnaId ?? null,
       v.poznamka ?? null,
     ],

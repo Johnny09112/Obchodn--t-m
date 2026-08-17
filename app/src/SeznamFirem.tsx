@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DetailFirmy } from "./DetailFirmy";
 import {
   maSpojeni,
+  pocetSpojeni,
   POPIS_STAVU,
   POPIS_VELIKOSTI,
   stavReserse,
@@ -145,11 +146,11 @@ export function SeznamFirem({
       <div className="souhrn">
         <p className="udaj">
           <span className="popisek">Firem</span>
-          <span className="hodnota">{souhrn.firem}</span>
+          <span className="hodnota">{souhrn.firem.toLocaleString("cs")}</span>
         </p>
         <p className="udaj">
           <span className="popisek">Se spojením</span>
-          <span className="hodnota">{souhrn.seSpojenim}</span>
+          <span className="hodnota">{souhrn.seSpojenim.toLocaleString("cs")}</span>
         </p>
         <p className="udaj">
           <span className="popisek">Zaměstnanců</span>
@@ -157,7 +158,7 @@ export function SeznamFirem({
         </p>
         <p className="udaj">
           <span className="popisek">Obcí</span>
-          <span className="hodnota">{souhrn.obci}</span>
+          <span className="hodnota">{souhrn.obci.toLocaleString("cs")}</span>
         </p>
       </div>
 
@@ -268,7 +269,7 @@ export function SeznamFirem({
                       : "—"}
                   </td>
                   <td className="cislo">{f.zamestnanci_odhad ?? "—"}</td>
-                  <td className="cislo">{f.contacts.length}</td>
+                  <td className="cislo">{pocetSpojeni(f)}</td>
                   <td className="cislo">{f.skore ?? "—"}</td>
                   <td>
                     <Stav stav={f.stav} />

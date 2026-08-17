@@ -264,11 +264,18 @@ export async function zaznamVyrazeni(db: Db, v: VyrazeniVstup): Promise<void> {
   );
 }
 
-/** TP-13: auditovatelnost — každý běh agenta do agent_runs. */
+/**
+ * TP-13: auditovatelnost — každý běh agenta do agent_runs.
+ *
+ * Do jsonb sloupců patří **hodnota, ne její JSON text**. Serializaci dělá
+ * ovladač: `JSON.stringify` by se v ostré databázi serializoval podruhé
+ * a uložil řetězec místo objektu (PGlite ho naopak rozparsuje, takže si
+ * toho testy nevšimnou) — viz test/agent-runs-jsonb.test.ts.
+ */
 export async function zacniBeh(db: Db, agent: string, vstup: unknown): Promise<string> {
   const rows = await db.query<{ id: string }>(
     "insert into agent_runs (agent, vstup) values ($1, $2) returning id",
-    [agent, JSON.stringify(vstup)],
+    [agent, vstup],
   );
   return rows[0]!.id;
 }
@@ -285,8 +292,8 @@ export async function ukonciBeh(
      set konec = now(), vystup = $1, chyby = $2, naklady_usd = $3
      where id = $4`,
     [
-      JSON.stringify(vystup),
-      chyby && chyby.length > 0 ? JSON.stringify(chyby) : null,
+      vystup,
+      chyby && chyby.length > 0 ? chyby : null,
       nakladyUsd ?? null,
       id,
     ],

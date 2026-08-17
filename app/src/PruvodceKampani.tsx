@@ -650,6 +650,9 @@ export function PruvodceKampani({
             <button className="tlacitko tise" onClick={() => setKrok(1)}>
               Zpět na založení
             </button>
+            <button className="tlacitko tise" onClick={onHotovo}>
+              Zpět na kampaně
+            </button>
             <button
               className="tlacitko"
               disabled={oblastiIds.length === 0 || uklada}
@@ -839,6 +842,9 @@ export function PruvodceKampani({
         <div className="tlacitka vlevo">
           <button className="tlacitko tise" onClick={() => setKrok(2)}>
             Zpět na území
+          </button>
+          <button className="tlacitko tise" onClick={onHotovo}>
+            Zpět na kampaně
           </button>
           <button className="tlacitko tise" onClick={nactiPruzkum}>
             Načíst znovu

@@ -45,8 +45,47 @@ function trvani(od: string, do_: string | null): string {
   return `${Math.floor(minut / 60)} h ${minut % 60} min`;
 }
 
+/**
+ * Běhy zapsané do 17. 8. 2026 mají v jsonb uložený řetězec místo objektu —
+ * ovladač je serializoval podruhé (opraveno v src/repo.ts). Data se kvůli
+ * tomu nepřepisují; obrazovka si starý zápis rozbalí sama, jinak by u nich
+ * Výsledek zůstal navždy prázdný a chyby nečitelné.
+ */
+function jakoHodnota(v: unknown): unknown {
+  if (typeof v !== "string") return v;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return v;
+  }
+}
+
+/**
+ * Chyby běhu čitelně. Syrový JSON s uvozovkami majiteli nic neřekne —
+ * z každé chyby se vytáhne věta, ne struktura.
+ */
+function popisChyb(syrove: unknown): string {
+  const v = jakoHodnota(syrove);
+  const seznam = Array.isArray(v) ? v : [v];
+  const vety = seznam.map((polozka) => {
+    if (typeof polozka === "string") return polozka;
+    if (polozka !== null && typeof polozka === "object") {
+      const o = polozka as Record<string, unknown>;
+      const veta = o.chyba ?? o.duvod ?? o.popis;
+      if (typeof veta === "string") {
+        const kdo = typeof o.ico === "string" ? `${o.ico}: ` : "";
+        return `${kdo}${veta}`;
+      }
+    }
+    return JSON.stringify(polozka);
+  });
+  const text = vety.join(" · ");
+  return text.length > 160 ? `${text.slice(0, 160)}…` : text;
+}
+
 /** Krátký souhrn z JSON výstupu běhu — celý JSON by nikdo nečetl. */
-function souhrnVystupu(v: unknown): string {
+function souhrnVystupu(syrovy: unknown): string {
+  const v = jakoHodnota(syrovy);
   if (v === null || typeof v !== "object") return "—";
   const dvojice = Object.entries(v as Record<string, unknown>)
     .filter(([, h]) => typeof h === "number" || typeof h === "boolean")
@@ -237,9 +276,7 @@ export function Provoz() {
                     <td>{souhrnVystupu(b.vystup)}</td>
                     <td>
                       {b.chyby ? (
-                        <span className="postup-popis je-chybny">
-                          {JSON.stringify(b.chyby).slice(0, 160)}
-                        </span>
+                        <span className="postup-popis je-chybny">{popisChyb(b.chyby)}</span>
                       ) : (
                         "—"
                       )}

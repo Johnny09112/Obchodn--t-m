@@ -16,6 +16,10 @@ export function App() {
   // Podněty jsou první obrazovka schválně: kartotéka odpovídá „koho máme",
   // ale ráno rozhoduje „komu volat dnes a proč".
   const [pohled, setPohled] = useState<Pohled>("signaly");
+  // Klik na záložku Kampaně vrátí na seznam, i když v ní zrovna stojí otevřená
+  // kampaň — bez toho tlačítko zdánlivě nedělá nic (nalezeno proklikáním
+  // 17. 8. 2026). Změna čísla přinutí seznam začít znovu.
+  const [zpetNaSeznamKampani, setZpetNaSeznamKampani] = useState(0);
 
   // Než se ověří uložené přihlášení, neukazuj ani kartotéku, ani přihlašovací
   // lístek — problikávání by vypadalo jako odhlášení.
@@ -50,7 +54,10 @@ export function App() {
           </button>
           <button
             className={pohled === "kampane" ? "aktivni" : ""}
-            onClick={() => setPohled("kampane")}
+            onClick={() => {
+              setPohled("kampane");
+              setZpetNaSeznamKampani((n) => n + 1);
+            }}
           >
             Kampaně
           </button>
@@ -84,7 +91,11 @@ export function App() {
         {pohled === "oblasti" && <Oblasti role={role} />}
         {pohled === "kartoteka" && <Kartoteka />}
         {pohled === "kampane" && (
-          <Kampane role={role} email={session.user.email ?? ""} />
+          <Kampane
+            key={zpetNaSeznamKampani}
+            role={role}
+            email={session.user.email ?? ""}
+          />
         )}
         {pohled === "jidelny" && <Jidelny role={role} />}
         {pohled === "provoz" && (role === "admin" || role === "super-admin") && <Provoz />}

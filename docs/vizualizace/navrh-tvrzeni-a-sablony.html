@@ -1,0 +1,333 @@
+<title>Tvrzení a šablony</title>
+<style>
+  :root {
+    --ground: #eeeee7; --karta: #fbfaf6; --karta2: #f3f2eb;
+    --inkoust: #1d211b; --inkoust-slaby: #5c6157; --linka: #cfd0c6;
+    --zelena: #3c6b48; --zelena-svetla: #e2ece3;
+    --cihla: #a4432c; --cihla-svetla: #f7e5df;
+    --zlata: #8d6a1a; --zlata-svetla: #f7eed6;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14170f; --karta: #1c2019; --karta2: #232821;
+      --inkoust: #e8e9e2; --inkoust-slaby: #a0a597; --linka: #363a33;
+      --zelena: #7fb98c; --zelena-svetla: #22301f;
+      --cihla: #e08a70; --cihla-svetla: #33211c;
+      --zlata: #d8b25c; --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #14170f; --karta: #1c2019; --karta2: #232821;
+    --inkoust: #e8e9e2; --inkoust-slaby: #a0a597; --linka: #363a33;
+    --zelena: #7fb98c; --zelena-svetla: #22301f;
+    --cihla: #e08a70; --cihla-svetla: #33211c;
+    --zlata: #d8b25c; --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body { margin: 0; background: var(--ground); color: var(--inkoust);
+         font-family: var(--pismo-text); line-height: 1.6; }
+
+  .stranka { max-width: 54rem; margin: 0 auto; padding: 3rem 1.5rem 5rem;
+             display: flex; flex-direction: column; gap: 2.75rem; }
+
+  .eyebrow { font-family: var(--pismo-data); font-size: 0.75rem; letter-spacing: 0.12em;
+             text-transform: uppercase; color: var(--inkoust-slaby); }
+
+  h1 { font-family: var(--pismo-nadpis); font-size: clamp(1.9rem, 5vw, 2.5rem);
+       line-height: 1.15; margin: 0.5rem 0 0.75rem; text-wrap: balance; }
+
+  h2 { font-family: var(--pismo-nadpis); font-size: 1.375rem; margin: 0 0 0.4rem; }
+  .podnadpis { margin: 0 0 1.4rem; color: var(--inkoust-slaby); font-size: 0.9375rem; max-width: 44rem; }
+  .perex { margin: 0; max-width: 44rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+
+  .obal-tabulky { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; background: var(--karta);
+          border: 1px solid var(--linka); border-radius: 4px; }
+  thead th { text-align: left; font-family: var(--pismo-data); font-size: 0.6875rem;
+             letter-spacing: 0.1em; text-transform: uppercase; color: var(--inkoust-slaby);
+             font-weight: 400; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--linka); }
+  tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px dotted var(--linka);
+             font-size: 0.9375rem; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody td.doklad { color: var(--inkoust-slaby); font-size: 0.875rem; }
+  tbody tr.ceka td { background: var(--zlata-svetla); }
+
+  .nesmi { display: flex; flex-direction: column; gap: 0.9rem; }
+
+  .zakaz { background: var(--cihla-svetla); border-left: 3px solid var(--cihla);
+           border-radius: 4px; padding: 0.9rem 1.15rem; }
+  .zakaz h3 { font-size: 0.9375rem; margin: 0 0 0.3rem; }
+  .zakaz p { margin: 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .zakaz .misto { display: block; margin-top: 0.4rem; color: var(--zelena); font-weight: 600; }
+
+  .sablona { background: var(--karta); border: 1px solid var(--linka); border-radius: 4px;
+             box-shadow: var(--stin); overflow: hidden; }
+  .sablona + .sablona { margin-top: 1.25rem; }
+  .sablona-hlava { padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--linka);
+                   display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline; }
+  .sablona-hlava h3 { font-family: var(--pismo-nadpis); font-size: 1.0625rem; margin: 0; }
+  .znacky { display: flex; gap: 0.4rem; margin-left: auto; flex-wrap: wrap; }
+  .stitek { font-family: var(--pismo-data); font-size: 0.6875rem; letter-spacing: 0.06em;
+            text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px;
+            white-space: nowrap; background: var(--karta2); color: var(--inkoust-slaby); }
+  .stitek.ok { background: var(--zelena-svetla); color: var(--zelena); }
+
+  .predmet { padding: 0.7rem 1.25rem; background: var(--karta2);
+             font-family: var(--pismo-data); font-size: 0.875rem; }
+  .predmet span { color: var(--inkoust-slaby); }
+  .telo { margin: 0; padding: 1.15rem 1.25rem; white-space: pre-wrap;
+          font-family: var(--pismo-text); font-size: 0.9375rem; }
+  .rozbor { padding: 0 1.25rem 1.15rem; font-size: 0.875rem; color: var(--inkoust-slaby); margin: 0; }
+
+  .otazky { display: flex; flex-direction: column; gap: 1rem; }
+  .otazka { background: var(--karta); border: 1px solid var(--linka); border-left: 3px solid var(--zelena);
+            border-radius: 4px; padding: 1rem 1.25rem; }
+  .otazka h3 { font-size: 1rem; margin: 0 0 0.3rem; }
+  .otazka p { margin: 0; font-size: 0.9375rem; }
+  .otazka .doporuceni { margin-top: 0.4rem; color: var(--zelena); font-weight: 600; }
+
+  footer { border-top: 1px solid var(--linka); padding-top: 1.25rem;
+           font-size: 0.875rem; color: var(--inkoust-slaby); }
+</style>
+
+<div class="stranka">
+  <header>
+    <span class="eyebrow">Cantinero · session S0.5 · návrh k odsouhlasení</span>
+    <h1>Tvrzení a šablony</h1>
+    <p class="perex">
+      Sestaveno z toho, co jste popsal. <strong>Nic z toho zatím není
+      v databázi</strong> — tvrzení se ukládají ve stavu „navrženo" a do
+      provozu je pustíte vy. Šablony prošly automatickou kontrolou stylu
+      podle SPEC kap. 6.
+    </p>
+  </header>
+
+  <section>
+    <h2>Co smíme tvrdit</h2>
+    <p class="podnadpis">
+      Ke každému tvrzení patří doklad — čím ho v případě dotazu podložíme.
+      Žlutě jsou ta, kde doklad ještě potřebuju od vás.
+    </p>
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr><th>Tvrzení</th><th>Doklad</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ve školní jídelně se vaří denně mimo školní prázdniny.</td>
+            <td class="doklad">Provoz partnerské jídelny; sezónnost plyne ze školního roku.</td>
+          </tr>
+          <tr>
+            <td>Menu je polévka, hlavní jídlo, obvykle přídavek a na místě nápoj (voda, čaj nebo džus).</td>
+            <td class="doklad">Skladba jídelníčku partnerské jídelny.</td>
+          </tr>
+          <tr class="ceka">
+            <td>Cena za celé menu se pohybuje zhruba mezi 90 a 130 Kč včetně naší provize.</td>
+            <td class="doklad">Ceník — <strong>potřebuju od vás doložit</strong>, ideálně rozpětí podle jídelny.</td>
+          </tr>
+          <tr>
+            <td>Objednává se dopředu z vystaveného jídelníčku v aplikaci; objednávka se obvykle uzavírá den před varným dnem.</td>
+            <td class="doklad">Fungování systému Cantinero.</td>
+          </tr>
+          <tr>
+            <td>Platit může každý strávník sám přes platební bránu, nebo firma souhrnně na fakturu — počty jsou v systému.</td>
+            <td class="doklad">Fungování systému Cantinero (firemní profil).</td>
+          </tr>
+          <tr>
+            <td>Jídlo lze sníst v jídelně, odnést ve vlastním jídlonosiči nebo jednorázovém obalu, odvézt hromadně firmou, nebo ho jídelna doveze a dopravu doúčtuje.</td>
+            <td class="doklad">Vaše provozní varianty — pokrývají 99 % případů.</td>
+          </tr>
+          <tr>
+            <td>Školní jídelny vaří dětem podle výživových norem (spotřebního koše) daných vyhláškou č. 107/2005 Sb.; obědy pro firmy vznikají z téhož jídelníčku.</td>
+            <td class="doklad">Vyhláška o školním stravování, ověřeno 17. 8. 2026. <strong>Pozor na formulaci</strong> — viz níž.</td>
+          </tr>
+          <tr>
+            <td>Firemní obědy se vaří ve volné kapacitě vedle hlavní činnosti, tedy vedle stravování dětí.</td>
+            <td class="doklad">Doplňková činnost školní jídelny; hlavní činnost nesmí být omezena.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co se tvrdit nesmí</h2>
+    <p class="podnadpis">
+      Tohle jsou věci, které jste zmínil a které dávají smysl jako vaše
+      přesvědčení — ale do zprávy nepatří, protože je nedokážeme podložit.
+    </p>
+    <div class="nesmi">
+      <article class="zakaz">
+        <h3>„Vaše obědy splňují výživové normy"</h3>
+        <p>
+          Normy a spotřební koš se vztahují na <strong>dětské porce</strong>
+          podle věkových kategorií. Na dospělé cizí strávníky se nevztahují,
+          takže takové tvrzení by bylo nepřesné.
+        </p>
+        <span class="misto">Místo toho: jídelna vaří dětem podle norem a firemní obědy vznikají z téhož jídelníčku.</span>
+      </article>
+      <article class="zakaz">
+        <h3>„Pestrá strava = zdravější zaměstnanci"</h3>
+        <p>
+          Je to rozumná úvaha, ale je to tvrzení o příčině a následku, které
+          o vaší službě nikdo neměřil. Do první zprávy nepatří.
+        </p>
+        <span class="misto">Místo toho: popsat, co je v menu, a nechat úsudek na příjemci.</span>
+      </article>
+      <article class="zakaz">
+        <h3>„Levnější než stravenky" a srovnání s konkurencí</h3>
+        <p>
+          Sám jste řekl, že stravenka je způsob výplaty peněz, ne konkurenční
+          služba. Srovnávat je zavádějící a doložit úsporu neumíme.
+        </p>
+        <span class="misto">Místo toho: uvést cenu za menu a co v ní je.</span>
+      </article>
+      <article class="zakaz">
+        <h3>Jakákoli zmínka o zkušenosti s firmami</h3>
+        <p>
+          <strong>Zatím žádná firma neodebírá</strong> — začínáte. Věty typu
+          „vaříme pro firmy v okolí" by byly nepravdivé a SPEC je zakazuje
+          výslovně (předstírání zkušenosti).
+        </p>
+        <span class="misto">Místo toho: „máme volnou kapacitu, kterou nabízíme firmám v okolí".</span>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tři šablony</h2>
+    <p class="podnadpis">
+      Jedna na segment. Liší se délkou i stavbou, ne jen jménem — SPEC
+      zakazuje stejný skelet u všech zpráv. Údaje v hranatých závorkách se
+      doplní z kartotéky, a jen když jsou doložené.
+    </p>
+
+    <article class="sablona">
+      <div class="sablona-hlava">
+        <h3>Mikropodnik (1–24 zaměstnanců)</h3>
+        <div class="znacky">
+          <span class="stitek">86 slov</span>
+          <span class="stitek ok">kontrola stylu bez výhrad</span>
+        </div>
+      </div>
+      <p class="predmet"><span>Předmět:</span> obědy ze školní jídelny v Tlučné kousek od vás</p>
+      <p class="telo">Dobrý den,
+
+ve školní jídelně v Tlučné vaříme denně a od září máme volnou kapacitu, kterou nabízíme firmám v okolí. Od vaší dílny je to sedm minut pěšky.
+
+Jídlo se dá sníst na místě, odnést ve vlastním jídlonosiči nebo v jednorázovém obalu. Menu je polévka, hlavní jídlo, obvykle přídavek a na místě pití. Objednává se dopředu z jídelníčku v aplikaci, uzávěrka bývá den před vařením.
+
+Má u vás smysl to zkusit, nebo obědy řešíte jinak?
+
+Jan Laub
+Cantinero s.r.o., IČO 12345678
+Plzeň, tel. 777 123 456</p>
+      <p class="rozbor">
+        Nejkratší z trojice. U malé firmy rozhoduje docházková vzdálenost,
+        proto je vpředu. Cena tu záměrně není — u pár lidí se domluví
+        rychleji řečí než číslem.
+      </p>
+    </article>
+
+    <article class="sablona">
+      <div class="sablona-hlava">
+        <h3>Střední firma (25–249)</h3>
+        <div class="znacky">
+          <span class="stitek">95 slov</span>
+          <span class="stitek ok">kontrola stylu bez výhrad</span>
+        </div>
+      </div>
+      <p class="predmet"><span>Předmět:</span> obědy pro zaměstnance ze školní jídelny ve Zbůchu</p>
+      <p class="telo">Dobrý den,
+
+vaříme ve školní jídelně ve Zbůchu, čtyři kilometry od vaší provozovny, a od září máme volnou kapacitu pro firmy.
+
+Zaměstnanci si objednají dopředu z jídelníčku v aplikaci. Jídlo si můžou vyzvednout sami, můžete ho odvézt hromadně, nebo ho dovezeme a dopravu doúčtujeme. Platit může každý sám přes platební bránu, nebo to jde souhrnně na firemní fakturu.
+
+Za menu s polévkou, hlavním jídlem a obvykle přídavkem se cena pohybuje kolem sto dvaceti korun.
+
+Vyplatilo by se to u vás zkusit na pár lidech?
+
+Jan Laub
+Cantinero s.r.o., IČO 12345678
+Plzeň, tel. 777 123 456</p>
+      <p class="rozbor">
+        Střední firma řeší logistiku a účtování, proto jsou varianty odběru
+        i placení uprostřed. Otázka nabízí zkoušku na pár lidech — nízký práh.
+      </p>
+    </article>
+
+    <article class="sablona">
+      <div class="sablona-hlava">
+        <h3>Korporát (250+)</h3>
+        <div class="znacky">
+          <span class="stitek">99 slov</span>
+          <span class="stitek ok">kontrola stylu bez výhrad</span>
+        </div>
+      </div>
+      <p class="predmet"><span>Předmět:</span> školní jídelna Zbůch — obědy pro vaše zaměstnance</p>
+      <p class="telo">Dobrý den,
+
+školní jídelna ve Zbůchu má od září volnou kapacitu vedle hlavního provozu a nabízíme ji firmám v okolí. Od vašeho areálu je to necelé tři kilometry.
+
+Objednávky jdou přes aplikaci: zaměstnanec si vybere z jídelníčku dopředu, uzávěrka je den před vařením. Platit lze jednotlivě přes bránu, nebo souhrnně na fakturu s přehledem počtů.
+
+Jídelna vaří pro děti podle výživových norem daných vyhláškou o školním stravování a obědy pro firmy vznikají z téhož jídelníčku.
+
+Dává smysl to probrat s někým, kdo u vás má stravování na starost?
+
+Jan Laub
+Cantinero s.r.o., IČO 12345678
+Plzeň, tel. 777 123 456</p>
+      <p class="rozbor">
+        Ve velké firmě čtete zprávu skoro jistě někdo, kdo o stravování
+        nerozhoduje sám — proto otázka směřuje na předání, ne na objednávku.
+        Zmínka o normách je tu formulovaná přesně tak, jak smí být.
+      </p>
+    </article>
+  </section>
+
+  <section>
+    <h2>Co potřebuju rozhodnout</h2>
+    <div class="otazky">
+      <article class="otazka">
+        <h3>Schvalujete tvrzení jako celek?</h3>
+        <p>Osm tvrzení výše. Když u některého váháte, řekněte které — do provozu pustím jen ta schválená.</p>
+        <p class="doporuceni">U ceny potřebuju doklad: rozpětí podle jídelny, ať to sedí i za půl roku.</p>
+      </article>
+      <article class="otazka">
+        <h3>Má být cena v první zprávě?</h3>
+        <p>Dal jsem ji jen do prostřední šablony. Řekl jste, že cenu klidně řešme — otázka je, jestli hned v prvním oslovení u všech segmentů.</p>
+        <p class="doporuceni">Doporučuji takhle: u střední firmy ano, u mikro zbytečné, u korporátu předčasné.</p>
+      </article>
+      <article class="otazka">
+        <h3>Kdo je podepsaný a jakými údaji?</h3>
+        <p>V šablonách je zástupné jméno, IČO i telefon. Potřebuju skutečné údaje: jméno, firmu, IČO, sídlo a telefon, který zvedáte.</p>
+        <p class="doporuceni">Podle vašeho dřívějšího rozhodnutí se podepisuje ten, kdo zprávu poslal.</p>
+      </article>
+      <article class="otazka">
+        <h3>Sedí „od září"?</h3>
+        <p>Psal jste, že jídelny začínají od září zase vařit. V šablonách je to jako fakt — až termín mine, musí se věta změnit.</p>
+        <p class="doporuceni">Nastavím si to jako věc k revizi na začátku září.</p>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    Zdroj faktů: váš popis ze 17. 8. 2026. Ověřeno navíc: vyhláška
+    č. 107/2005 Sb. o školním stravování (výživové normy a spotřební koš pro
+    dětské porce). Do databáze se nic neuloží bez vašeho schválení —
+    odesílání zůstává vypnuté (TP-8).
+  </footer>
+</div>

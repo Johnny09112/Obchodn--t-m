@@ -1842,6 +1842,10 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       segmenty: { type: "string" },
       // Firmy, kde známe jméno, ale ne spojení na něj.
       "bez-spojeni": { type: "boolean", default: false },
+      // Přesný seznam IČO oddělený čárkou. Přebíjí veškerý výběr včetně
+      // podmínky „neprošla rešerší" — proto se hodí k cílené opravě, kdy
+      // se u firmy dohledává jeden konkrétní údaj znovu (17. 8. 2026).
+      ico: { type: "string" },
     },
   });
   const db = await pripojDb();
@@ -1869,6 +1873,7 @@ async function cmdKObohaceni(argv: string[]): Promise<void> {
       profilKod,
       segmenty: values.segmenty?.split(",").map((s) => s.trim()) as Segment[] | undefined,
       jenBezSpojeni: values["bez-spojeni"] === true,
+      ica: values.ico?.split(",").map((s) => s.trim()).filter(Boolean),
     });
     // Strojově čitelný výstup — čte ho agent, ne člověk.
     console.log(JSON.stringify(firmy, null, 2));
@@ -2082,13 +2087,15 @@ switch (prikaz) {
   pruzkum useky <id>               vypíše úseky průzkumu a jejich stav
   reserse obsluz                   vyřídí jednu objednávku AI průzkumu
                                    (spustí Čmuchala neinteraktivně)
-  k-obohaceni [--limit N] [--kampan <id>] [--profil <kod>] [--segmenty stredni,korporat] [--bez-spojeni]
+  k-obohaceni [--limit N] [--kampan <id>] [--profil <kod>] [--segmenty stredni,korporat] [--bez-spojeni] [--ico 123,456]
                                    vypíše firmy čekající na rešerši (pro agenta);
                                    --kampan = jen firmy vybrané do dané kampaně (stejné jako
                                    objednávka AI rešerše); --profil = podle čeho se počítá
                                    pole "chybi" (nezadaný a bez --kampan = globálně aktivní
                                    profil; s --kampan = profil té kampaně); --bez-spojeni =
-                                   známe jméno, chybí e-mail i telefon
+                                   známe jméno, chybí e-mail i telefon;
+                                   --ico = přesně tyhle firmy, i když už rešerší prošly
+                                   (cílená oprava jednoho údaje)
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)`);
     process.exit(prikaz ? 1 : 0);

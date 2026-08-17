@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { postupPruzkumu, souhrnPruzkumu, type OblastPostup } from "../src/pruzkum-postup.js";
+import {
+  postupPruzkumu,
+  pruzkumDobehl,
+  souhrnPruzkumu,
+  type OblastPostup,
+} from "../src/pruzkum-postup.js";
 
 /** Objednávka, která doběhla — dvě obce hotové. */
 function hotova(nazev: string): OblastPostup {
@@ -83,5 +88,39 @@ describe("souhrn průzkumu přes víc oblastí", () => {
     const s = souhrnPruzkumu([hotova("Plzeňsko"), selhala]);
     expect(s.popis).toContain("Rokycansko");
     expect(s.selhalych).toBe(1);
+  });
+});
+
+/**
+ * Kampaň zůstává ve stavu `ceka_na_pruzkum`, dokud ji člověk neposune dál —
+ * i když průzkum dávno doběhl. Seznam kampaní pak hlásil „čeká na průzkum"
+ * a hned pod tím „Hotovo — prozkoumáno 9 obcí" (nalezeno 17. 8. 2026).
+ * Pravidlo, kdy je doběhnuto, žije v jádře, aby se obrazovka a průvodce
+ * nemohly rozejít.
+ */
+describe("kdy průzkum doběhl", () => {
+  it("bez území se nedoběhlo — není co dělat, ale ani hotovo", () => {
+    expect(pruzkumDobehl(souhrnPruzkumu([]))).toBe(false);
+  });
+
+  it("neobjednaný průzkum nedoběhl", () => {
+    expect(pruzkumDobehl(souhrnPruzkumu([neobjednana("Plzeňsko")]))).toBe(false);
+  });
+
+  it("běžící průzkum nedoběhl", () => {
+    expect(pruzkumDobehl(souhrnPruzkumu([hotova("Plzeňsko"), bezici("Klatovsko")]))).toBe(false);
+  });
+
+  it("všechny oblasti hotové znamená doběhlo", () => {
+    expect(pruzkumDobehl(souhrnPruzkumu([hotova("Plzeňsko"), hotova("Klatovsko")]))).toBe(true);
+  });
+
+  it("selhaná oblast taky doběhla — čeká se na člověka, ne na agenta", () => {
+    const selhala: OblastPostup = {
+      nazev: "Rokycansko",
+      stav: "selhalo",
+      postup: postupPruzkumu({ stav: "selhalo", useky: [], bezPredMinutami: 5 }),
+    };
+    expect(pruzkumDobehl(souhrnPruzkumu([hotova("Plzeňsko"), selhala]))).toBe(true);
   });
 });

@@ -110,6 +110,22 @@ export function souhrnPruzkumu(oblasti: readonly OblastPostup[]): SouhrnPruzkumu
 }
 
 /**
+ * Doběhl průzkum? Tedy: nemá už smysl na agenta čekat, další krok je na
+ * člověku. Selhaná oblast se počítá jako doběhnutá — čekáním se nespraví.
+ *
+ * Kampaň si přitom **dál nese stav `ceka_na_pruzkum`**, protože ten se mění
+ * až rozhodnutím člověka. Bez tohohle rozlišení seznam kampaní hlásil
+ * „čeká na průzkum" a hned pod tím „Hotovo — prozkoumáno 9 obcí".
+ *
+ * Pozor, **není to totéž co „vše hotovo"** v průvodci: ten počítá jen
+ * úspěšné oblasti, protože podle nich se smí kampaň schválit. Doběhnutí
+ * odpovídá na jinou otázku — má ještě smysl čekat?
+ */
+export function pruzkumDobehl(s: SouhrnPruzkumu): boolean {
+  return s.celkem > 0 && s.bezObjednavky.length === 0 && s.hotovych + s.selhalych === s.celkem;
+}
+
+/**
  * Součet zbývajících minut. `null`, jakmile se u některé nedokončené
  * oblasti odhadnout nedá — částečný součet by tvrdil míň, než je pravda.
  */

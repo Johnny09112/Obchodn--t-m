@@ -11,7 +11,7 @@ import {
 } from "./data";
 import type { Role } from "./supabase";
 import {
-  postupPruzkumu, souhrnPruzkumu, type SouhrnPruzkumu,
+  postupPruzkumu, pruzkumDobehl, souhrnPruzkumu, type SouhrnPruzkumu,
 } from "../../src/pruzkum-postup";
 
 /** Datum bez času — v seznamu jde o „kdy naposled", ne o minuty. */
@@ -183,7 +183,16 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
               </thead>
               <tbody>
                 {videt.map((k) => {
-                  const s = POPIS_STAVU_KAMPANE[k.stav] ?? { popis: k.stav, trida: "je-novy" };
+                  const zaklad = POPIS_STAVU_KAMPANE[k.stav] ?? { popis: k.stav, trida: "je-novy" };
+                  // Stav se mění až rozhodnutím člověka, takže „čeká na
+                  // průzkum" zůstává i po jeho dokončení. Popisek proto říká,
+                  // na co se doopravdy čeká — jinak si řádek protiřečí se
+                  // shrnutím „Hotovo — prozkoumáno 9 obcí" hned pod ním.
+                  const postup = postupy.get(k.id);
+                  const s =
+                    k.stav === "ceka_na_pruzkum" && postup && pruzkumDobehl(postup)
+                      ? { popis: "průzkum hotový, čeká na vás", trida: "je-jinak" }
+                      : zaklad;
                   return (
                     <tr key={k.id}>
                       <td>
@@ -197,11 +206,7 @@ export function Kampane({ role, email }: { role: Role; email: string }) {
                           {s.popis}
                         </span>
                         {/* Stav sám o sobě neříká, na co se čeká. Tohle ano. */}
-                        {postupy.get(k.id) && (
-                          <span className="postup-popis na-radek">
-                            {postupy.get(k.id)!.popis}
-                          </span>
-                        )}
+                        {postup && <span className="postup-popis na-radek">{postup.popis}</span>}
                       </td>
                       <td>{k.oblasti.length > 0 ? k.oblasti.map((o) => o.nazev).join(", ") : "—"}</td>
                       <td>{k.spravce}</td>

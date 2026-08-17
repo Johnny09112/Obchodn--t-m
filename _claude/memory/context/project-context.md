@@ -250,14 +250,14 @@ se neodesílalo ani nemazalo; ostrá data zůstala nedotčená.
 4. **Souhrn kartotéky psal „13919"** místo „13 919".
 5. Překryv popisků v souhrnu Jídelen (výše).
 
-**Otevřené k rozhodnutí majitele:**
+**Obojí majitel rozhodl týž den:**
 
-- **Firma může být zároveň v „Příležitosti" i v „Neoslovovat"** — Centrum
-  pobytových a terénních sociálních služeb Zbůch má vícesměnný provoz
-  i vlastní jídelnu. Obrazovka třídí podněty, ne firmy. Návrh: nechat ji
-  v příležitostech, ale označit štítkem, že má i vylučovací podnět.
-- **Kampaň s hotovým průzkumem má pořád stav „čeká na průzkum"** a hned pod
-  ním „Hotovo — prozkoumáno 9 obcí". Čeká se ve skutečnosti na člověka.
+- **Firma smí být zároveň v „Příležitosti" i v „Neoslovovat"** — je to platný
+  stav, ne chyba, a nic se neskrývá ([[firma-smi-byt-prilezitost-i-neoslovovat]]).
+- **Kampaň s doběhlým průzkumem** nově hlásí „průzkum hotový, čeká na vás"
+  místo „čeká na průzkum". Pravidlo `pruzkumDobehl` sedí v jádře
+  (`src/pruzkum-postup.ts`) — pozor, není totéž co „vše hotovo" v průvodci,
+  které počítá jen úspěšné oblasti, protože podle nich se smí schvalovat.
 
 ## Aktuální focus
 

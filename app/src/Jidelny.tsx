@@ -120,7 +120,7 @@ export function Jidelny({ role }: Props) {
           ví ho jen partner.
         </p>
 
-        <div className="souhrn">
+        <div className="souhrn siroky">
           <p className="udaj">
             <span className="popisek">Volná kapacita v provozu</span>
             <span className="hodnota">{obedu(soucet.vProvozu)}</span>

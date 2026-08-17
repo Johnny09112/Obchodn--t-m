@@ -82,9 +82,10 @@ select {
   padding: 0.2rem 0;
 }
 
+/* Popisek se smí zalomit — nowrap by ho nechal přetéct přes sousední sloupec
+   a čísla by se překryla (ověřeno v prohlížeči 17. 8. na obrazovce Jídelny). */
 .udaj > .popisek {
   color: var(--inkoust-slaby);
-  white-space: nowrap;
 }
 
 /* Vodič je čistě dekorace mezi popiskem a hodnotou — čtečce ho neposíláme. */
@@ -361,6 +362,13 @@ h2 {
   border-radius: var(--r);
   padding: 0.9rem 1.1rem;
   margin-bottom: 1.5rem;
+}
+
+/* Souhrn s dlouhými popisky (Jídelny) potřebuje širší sloupce; kdyby širší
+   byly všude, krátké popisky v kartotéce by se zbytečně lámaly do dvou řádků. */
+.souhrn.siroky {
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  row-gap: 0.3rem;
 }
 
 /* ───────────────────────────────────────────────────────────── kartotéka */

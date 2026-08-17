@@ -23,3 +23,7 @@ app/dist/
 
 # Pracovní seznamy a nálezy agenta (obsahují data o firmách)
 data/prace/
+
+# Snímky a výpisy z prohlížeče při ověřování obrazovek (mohou obsahovat
+# data o firmách i přihlášeného uživatele)
+.playwright-mcp/

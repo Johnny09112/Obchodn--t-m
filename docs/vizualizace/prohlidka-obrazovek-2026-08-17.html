@@ -1,0 +1,443 @@
+<title>Prohlídka obrazovek Cantinera</title>
+<style>
+  :root {
+    --ground: #f1f0ea;
+    --karta: #fbfaf6;
+    --inkoust: #1d211b;
+    --inkoust-slaby: #5c6157;
+    --linka: #cfd0c6;
+    --zelena: #3c6b48;
+    --cihla: #a4432c;
+    --zlata: #8d6a1a;
+    --stin: 0 1px 2px rgba(29, 33, 27, 0.06);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #161914;
+      --karta: #1d211b;
+      --inkoust: #e8e9e2;
+      --inkoust-slaby: #a0a597;
+      --linka: #363a33;
+      --zelena: #7fb98c;
+      --cihla: #e08a70;
+      --zlata: #d8b25c;
+      --stin: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #161914;
+    --karta: #1d211b;
+    --inkoust: #e8e9e2;
+    --inkoust-slaby: #a0a597;
+    --linka: #363a33;
+    --zelena: #7fb98c;
+    --cihla: #e08a70;
+    --zlata: #d8b25c;
+    --stin: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .stranka {
+    max-width: 54rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  header { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .eyebrow {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    line-height: 1.15;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .perex {
+    margin: 0;
+    max-width: 40rem;
+    color: var(--inkoust-slaby);
+    font-size: 1.0625rem;
+  }
+
+  h2 {
+    font-family: var(--pismo-nadpis);
+    font-size: 1.375rem;
+    font-weight: 700;
+    margin: 0 0 1.25rem;
+  }
+
+  /* Tečkovaný vodič mezi popiskem a hodnotou je vlastní znak aplikace —
+     tenhle přehled si ho půjčuje, ať je poznat, o čem je řeč. */
+  .udaje { display: flex; flex-direction: column; gap: 0.35rem; }
+
+  .udaj { display: flex; align-items: baseline; gap: 0.6rem; }
+
+  .udaj .popisek { color: var(--inkoust-slaby); }
+
+  .udaj::after {
+    content: "";
+    order: 1;
+    flex: 1;
+    height: 0;
+    border-bottom: 1px dotted var(--linka);
+    transform: translateY(-0.25em);
+  }
+
+  .udaj .hodnota {
+    order: 2;
+    font-family: var(--pismo-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .ramecek {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--stin);
+  }
+
+  .nalezy { display: flex; flex-direction: column; gap: 0; }
+
+  .nalez {
+    display: grid;
+    grid-template-columns: 8.5rem 1fr;
+    gap: 0.25rem 1.5rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--linka);
+  }
+
+  .nalez:last-child { border-bottom: 1px solid var(--linka); }
+
+  .znacka {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-top: 0.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .zavaznost { display: flex; align-items: center; gap: 0.4rem; color: var(--inkoust-slaby); }
+
+  .tecka { width: 0.6rem; height: 0.6rem; flex: 0 0 auto; }
+  .tecka.vysoka { background: var(--cihla); }
+  .tecka.stredni { background: var(--zlata); transform: rotate(45deg); }
+  .tecka.drobna { background: var(--inkoust-slaby); border-radius: 50%; }
+
+  .hotovo {
+    color: var(--zelena);
+    font-weight: 600;
+  }
+
+  .nalez h3 {
+    font-family: var(--pismo-nadpis);
+    font-size: 1.125rem;
+    margin: 0 0 0.5rem;
+    text-wrap: balance;
+  }
+
+  .nalez p { margin: 0 0 0.6rem; }
+  .nalez p:last-child { margin-bottom: 0; }
+
+  .kde {
+    font-family: var(--pismo-data);
+    font-size: 0.8125rem;
+    color: var(--inkoust-slaby);
+  }
+
+  .dopad {
+    border-left: 2px solid var(--linka);
+    padding-left: 0.9rem;
+    color: var(--inkoust-slaby);
+    font-size: 0.9375rem;
+  }
+
+  .otazky { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .otazka {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--stin);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .otazka h3 {
+    font-family: var(--pismo-nadpis);
+    font-size: 1.0625rem;
+    margin: 0;
+  }
+
+  .otazka p { margin: 0; }
+
+  .navrh {
+    font-size: 0.9375rem;
+    color: var(--zelena);
+    font-weight: 600;
+  }
+
+  .vporadku { columns: 2; column-gap: 2.5rem; margin: 0; padding: 0; list-style: none; }
+
+  .vporadku li {
+    break-inside: avoid;
+    padding: 0.4rem 0 0.4rem 1.4rem;
+    position: relative;
+    color: var(--inkoust-slaby);
+    font-size: 0.9375rem;
+  }
+
+  .vporadku li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--zelena);
+    font-weight: 700;
+  }
+
+  footer {
+    border-top: 1px solid var(--linka);
+    padding-top: 1.25rem;
+    color: var(--inkoust-slaby);
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 34rem) {
+    .nalez { grid-template-columns: 1fr; }
+    .znacka { flex-direction: row; gap: 1rem; padding-top: 0; }
+    .vporadku { columns: 1; }
+  }
+</style>
+
+<div class="stranka">
+  <header>
+    <span class="eyebrow">Cantinero · 17. srpna 2026</span>
+    <h1>Prohlídka obrazovek</h1>
+    <p class="perex">
+      Postupné proklikání celé aplikace v prohlížeči — Co je nového, Oblasti,
+      Kartotéka, Kampaně, Jídelny, Provoz. Nic se neodesílalo, nic nemazalo,
+      ostrá data zůstala nedotčená. Našlo se pět vad; všechny jsou opravené
+      a nasazené.
+    </p>
+  </header>
+
+  <section class="ramecek">
+    <div class="udaje">
+      <p class="udaj">
+        <span class="popisek">Obrazovek proklikáno</span>
+        <span class="hodnota">6 ze 6</span>
+      </p>
+      <p class="udaj">
+        <span class="popisek">Nalezených vad</span>
+        <span class="hodnota">5</span>
+      </p>
+      <p class="udaj">
+        <span class="popisek">Opraveno a nasazeno</span>
+        <span class="hodnota">5</span>
+      </p>
+      <p class="udaj">
+        <span class="popisek">Čeká na rozhodnutí majitele</span>
+        <span class="hodnota">2</span>
+      </p>
+      <p class="udaj">
+        <span class="popisek">Zásahů do ostrých dat</span>
+        <span class="hodnota">0</span>
+      </p>
+      <p class="udaj">
+        <span class="popisek">Testy po opravách</span>
+        <span class="hodnota">699 zelených</span>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co se našlo</h2>
+    <div class="nalezy">
+
+      <article class="nalez">
+        <div class="znacka">
+          <span class="zavaznost"><span class="tecka vysoka"></span>vážné</span>
+          <span class="hotovo">opraveno</span>
+        </div>
+        <div>
+          <h3>Deník agenta se ukládal jako text, ne jako údaje</h3>
+          <p class="kde">Provoz → Běhy agentů</p>
+          <p>
+            U všech 72 běhů Čmuchala zůstával sloupec „Výsledek“ prázdný
+            a chyby se vypisovaly jako nečitelná změť uvozovek. Údaje se
+            přitom zapisovaly celou dobu — jen se do databáze ukládaly
+            zabalené navíc jednou, takže je aplikace nedokázala rozbalit.
+          </p>
+          <p class="dopad">
+            Proč to nikdo nechytil: v testovací databázi se zabalení samo
+            rozbalí, v ostré ne. Testy proto svítily zeleně. Ověřeno naostro
+            v dočasné tabulce, která zanikla hned po měření. Stará data se
+            nepřepisovala — obrazovka si je nově rozbalí sama, takže dnes
+            ukazuje výsledek u všech 40 zobrazených běhů.
+          </p>
+        </div>
+      </article>
+
+      <article class="nalez">
+        <div class="znacka">
+          <span class="zavaznost"><span class="tecka vysoka"></span>vážné</span>
+          <span class="hotovo">opraveno</span>
+        </div>
+        <div>
+          <h3>Sloupec „Spojení“ si protiřečil s filtrem</h3>
+          <p class="kde">Kartotéka</p>
+          <p>
+            U firmy stálo „spojení: 2“, a přitom ji filtr „chybí kontakt“
+            vracel mezi firmy bez spojení. Sloupec totiž počítal všechny
+            evidované osoby včetně jednatelů, u kterých známe jen jméno —
+            bez e‑mailu i telefonu. Nově počítá jen ty, přes které jde firmu
+            skutečně oslovit.
+          </p>
+          <p class="dopad">
+            Stejný omyl se řešil už 6. srpna u přehledu, o který se opírá
+            schvalování kampaně. Slovo „spojení“ musí všude znamenat totéž:
+            kontakt s adresou nebo telefonem.
+          </p>
+        </div>
+      </article>
+
+      <article class="nalez">
+        <div class="znacka">
+          <span class="zavaznost"><span class="tecka stredni"></span>střední</span>
+          <span class="hotovo">opraveno</span>
+        </div>
+        <div>
+          <h3>Z otevřené kampaně nevedla cesta zpět</h3>
+          <p class="kde">Kampaně → kroky Území a Průzkum</p>
+          <p>
+            V těchto dvou krocích chybělo tlačítko „Zpět na kampaně“ (v prvním
+            a posledním kroku bylo) a kliknutí na záložku Kampaně nahoře
+            nedělalo nic. Ze seznamu se dalo dostat ven jen oklikou přes jinou
+            záložku a zpátky.
+          </p>
+        </div>
+      </article>
+
+      <article class="nalez">
+        <div class="znacka">
+          <span class="zavaznost"><span class="tecka drobna"></span>drobné</span>
+          <span class="hotovo">opraveno</span>
+        </div>
+        <div>
+          <h3>Čísla v souhrnu se překrývala s popisky</h3>
+          <p class="kde">Jídelny</p>
+          <p>
+            „40 obědů/den“ se vykreslovalo přes text „Jídelen v provozu ·
+            v přípravě“. Rámeček měl 269 bodů, text potřeboval 330. Na užším
+            okně přetékaly tři údaje ze čtyř.
+          </p>
+        </div>
+      </article>
+
+      <article class="nalez">
+        <div class="znacka">
+          <span class="zavaznost"><span class="tecka drobna"></span>drobné</span>
+          <span class="hotovo">opraveno</span>
+        </div>
+        <div>
+          <h3>Počty firem bez mezery v tisících</h3>
+          <p class="kde">Kartotéka → souhrn</p>
+          <p>
+            Stálo tam „13919“, zatímco všude jinde v aplikaci „13 919“.
+          </p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Dvě věci k rozhodnutí</h2>
+    <div class="otazky">
+
+      <article class="otazka">
+        <h3>Firma může být zároveň příležitost i „neoslovovat“</h3>
+        <p>
+          Centrum pobytových a terénních sociálních služeb Zbůch má vícesměnný
+          provoz (příležitost) a zároveň vlastní jídelnu (neoslovovat).
+          Obrazovka třídí podněty, ne firmy, takže se objeví v obou seznamech —
+          a v příležitostech bez jakéhokoli varování.
+        </p>
+        <p class="navrh">
+          Návrh: nechat ji v příležitostech, ale označit štítkem, že má
+          i vylučovací podnět. Skrýt ji úplně by zatajilo informaci.
+        </p>
+      </article>
+
+      <article class="otazka">
+        <h3>Kampaň s hotovým průzkumem hlásí „čeká na průzkum“</h3>
+        <p>
+          V seznamu kampaní stojí stav „čeká na průzkum“ a hned pod ním
+          „Hotovo — prozkoumáno 9 obcí“. Průzkum doběhl; ve skutečnosti se
+          čeká na vás, až kampaň posunete na seznam firem.
+        </p>
+        <p class="navrh">
+          Návrh: přejmenovat popisek stavu na „průzkum hotový, čeká na vás“.
+          Je to jen text, samotné fungování kampaně se nemění.
+        </p>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Co bylo v pořádku</h2>
+    <ul class="vporadku">
+      <li>Kapacita jídelen — čísla i stavy sedí s databází</li>
+      <li>Úprava kapacity se otevře a zruší bez zápisu</li>
+      <li>Mapa oblastí i vrstvy se vykreslují bez chyb</li>
+      <li>Detail firmy uvádí u každého údaje zdroj i citaci</li>
+      <li>Kontakt bez adresy je poctivě označený</li>
+      <li>Filtry kartotéky sedí s přepočítaným souhrnem</li>
+      <li>Podněty mají doklad, proč zrovna teď</li>
+      <li>Každý běh agenta je zapsaný (TP‑13)</li>
+      <li>Konzole prohlížeče bez chyb (mimo chybějící ikonu webu)</li>
+      <li>Nikde není tlačítko, které by cokoli odeslalo</li>
+    </ul>
+  </section>
+
+  <footer>
+    Prohlídka proběhla v prohlížeči na ostré aplikaci. Opravy jsou nasazené
+    a znovu ověřené na produkci; testová sada i kontrola typů prošly.
+  </footer>
+</div>

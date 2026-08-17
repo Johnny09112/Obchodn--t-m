@@ -9,7 +9,13 @@ i realita vyžadují **před** ostrým během čehokoli:
   (jídelny a zóny, knihovna tvrzení, šablony, odesílací doména, podepsaná
   osoba, právní konzultace).
 
-Stav: **návrh k odsouhlasení**. Nic z níže uvedeného ještě neběží.
+Stav k **17. 8. 2026**: fáze 0 běží, fáze 1 je hotová (běžela vědomě napřed).
+Stavy jednotlivých sessions jsou u nich; přehled ověřený proti datům je
+v `docs/vizualizace/plan-fazi-a-sessions-2026-08-17.html`.
+
+> **Tenhle dokument je zdroj pravdy o postupu.** Když se něco naplánuje
+> v hovoru a nezapíše se sem, přestane to existovat — přesně to se stalo
+> re-designu (dnes S0.11) i celé aplikaci, která v původním rozpisu nebyla.
 
 ---
 
@@ -38,14 +44,25 @@ Vše z předchozí práce zůstává použitelné **bez ohledu na volbu technolo
 Proud A — Prostředí        Proud B — Obchodní příprava     Proud C — Infrastruktura
 (bez blokací, hned)        (potřebuje tvoje vstupy)        (potřebuje rozhodnutí)
 ─────────────────────      ──────────────────────────      ────────────────────────
-S0.1 Workspace             S0.4 Jídelny a zóny             S0.2 Architektura (ADR)
-S0.3 Agenti + skilly       S0.5 Tvrzení + šablony          S0.6 DB projekt
-                           S0.7 E-mail + podpis            S0.8 Právní podklady
+S0.1 Workspace ✅          S0.4 Jídelny a zóny ✅          S0.2 Architektura (ADR) ~
+S0.3 Agenti + skilly ~     S0.5 Tvrzení + šablony ❌       S0.6 DB projekt ✅
+                           S0.7 E-mail + podpis ❌         S0.8 Právní podklady ~
+
+Proud D — Aplikace (vznikl za pochodu, v původním rozpisu nebyl)
+────────────────────────────────────────────────────────────────
+9 odpracovaných celků se zadáním a plánem v docs/superpowers/
+S0.11 Vzhled aplikace — naplánováno 17. 8., spouští se na signál (viz níže)
 ```
 
 Pořadí: **S0.1 → S0.2** jsou první (S0.1 nic neblokuje, S0.2 blokuje S0.3
 a S0.6). Proud B může běžet paralelně, jakmile dodáš vstupy. Fáze 0 končí
 kontrolní session S0.9 (go/no-go do fáze 1).
+
+**Proud D není v původním plánu schválně — vznikl z potřeby.** Rozpis počítal
+s tím, že se všechno ovládá příkazovou řádkou. Jakmile se ukázalo, že majitel
+musí vidět a rozhodovat (které firmy, které území, jaká kapacita), vznikla
+webová aplikace: dnes 6 obrazovek, 24 souborů, ~7 100 řádků. Je to největší
+kus odvedené práce a v rozpisu chyběl celý.
 
 ---
 
@@ -227,6 +244,40 @@ otevřít teď, nebo až po vyhodnocení fáze 1 (**doporučuji až po fázi 1**
 budeš mít reálná data o tom, jestli systém vůbec funguje).
 **Výstup:** `docs/analyza-produkt.md` + rozhodnutí jít/nejít do produktizace.
 
+### S0.11 — Vzhled aplikace *(naplánováno 17. 8. 2026, spouští se na signál)*
+
+**Cíl:** projít aplikaci jako celek a sjednotit vzhled — typografii, barvy
+stavů, rozestupy, chování na úzkém okně — místo dnešního postupného
+přirůstání obrazovku po obrazovce. Nástroj: Claude Design (majitel si ho
+vyžádal 17. 8.).
+
+**Co se NEmění:** obsah obrazovek ani toky. Tohle je vzhled, ne přestavba —
+kdyby se měnilo obojí najednou, nepozná se, co rozbilo co.
+
+**Doporučení, kdy to pustit — ne dřív než nastane jedna z těchto věcí:**
+
+1. **Aplikaci uvidí někdo zvenčí** — partner, zřizovatel jídelny, potenciální
+   zákazník produktu (fáze 2, nebo produktizace ze S0.10). Do té doby ji
+   používá jeden až dva lidé, kteří vědí, kde co je.
+2. **Přibude sedmá a osmá obrazovka** — dnešních šest se do lišty vejde,
+   dalších pár už ne a navigaci bude potřeba přestavět tak jako tak.
+3. **Vzhled začne překážet v práci** — projeví se to jako opakované „nevím,
+   kam kliknout" nebo přehlédnuté číslo, ne jako „nelíbí se mi to".
+
+**Proč ne teď (můj názor, rozhoduje majitel):** aplikace má vlastní
+konzistentní jazyk (tečkovaný vodič mezi popiskem a hodnotou, data
+neproporcionálním písmem, stavy kódované tvarem i barvou kvůli barvosleposti)
+a **žádná z vad nalezených při proklikání 17. 8. nebyla estetická** — všech
+pět byla věcná nebo textová. Přednější je to, co blokuje fázi 3: tvrzení,
+šablony a odesílací doména. Re-design nepřinese ani jednu oslovenou firmu.
+
+**Co udělat hned a levně místo toho** (drobnosti, ne session): projít úzké
+okno na mobilu, sjednotit velikost písma v tabulkách a doplnit stavům
+jednotné pořadí barev. Odhad: hodina práce.
+
+**Od tebe:** signál, že nastala jedna ze tří situací výše — nebo pokyn, že
+to chceš dřív. Pak připravím zadání a návrh nanečisto, jako u detailu firmy.
+
 ### S0.9 — Kontrolní session: go/no-go *(závěr fáze 0)*
 **Cíl:** projít checklist dokončení (kap. 5), vyhodnotit, rozhodnout start
 fáze 1 (ostré běhy Čmuchala) a revidovat plán fáze 1 podle ADR.
@@ -235,16 +286,28 @@ fáze 1 (ostré běhy Čmuchala) a revidovat plán fáze 1 podle ADR.
 
 ## 5. Kritéria dokončení fáze 0
 
+*(Odškrtnuto podle skutečnosti k 17. 8. 2026 — ověřeno v datech a repozitáři,
+ne odhadem.)*
+
 - [x] Lokální prostředí a databáze běží, migrace idempotentní (S0.6)
 - [x] Rozhodnut režim provozu: předplatné, 20–50 firem/den, bez cloudu (S0.2)
-- [ ] CLAUDE.md, paměť, oprávnění, agenti a skilly commitnuté (S0.1, S0.3)
-- [ ] ADR o technologii sepsané + enrichment přepnutý z API na agenta (S0.2)
-- [ ] ≥ 1 aktivní jídelna se zónou a kapacitou v DB; znám strop obchodu (S0.4)
-- [ ] Knihovna tvrzení schválená, šablony navržené (S0.5)
-- [ ] Dry-run Čmuchala na 5 firmách prošel (S0.6)
-- [ ] Doména s SPF/DKIM/DMARC, zahřívání běží, podepsaná osoba určena (S0.7)
-- [ ] Právní brief hotový, konzultace domluvená (S0.8)
-- [ ] *(volitelně, doporučeno až po fázi 1)* Analýza produktizace (S0.10)
+- [x] CLAUDE.md, paměť, oprávnění a agenti commitnuté (S0.1, S0.3)
+- [ ] **Skilly** `overeni-firmy`, `kontrola-kvality`, `tydenni-report` (S0.3)
+      — složka `.claude/skills/` neexistuje
+- [ ] ADR o technologii sepsané (S0.2) — rozhodnutí padlo a platí, ale zapsané
+      je jen v kap. 3 tohohle dokumentu; ADR jsou zatím o frontendu a o dvou
+      vrstvách. *Enrichment přepnutý z API na agenta je hotový.*
+- [x] ≥ 1 aktivní jídelna se zónou a kapacitou; znám strop obchodu (S0.4)
+      — 5 jídelen, 80 obědů/den k prodeji, 40 v přípravě
+- [ ] **Knihovna tvrzení schválená, šablony navržené (S0.5)** — v databázi je
+      0 tvrzení a 0 šablon. **Blokuje fázi 3.**
+- [x] Dry-run Čmuchala prošel (S0.6) — a po něm stovky ostrých firem
+- [ ] **Doména s SPF/DKIM/DMARC, zahřívání běží, podepsaná osoba (S0.7)**
+      — nezačato. **Blokuje fázi 3 a má nejdelší lhůty ze všeho.**
+- [ ] Právní brief hotový, konzultace domluvená (S0.8) — brief hotový 11. 8.,
+      konzultace neznámo
+- [x] Analýza produktizace (S0.10) — `docs/analyza-produkt.md`, 11. 8.
+- [ ] Go/no-go do fáze 1 (S0.9) — neproběhlo; fáze 1 se rozjela bez něj
 
 ## 6. Rozhodnutí, která jsou jen tvoje (souhrn)
 
@@ -252,8 +315,11 @@ fáze 1 (ostré běhy Čmuchala) a revidovat plán fáze 1 podle ADR.
 |---|---|---|
 | 1 | Technologie a režim provozu (S0.2) | ✅ předplatné + lokální DB, 20–50/den |
 | 2 | Cloudová DB (S0.6) | ✅ zatím nepotřeba, Supabase se nedotýkáme |
-| 3 | **Seznam jídelen (S0.4)** | ⏳ **blokuje fázi 1** — bez nich není území |
-| 4 | Fakta o produktu a schválení tvrzení (S0.5) | ⏳ |
-| 5 | Doména + podepsaná osoba (S0.7) | ⏳ dlouhé lhůty, začít brzy |
-| 6 | Advokát (S0.8) | ⏳ deadline před fází 3 |
-| 7 | Otevřít analýzu produktizace teď, nebo po fázi 1? (S0.10) | ⏳ doporučuji po fázi 1 |
+| 3 | Seznam jídelen (S0.4) | ✅ 5 jídelen, kapacita 120 obědů/den |
+| 4 | **Fakta o produktu a schválení tvrzení (S0.5)** | ⏳ **blokuje fázi 3** |
+| 5 | **Doména + podepsaná osoba (S0.7)** | ⏳ **blokuje fázi 3**, nejdelší lhůty |
+| 6 | Advokát (S0.8) | ⏳ brief hotový, konzultace na tobě |
+| 7 | Analýza produktizace (S0.10) | ✅ hotová 11. 8., rozhodnutí otevřené |
+| 8 | Kdy pustit vzhled aplikace (S0.11) | ⏳ doporučuji na signál, ne teď |
+| 9 | Překvalifikace 2 301 plzeňských firem | ⏸ vědomě odloženo na kapacitu |
+| 10 | Přepsat 7 vadných oborů (≈ 8 min agentní práce) | ⏳ čeká na pokyn |

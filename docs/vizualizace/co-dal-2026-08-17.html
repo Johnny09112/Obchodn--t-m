@@ -1,0 +1,471 @@
+<title>Co dál v Cantineru</title>
+<style>
+  :root {
+    --ground: #efeee8;
+    --karta: #fbfaf6;
+    --karta2: #f4f3ec;
+    --inkoust: #1d211b;
+    --inkoust-slaby: #5c6157;
+    --linka: #cfd0c6;
+    --zelena: #3c6b48;
+    --zelena-svetla: #e3ece3;
+    --cihla: #a4432c;
+    --cihla-svetla: #f6e5df;
+    --zlata: #8d6a1a;
+    --zlata-svetla: #f6eed7;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14170f;
+      --karta: #1c2019;
+      --karta2: #232821;
+      --inkoust: #e8e9e2;
+      --inkoust-slaby: #a0a597;
+      --linka: #363a33;
+      --zelena: #7fb98c;
+      --zelena-svetla: #22301f;
+      --cihla: #e08a70;
+      --cihla-svetla: #33211c;
+      --zlata: #d8b25c;
+      --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #14170f;
+    --karta: #1c2019;
+    --karta2: #232821;
+    --inkoust: #e8e9e2;
+    --inkoust-slaby: #a0a597;
+    --linka: #363a33;
+    --zelena: #7fb98c;
+    --zelena-svetla: #22301f;
+    --cihla: #e08a70;
+    --cihla-svetla: #33211c;
+    --zlata: #d8b25c;
+    --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    line-height: 1.6;
+  }
+
+  .stranka {
+    max-width: 55rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .eyebrow {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: clamp(2rem, 5vw, 2.6rem);
+    line-height: 1.15;
+    margin: 0.5rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  h2 { font-family: var(--pismo-nadpis); font-size: 1.375rem; margin: 0 0 0.4rem; }
+  h3 { font-family: var(--pismo-nadpis); font-size: 1.0625rem; margin: 0 0 0.4rem; }
+  .podnadpis { margin: 0 0 1.5rem; color: var(--inkoust-slaby); font-size: 0.9375rem; max-width: 44rem; }
+  .perex { margin: 0; max-width: 44rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+
+  .verdikt {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-left: 3px solid var(--zelena);
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--stin);
+  }
+
+  .verdikt .hlavni {
+    font-family: var(--pismo-nadpis);
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+    text-wrap: balance;
+  }
+
+  .verdikt p { margin: 0 0 0.6rem; }
+  .verdikt p:last-child { margin-bottom: 0; }
+
+  .spoustece { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+
+  .spoustec {
+    background: var(--karta2);
+    border-radius: 4px;
+    padding: 0.9rem 1.05rem;
+  }
+
+  .spoustec .kdy {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--zelena);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  .spoustec p { margin: 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+
+  .bloky { display: flex; flex-direction: column; gap: 1rem; }
+
+  .blok {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 1.15rem 1.35rem;
+    box-shadow: var(--stin);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3rem 1.25rem;
+    align-items: baseline;
+  }
+
+  .blok.kriticky { border-left: 3px solid var(--cihla); }
+  .blok.dulezity { border-left: 3px solid var(--zlata); }
+  .blok.drobny { border-left: 3px solid var(--linka); }
+
+  .poradi {
+    font-family: var(--pismo-data);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--inkoust-slaby);
+    font-variant-numeric: tabular-nums;
+    grid-row: span 2;
+  }
+
+  .blok .telo p { margin: 0 0 0.5rem; font-size: 0.9375rem; }
+  .blok .telo p:last-child { margin-bottom: 0; }
+  .blok .telo .co-potrebuji { color: var(--zelena); font-weight: 600; }
+
+  .znacky { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
+
+  .stitek {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+    background: var(--karta2);
+    color: var(--inkoust-slaby);
+  }
+
+  .stitek.blokuje { background: var(--cihla-svetla); color: var(--cihla); }
+  .stitek.cas { background: var(--zelena-svetla); color: var(--zelena); }
+  .stitek.ty { background: var(--zlata-svetla); color: var(--zlata); }
+
+  .vysvetleni { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+
+  .kartka {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 1rem 1.15rem;
+  }
+
+  .kartka p { margin: 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .kartka .cislo { font-family: var(--pismo-data); font-size: 1.5rem; font-weight: 700; display: block; margin-bottom: 0.2rem; }
+
+  .obal-tabulky { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 32rem; background: var(--karta); }
+  thead th {
+    text-align: left;
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    font-weight: 400;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--linka);
+  }
+  tbody td { padding: 0.65rem 0.9rem; border-bottom: 1px dotted var(--linka); font-size: 0.9375rem; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody td:first-child { font-family: var(--pismo-data); white-space: nowrap; }
+
+  footer { border-top: 1px solid var(--linka); padding-top: 1.25rem; font-size: 0.875rem; color: var(--inkoust-slaby); }
+
+  @media (max-width: 36rem) {
+    .blok { grid-template-columns: 1fr; }
+    .poradi { grid-row: auto; }
+  }
+</style>
+
+<div class="stranka">
+  <header>
+    <span class="eyebrow">Cantinero · 17. srpna 2026</span>
+    <h1>Co dál</h1>
+    <p class="perex">
+      Odpověď na tři věci: jestli má re-design smysl a kdy ho pustit, co vlastně
+      myslím „aplikací“, a v jakém pořadí dohnat to, co v přípravě chybí.
+      Plán je zapsaný v docs/FAZE-0.md — tahle stránka je jeho čtivá podoba.
+    </p>
+  </header>
+
+  <section>
+    <h2>1. Re-design: naplánovaný, ale nedoporučuji ho teď</h2>
+    <p class="podnadpis">Ptal jste se na můj názor, tak ho říkám rovnou.</p>
+
+    <div class="verdikt">
+      <p class="hlavni">Zadání je připravené jako session S0.11. Spustit bych ho ale
+        nechal až na signál, ne na termín.</p>
+      <p>
+        <strong>Proč:</strong> aplikaci dnes používá jeden až dva lidé, kteří
+        vědí, kde co je. Má vlastní konzistentní jazyk — tečkovaný vodič mezi
+        popiskem a hodnotou, data neproporcionálním písmem, stavy kódované
+        tvarem <em>i</em> barvou (kvůli barvosleposti). A hlavně: z pěti vad,
+        které dnešní proklikání našlo, <strong>nebyla estetická ani jedna</strong>.
+        Všech pět bylo věcných nebo textových.
+      </p>
+      <p>
+        Zatím platí, že fázi 3 blokují tvrzení, šablony a odesílací doména.
+        Re-design nepřinese ani jednu oslovenou firmu, kdežto ty tři věci jsou
+        jediné, co stojí mezi vámi a prvním obchodem.
+      </p>
+      <p>
+        <strong>Co bych udělal místo toho hned:</strong> hodinu drobností —
+        projít úzké okno na mobilu, sjednotit velikost písma v tabulkách,
+        srovnat pořadí barev u stavů. To není re-design, to je úklid.
+      </p>
+
+      <div class="spoustece">
+        <div class="spoustec">
+          <span class="kdy">Spouštěč 1</span>
+          <p>Aplikaci uvidí někdo zvenčí — partner, zřizovatel jídelny nebo
+            zákazník produktu. Pak vzhled mluví za vás.</p>
+        </div>
+        <div class="spoustec">
+          <span class="kdy">Spouštěč 2</span>
+          <p>Přibude sedmá a osmá obrazovka. Šest se do lišty vejde, víc už ne
+            a navigace se stejně bude předělávat.</p>
+        </div>
+        <div class="spoustec">
+          <span class="kdy">Spouštěč 3</span>
+          <p>Vzhled začne překážet v práci — projeví se to jako „nevím, kam
+            kliknout“, ne jako „nelíbí se mi to“.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Co myslím „aplikací“</h2>
+    <p class="podnadpis">
+      Původní plán počítal s tím, že se všechno ovládá příkazovou řádkou —
+      tedy psaním příkazů. Aplikace v něm není zmíněná ani slovem, a přitom
+      je to největší kus odvedené práce.
+    </p>
+
+    <div class="vysvetleni">
+      <article class="kartka">
+        <span class="cislo">6</span>
+        <p><strong>obrazovek</strong> — Co je nového, Oblasti, Kartotéka,
+          Kampaně, Jídelny, Provoz</p>
+      </article>
+      <article class="kartka">
+        <span class="cislo">7 100</span>
+        <p><strong>řádků kódu</strong> ve 24 souborech, jen samotná aplikace</p>
+      </article>
+      <article class="kartka">
+        <span class="cislo">44</span>
+        <p><strong>migrací databáze</strong> — schéma, které pod tím vším drží</p>
+      </article>
+    </div>
+
+    <p style="margin-top: 1.25rem;">
+      Je to webová stránka na <span style="font-family: var(--pismo-data);">cantinero-find.vercel.app</span>,
+      kam se přihlásíte a vidíte kartotéku firem, mapu území, kampaně, jídelny
+      s kapacitou a provozní deník agenta. Vznikla proto, že <strong>rozhodovat
+      musíte vy</strong> — které firmy přibrat, kde hledat, kolik obědů máme
+      volných — a to nejde dělat přes příkazovou řádku.
+    </p>
+    <p>
+      Devět větších celků k ní má vlastní zadání a plán v <span
+      style="font-family: var(--pismo-data);">docs/superpowers/</span> — kampaně,
+      průvodce, fronta AI průzkumu, profil produktu a další. V rozpisu fáze 0
+      ale nebyly, takže „plán“ a „skutečnost“ se rozešly. Dnes jsem to srovnal:
+      do plánu přibyl proud D — Aplikace.
+    </p>
+  </section>
+
+  <section>
+    <h2>3. Co chybí a v jakém pořadí to připravit</h2>
+    <p class="podnadpis">
+      Pořadí není podle velikosti práce, ale podle toho, co na co čeká.
+      Nahoře je věc s nejdelší lhůtou — ta se nedá dohnat rychleji tím, že se
+      začne později.
+    </p>
+
+    <div class="bloky">
+      <article class="blok kriticky">
+        <span class="poradi">1</span>
+        <div class="telo">
+          <h3>Odesílací doména a podepsaná osoba (S0.7)</h3>
+          <div class="znacky">
+            <span class="stitek blokuje">blokuje fázi 3</span>
+            <span class="stitek cas">nastavení do hodiny</span>
+            <span class="stitek cas">zahřívání týdny</span>
+            <span class="stitek ty">rozhodujete vy</span>
+          </div>
+          <p>
+            Nová doména nesmí začít rozesílat naplno — musí se „zahřát“, jinak
+            skončí ve spamu. Tenhle čas se nedá zkrátit, jen začít dřív.
+            Technické nastavení (SPF, DKIM, DMARC) je hodina práce, zbytek běží
+            sám.
+          </p>
+          <p class="co-potrebuji">
+            Od vás: jaká doména, přístup ke správě DNS a jméno člověka, který
+            bude pod zprávami podepsaný a bude číst odpovědi.
+          </p>
+        </div>
+      </article>
+
+      <article class="blok kriticky">
+        <span class="poradi">2</span>
+        <div class="telo">
+          <h3>Tvrzení a šablony (S0.5)</h3>
+          <div class="znacky">
+            <span class="stitek blokuje">blokuje fázi 3</span>
+            <span class="stitek cas">jedna session</span>
+            <span class="stitek ty">schvalujete vy</span>
+          </div>
+          <p>
+            V databázi je dnes <strong>0 tvrzení a 0 šablon</strong>. Tvrzení je
+            věta, kterou o službě smíme napsat — a ke každé musí být doklad, že
+            je pravdivá. Bez toho nemá Obchodník z čeho skládat zprávu.
+          </p>
+          <p>
+            Navrhuju postup jako u detailu firmy: sednu si s vámi na půl hodiny
+            nad tím, co služba umí, sepíšu z toho návrh tvrzení i tří šablon,
+            pošlu nanečisto — a schválíte, co smí do provozu.
+          </p>
+          <p class="co-potrebuji">
+            Od vás: fakta o službě (ne ceny, ty se neslibují) a půl hodiny
+            povídání.
+          </p>
+        </div>
+      </article>
+
+      <article class="blok dulezity">
+        <span class="poradi">3</span>
+        <div class="telo">
+          <h3>Ruční kontrola vzorku 30 firem</h3>
+          <div class="znacky">
+            <span class="stitek">poslední kritérium fáze 1</span>
+            <span class="stitek cas">hodina vašeho času</span>
+          </div>
+          <p>
+            Jediné kritérium fáze 1, které zbývá. Připravím výběr 30 firem
+            s údaji a doklady tak, ať se to dá projít jako seznam — u každé
+            odpovíte „sedí / nesedí“. Výsledek řekne, jestli se agentovi dá
+            věřit natolik, aby jeho data šla do zpráv.
+          </p>
+          <p class="co-potrebuji">Od vás: hodina a poctivé „nesedí“, kde nesedí.</p>
+        </div>
+      </article>
+
+      <article class="blok drobny">
+        <span class="poradi">4</span>
+        <div class="telo">
+          <h3>Drobnosti, které udělám sám</h3>
+          <div class="znacky">
+            <span class="stitek cas">bez vašeho času</span>
+          </div>
+          <p>
+            Chybějící skilly ze S0.3 (postupy pro ověření firmy, kontrolu
+            kvality a týdenní hlášení), ADR o technologii — rozhodnutí platí,
+            jen není zapsané tam, kde se hledá — a sedm firem, kde je v oboru
+            omylem nábor (asi osm minut agentní práce, čeká na váš pokyn).
+          </p>
+        </div>
+      </article>
+
+      <article class="blok drobny">
+        <span class="poradi">5</span>
+        <div class="telo">
+          <h3>Uzavřít fázi 0 (S0.9)</h3>
+          <div class="znacky">
+            <span class="stitek cas">půl hodiny</span>
+            <span class="stitek ty">rozhodujete vy</span>
+          </div>
+          <p>
+            Až budou první čtyři body hotové, projdeme checklist a řeknete
+            go/no-go do fáze 2 a 3. Formálně to nikdy neproběhlo — fáze 1 se
+            rozjela bez něj, vědomě, ale podruhé už by to bylo přehlédnutí.
+          </p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co čeká na vaše slovo</h2>
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr><th>Věc</th><th>Co potřebuju slyšet</th><th>Moje doporučení</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Doména</td>
+            <td>jakou použít, kdo bude podepsaný</td>
+            <td>začít hned — lhůty se nedají dohnat</td>
+          </tr>
+          <tr>
+            <td>Tvrzení</td>
+            <td>půl hodiny povídání o službě</td>
+            <td>hned po doméně</td>
+          </tr>
+          <tr>
+            <td>7 vadných oborů</td>
+            <td>smazat a nechat dohledat?</td>
+            <td>ano, je to 8 minut</td>
+          </tr>
+          <tr>
+            <td>Re-design (S0.11)</td>
+            <td>počkat na signál, nebo chcete dřív?</td>
+            <td>počkat</td>
+          </tr>
+          <tr>
+            <td>Vzorek 30 firem</td>
+            <td>kdy na to máte hodinu</td>
+            <td>než se pustí fáze 2</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Plán je zapsaný v docs/FAZE-0.md (sessions včetně nové S0.11) — tahle
+    stránka z něj jen čte. Stavy ověřené proti ostré databázi a repozitáři
+    17. 8. 2026.
+  </footer>
+</div>

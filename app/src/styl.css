@@ -1683,3 +1683,33 @@ h3 {
   outline: 2px solid var(--razitko);
   outline-offset: 2px;
 }
+
+/* ──────────────────────────────────────────────────────────────── jídelny */
+
+/*
+ * Kapacita se upravuje přímo v řádku tabulky. Pole je úzké schválně — jde
+ * o počet obědů, ne o text; širší by v tabulce jen roztáhlo sloupec.
+ */
+.kapacita-vstup {
+  width: 6rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--bila);
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  font-family: var(--pismo-data);
+}
+
+.kapacita-vstup:focus {
+  border-color: var(--razitko);
+}
+
+/* Doplňky v buňce (druhý stav, „uloženo") patří pod hlavní údaj, ne za něj. */
+.tabulka .na-radek {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* Řada tlačítek uvnitř řádku nemá odsazovat řádek samotný. */
+.tabulka .tlacitka {
+  margin-top: 0;
+}

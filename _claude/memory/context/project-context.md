@@ -4,7 +4,7 @@ description: Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, 
 type: context
 status: active
 created: 2026-08-01
-updated: 2026-08-13
+updated: 2026-08-17
 ---
 
 # obchodni-tym — živý kontext
@@ -169,13 +169,10 @@ a většími firmami, ne Hrobce.
 v promptu, ne kontrola v kódu. Mezera v plánu, ne v provedení; podrobnosti
 v [[dva-profily-sber-a-reserse]].
 
-## ▶ TADY POKRAČOVAT (13. 8. 2026, konec sezení)
+## Přepočet dosahu (13. 8.) a co z něj vyplynulo
 
-> Majitel přechází do VS Code a napíše jen **„pokračujeme"**. Tohle je celý
-> kontext, který k tomu potřebuješ. **Začni tím, že mu položíš ty dvě
-> otázky dole** — nic jiného rozdělaného není.
-
-**Poslední akce:** proběhl `npm run cli -- dosah` (přepočet dosahu jídelen).
+**Poslední akce 13. 8.:** proběhl `npm run cli -- dosah` (přepočet dosahu
+jídelen).
 
 **Co ukázal:**
 
@@ -200,13 +197,21 @@ segment vyroste ze zhruba 20 na **115 firem — pětinásobek**.
 Bezdružice 10) a **u 34. ZŠ Plzeň není vyplněná vůbec** (`NULL`). Jde tedy
 odemknout pětkrát víc firem, ale není jim co nabídnout.
 
-### Dvě otázky, které čekají na majitele
+### Obě otázky zodpovězeny 17. 8. 2026
 
-1. **Jakou volnou kapacitu má 34. ZŠ Plzeň?** Ví to jen on nebo partner,
-   dohledat se to nedá. Bez toho číslo nemá smysl odemykat frontu.
-2. **Překvalifikovat těch 2 301 firem?** Je to zásah do stavů v ostré
-   databázi. Doporučení: **nedělat, dokud není známá kapacita** — jinak se
-   jen nafoukne fronta, na kterou není odpověď.
+1. **Kapacita 34. ZŠ Plzeň = 50 obědů/den.** Volná kapacita celkem tím roste
+   ze 70 na **120 obědů/den**.
+2. **Překvalifikace 2 301 plzeňských firem se NEDĚLÁ.** Rozhodnutí majitele:
+   počkat. Stavy v ostré databázi zůstávají, jak jsou.
+
+**Proč to dává smysl i po doplnění kapacity:** 120 obědů denně je zhruba na
+dvě až čtyři firmy. Odemknout 115 cílových firem proti téhle kapacitě by
+znamenalo nafouknout frontu, na kterou nemáme odpověď. Překvalifikace je
+technicky triviální — čeká na kapacitu, ne na kód.
+
+**Postaveno 17. 8.:** obrazovka **Jídelny** — kapacita jde konečně měnit
+v aplikaci (dřív jedině při zakládání jídelny příkazem). Ukazuje i počty
+firem v dosahu. Podrobnosti: [[kapacita-se-upravuje-v-aplikaci]].
 
 ## Aktuální focus
 

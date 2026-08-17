@@ -13,10 +13,9 @@
 
 ## ▶ Rozdělaná práce
 
-Když majitel napíše jen **„pokračujeme"**, přečti
-`_claude/memory/context/project-context.md` — hned nahoře je sekce
-**„TADY POKRAČOVAT"** s celým kontextem a dvěma otázkami, které mu máš
-položit. Nic jiného rozdělaného není.
+Nic rozdělaného. Když majitel napíše jen **„pokračujeme"**, přečti
+`_claude/memory/context/project-context.md` — živý stav a otevřené body
+jsou tam.
 
 ## Jak používat tuto paměť
 

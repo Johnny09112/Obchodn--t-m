@@ -40,6 +40,8 @@ export interface Jidelna {
   lat: number | null;
   lng: number | null;
   zona_metru: number;
+  /** Kolik obědů denně má jídelna volných; `null` = neuvedeno (ne nula). */
+  kapacita_volna: number | null;
   aktivni: boolean;
 }
 
@@ -134,10 +136,59 @@ export async function nactiFirmy(): Promise<Firma[]> {
 export async function nactiJidelny(): Promise<Jidelna[]> {
   const { data, error } = await supabase
     .from("jidelny")
-    .select("id,nazev,obec,lat,lng,zona_metru,aktivni")
+    .select("id,nazev,obec,lat,lng,zona_metru,kapacita_volna,aktivni")
     .order("nazev");
   if (error) throw new Error(error.message);
   return (data ?? []) as Jidelna[];
+}
+
+/**
+ * Kolik firem má která jídelna v dosahu.
+ *
+ * Pravda o dosahu je v tabulce `dosah`, ne ve sloupci
+ * `companies.nejblizsi_jidelna_id` — ten drží jen zařazení do kartotéky
+ * a ukázal by nulu i tam, kde dosah je (migrace 0010).
+ *
+ * Počítá se serverem (`head: true`), takže se nepřenáší ani jeden řádek —
+ * u 2 300 firem na jednu jídelnu by je stejně zastavil strop PostgRESTu.
+ */
+export async function nactiFiremVDosahu(
+  jidelnaIds: string[],
+): Promise<Record<string, number>> {
+  const dvojice = await Promise.all(
+    jidelnaIds.map(async (id) => {
+      const { count, error } = await supabase
+        .from("dosah")
+        .select("ico", { count: "exact", head: true })
+        .eq("jidelna_id", id)
+        .eq("v_zone", true);
+      if (error) throw new Error(error.message);
+      return [id, count ?? 0] as const;
+    }),
+  );
+  return Object.fromEntries(dvojice);
+}
+
+/**
+ * Zapíše volnou kapacitu jídelny. `null` = neuvedeno.
+ *
+ * Kapacitu smí měnit jen admin a výš (migrace 0016) a zamítnutý zápis
+ * Supabase nehlásí jako chybu — jen změní nula řádků. Bez téhle kontroly
+ * by tlačítko u běžného uživatele jen zablikalo.
+ */
+export async function ulozKapacituJidelny(
+  id: string,
+  kapacita: number | null,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("jidelny")
+    .update({ kapacita_volna: kapacita })
+    .eq("id", id)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Kapacitu se nepodařilo uložit — měnit ji smí jen admin.");
+  }
 }
 
 export async function nactiKategorie(): Promise<Kategorie[]> {

@@ -204,10 +204,11 @@ odemknout pětkrát víc firem, ale není jim co nabídnout.
 2. **Překvalifikace 2 301 plzeňských firem se NEDĚLÁ.** Rozhodnutí majitele:
    počkat. Stavy v ostré databázi zůstávají, jak jsou.
 
-**Proč to dává smysl i po doplnění kapacity:** 120 obědů denně je zhruba na
-dvě až čtyři firmy. Odemknout 115 cílových firem proti téhle kapacitě by
-znamenalo nafouknout frontu, na kterou nemáme odpověď. Překvalifikace je
-technicky triviální — čeká na kapacitu, ne na kód.
+**Proč to dává smysl i po doplnění kapacity:** prodat jde dnes **80 obědů
+denně** (Tlučná a Zbůch jsou od 17. 8. v přípravě, jejich 40 obědů je
+potenciál). To je zhruba na dvě až tři firmy. Odemknout 115 cílových firem
+proti téhle kapacitě by znamenalo nafouknout frontu, na kterou nemáme
+odpověď. Překvalifikace je technicky triviální — čeká na kapacitu, ne na kód.
 
 **Postaveno 17. 8.:** obrazovka **Jídelny** — kapacita jde konečně měnit
 v aplikaci (dřív jedině při zakládání jídelny příkazem). Ukazuje počty firem
@@ -215,9 +216,18 @@ v dosahu a **rozlišuje jídelnu v provozu od jídelny v přípravě**, takže v
 kapacita se dělí na „co jde prodat dnes" a „potenciál" (migrace 0044,
 nasazená). Podrobnosti: [[kapacita-se-upravuje-v-aplikaci]].
 
-**Ověřeno 17. 8. na ostré databázi:** 5 aktivních jídelen, volná kapacita
-**120 obědů/den**, 165 kvalifikovaných firem. Všech pět je zatím vedených
-jako „v provozu" — majitel přepne ty, které se teprve chystají.
+**Stav jídelen k 17. 8. (ostrá databáze):**
+
+| Jídelna | Kapacita | Stav |
+|---|---|---|
+| 34. ZŠ Plzeň, Gerská | 50 | v provozu |
+| ZŠ a MŠ Hrádek | 20 | v provozu |
+| ZŠ, MŠ a ZUŠ Bezdružice | 10 | v provozu |
+| ZŠ a MŠ Tlučná | 20 | **příprava** |
+| ZŠ Zbůch | 20 | **příprava** |
+
+**Prodat jde 80 obědů/den, dalších 40 je v přípravě.** Proti 165
+kvalifikovaným firmám. Tlučnou a Zbůch přepnul majitel 17. 8.
 
 ## Aktuální focus
 

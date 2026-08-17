@@ -214,6 +214,13 @@ pak dry-run Čmuchala na 5 firmách.
 sdílená mezi více lidmi nebo stroji — dnes to není potřeba.
 
 ### S0.7 — Odesílací doména a podepsaná osoba *(příprava na fázi 3, dlouhé lhůty!)*
+
+> **Rozhodnuto 17. 8. 2026, postup připravený k provedení:
+> `docs/ODESILANI-DOMENA.md`.** Posílá se z adresy přihlášeného uživatele
+> přes Resend; doména musí být **nastavitelná per firma**, protože se systém
+> bude prodávat. Podepsaná osoba (TP-10) je tím vyřešená — podepsaný je ten,
+> kdo zprávu poslal. Zbývá provedení: založit účet, vložit tři DNS záznamy
+> do Cloudflare, ověřit a doplnit `rua=` do DMARC.
 **Cíl:** vybrat odesílací (sub)doménu, nastavit SPF, DKIM, DMARC, naplánovat
 zahřívání; určit skutečnou osobu, která bude podepsaná pod zprávami a bude
 číst odpovědi (TP-10). Zahřívání trvá týdny — proto patří do fáze 0, i když

@@ -1,0 +1,377 @@
+<title>Nastavení odesílací domény</title>
+<style>
+  :root {
+    --ground: #eeeee7;
+    --karta: #fbfaf6;
+    --karta2: #f3f2eb;
+    --inkoust: #1d211b;
+    --inkoust-slaby: #5c6157;
+    --linka: #cfd0c6;
+    --zelena: #3c6b48;
+    --zelena-svetla: #e2ece3;
+    --cihla: #a4432c;
+    --cihla-svetla: #f7e5df;
+    --zlata: #8d6a1a;
+    --zlata-svetla: #f7eed6;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14170f;
+      --karta: #1c2019;
+      --karta2: #232821;
+      --inkoust: #e8e9e2;
+      --inkoust-slaby: #a0a597;
+      --linka: #363a33;
+      --zelena: #7fb98c;
+      --zelena-svetla: #22301f;
+      --cihla: #e08a70;
+      --cihla-svetla: #33211c;
+      --zlata: #d8b25c;
+      --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #14170f;
+    --karta: #1c2019;
+    --karta2: #232821;
+    --inkoust: #e8e9e2;
+    --inkoust-slaby: #a0a597;
+    --linka: #363a33;
+    --zelena: #7fb98c;
+    --zelena-svetla: #22301f;
+    --cihla: #e08a70;
+    --cihla-svetla: #33211c;
+    --zlata: #d8b25c;
+    --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    line-height: 1.6;
+  }
+
+  .stranka {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .eyebrow {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: clamp(1.9rem, 5vw, 2.5rem);
+    line-height: 1.15;
+    margin: 0.5rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  h2 { font-family: var(--pismo-nadpis); font-size: 1.3rem; margin: 0 0 0.9rem; }
+  .perex { margin: 0; max-width: 42rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+
+  .jak-to-chodi {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 1.15rem 1.35rem;
+    box-shadow: var(--stin);
+  }
+
+  .adresy { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin-top: 0.9rem; }
+
+  .adresa { background: var(--karta2); border-radius: 4px; padding: 0.85rem 1rem; }
+  .adresa .nazev { font-family: var(--pismo-data); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--inkoust-slaby); display: block; margin-bottom: 0.25rem; }
+  .adresa .hodnota { font-family: var(--pismo-data); font-weight: 600; display: block; margin-bottom: 0.3rem; word-break: break-all; }
+  .adresa p { margin: 0; font-size: 0.875rem; color: var(--inkoust-slaby); }
+
+  .kroky { list-style: none; counter-reset: krok; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
+
+  .krok {
+    counter-increment: krok;
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 1.15rem 1.35rem 1.15rem 3.9rem;
+    position: relative;
+    box-shadow: var(--stin);
+  }
+
+  .krok::before {
+    content: counter(krok);
+    position: absolute;
+    left: 1.15rem;
+    top: 1.15rem;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: var(--zelena);
+    color: var(--karta);
+    display: grid;
+    place-items: center;
+    font-family: var(--pismo-data);
+    font-weight: 700;
+    font-size: 0.9375rem;
+  }
+
+  .krok h3 { font-family: var(--pismo-nadpis); font-size: 1.0625rem; margin: 0 0 0.4rem; }
+  .krok p { margin: 0 0 0.6rem; font-size: 0.9375rem; }
+  .krok p:last-child { margin-bottom: 0; }
+  .krok a { color: var(--zelena); }
+
+  code {
+    font-family: var(--pismo-data);
+    font-size: 0.875em;
+    background: var(--karta2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+    word-break: break-all;
+  }
+
+  .obal-tabulky { overflow-x: auto; margin: 0.75rem 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 30rem; }
+  th, td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px dotted var(--linka); font-size: 0.875rem; }
+  th { font-family: var(--pismo-data); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--inkoust-slaby); font-weight: 400; }
+  td:first-child, td:nth-child(2) { font-family: var(--pismo-data); white-space: nowrap; }
+
+  .pozor {
+    background: var(--cihla-svetla);
+    border-left: 3px solid var(--cihla);
+    border-radius: 3px;
+    padding: 0.8rem 1rem;
+    margin-top: 0.75rem;
+  }
+
+  .pozor p { margin: 0 0 0.4rem; font-size: 0.9375rem; }
+  .pozor p:last-child { margin-bottom: 0; }
+  .pozor strong { color: var(--cihla); }
+
+  .klid {
+    background: var(--zelena-svetla);
+    border-left: 3px solid var(--zelena);
+    border-radius: 3px;
+    padding: 0.8rem 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .stav-dns { background: var(--karta); border: 1px solid var(--linka); border-radius: 4px; padding: 1.15rem 1.35rem; box-shadow: var(--stin); }
+
+  .stitek { font-family: var(--pismo-data); font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12rem 0.45rem; border-radius: 2px; white-space: nowrap; }
+  .stitek.nechat { background: var(--zelena-svetla); color: var(--zelena); }
+  .stitek.upravit { background: var(--zlata-svetla); color: var(--zlata); }
+  .stitek.pridat { background: var(--cihla-svetla); color: var(--cihla); }
+
+  footer { border-top: 1px solid var(--linka); padding-top: 1.25rem; font-size: 0.875rem; color: var(--inkoust-slaby); }
+</style>
+
+<div class="stranka">
+  <header>
+    <span class="eyebrow">Cantinero · session S0.7 · 17. srpna 2026</span>
+    <h1>Nastavení odesílací domény</h1>
+    <p class="perex">
+      Šest kroků, po kterých bude cantinero.cz připravená posílat důvěryhodné
+      zprávy. Odesílání zůstává vypnuté — tohle je jen příprava, aby se na nic
+      nečekalo, až se rozhodne psát.
+    </p>
+  </header>
+
+  <section class="jak-to-chodi">
+    <h2>Proč se nemusí sahat na dnešní poštu</h2>
+    <p style="margin: 0; font-size: 0.9375rem;">
+      Každá zpráva má dvě adresy a posuzují se zvlášť. Díky tomu může Resend
+      posílat vaším jménem, aniž by se cokoli měnilo na poště u Forpsi.
+    </p>
+    <div class="adresy">
+      <div class="adresa">
+        <span class="nazev">Co vidí příjemce</span>
+        <span class="hodnota">laub@cantinero.cz</span>
+        <p>Vaše adresa. Sem chodí odpovědi. Důvěryhodnost jí zajistí podpis
+          DKIM vydaný pro cantinero.cz.</p>
+      </div>
+      <div class="adresa">
+        <span class="nazev">Technická zpáteční adresa</span>
+        <span class="hodnota">send.cantinero.cz</span>
+        <p>Sem chodí hlášení o nedoručení a podle ní se posuzuje SPF. Proto
+          stačí nastavit ji — kořenové domény se to netýká.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="stav-dns">
+    <h2>Co v DNS je dnes</h2>
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr><th>Záznam</th><th>Hodnota</th><th>Co s ním</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>NS</td>
+            <td>dee / walt.ns.cloudflare.com</td>
+            <td><span class="stitek nechat">sedí, DNS je na Cloudflare</span></td>
+          </tr>
+          <tr>
+            <td>MX</td>
+            <td>mxavas.forpsi.com</td>
+            <td><span class="stitek nechat">nechat být</span></td>
+          </tr>
+          <tr>
+            <td>TXT (SPF)</td>
+            <td>v=spf1 a mx include:_spf.forpsi.com ~all</td>
+            <td><span class="stitek nechat">nechat být</span></td>
+          </tr>
+          <tr>
+            <td>TXT _dmarc</td>
+            <td>v=DMARC1; p=quarantine</td>
+            <td><span class="stitek upravit">doplnit hlášení</span></td>
+          </tr>
+          <tr>
+            <td>MX + 2× TXT</td>
+            <td>pro Resend</td>
+            <td><span class="stitek pridat">přidat (krok 3)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin: 0; font-size: 0.875rem; color: var(--inkoust-slaby);">
+      Ověřeno dotazem do DNS 17. 8. 2026.
+    </p>
+  </section>
+
+  <section>
+    <h2>Postup</h2>
+    <ol class="kroky">
+      <li class="krok">
+        <h3>Založit účet v Resendu</h3>
+        <p>
+          Na <a href="https://resend.com" target="_blank" rel="noopener noreferrer">resend.com</a>
+          → Sign up. Bezplatné pásmo je <strong>100 zpráv denně a 3 000 měsíčně</strong>.
+          Fáze 3 počítá s deseti denně, takže se do něj vejdeme s velkou rezervou
+          a platit se zatím nebude nic.
+        </p>
+      </li>
+
+      <li class="krok">
+        <h3>Přidat doménu cantinero.cz</h3>
+        <p>
+          V Resendu <strong>Domains → Add Domain</strong>, zadat <code>cantinero.cz</code>
+          a zvolit region <strong>EU (Ireland)</strong> — data zůstanou v Evropě,
+          což se bude hodit i k argumentaci kolem ochrany údajů.
+        </p>
+        <p>Resend pak vypíše tři záznamy v tomhle tvaru:</p>
+        <div class="obal-tabulky">
+          <table>
+            <thead>
+              <tr><th>Typ</th><th>Název</th><th>Hodnota</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>MX</td><td>send</td><td>feedback-smtp.eu-west-1.amazonses.com (priorita 10)</td></tr>
+              <tr><td>TXT</td><td>send</td><td>v=spf1 include:amazonses.com ~all</td></tr>
+              <tr><td>TXT</td><td>resend._domainkey</td><td>p=… (dlouhý klíč)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: 0.875rem; color: var(--inkoust-slaby);">
+          Přesné hodnoty se generují pro váš účet, takže je nejde předepsat
+          dopředu — opíšou se z obrazovky.
+        </p>
+      </li>
+
+      <li class="krok">
+        <h3>Vložit záznamy do Cloudflare</h3>
+        <p>V Cloudflare <strong>DNS → Records → Add record</strong>. Tři věci, na kterých to nejčastěji ztroskotá:</p>
+        <div class="pozor">
+          <p><strong>Do políčka „Name" patří jen <code>send</code></strong>, ne
+            send.cantinero.cz. Cloudflare si doménu doplní sám — jinak vznikne
+            send.cantinero.cz.cantinero.cz.</p>
+          <p><strong>Proxy musí být vypnutá</strong> — šedý mráček, „DNS only“.
+            S oranžovým se ověření nikdy nepovede.</p>
+          <p><strong>Nepřidávejte druhý SPF na kořen domény.</strong> Dva
+            záznamy <code>v=spf1</code> na jedné doméně jsou chyba a pošta
+            začne padat do spamu.</p>
+        </div>
+      </li>
+
+      <li class="krok">
+        <h3>Ověřit</h3>
+        <p>
+          V Resendu tlačítko <strong>Verify</strong>. Cloudflare mění DNS
+          rychle, takže to bývá otázka minut.
+        </p>
+      </li>
+
+      <li class="krok">
+        <h3>Doplnit adresu pro hlášení do DMARC</h3>
+        <p>
+          Dnešní záznam funguje, ale nikam neposílá hlášení — o problému
+          s doručováním byste se nedozvěděl. Upravte TXT <code>_dmarc</code> na:
+        </p>
+        <p><code>v=DMARC1; p=quarantine; rua=mailto:dmarc@cantinero.cz; pct=100; adkim=r; aspf=r</code></p>
+        <p>
+          Adresa <code>dmarc@cantinero.cz</code> musí existovat — stačí
+          přesměrování do vaší schránky. Hlášení chodí jednou denně od velkých
+          poskytovatelů.
+        </p>
+        <div class="pozor">
+          <p><strong>Než bude DKIM ověřený, neposílejte nic.</strong> Nastavení
+            <code>p=quarantine</code> posílá nevyhovující zprávy rovnou do
+            spamu — a to je přesně to, co reputaci kazí.</p>
+        </div>
+      </li>
+
+      <li class="krok">
+        <h3>Zkušební zpráva</h3>
+        <p>
+          Pošlete jednu zprávu sám sobě na schránku u jiného poskytovatele
+          (Gmail, Seznam) a v „Zobrazit originál“ zkontrolujte tři řádky:
+          <code>SPF=pass</code>, <code>DKIM=pass</code>, <code>DMARC=pass</code>.
+          Tím je S0.7 hotová.
+        </p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Zahřívání — zpřesnění dřívějšího tvrzení</h2>
+    <div class="klid">
+      <p style="margin: 0 0 0.5rem;">
+        Psal jsem, že zahřívání trvá týdny a je to nejdelší lhůta v přípravě.
+        <strong>Platí to pro stovky zpráv denně, ne pro deset.</strong> Při
+        našem objemu žádný poplach nespustíte.
+      </p>
+      <p style="margin: 0;">
+        Co platí pořád: doména potřebuje nějakou historii, než jí velcí
+        poskytovatelé začnou věřit, a reputaci nezničí množství, ale stížnosti.
+        Proto pravidlo jedna firma = jedno oslovení a proto se prvních
+        50 zpráv schvaluje ručně.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    Podrobnosti a zdůvodnění: <code>docs/ODESILANI-DOMENA.md</code>.
+    Odesílání zůstává vypnuté (TP-8) — tenhle krok na tom nic nemění.
+  </footer>
+</div>

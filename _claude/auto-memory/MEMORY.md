@@ -11,6 +11,13 @@
 - [[pushuj-na-git-sam]] — `git push` dělej sám, nenechávej ho majiteli k odkliknutí
 <!-- /AUTO:feedback -->
 
+## ▶ Rozdělaná práce
+
+Když majitel napíše jen **„pokračujeme"**, přečti
+`_claude/memory/context/project-context.md` — hned nahoře je sekce
+**„TADY POKRAČOVAT"** s celým kontextem a dvěma otázkami, které mu máš
+položit. Nic jiného rozdělaného není.
+
 ## Jak používat tuto paměť
 
 - Záznamy (decisions, bugs, patterns, …) jsou on-demand v `memory/` — najdi je přes `memory/INDEX.md`.

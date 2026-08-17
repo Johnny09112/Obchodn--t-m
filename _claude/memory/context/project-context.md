@@ -169,10 +169,49 @@ a většími firmami, ne Hrobce.
 v promptu, ne kontrola v kódu. Mezera v plánu, ne v provedení; podrobnosti
 v [[dva-profily-sber-a-reserse]].
 
+## ▶ TADY POKRAČOVAT (13. 8. 2026, konec sezení)
+
+> Majitel přechází do VS Code a napíše jen **„pokračujeme"**. Tohle je celý
+> kontext, který k tomu potřebuješ. **Začni tím, že mu položíš ty dvě
+> otázky dole** — nic jiného rozdělaného není.
+
+**Poslední akce:** proběhl `npm run cli -- dosah` (přepočet dosahu jídelen).
+
+**Co ukázal:**
+
+| Jídelna | Firem v zóně | Z toho čeká na jídelnu | Cílových (25+) |
+|---|---|---|---|
+| **34. ZŠ Plzeň, Gerská** | **2 301** | **2 301** | **59** |
+| ZŠ a MŠ Tlučná | 316 | 255 | 26 |
+| ZŠ a MŠ Hrádek | 139 | 99 | 5 |
+| ZŠ Zbůch | 136 | 94 | 21 |
+| ZŠ, MŠ a ZUŠ Bezdružice | 22 | 0 | 4 |
+
+Celkem **2 914 firem v dosahu, z toho 115 cílových**. Kvalifikovaných je
+dnes 165 — tedy zhruba 20 v cílovém segmentu.
+
+**Podstatné zjištění:** těch 2 301 plzeňských firem je ve stavu
+`cekajici_na_jidelnu`, přestože jídelnu v dosahu **mají**. Sběr je založil
+dřív, než jídelna vznikla, a přepočet dosahu **stav firmy nemění**
+([[dosah-je-tabulka-ne-sloupec]]). Kdyby se překvalifikovaly, cílový
+segment vyroste ze zhruba 20 na **115 firem — pětinásobek**.
+
+**Ale volná kapacita je pořád 70 obědů** (Tlučná 20, Zbůch 20, Hrádek 20,
+Bezdružice 10) a **u 34. ZŠ Plzeň není vyplněná vůbec** (`NULL`). Jde tedy
+odemknout pětkrát víc firem, ale není jim co nabídnout.
+
+### Dvě otázky, které čekají na majitele
+
+1. **Jakou volnou kapacitu má 34. ZŠ Plzeň?** Ví to jen on nebo partner,
+   dohledat se to nedá. Bez toho číslo nemá smysl odemykat frontu.
+2. **Překvalifikovat těch 2 301 firem?** Je to zásah do stavů v ostré
+   databázi. Doporučení: **nedělat, dokud není známá kapacita** — jinak se
+   jen nafoukne fronta, na kterou není odpověď.
+
 ## Aktuální focus
 
-**Fáze 1 je z pohledu majitele hotová** — sběr, přibírání firem i AI průzkum
-si objedná sám v aplikaci. Čeká se na volbu dalšího celku.
+**Fáze 1 je hotová a rešerše doběhla na všech kvalifikovaných firmách.**
+Obrazovka „Co je nového" (obchodní podněty) je postavená a používá se.
 
 Dva otevřené body z 6. 8., které stojí za pozornost:
 

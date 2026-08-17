@@ -1,0 +1,500 @@
+<title>Fáze a sessions Cantinera</title>
+<style>
+  :root {
+    --ground: #eeede7;
+    --karta: #fbfaf6;
+    --karta2: #f4f3ec;
+    --inkoust: #1d211b;
+    --inkoust-slaby: #5c6157;
+    --linka: #cfd0c6;
+    --linka-slaba: #e3e2d9;
+    --zelena: #3c6b48;
+    --zelena-svetla: #e3ece3;
+    --cihla: #a4432c;
+    --cihla-svetla: #f6e5df;
+    --zlata: #8d6a1a;
+    --zlata-svetla: #f6eed7;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141710;
+      --karta: #1c2019;
+      --karta2: #232821;
+      --inkoust: #e8e9e2;
+      --inkoust-slaby: #a0a597;
+      --linka: #363a33;
+      --linka-slaba: #2b2f28;
+      --zelena: #7fb98c;
+      --zelena-svetla: #22301f;
+      --cihla: #e08a70;
+      --cihla-svetla: #33211c;
+      --zlata: #d8b25c;
+      --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #141710;
+    --karta: #1c2019;
+    --karta2: #232821;
+    --inkoust: #e8e9e2;
+    --inkoust-slaby: #a0a597;
+    --linka: #363a33;
+    --linka-slaba: #2b2f28;
+    --zelena: #7fb98c;
+    --zelena-svetla: #22301f;
+    --cihla: #e08a70;
+    --cihla-svetla: #33211c;
+    --zlata: #d8b25c;
+    --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    line-height: 1.6;
+  }
+
+  .stranka {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .eyebrow {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: clamp(2rem, 5vw, 2.6rem);
+    line-height: 1.15;
+    margin: 0.5rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  h2 { font-family: var(--pismo-nadpis); font-size: 1.375rem; margin: 0 0 0.4rem; }
+  .podnadpis { margin: 0 0 1.5rem; color: var(--inkoust-slaby); font-size: 0.9375rem; max-width: 44rem; }
+  .perex { margin: 0; max-width: 44rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+
+  /* ─────────────────────────────────────────────── osa fází */
+
+  .faze { display: flex; flex-direction: column; }
+
+  .krok {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr;
+    gap: 0 1.25rem;
+    position: relative;
+    padding-bottom: 1.5rem;
+  }
+
+  .krok:last-child { padding-bottom: 0; }
+
+  /* Čára spojuje fáze, protože jsou skutečně po sobě — SPEC: nepřeskakovat. */
+  .krok::before {
+    content: "";
+    position: absolute;
+    left: 1.05rem;
+    top: 1.9rem;
+    bottom: -0.25rem;
+    width: 2px;
+    background: var(--linka);
+  }
+
+  .krok:last-child::before { display: none; }
+
+  .cislo {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--pismo-data);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    border: 2px solid var(--linka);
+    background: var(--karta);
+    color: var(--inkoust-slaby);
+    position: relative;
+    z-index: 1;
+  }
+
+  .krok.hotova .cislo { background: var(--zelena); border-color: var(--zelena); color: var(--karta); }
+  .krok.bezi .cislo { border-color: var(--zlata); color: var(--zlata); }
+
+  .telo-kroku {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 0.9rem 1.15rem;
+    box-shadow: var(--stin);
+  }
+
+  .hlava-kroku { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 0.75rem; }
+  .hlava-kroku h3 { font-family: var(--pismo-nadpis); font-size: 1.0625rem; margin: 0; }
+  .telo-kroku p { margin: 0.35rem 0 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .telo-kroku .cil { font-family: var(--pismo-data); font-size: 0.8125rem; }
+
+  .stitek {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .stitek.hotovo { background: var(--zelena-svetla); color: var(--zelena); }
+  .stitek.bezi { background: var(--zlata-svetla); color: var(--zlata); }
+  .stitek.ceka { background: var(--karta2); color: var(--inkoust-slaby); }
+  .stitek.chybi { background: var(--cihla-svetla); color: var(--cihla); }
+
+  /* ─────────────────────────────────────────── tabulka sessions */
+
+  .obal-tabulky { overflow-x: auto; }
+
+  table { border-collapse: collapse; width: 100%; min-width: 40rem; background: var(--karta); }
+
+  thead th {
+    text-align: left;
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    font-weight: 400;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--linka);
+  }
+
+  tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px dotted var(--linka); vertical-align: top; font-size: 0.9375rem; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody td:first-child { font-family: var(--pismo-data); font-weight: 600; white-space: nowrap; }
+  tbody td .co { display: block; color: var(--inkoust-slaby); font-size: 0.875rem; margin-top: 0.15rem; }
+  tbody tr.blokuje td { background: var(--cihla-svetla); }
+
+  /* ─────────────────────────────────────────────── ostatní bloky */
+
+  .karty { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+
+  .karta {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 4px;
+    padding: 1rem 1.15rem;
+  }
+
+  .karta h3 { font-size: 0.9375rem; margin: 0 0 0.35rem; }
+  .karta p { margin: 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+
+  .zjisteni {
+    background: var(--cihla-svetla);
+    border-left: 3px solid var(--cihla);
+    border-radius: 4px;
+    padding: 1.15rem 1.35rem;
+  }
+
+  .zjisteni h3 { font-family: var(--pismo-nadpis); font-size: 1.125rem; margin: 0 0 0.5rem; }
+  .zjisteni p { margin: 0 0 0.6rem; }
+  .zjisteni p:last-child { margin-bottom: 0; }
+
+  .seznam-praci { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+
+  .seznam-praci li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-size: 0.9375rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px dotted var(--linka);
+  }
+
+  .seznam-praci li:last-child { border-bottom: 0; }
+  .seznam-praci .datum { font-family: var(--pismo-data); font-size: 0.8125rem; color: var(--inkoust-slaby); white-space: nowrap; }
+
+  footer { border-top: 1px solid var(--linka); padding-top: 1.25rem; font-size: 0.875rem; color: var(--inkoust-slaby); }
+
+  @media (max-width: 34rem) {
+    .krok { grid-template-columns: 2.5rem 1fr; gap: 0 0.75rem; }
+    .krok::before { left: 0.6rem; }
+    .cislo { width: 1.75rem; height: 1.75rem; font-size: 0.8125rem; }
+  }
+</style>
+
+<div class="stranka">
+  <header>
+    <span class="eyebrow">Cantinero · stav k 17. srpnu 2026</span>
+    <h1>Fáze a sessions</h1>
+    <p class="perex">
+      Kde je plán zapsaný a kde v něm právě stojíme. Fáze 0 až 5 určuje
+      <strong>SPEC.md, kapitola 12</strong>; rozpis sessions přípravné fáze je
+      v <strong>docs/FAZE-0.md</strong>. Stav u každé položky jsem ověřil
+      v datech a v repozitáři, ne opsal z dokumentu.
+    </p>
+  </header>
+
+  <section>
+    <h2>Šest fází podle zadání</h2>
+    <p class="podnadpis">
+      SPEC to říká jasně: „Postup do další fáze až po vyhodnocení předchozí.
+      Nepřeskakovat.“ Fáze 1 přesto běžela napřed — vědomě, aby se sběr
+      kalibroval na skutečných datech.
+    </p>
+
+    <div class="faze">
+      <article class="krok bezi">
+        <span class="cislo">0</span>
+        <div class="telo-kroku">
+          <div class="hlava-kroku">
+            <h3>Příprava</h3>
+            <span class="stitek bezi">běží, nedokončená</span>
+          </div>
+          <p class="cil">Jídelny a zóny · tvrzení a šablony · odesílací doména · právní konzultace</p>
+          <p>
+            Hotové jsou jídelny, prostředí, databáze i právní podklad. Chybí
+            tvrzení a šablony, odesílací doména a závěrečné go/no-go.
+          </p>
+        </div>
+      </article>
+
+      <article class="krok hotova">
+        <span class="cislo">1</span>
+        <div class="telo-kroku">
+          <div class="hlava-kroku">
+            <h3>Čmuchal — jen sběr</h3>
+            <span class="stitek hotovo">hotová</span>
+          </div>
+          <p class="cil">Cíl ze SPEC: 200 ověřených firem se zdrojem u každého údaje</p>
+          <p>
+            V kartotéce je 13 919 firem, 165 kvalifikovaných a rešerše doběhla
+            na všech. Otevřené zůstává jediné kritérium: ruční kontrola vzorku
+            30 firem.
+          </p>
+        </div>
+      </article>
+
+      <article class="krok">
+        <span class="cislo">2</span>
+        <div class="telo-kroku">
+          <div class="hlava-kroku">
+            <h3>Spojka a inbound</h3>
+            <span class="stitek ceka">nezačala</span>
+          </div>
+          <p class="cil">Oslovení zřizovatelů, landing page, formulář · cíl: první partnerství a 100 souhlasů</p>
+        </div>
+      </article>
+
+      <article class="krok">
+        <span class="cislo">3</span>
+        <div class="telo-kroku">
+          <div class="hlava-kroku">
+            <h3>Obchodník — první oslovení</h3>
+            <span class="stitek chybi">zamčená</span>
+          </div>
+          <p class="cil">10 zpráv denně, prvních 50 schvaluje člověk</p>
+          <p>
+            Odesílání je vypnuté a žádný kód ho neumí zapnout. Než se sem dá
+            vstoupit, musí být hotová tvrzení, šablony, doména i právní
+            konzultace.
+          </p>
+        </div>
+      </article>
+
+      <article class="krok">
+        <span class="cislo">4</span>
+        <div class="telo-kroku">
+          <div class="hlava-kroku">
+            <h3>Statistik a Marketér</h3>
+            <span class="stitek ceka">nezačala</span>
+          </div>
+          <p class="cil">Měření, testy větných struktur</p>
+        </div>
+      </article>
+
+      <article class="krok">
+        <span class="cislo">5</span>
+        <div class="telo-kroku">
+          <div class="hlava-kroku">
+            <h3>Ředitel — dohled</h3>
+            <span class="stitek ceka">nezačala</span>
+          </div>
+          <p class="cil">Týdenní review, hlášení, incidenty</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sessions přípravné fáze</h2>
+    <p class="podnadpis">
+      Rozpis z docs/FAZE-0.md. Sloupec „stav“ je ověřený dnes — v několika
+      případech se liší od odškrtnutí v dokumentu, protože ten se od července
+      neaktualizoval.
+    </p>
+
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr>
+            <th>Session</th>
+            <th>Co má být hotové</th>
+            <th>Stav</th>
+            <th>Ověřeno podle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>S0.1</td>
+            <td>Workspace <span class="co">CLAUDE.md, paměť, oprávnění</span></td>
+            <td><span class="stitek hotovo">hotovo</span></td>
+            <td>soubory v repozitáři</td>
+          </tr>
+          <tr>
+            <td>S0.2</td>
+            <td>Architektura a technologie <span class="co">rozhodnutí + ADR</span></td>
+            <td><span class="stitek bezi">z části</span></td>
+            <td>rozhodnuto (předplatné, vlastní databáze), ale ADR o technologii chybí — jsou jen ADR o frontendu a o dvou vrstvách</td>
+          </tr>
+          <tr>
+            <td>S0.3</td>
+            <td>Agenti a skilly <span class="co">6 rolí + tři pomocné postupy</span></td>
+            <td><span class="stitek bezi">z části</span></td>
+            <td>6 agentů hotových, složka se skilly vůbec neexistuje</td>
+          </tr>
+          <tr>
+            <td>S0.3b</td>
+            <td>Oprava limitu rejstříku <span class="co">tisíc výsledků na dotaz</span></td>
+            <td><span class="stitek hotovo">hotovo</span></td>
+            <td>Plzeň má v kartotéce 12 762 firem</td>
+          </tr>
+          <tr>
+            <td>S0.3c</td>
+            <td>Obrácené hledání <span class="co">místo → kdo tam pracuje → kdo to je</span></td>
+            <td><span class="stitek hotovo">hotovo</span></td>
+            <td>běží ostře od července</td>
+          </tr>
+          <tr>
+            <td>S0.4</td>
+            <td>Jídelny a zóny <span class="co">a strop obchodu</span></td>
+            <td><span class="stitek hotovo">hotovo</span></td>
+            <td>5 jídelen, 80 obědů/den k prodeji, 40 v přípravě</td>
+          </tr>
+          <tr class="blokuje">
+            <td>S0.5</td>
+            <td>Tvrzení a šablony <span class="co">co smíme o produktu říkat a jak</span></td>
+            <td><span class="stitek chybi">nezačato</span></td>
+            <td>v databázi je 0 tvrzení a 0 šablon — <strong>blokuje fázi 3</strong></td>
+          </tr>
+          <tr>
+            <td>S0.6</td>
+            <td>Prostředí a databáze</td>
+            <td><span class="stitek hotovo">hotovo</span></td>
+            <td>běží ostrá databáze i nasazená aplikace</td>
+          </tr>
+          <tr class="blokuje">
+            <td>S0.7</td>
+            <td>Odesílací doména a podepsaná osoba <span class="co">SPF, DKIM, DMARC, zahřívání</span></td>
+            <td><span class="stitek chybi">nezačato</span></td>
+            <td>nikde v repozitáři ani v paměti — <strong>dlouhé lhůty, blokuje fázi 3</strong></td>
+          </tr>
+          <tr>
+            <td>S0.8</td>
+            <td>Právní podklady <span class="co">brief a konzultace</span></td>
+            <td><span class="stitek bezi">z části</span></td>
+            <td>brief hotový 11. 8.; jestli konzultace proběhla, nevím</td>
+          </tr>
+          <tr>
+            <td>S0.9</td>
+            <td>Go/no-go do fáze 1 <span class="co">kontrolní session</span></td>
+            <td><span class="stitek chybi">neproběhlo</span></td>
+            <td>fáze 1 se rozjela bez ní — vědomě</td>
+          </tr>
+          <tr>
+            <td>S0.10</td>
+            <td>Analýza produktizace <span class="co">má smysl to prodávat?</span></td>
+            <td><span class="stitek hotovo">hotovo</span></td>
+            <td>docs/analyza-produkt.md, 11. 8.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co se odpracovalo mimo tenhle rozpis</h2>
+    <p class="podnadpis">
+      Devět větších celků má vlastní zadání a plán v docs/superpowers/. V rozpisu
+      fáze 0 nejsou, protože vznikly až během práce — vesměs kolem aplikace,
+      kterou původní plán neobsahoval vůbec.
+    </p>
+    <ul class="seznam-praci">
+      <li><span class="datum">24. 7.</span> Čmuchal — jádro sběru</li>
+      <li><span class="datum">29. 7.</span> Kampaně — jádro</li>
+      <li><span class="datum">30. 7.</span> Čmuchal nad oblastmi</li>
+      <li><span class="datum">31. 7.</span> Průvodce kampaní, etapy B a C</li>
+      <li><span class="datum">1. 8.</span> Kampaň nad více oblastmi</li>
+      <li><span class="datum">3. 8.</span> Dodatečné rozšíření kampaně</li>
+      <li><span class="datum">6. 8.</span> Fronta AI průzkumu</li>
+      <li><span class="datum">7. 8.</span> Profil produktu</li>
+      <li><span class="datum">17. 8.</span> Jídelny — kapacita a stav <span class="co">(bez samostatného plánu)</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Dvě věci, které v plánu nejsou</h2>
+    <div class="karty">
+      <article class="zjisteni">
+        <h3>Re-design přes Claude Design nikde není</h3>
+        <p>
+          Prohledal jsem celý repozitář i osobní paměť — zmínka o něm není
+          v žádném plánu, zadání ani rozhodnutí. Nejspíš zazněl v hovoru
+          a nikdo ho nezapsal.
+        </p>
+        <p>
+          Tohle je ta pravá odpověď na vaši otázku: seznam fází i sessions
+          existuje, ale <strong>drží jen to, co do něj někdo napsal</strong>.
+          Navrhuji záměr zapsat jako samostatnou session (třeba S0.11 — vzhled
+          aplikace) a doplnit do rozpisu.
+        </p>
+      </article>
+      <article class="zjisteni" style="border-color: var(--zlata); background: var(--zlata-svetla);">
+        <h3>Aplikace v rozpisu chybí celá</h3>
+        <p>
+          Původní plán fáze 0 s aplikací nepočítal — počítal s příkazovou
+          řádkou. Přitom je to největší kus odvedené práce a devět celků výše
+          je právě ona.
+        </p>
+        <p>
+          Rozpis by se měl doplnit, jinak bude „plán“ a „skutečnost“ dvě různé
+          věci a přehled ztratí smysl.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    Zdroje: SPEC.md kap. 12 (fáze), docs/FAZE-0.md (sessions), docs/superpowers/
+    (odpracované celky). Stavy ověřeny proti ostré databázi a repozitáři
+    17. 8. 2026.
+  </footer>
+</div>

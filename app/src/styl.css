@@ -1232,6 +1232,109 @@ input[type="range"] {
   gap: 0 var(--o4);
 }
 
+/* Řádek pod názvem firmy — identifikace, ne údaje k rozhodování. */
+.detail-firmy .radek-udaju {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+  font-family: var(--pismo-data);
+  font-size: var(--t-mikro);
+  color: var(--inkoust-slaby);
+}
+
+.detail-firmy .odkazy-firmy {
+  font-family: var(--pismo-data);
+  font-size: var(--t-mikro);
+}
+
+/* Obor vlastními slovy je to hlavní, co o firmě víme — čte se jako věta. */
+.detail-firmy .obor {
+  margin: 0 0 var(--o2);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.rozhoduje {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--o2);
+}
+
+.rozhoduje .polozka {
+  background: var(--papir);
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  padding: var(--o2) var(--o3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rozhoduje .polozka .co {
+  font-family: var(--pismo-data);
+  font-size: var(--t-mikro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--inkoust-slaby);
+}
+
+.rozhoduje .polozka .jak {
+  font-weight: 600;
+}
+
+/* „Nevíme" se nesmí tvářit jako údaj — proto slabší a kurzívou. */
+.rozhoduje .polozka.nevime .jak {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--inkoust-slaby);
+}
+
+.rozhoduje .polozka .odkud {
+  font-size: var(--t-mikro);
+  color: var(--inkoust-slaby);
+}
+
+.jidelny-okoli {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--o1);
+}
+
+.jidelny-okoli > li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--o1) var(--o2);
+  padding: var(--o1) 0;
+  border-bottom: 1px dotted var(--linka);
+}
+
+.jidelny-okoli > li:last-child {
+  border-bottom: 0;
+}
+
+.jidelny-okoli .jak-daleko {
+  font-family: var(--pismo-data);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+
+.chybi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--o1);
+}
+
+/* Technický záznam (poloha z geokódování) není údaj o firmě — ať je to znát. */
+.seznam-dokladu > li.technicky {
+  background: transparent;
+  border-style: dashed;
+}
+
 .seznam-dokladu {
   list-style: none;
   margin: 0;

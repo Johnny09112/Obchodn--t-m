@@ -234,6 +234,31 @@ sedí s ostrou databází, editace kapacity se otevře a zruší bez zápisu. Na
 se přitom jedna vada vzhledu — popisky v souhrnu se překrývaly s čísly;
 opraveno a nasazeno ([[nowrap-v-gridu-pretece-pres-sousedy]]).
 
+## Proklikání všech obrazovek 17. 8. — pět vad, všechny opravené
+
+Postupně: Co je nového, Oblasti, Kartotéka, Kampaně, Jídelny, Provoz. Nic
+se neodesílalo ani nemazalo; ostrá data zůstala nedotčená.
+
+1. **Běhy agentů se ukládaly jako text, ne jako data** — 72 ze 72. Provoz
+   proto u všech ukazoval prázdný Výsledek a nečitelné chyby. Nejzávažnější
+   nález dne: [[jsonb-se-serializuje-dvakrat]]. Data se nepřepisovala,
+   obrazovka si starý zápis rozbalí sama.
+2. **Sloupec Spojení počítal i kontakty bez adresy** — firma s „spojení: 2"
+   zároveň padala do filtru „chybí kontakt" ([[spojeni-neni-pocet-kontaktu]]).
+3. **Z otevřené kampaně nevedla cesta zpět** — v krocích Území a Průzkum
+   chybělo tlačítko a klik na záložku Kampaně nedělal nic.
+4. **Souhrn kartotéky psal „13919"** místo „13 919".
+5. Překryv popisků v souhrnu Jídelen (výše).
+
+**Otevřené k rozhodnutí majitele:**
+
+- **Firma může být zároveň v „Příležitosti" i v „Neoslovovat"** — Centrum
+  pobytových a terénních sociálních služeb Zbůch má vícesměnný provoz
+  i vlastní jídelnu. Obrazovka třídí podněty, ne firmy. Návrh: nechat ji
+  v příležitostech, ale označit štítkem, že má i vylučovací podnět.
+- **Kampaň s hotovým průzkumem má pořád stav „čeká na průzkum"** a hned pod
+  ním „Hotovo — prozkoumáno 9 obcí". Čeká se ve skutečnosti na člověka.
+
 ## Aktuální focus
 
 **Fáze 1 je hotová a rešerše doběhla na všech kvalifikovaných firmách.**

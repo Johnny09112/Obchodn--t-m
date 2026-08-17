@@ -39,8 +39,19 @@ export interface MetrikyFaze1 {
   kvalifikovanychFirem: number;
   /** Podíl kvalifikovaných firem s ověřeným stavem stravování (jídelna/způsob). */
   podilStravovaniOvereno: number;
-  /** Podíl kontaktů úrovně 1 (poptávkové adresy) na všech kontaktech. */
+  /**
+   * Podíl poptávkových adres (úroveň 1) na adresách, **na které jde napsat**.
+   * Jednatel z rejstříku bez e-mailu i telefonu se nepočítá — adresou pro
+   * nabídky se stát nemůže.
+   */
   podilKontaktuUrovne1: number;
+  /** Kolik kontaktů má e-mail nebo telefon — jmenovatel podílu výše. */
+  adresSeSpojenim: number;
+  /**
+   * Rozpad adres po úrovních TP-6. Samotné procento u malých čísel klame:
+   * 6 ze 442 i 11 z 1 319 vypadá po zaokrouhlení stejně.
+   */
+  kontaktuDleUrovne: { 1: number; 2: number; 3: number };
   kontaktuNaKvalifikovanouFirmu: number;
   /** Podíl vyplněných sledovaných polí, které mají záznam v evidence (TP-2). */
   podilPoliSeZdrojem: number;
@@ -58,10 +69,23 @@ export async function metrikyFaze1(db: Db): Promise<MetrikyFaze1> {
        and (zpusob_stravovani is not null or ma_vlastni_jidelnu is not null)`,
   );
 
-  const [kontakty] = await db.query<{ celkem: string; uroven1: string }>(
+  // Počítá se jen z kontaktů, na které jde napsat. Jednatel z rejstříku bez
+  // e-mailu i telefonu je kontakt, ale **není to adresa** — poptávkovou
+  // adresou se stát nemůže, takže do jmenovatele nepatří. Dokud se počítal,
+  // hlásila metrika 1 % tam, kde vychází 2,5 % (877 z 1 319 kontaktů v ostré
+  // databázi je bez spojení, 17. 8. 2026).
+  const [kontakty] = await db.query<{
+    celkem: string;
+    uroven1: string;
+    uroven2: string;
+    uroven3: string;
+  }>(
     `select count(*)::text as celkem,
-            count(*) filter (where uroven_adresy = 1)::text as uroven1
-     from contacts`,
+            count(*) filter (where uroven_adresy = 1)::text as uroven1,
+            count(*) filter (where uroven_adresy = 2)::text as uroven2,
+            count(*) filter (where uroven_adresy = 3)::text as uroven3
+     from contacts
+     where email is not null or telefon is not null`,
   );
   const celkemKontaktu = Number(kontakty?.celkem ?? 0);
 
@@ -91,6 +115,12 @@ export async function metrikyFaze1(db: Db): Promise<MetrikyFaze1> {
     podilKontaktuUrovne1: celkemKontaktu
       ? Number(kontakty?.uroven1 ?? 0) / celkemKontaktu
       : 0,
+    adresSeSpojenim: celkemKontaktu,
+    kontaktuDleUrovne: {
+      1: Number(kontakty?.uroven1 ?? 0),
+      2: Number(kontakty?.uroven2 ?? 0),
+      3: Number(kontakty?.uroven3 ?? 0),
+    },
     kontaktuNaKvalifikovanouFirmu: kvalifikovanych
       ? Number(kontaktyKv?.pocet ?? 0) / kvalifikovanych
       : 0,

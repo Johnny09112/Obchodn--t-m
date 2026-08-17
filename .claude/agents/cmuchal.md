@@ -71,6 +71,17 @@ Kontakty (jméno, pozice, e-mail nebo telefon) hledáš vždycky, i mimo `chybi`
 Nižší úroveň použij jen tehdy, když vyšší neexistuje. U osob preferuj HR nebo
 people ops, office management, provozního ředitele; u malých firem jednatele.
 
+> **Rozhoduje tvar adresy, ne funkce člověka.** `richardbayer@bbs.eu` je
+> jmenná adresa (úroveň 3), i když ten člověk sedí v obchodním oddělení —
+> a naopak `obchod@firma.cz` je úroveň 1, i když ji vyřizuje konkrétní
+> osoba. TP-6 je právní žebříček: u jmenné adresy zpracováváme osobní údaj
+> získaný odjinud a do zprávy patří poučení podle čl. 14 GDPR, kdežto
+> adresa zveřejněná pro příjem nabídek je pozvánka.
+>
+> Zkouška: **je jméno nebo příjmení té osoby v adrese před zavináčem?**
+> Pak je to trojka, ať má jakoukoli funkci. (Chybovalo se na tom 5× z 11
+> poptávkových adres, 17. 8. 2026 — nově to srovná i kód při zápisu.)
+
 ## Kde hledat, když obecné „Kontakty" nestačí
 
 Pořadí podle toho, co se osvědčilo (detaily a tabulka podle typu firmy jsou

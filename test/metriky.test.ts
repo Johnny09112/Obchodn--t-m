@@ -62,8 +62,43 @@ describe("metrikyFaze1", () => {
     const m = await metrikyFaze1(db);
     expect(m.kvalifikovanychFirem).toBe(1);
     expect(m.podilStravovaniOvereno).toBe(1); // Alfa má zpusob_stravovani
-    expect(m.podilKontaktuUrovne1).toBe(0.5); // 1 z 2 kontaktů
+    expect(m.podilKontaktuUrovne1).toBe(0.5); // 1 ze 2 adres, na které jde psát
     expect(m.kontaktuNaKvalifikovanouFirmu).toBe(2);
     expect(m.podilPoliSeZdrojem).toBe(1); // repo vrstva evidence vynucuje
+  });
+
+  /**
+   * Jednatel z rejstříku je kontakt, ale **není to adresa** — nemá e-mail
+   * ani telefon. Do podílu poptávkových adres nepatří ani do čitatele, ani
+   * do jmenovatele: adresou pro nabídky se nikdy stát nemůže.
+   *
+   * V ostré databázi jich je 877 z 1 319 kontaktů, takže dokud se počítaly,
+   * hlásila metrika 1 % tam, kde ve skutečnosti vychází 2,5 % (17. 8. 2026).
+   */
+  it("kontakty bez e-mailu a telefonu se do podílu nepočítají", async () => {
+    await zapisKontakt(db, "25596641", {
+      jmeno: "Jan",
+      prijmeni: "Jednatel",
+      urovenAdresy: 3,
+      zdrojUrl: "https://ares.gov.cz/ekonomicke-subjekty/25596641",
+      citace: "veřejný rejstřík: Jednatel JAN JEDNATEL",
+    });
+
+    const m = await metrikyFaze1(db);
+    // Pořád 1 ze 2 adres se spojením — jednatel bez adresy jmenovatel neředí.
+    expect(m.podilKontaktuUrovne1).toBe(0.5);
+    // Ale do „kontaktů na firmu" patří: víme o něm, jen na něj neumíme napsat.
+    expect(m.kontaktuNaKvalifikovanouFirmu).toBe(3);
+  });
+
+  /**
+   * Samotné procento u malých čísel klame: 6 ze 442 i 11 z 1 319 se
+   * zaokrouhlí na „1 %", přestože je to úplně jiná situace. Proto metrika
+   * nese i absolutní počty a rozpad po úrovních.
+   */
+  it("nese i absolutní čísla, ne jen procento", async () => {
+    const m = await metrikyFaze1(db);
+    expect(m.adresSeSpojenim).toBe(2);
+    expect(m.kontaktuDleUrovne).toEqual({ 1: 1, 2: 1, 3: 0 });
   });
 });

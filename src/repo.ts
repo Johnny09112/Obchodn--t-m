@@ -2,6 +2,7 @@ import type { AresZaznam } from "./ares.js";
 import { jeZnamyAtribut } from "./atributy.js";
 import type { Db } from "./db.js";
 import { naTriStav, TRISTAVOVE_SLOUPCE } from "./tristav.js";
+import { srovnejUroven } from "./uroven-adresy.js";
 import { ATRIBUTY_SLOUPCE } from "./whitelist.js";
 import { spolehlivostZdroje } from "./zdroje.js";
 
@@ -132,6 +133,10 @@ export async function zapisKontakt(
   k: KontaktVstup,
 ): Promise<string> {
   overZdroj(k);
+  // TP-6 v kódu, ne v promptu: jmenná adresa je úroveň 3, ať ji agent poslal
+  // jakkoli. Obchodnímu zástupci dával jedničku („je to přece kontakt pro
+  // nabídky"), čímž se ztrácela povinnost poučení podle čl. 14 GDPR.
+  const uroven = srovnejUroven(k.urovenAdresy, k.email, k.jmeno, k.prijmeni);
   return db.tx(async (t) => {
     const rows = await t.query<{ id: string }>(
       `insert into contacts (ico, jmeno, prijmeni, pozice, email, uroven_adresy, telefon, zdroj_url)
@@ -142,7 +147,7 @@ export async function zapisKontakt(
         k.prijmeni ?? null,
         k.pozice ?? null,
         k.email ?? null,
-        k.urovenAdresy,
+        uroven,
         k.telefon ?? null,
         k.zdrojUrl,
       ],

@@ -1931,7 +1931,14 @@ async function cmdMetriky(): Promise<void> {
     console.log(`Kvalifikovaných firem: ${m.kvalifikovanychFirem} (cíl fáze 1: 200)`);
     console.log(`Podíl polí se zdrojem: ${pct(m.podilPoliSeZdrojem)}`);
     console.log(`Ověřený stav stravování: ${pct(m.podilStravovaniOvereno)}`);
-    console.log(`Podíl kontaktů úrovně 1: ${pct(m.podilKontaktuUrovne1)}`);
+    console.log(
+      `Poptávkové adresy (úroveň 1): ${pct(m.podilKontaktuUrovne1)} ` +
+        `(${m.kontaktuDleUrovne[1]} z ${m.adresSeSpojenim} adres)`,
+    );
+    console.log(
+      `  z toho obecné firemní (úroveň 2): ${m.kontaktuDleUrovne[2]} · ` +
+        `jmenné osob (úroveň 3, poučení dle čl. 14 GDPR): ${m.kontaktuDleUrovne[3]}`,
+    );
     console.log(`Ověřených kontaktů na firmu: ${m.kontaktuNaKvalifikovanouFirmu.toFixed(1)}`);
   } finally {
     await db.close();

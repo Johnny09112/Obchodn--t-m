@@ -259,6 +259,35 @@ se neodesílalo ani nemazalo; ostrá data zůstala nedotčená.
   (`src/pruzkum-postup.ts`) — pozor, není totéž co „vše hotovo" v průvodci,
   které počítá jen úspěšné oblasti, protože podle nich se smí schvalovat.
 
+## Detail firmy přestavěný (17. 8.)
+
+Nové pořadí sekcí a pět nejbližších jídelen do 50 km
+([[detail-firmy-ma-porad-sekci]]). Návrh šel majiteli nanečisto jako HTML
+a teprve po odsouhlasení se stavěl.
+
+**Nálezy v datech, které to odhalilo — zatím neopravené:**
+
+- **7 firem má v `obor` zapsaný nábor** („nabírá 3 míst“ z dat MPSV) místo
+  oboru podnikání. Zbylých 207 je v pořádku. Dohledat znovu ≈ 8 minut
+  agentní práce; napřed se musí těch 7 záznamů smazat, jinak platí za
+  doložené. **Čeká na rozhodnutí majitele.**
+- **Duplicitní kontakty:** tentýž e-mail nalezený na dvou podstránkách je
+  veden jako dva kontakty (Stavební stroje a doprava). Rozsah nespočítán.
+- **73 firem nemá jídelnu do 50 km**, nejvzdálenější 95 km.
+
+## Kde je zapsaný plán
+
+Fáze 0–5 = SPEC kap. 12; sessions přípravné fáze = `docs/FAZE-0.md`.
+Přehled se stavem ověřeným v datech (17. 8.):
+`docs/vizualizace/plan-fazi-a-sessions-2026-08-17.html`.
+
+**Co z něj vyplynulo:** rozpis je zastaralý a **neobsahuje aplikaci vůbec** —
+devět odpracovaných celků v `docs/superpowers/` v něm není. Nezačaté a
+blokující: **S0.5 tvrzení a šablony** (v databázi 0 tvrzení, 0 šablon)
+a **S0.7 odesílací doména** (dlouhé lhůty). Skilly z S0.3 neexistují.
+**Re-design přes Claude Design není zapsaný nikde** — majitel ho zmínil
+17. 8., v repozitáři ani ve vaultu po něm není stopa.
+
 ## Aktuální focus
 
 **Fáze 1 je hotová a rešerše doběhla na všech kvalifikovaných firmách.**

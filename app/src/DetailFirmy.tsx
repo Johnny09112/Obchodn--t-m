@@ -83,6 +83,12 @@ function kdeZjisteno(url: string): string {
   }
 }
 
+/** Hodnota údaje česky — v evidenci jsou některé strojové (`stredni`). */
+function popisHodnoty(atribut: string, hodnota: string): string {
+  if (atribut === "velikost_kategorie") return POPIS_VELIKOSTI[hodnota] ?? hodnota;
+  return hodnota;
+}
+
 function Doklad({ e }: { e: EvidenceDetail }) {
   return (
     <>
@@ -318,7 +324,7 @@ export function DetailFirmy({ firma, onZavri }: { firma: Firma; onZavri: () => v
                   <li key={e.id} className={TECHNICKE.has(e.atribut) ? "technicky" : undefined}>
                     <div className="doklad-hlava">
                       <strong>{POPIS_ATRIBUTU[e.atribut] ?? e.atribut}</strong>
-                      <span className="tise"> · {e.hodnota}</span>
+                      <span className="tise"> · {popisHodnoty(e.atribut, e.hodnota)}</span>
                       {TECHNICKE.has(e.atribut) && (
                         <span className="stitek">naše práce, ne údaj o firmě</span>
                       )}

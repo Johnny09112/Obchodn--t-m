@@ -265,15 +265,35 @@ Nové pořadí sekcí a pět nejbližších jídelen do 50 km
 ([[detail-firmy-ma-porad-sekci]]). Návrh šel majiteli nanečisto jako HTML
 a teprve po odsouhlasení se stavěl.
 
-**Nálezy v datech, které to odhalilo — zatím neopravené:**
+**Nálezy v datech, které to odhalilo:**
 
-- **7 firem má v `obor` zapsaný nábor** („nabírá 3 míst“ z dat MPSV) místo
-  oboru podnikání. Zbylých 207 je v pořádku. Dohledat znovu ≈ 8 minut
-  agentní práce; napřed se musí těch 7 záznamů smazat, jinak platí za
-  doložené. **Čeká na rozhodnutí majitele.**
+- ✅ **7 vadných oborů opraveno 17. 8.** — viz níž.
 - **Duplicitní kontakty:** tentýž e-mail nalezený na dvou podstránkách je
   veden jako dva kontakty (Stavební stroje a doprava). Rozsah nespočítán.
 - **73 firem nemá jídelnu do 50 km**, nejvzdálenější 95 km.
+
+## Oprava vadných oborů (17. 8.) — hotová
+
+Sedm kvalifikovaných firem mělo v `obor` zapsaný počet volných míst z dat
+MPSV („nabírá 3 míst“). Záznamy zazálohovány, smazány a nechány dohledat
+znovu. **Obor se podařilo doložit u všech sedmi**, cestou přibylo 5 webů
+a 7 kontaktů. Celý běh trval zhruba 13 minut agentní práce (odhad byl 8),
+náklad 0 Kč — jde z předplatného.
+
+| Údaj | Před | Po |
+|---|---|---|
+| Oborů celkem · z toho vadných | 214 · 7 | **214 · 0** |
+| Firem s uloženým webem | 156 | **161** |
+| Kontaktů | 1 312 | **1 319** |
+
+**Jak se to dělá znovu:** `k-obohaceni --ico 123,456` vypíše práci pro
+konkrétní firmy — přesný seznam přebíjí i podmínku „neprošla rešerší“,
+takže se nemusí sahat na razítko `obohaceno_at`. Parametr přibyl týž den;
+jádro ho umělo, jen nešel zadat z příkazové řádky.
+
+**Za pozornost stojí:** u REVIANTu je obor z katalogu `jenfirmy.cz`, ne
+z webu firmy — vlastní web se nenašel. Doložený je, ale je to popis
+katalogu, ne slova firmy.
 
 ## Kde je zapsaný plán
 

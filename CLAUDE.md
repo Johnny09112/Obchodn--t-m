@@ -134,9 +134,17 @@ npm run typecheck
 npm run cli            # nápověda ke všem příkazům
 ```
 
-**Aktivní data jsou v `data/pgdata-v5`**, ne ve výchozím `data/pgdata`.
-Ke každému příkazu proto patří `CANTINERO_DATA_DIR=data/pgdata-v5`.
-Databázi smí otevřít jen jeden proces naráz — dva ji tiše rozbijí.
+**Ostrá data jsou v cloudu za `DATABASE_URL`**, ne v `data/pgdata-v5` —
+ta kopie zamrzla 29. 7. na 167 firmách a na dotazy tiše odpovídá dál
+([[ostra-data-jsou-v-cloudu]]). Ke každému příkazu nad ostrými daty proto
+patří načtení tajemství, které leží mimo pracovní složku:
+
+```bash
+set -a && . ~/.cantinero/.env && set +a && npm run cli -- <příkaz>
+```
+
+Lokální PGlite (`CANTINERO_DATA_DIR`) je jen pro pokusy a testy; smí ji
+otevřít jen jeden proces naráz — dva ji tiše rozbijí.
 
 ## Role agentů (SPEC kap. 10)
 

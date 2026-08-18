@@ -22,6 +22,8 @@ import { vytvorOsmKlienta } from "./osm.js";
 import { vytvorRegistrKlienta, zdrojVelikosti } from "./registr.js";
 import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
+import { nactiSchvalenaTvrzeni, ulozSablonu, ulozTvrzeni, vyplnPriklady } from "./obsah.js";
+import { SABLONA_HLAVNI, TVRZENI } from "./obsah-schvaleny.js";
 import { novePoznatky } from "./playbook.js";
 import { doplnKontakty } from "./kontakty.js";
 import { doplnVelikosti } from "./velikosti.js";
@@ -1946,6 +1948,69 @@ async function cmdMetriky(): Promise<void> {
 }
 
 /**
+ * Knihovna tvrzení a šablon (S0.5).
+ *
+ * `nahraj` je jediná cesta, kterou se schválený text dostane do databáze —
+ * bere ho ze `src/obsah-schvaleny.ts`, takže je v gitu vidět, kdo co
+ * schválil a kdy se text změnil. Zápis je za `--potvrdit` schválně: když
+ * je nastavená DATABASE_URL, sahá do ostrých dat.
+ */
+async function cmdObsah(argv: string[]): Promise<void> {
+  const podprikaz = argv[0] ?? "seznam";
+  const { values } = parseArgs({
+    args: podprikaz === "seznam" ? argv : argv.slice(1),
+    options: { potvrdit: { type: "boolean" } },
+    allowPositionals: true,
+  });
+
+  const db = await pripojDb();
+  try {
+    if (podprikaz === "nahraj") {
+      if (!values.potvrdit) {
+        console.log(
+          `Nahrálo by se ${TVRZENI.length} tvrzení a šablona „${SABLONA_HLAVNI.segment}".`,
+        );
+        console.log("Spusť znovu s --potvrdit.");
+        return;
+      }
+      const novych = await ulozTvrzeni(db, TVRZENI);
+      const verze = await ulozSablonu(db, SABLONA_HLAVNI);
+      console.log(`Tvrzení: ${novych} nových (schválených celkem ${TVRZENI.length}).`);
+      console.log(`Šablona „${SABLONA_HLAVNI.segment}" uložena jako verze ${verze}.`);
+      return;
+    }
+
+    const tvrzeni = await nactiSchvalenaTvrzeni(db);
+    console.log(`Schválená tvrzení (${tvrzeni.length}):`);
+    for (const t of tvrzeni) console.log(`  — ${t.tvrzeni}`);
+
+    const sablony = await db.query<{
+      verze: number;
+      segment: string;
+      kanal: string;
+      stav: string;
+      predmet: string;
+    }>("select verze, segment, kanal, stav, predmet from templates order by segment, kanal, verze");
+    console.log(`\nŠablony (${sablony.length}):`);
+    for (const s of sablony) {
+      console.log(`  v${s.verze} ${s.segment}/${s.kanal} [${s.stav}] — ${s.predmet}`);
+    }
+
+    if (sablony.length > 0) {
+      const [posledni] = await db.query<{ telo: string }>(
+        "select telo from templates order by verze desc limit 1",
+      );
+      if (posledni) {
+        console.log("\nJak vypadá vyplněná (ukázkové hodnoty):\n");
+        console.log(vyplnPriklady(posledni.telo));
+      }
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
  * Vzorek ke kontrole kvality (SPEC kap. 12, fáze 1 — „ruční kontrola vzorku
  * 30 firem"). Metriku „podíl chybných záznamů" nespočítá dotaz, musí ji
  * změřit člověk; tenhle příkaz mu k tomu připraví stránku.
@@ -2148,6 +2213,9 @@ switch (prikaz) {
   case "vzorek-kontroly":
     await cmdVzorekKontroly(zbytek);
     break;
+  case "obsah":
+    await cmdObsah(zbytek);
+    break;
   default:
     console.log(`Cantinero — fáze 1 (Čmuchal). Příkazy:
   migrate                          založí/aktualizuje schéma (lokálně, nebo na DATABASE_URL)
@@ -2236,6 +2304,8 @@ switch (prikaz) {
                                    (cílená oprava jednoho údaje)
   zapis-nalezy --soubor x.json     zapíše nálezy od agenta (kontroluje zdroje)
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)
+  obsah [seznam]                   vypíše schválená tvrzení a šablony v databázi
+  obsah nahraj [--potvrdit]        nahraje schválený text ze src/obsah-schvaleny.ts
   vzorek-kontroly [--pocet 30] [--vystup cesta.html]
                                    připraví vzorek k ruční kontrole kvality —
                                    různorodý výběr firem s hodnotami, citacemi

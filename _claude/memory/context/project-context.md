@@ -332,6 +332,17 @@ a vaši zaměstnanci obědy svépomocí, nebo centralizovaně?“ Moje verze byl
 **Nápad k produktizaci:** [[onboarding-dotaznik-pro-prodej]] — u cizího
 zákazníka nikdo rozhovor o produktu nepovede, systém se musí umět vyptat sám.
 
+**Třetí revize 18. 8. — věcná oprava:** psal jsem „vaříme“, ale Cantinero
+nevaří. Vaří jídelna, my zajišťujeme spojení mezi jídelnou a strávníkem.
+V oslovení se navíc **konkrétní jídelna nejmenuje** (šla by obejít) — uvádí
+se jen vzdálenost od firmy. Oslovuje se jménem, což má právní dopad:
+poučení podle čl. 14 GDPR. Vše v [[kdo-vari-a-co-se-neprozrazuje]].
+
+**Meze personalizace:** [[personalizace-jen-z-whitelistu]] — směnný provoz
+ani web do zprávy nesmí, obor ano. Plnou kvalitu oslovení (jméno + obor)
+unese zhruba polovina kvalifikovaných firem: ze 165 jde napsat 104,
+oslovit jménem 59, obor známe u 91.
+
 **Hotové v kódu:** kontrola stylu podle SPEC kap. 6 (`src/styl-zpravy.ts`)
 — třináct zakázaných frází, délka, odrážky, jedna otázka, jméno adresáta,
 HTML, předmět. Je to zároveň jedna z podmínek automatického povýšení.

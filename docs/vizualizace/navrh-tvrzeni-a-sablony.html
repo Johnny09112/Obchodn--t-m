@@ -102,17 +102,31 @@
 
 <div class="stranka">
   <header>
-    <span class="eyebrow">Cantinero · session S0.5 · druhá verze podle vaší zpětné vazby</span>
+    <span class="eyebrow">Cantinero · session S0.5 · třetí revize</span>
     <h1>Tvrzení a šablony</h1>
     <p class="perex">
-      Maily jsou přepsané: kratší, méně popisné, cílené na odpověď místo na
-      vysvětlení. Tvrzení zůstávají, mění se u nich zacházení s cenou.
-      <strong>Do databáze se pořád neuložilo nic</strong> — čekám na vaše slovo.
+      Jedna z vašich připomínek nebyla stylistická, ale věcná — a měnila
+      všechno ostatní. Maily jsou proto přepsané od základu: jinak popisují,
+      kdo jsme, neprozrazují jídelnu a oslovují konkrétního člověka.
     </p>
   </header>
 
   <section>
-    <h2>Co se změnilo od minula</h2>
+    <div class="zakaz">
+      <h3>Napsal jsem „vaříme“ a to je špatně</h3>
+      <p>
+        Cantinero nevaří. <strong>Vaří jídelna, my zajišťujeme spojení mezi
+        jídelnou a strávníkem</strong> — objednávky, evidenci, rozúčtování.
+        Byla to moje chyba, ne nepřesnost v překladu vašeho popisu: stálo to
+        v prvním mailu hned v první větě a znělo to, jako bychom provozovali
+        kuchyni.
+      </p>
+      <span class="misto">Opraveno ve všech třech mailech i v tvrzeních. Nová věta: „vaří ona, my zajišťujeme objednávky a rozúčtování“.</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Co se změnilo</h2>
     <div class="obal-tabulky">
       <table>
         <thead>
@@ -120,20 +134,20 @@
         </thead>
         <tbody>
           <tr>
-            <td>Maily jsou moc popisné a toporné</td>
-            <td>Zkrátil jsem je z 86–99 slov na <strong>56–64 slov</strong>. Vypadla mechanika (uzávěrky, způsoby platby u malých firem) a zůstalo to, co má vyvolat odpověď.</td>
+            <td>Nikdo z nás nevaří</td>
+            <td>Přepsaná tvrzení i všechny maily. Role je nově popsaná přesně: jídelna vaří, my zajišťujeme službu.</td>
           </tr>
           <tr>
-            <td>Ceny hlídat u každé jídelny je neudržitelné</td>
-            <td>V mailu je <strong>přibližné číslo</strong> („zhruba 120 korun“), přesný ceník zůstane na webu. Tvrzení o ceně je nově rozpětí, ne konkrétní částka.</td>
+            <td>Nezmiňovat konkrétní jídelnu — mohli by nás obejít</td>
+            <td>Z mailů zmizel název i obec jídelny. Zůstala <strong>vzdálenost od firmy</strong>, což je konkrétní údaj, který partnera neprozradí.</td>
           </tr>
           <tr>
-            <td>Podpis neřešit</td>
-            <td>Ze šablon jsem ho vypustil — níž je jen text mailu. Podpis doplní odesílatel.</td>
+            <td>Oslovovat přímo osobu</td>
+            <td>Maily začínají „Dobrý den, paní Nováková“. Jméno padne <strong>jednou</strong> — víc už působí jako hromadná pošta.</td>
           </tr>
           <tr>
-            <td>„Od září“ hlídat</td>
-            <td>Zapsáno jako revize k 1. září. Až termín mine, věta se musí změnit, jinak by tvrdila nepravdu.</td>
+            <td>Chybí personalizace z dohledaných dat</td>
+            <td>Každý mail má větu odvozenou z toho, co o firmě víme — obor a vzdálenost. Meze jsou níž, nejsou samozřejmé.</td>
           </tr>
         </tbody>
       </table>
@@ -141,162 +155,197 @@
   </section>
 
   <section>
-    <h2>Tři maily, nová verze</h2>
+    <h2>Personalizace: čím se smí a čím ne</h2>
     <p class="podnadpis">
-      První oslovení nemá vysvětlit službu, ale zjistit, jestli je o čem mluvit.
-      Proto všechny tři končí otázkou, na kterou jde odpovědět jednou větou —
-      a žádný z nich nepopisuje objednávkový systém.
+      Tvrdé pravidlo TP-3 říká, co smí do zprávy — a nejsou to všechny údaje,
+      které o firmě máme. Rozdíl je záměrný: podle některých vybíráme, koho
+      oslovit, ale zmínit je by bylo nemístné.
+    </p>
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr><th>Údaj</th><th>Smí do mailu</th><th>Máme u kolika firem</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Obor podnikání</td>
+            <td>ano — hlavní zdroj personalizace</td>
+            <td class="doklad">214 (z kvalifikovaných 91)</td>
+          </tr>
+          <tr>
+            <td>Vzdálenost k jídelně</td>
+            <td>ano — je to náš výpočet, ne údaj o firmě</td>
+            <td class="doklad">u všech s adresou</td>
+          </tr>
+          <tr>
+            <td>Velikost firmy</td>
+            <td>ano, ale opatrně — „vaše firma o padesáti lidech“ zní jako sledování</td>
+            <td class="doklad">5 908</td>
+          </tr>
+          <tr>
+            <td>Způsob stravování, vlastní jídelna</td>
+            <td>ano</td>
+            <td class="doklad">8 a 5 — na personalizaci zatím málo</td>
+          </tr>
+          <tr class="ceka">
+            <td><strong>Směnný provoz</strong></td>
+            <td><strong>ne</strong> — v profilu je označený jako údaj mimo zprávu</td>
+            <td class="doklad">26</td>
+          </tr>
+          <tr class="ceka">
+            <td><strong>Web firmy</strong></td>
+            <td><strong>ne</strong></td>
+            <td class="doklad">161</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="podnadpis" style="margin-top: 1rem;">
+      Směnný provoz je dobrý příklad, proč to pravidlo existuje: je to silný
+      signál, podle kterého firmu vybereme — ale věta „všiml jsem si, že
+      jedete na tři směny“ zní, jako bychom firmu sledovali. Vybírat podle
+      něčeho a psát o tom jsou dvě různé věci.
+    </p>
+  </section>
+
+  <section>
+    <h2>Tři maily, třetí verze</h2>
+    <p class="podnadpis">
+      První dva počítají s tím, že známe jméno i obor. Třetí je pro případ,
+      kdy jméno nemáme — a je vidět, o kolik je chudší.
     </p>
 
     <article class="sablona">
       <div class="sablona-hlava">
-        <h3>Mikropodnik (1–24)</h3>
+        <h3>Mikropodnik · známe jméno i obor</h3>
         <div class="znacky">
-          <span class="stitek">58 slov</span>
+          <span class="stitek">56 slov</span>
           <span class="stitek ok">kontrola stylu bez výhrad</span>
         </div>
       </div>
-      <p class="predmet"><span>Předmět:</span> obědy z jídelny v Tlučné, sedm minut od vás</p>
-      <p class="telo">Dobrý den,
+      <p class="predmet"><span>Předmět:</span> obědy ze školní jídelny sedm minut od vás</p>
+      <p class="telo">Dobrý den, paní Nováková,
 
-od září vaříme ve školní jídelně v Tlučné a máme volnou kapacitu pro lidi z okolních firem. Od vás je to sedm minut pěšky.
+sedm minut pěšky od vaší truhlárny je školní jídelna, se kterou spolupracujeme — vaří ona, my zajišťujeme objednávky a rozúčtování.
 
 Polévka, hlavní jídlo, obvykle přídavek a pití na místě vyjdou zhruba na 120 korun. Kdo nechce chodit, odnese si oběd v jídlonosiči.
 
 Řešíte si vy a vaši zaměstnanci obědy svépomocí, nebo centralizovaně?</p>
       <p class="rozbor">
-        Otázka na konci je zjišťovací, ne prodejní — na „svépomocí“
-        se dá odpovědět bez závazku, a přitom je to přesně ta informace,
-        kterou potřebujeme.
+        „Vaší truhlárny“ je personalizace z dohledaného oboru — konkrétní,
+        ale ne vlezlá. Jídelna není jmenovaná, vzdálenost ano.
       </p>
     </article>
 
     <article class="sablona">
       <div class="sablona-hlava">
-        <h3>Střední firma (25–249)</h3>
+        <h3>Střední firma · známe jméno i obor</h3>
         <div class="znacky">
           <span class="stitek">64 slov</span>
           <span class="stitek ok">kontrola stylu bez výhrad</span>
         </div>
       </div>
-      <p class="predmet"><span>Předmět:</span> obědy pro vaše lidi ze školní jídelny ve Zbůchu</p>
-      <p class="telo">Dobrý den,
+      <p class="predmet"><span>Předmět:</span> obědy pro zaměstnance ze školní jídelny v okolí</p>
+      <p class="telo">Dobrý den, pane Procházko,
 
-školní jídelna ve Zbůchu má od září volnou kapacitu a od vaší provozovny jsou to čtyři kilometry. Celé menu s polévkou a obvykle přídavkem vyjde kolem 120 korun.
+vaše dřevovýroba má provozovnu čtyři kilometry od školní jídelny, se kterou spolupracujeme. Vaří jídelna, my zařizujeme objednávky a vyúčtování pro firmy.
 
-Lidé si můžou dojít sami, nebo obědy odvezete hromadně. Objednává se dopředu v aplikaci a platí buď každý za sebe, nebo firma jednou fakturou.
+Celé menu s polévkou a obvykle přídavkem vyjde kolem 120 korun. Lidé si můžou dojít sami, nebo obědy odvezete hromadně. Platí buď každý za sebe, nebo firma jednou fakturou.
 
-Stálo by to u vás za zkoušku na pár lidech?</p>
+Řešíte si vy a vaši zaměstnanci obědy svépomocí, nebo centralizovaně?</p>
       <p class="rozbor">
-        Jediná šablona, kde zůstala zmínka o placení — u střední firmy je to
-        první námitka, která přijde na řadu. „Zkouška na pár lidech“ drží
-        práh nízko.
+        U střední firmy je vzdálenost i způsob placení tím, co rozhoduje —
+        proto obojí zůstalo. Role je popsaná ve druhé větě, aby nevznikl dojem,
+        že provozujeme kuchyni.
       </p>
     </article>
 
     <article class="sablona">
       <div class="sablona-hlava">
-        <h3>Korporát (250+)</h3>
+        <h3>Korporát · jméno neznáme</h3>
         <div class="znacky">
-          <span class="stitek">63 slov</span>
+          <span class="stitek">61 slov</span>
           <span class="stitek ok">kontrola stylu bez výhrad</span>
         </div>
       </div>
-      <p class="predmet"><span>Předmět:</span> školní jídelna Zbůch — volná kapacita pro vaše zaměstnance</p>
+      <p class="predmet"><span>Předmět:</span> obědy ze školní jídelny pro vaše zaměstnance</p>
       <p class="telo">Dobrý den,
 
-jídelna ve Zbůchu vaří každý den pro školu a od září má volnou kapacitu, kterou nabízíme firmám v okolí. Od vašeho areálu jsou to tři kilometry.
+tři kilometry od vašeho areálu je školní jídelna, která má od září volnou kapacitu vedle hlavního provozu. Vaří ona, my pro firmy zařizujeme objednávky i vyúčtování.
 
-Menu vyjde zhruba na 120 korun a vaří se na místě, ne v centrální kuchyni. Objednávky i vyúčtování běží přes aplikaci, takže vám zůstane přehled o počtech.
+Menu vyjde zhruba na 120 korun a vaří se každý den na místě. Objednávky běží přes aplikaci, takže vám zůstane přehled o počtech.
 
 Komu u vás dává smysl tohle poslat dál?</p>
       <p class="rozbor">
-        Ve velké firmě čte zprávu skoro jistě někdo, kdo o stravování
-        nerozhoduje. Otázka mu proto nabízí snadný krok — předat to dál —
-        místo rozhodnutí, které udělat nemůže.
+        Bez jména a bez oboru zbývá jen vzdálenost. Je to nejslabší z trojice
+        — a přesně proto se vyplatí dohledat kontaktní osobu dřív, než se
+        odešle.
       </p>
     </article>
   </section>
 
   <section>
-    <h2>Jak se text bude zlepšovat</h2>
-    <p class="podnadpis">
-      Ptal jste se na to právem — pravidla už v zadání jsou a jedno z nich
-      přináší nepříjemné číslo.
-    </p>
-
-    <div class="obal-tabulky">
-      <table>
-        <thead>
-          <tr><th>Krok</th><th>Kdo</th><th>Co se děje</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Měření</td>
-            <td>Statistik</td>
-            <td>Sleduje podíl odpovědí a kladných odpovědí u každé varianty. Dokud se nic neodešle, nemá co měřit.</td>
-          </tr>
-          <tr>
-            <td>Návrh variant</td>
-            <td>Marketér</td>
-            <td>Navrhuje jiné znění a nové větné struktury — <strong>jen v rámci schválených tvrzení</strong>. Nasadit je sám nesmí.</td>
-          </tr>
-          <tr>
-            <td>Nasazení</td>
-            <td>Vy, nebo automat</td>
-            <td>Automaticky se varianta povýší, jen když zvítězila při <strong>80 odeslaných zprávách na rameno</strong>, nezavádí nové tvrzení ani segment a projde kontrolou stylu. Všechno ostatní schvalujete vy.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="nesmi" style="margin-top: 1.25rem;">
-      <article class="zakaz">
-        <h3>Práh snížen na 80 — a co to stojí</h3>
+    <h2>Dvě věci, které z vašich připomínek plynou</h2>
+    <div class="otazky">
+      <article class="otazka">
+        <h3>Oslovení jménem má právní dopad</h3>
         <p>
-          Původních 150 zpráv na rameno znamenalo 300 oslovení na jeden test,
-          zatímco kvalifikovaných firem máme <strong>165</strong> a každá se
-          osloví jen jednou. Test by nikdy nedoběhl. Po vašem rozhodnutí je
-          práh <strong>80 na rameno</strong>, tedy zhruba týden provozu na
-          jedno rameno a 160 oslovení na celý test — to už do dnešní
-          kartotéky vejde.
+          Jakmile napíšeme „paní Nováková“, zpracováváme osobní údaj, který
+          jsme získali odjinud než od ní. Podle čl. 14 GDPR k tomu patří
+          poučení <strong>přímo ve zprávě</strong> — a to platí i tehdy, když
+          píšeme na obecnou adresu firmy.
         </p>
-        <p style="margin-top: 0.5rem;">
-          <strong>Cena za to je menší jistota.</strong> Při osmdesáti zprávách
-          se pozná jen výrazný rozdíl — zhruba deset procentních bodů
-          v odpovědích a víc. Jemnější rozdíl mezi dvěma texty splyne
-          s náhodou a mohli bychom nasadit variantu, která ve skutečnosti
-          lepší není.
+        <p class="doporuceni">
+          Do šablon zatím poučení nepíšu — je to věc pro právní konzultaci
+          (S0.8), aby znělo správně a nezabralo půl mailu.
         </p>
-        <span class="misto">Než práh padne, schvalujete varianty vy — tak jste to chtěl a dává to smysl právě proto, že statistika sama zatím nerozhodne.</span>
+      </article>
+      <article class="otazka">
+        <h3>Máte pravdu, že na dvacet mailů je šablona málo</h3>
+        <p>
+          Sám jste to napsal a je to tak. Při deseti až dvaceti zprávách denně
+          se šablona nemá rozesílat — má sloužit jako <strong>kostra
+          a pojistka</strong>: určuje, co ve zprávě musí být, co v ní být
+          nesmí a jak je dlouhá. Text kolem toho skládá agent z doložených
+          údajů o konkrétní firmě, tak jako v ukázkách výše.
+        </p>
+        <p class="doporuceni">
+          Kontrola stylu tím dostává hlavní roli: hlídá každou složenou
+          zprávu, ne jen šablonu.
+        </p>
       </article>
     </div>
-
-    <p class="podnadpis" style="margin-top: 1.25rem;">
-      Kontrola stylu, kterou jsem dnes napsal, je jedna z podmínek povýšení —
-      varianta, která jí neprojde, se nenasadí ani automaticky, ani omylem.
-    </p>
   </section>
 
   <section>
-    <h2>Co zbývá</h2>
-    <div class="otazky">
-      <article class="otazka">
-        <h3>Schvalujete tvrzení a tyhle tři maily?</h3>
-        <p>Po schválení je uložím: tvrzení do knihovny, šablony jako verzi 1 ve stavu „schváleno“. Odesílání zůstává vypnuté.</p>
-        <p class="doporuceni">Když u některé věty váháte, řekněte kterou — přepíšu ji.</p>
-      </article>
-      <article class="otazka">
-        <h3>Jaká adresa webu patří k ceně?</h3>
-        <p>Do mailu dávám přibližné číslo, ale ceník musí být někde k dohledání. Potřebuju adresu stránky, kde ceny budou.</p>
-        <p class="doporuceni">Odkaz zatím do textu nedávám — dokud stránka není, byl by to slib naprázdno.</p>
-      </article>
+    <h2>Kolik firem tohle vůbec unese</h2>
+    <p class="podnadpis">
+      Personalizace je hezká, když je z čeho. Tady je, co dnes o kvalifikovaných
+      firmách víme.
+    </p>
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr><th>Kolik</th><th>Co to znamená</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>165</strong></td><td>kvalifikovaných firem celkem</td></tr>
+          <tr><td><strong>104</strong></td><td>má adresu nebo telefon — jen těm jde vůbec napsat</td></tr>
+          <tr><td><strong>59</strong></td><td>zná se i jméno člověka — jen tady jde oslovit „paní Nováková“</td></tr>
+          <tr><td><strong>91</strong></td><td>má dohledaný obor — zdroj personalizované věty</td></tr>
+        </tbody>
+      </table>
     </div>
+    <p class="podnadpis" style="margin-top: 1rem;">
+      Prakticky: <strong>zhruba u poloviny kvalifikovaných firem</strong> jde
+      napsat mail v plné kvalitě — se jménem i s větou o jejich oboru.
+      U zbytku se buď dohledá kontakt, nebo se pošle slabší verze.
+    </p>
   </section>
 
   <footer>
-    Fakta o službě: váš popis ze 17. 8. 2026. Ověřeno: vyhláška č. 107/2005 Sb.
-    (výživové normy pro dětské porce). Pravidla zlepšování: SPEC kap. 10.5.
-    Do databáze se nic neuloží bez vašeho schválení; odesílání je vypnuté (TP-8).
+    Fakta o službě: váš popis ze 17. a 18. 8. 2026. Meze personalizace: profil
+    produktu v databázi (TP-3). Do databáze se pořád neuložilo nic; odesílání
+    je vypnuté (TP-8).
   </footer>
 </div>

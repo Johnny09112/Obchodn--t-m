@@ -55,3 +55,27 @@ export function osloveni(prijmeni: string | null): string {
 
   return OBECNE_OSLOVENI;
 }
+
+/**
+ * Jak firmu pojmenovat ve větě „pár minut pěšky **od Vaší truhlárny**".
+ *
+ * Vyžaduje druhý pád, a ten se dá spolehlivě utvořit jen u jednoslovného
+ * ženského podstatného jména na -a (truhlárna → truhlárny). Uložený obor
+ * je ale povětšinou **celá popisná věta** („Bezpečnostní agentura
+ * poskytující ochranu osob a majetku…"), protože ho agent píše pro člověka,
+ * ne pro skloňování. Změřeno na ostrých datech 18. 8. 2026.
+ *
+ * Proto: jednoslovný ženský obor se vyskloňuje, u všeho ostatního se vrátí
+ * **„od Vás"**. Je to vždycky správně česky a vždycky pravda; horší je
+ * „od Vaší Bezpečnostní agentura poskytující ochranu osob".
+ */
+export function oznaceniFirmy(obor: string | null): string {
+  const o = (obor ?? "").trim();
+  const OBECNE = "od Vás";
+  if (o === "" || o.includes(" ")) return OBECNE;
+
+  // Ženské na -a: truhlárna → truhlárny, pekárna → pekárny.
+  if (/[a-záčďéěíňóřšťúůýž]a$/u.test(o)) return `od Vaší ${o.slice(0, -1)}y`;
+
+  return OBECNE;
+}

@@ -4,7 +4,7 @@ description: Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, 
 type: context
 status: active
 created: 2026-08-01
-updated: 2026-08-17
+updated: 2026-08-18
 ---
 
 # obchodni-tym — živý kontext
@@ -307,6 +307,30 @@ blokující: **S0.5 tvrzení a šablony** (v databázi 0 tvrzení, 0 šablon)
 a **S0.7 odesílací doména** (dlouhé lhůty). Skilly z S0.3 neexistují.
 **Re-design přes Claude Design není zapsaný nikde** — majitel ho zmínil
 17. 8., v repozitáři ani ve vaultu po něm není stopa.
+
+## Tvrzení a šablony (S0.5) — rozpracované, 18. 8.
+
+Majitel popsal službu (17. 8.), z toho vznikl návrh: osm doložitelných
+tvrzení, čtyři zákazy a tři maily. **Nic není v databázi** — čeká na
+schválení; `claims` i `templates` mají 0 řádků.
+
+**Zpětná vazba majitele 18. 8.:** maily byly moc popisné a toporné.
+Přepsané mají 56–64 slov (bylo 86–99), vypadla z nich mechanika
+objednávání a končí zjišťovací otázkou. Cena zůstává, ale přibližně
+([[cena-v-osloveni]]); podpis se neřeší.
+
+**Poctivé zjištění o zlepšování textu:** SPEC kap. 10.5 dovoluje
+automatické povýšení varianty až po **150 zprávách na rameno** testu. Dvě
+varianty tedy potřebují 300 oslovení, a kvalifikovaných firem je 165 —
+při pravidle jedna firma = jedno oslovení (TP-5) se první A/B test
+**nedá dokončit**. Varianty bude první měsíce schvalovat majitel podle
+odpovědí, ne statistika.
+
+**Hotové v kódu:** kontrola stylu podle SPEC kap. 6 (`src/styl-zpravy.ts`)
+— třináct zakázaných frází, délka, odrážky, jedna otázka, jméno adresáta,
+HTML, předmět. Je to zároveň jedna z podmínek automatického povýšení.
+
+**Revize:** [[revize-zari]] — k 1. 9. přepsat „od září" v šablonách.
 
 ## Aktuální focus
 

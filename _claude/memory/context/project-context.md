@@ -18,17 +18,17 @@ naostro, protože se na reálných datech kalibruje líp než na úvahách. Do f
 (oslovování) se nesmí, dokud není hotový zbytek fáze 0: tvrzení, šablony,
 odesílací doména, právní konzultace.
 
-Čísla z ostré databáze k 3. 8. 2026:
+Čísla z ostré databáze (cloud za DATABASE_URL) k 18. 8. 2026:
 
 | Údaj | Hodnota |
 |---|---|
-| Firem v kartotéce | **13 858** |
+| Firem v kartotéce | **13 919** |
 | Z toho se spojením | 648 |
 | Oblastí · kampaní | 7 · 5 |
 | Náklady na API | **0 USD** — placené nikdy neběželo, agent jde z předplatného |
-| Migrace | po `0033_indexy_rychlost.sql`, nasazeno |
-| Testy | **696 zelených, 76 souborů** (k 17. 8.) |
-| Odesílání | **vypnuté**, a žádný kód ho neumí zapnout |
+| Migrace | po `0044_stav_jidelny.sql`, nasazeno |
+| Testy | **760 zelených, 83 souborů** (k 18. 8.) |
+| Odesílání | **vypnuté** (ověřeno 18. 8.), zpráv 0 |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
 Vývojový server: `npm run dev --prefix app` (port 5173).
@@ -331,25 +331,40 @@ schválení textů. Odesílání zůstává vypnuté (TP-8).
   ([[prah-povyseni-varianty-80]]), podobnost až od 20 zpráv denně a segmenty
   z reakcí ([[podobnost-podle-objemu]]).
 
+### Hotovo 18. 8. — obsah je v databázi
+
+**Majitel schválil osm tvrzení i čtyři zákazy** a rozhodl o **jedné hlavní
+šabloně** ([[jedna-sablona-a-uplnost-blokuje]]): chybějící jméno se nahradí
+„Dobrý den“, chybějící jiný údaj firmu z kampaně vyřadí a je vidět v tabulce.
+
+V ostré databázi je **8 tvrzení** ve stavu `schvaleno` a **šablona
+`vsichni/email` verze 1**. Odesílání zůstává vypnuté, zpráv 0.
+
+Cesta: `src/obsah.ts` (zástupné údaje, zápis), `src/obsah-schvaleny.ts`
+(schválený text jako zdroj pravdy v gitu), příkaz `obsah` / `obsah nahraj
+--potvrdit`. Kontroluje se **při zápisu**: kontrola stylu a whitelist zdrojů.
+
 ### Co zbývá v S0.5
 
-1. **Schválit tvrzení a maily** — majitel je 18. 8. chtěl nejdřív vidět celé
-   a maily si přepsat sám. Dostal je na jedné stránce k proklikání
-   a přepsání: `docs/vizualizace/tvrzeni-a-maily-ke-schvaleni-2026-08-18.html`
-   (osm tvrzení s dokladem, čtyři zákazy, tři maily jako editovatelná pole
-   s živou kontrolou stylu). **Čeká se na jeho upravené texty.**
-2. **Uložit je do databáze** po schválení: tvrzení do `claims` (stav
-   `schvaleno`), text do `templates` jako verze 1. Zápis se ještě nikdy
-   nedělal, cesta není napsaná — bude potřeba příkaz nebo obrazovka.
-3. **Cena u jídelny místo ceníku** ([[cena-v-osloveni]] přepsáno 18. 8.):
+1. **Cena u jídelny místo ceníku** ([[cena-v-osloveni]] přepsáno 18. 8.):
    sloupec s cenou a provizí u jídelny, pole na obrazovce Jídelny a potvrzení
    ceny před spuštěním kampaně. Návrh předložen, **čeká na majitelovo ano**.
-4. **Poučení podle čl. 14 GDPR** do mailu, protože se oslovuje jménem.
+   Dokud cena není, `[cena]` se nemá čím vyplnit a připravených firem je 0.
+2. **Upozornění v tabulce firem + vyřazení z kampaně**, když povinný údaj
+   chybí. Rozhodnuto, nepostavené. Jediný zdroj pravdy o tom, co je povinné,
+   je `POVINNE_SLOTY` v `src/obsah.ts` — ať nevznikne čtvrtá kopie seznamu
+   ([[tri-kopie-seznamu-atributu]]).
+3. **Poučení podle čl. 14 GDPR** do mailu, protože se oslovuje jménem.
    Znění patří na právní konzultaci (S0.8), ne do mé hlavy.
-5. **Revize „od září"** k 1. 9. ([[revize-zari]]).
+4. **Revize „od září"** k 1. 9. ([[revize-zari]]).
+5. **Zapsat do SPEC** jednu šablonu místo segmentů — majitel rozhodl,
+   zadání to zatím neví. Nedělat bez jeho pokynu.
 
 Majitel 18. 8. zároveň řekl, že texty musí být nasaditelné i u jiné firmy
 a že skládat je má umět agent — zapsáno jako [[sablona-ma-tri-vrstvy]].
+
+Podklad, který schvaloval:
+`docs/vizualizace/tvrzeni-a-maily-ke-schvaleni-2026-08-18.html`.
 
 ### Co zbývá jinde ve fázi 0
 

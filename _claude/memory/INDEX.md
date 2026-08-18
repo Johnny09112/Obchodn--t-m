@@ -10,6 +10,7 @@
 
 ## Decisions
 - [[cena-v-osloveni]] — Cena patří ke konkrétní jídelně, ne do šablony ani na ceník — před spuštěním kampaně se odsouhlasí · active · 2026-08-18
+- [[jedna-sablona-a-uplnost-blokuje]] — Jedna hlavní šablona pro všechny; chybějící jméno se nahradí „Dobrý den“, chybějící ostatní údaj firmu z kampaně vyřadí a je vidět v tabulce · active · 2026-08-18
 - [[kdo-vari-a-co-se-neprozrazuje]] — Cantinero nevaří — zajišťuje spojení mezi jídelnou a strávníkem; a v oslovení se konkrétní jídelna nejmenuje, aby ji zákazník neobešel · active · 2026-08-18
 - [[podobnost-podle-objemu]] — Kontrola podobnosti zpráv se zapíná až nad 20 mailů denně a segmenty vznikají z reakcí, ne z tabulky velikostí · active · 2026-08-18
 - [[prah-povyseni-varianty-80]] — Práh pro automatické povýšení varianty šablony snížen ze 150 na 80 zpráv na rameno — se 165 firmami by test se 150 nikdy nedoběhl · active · 2026-08-18
@@ -40,6 +41,7 @@
 
 ## Patterns
 - [[js-hranice-slova-a-diakritika]] — \b v JavaScriptu nezná diakritiku — /\bvaší\b/ nenajde nic, protože „í" není slovní znak; použij hranice přes \p{L} · active · 2026-08-18
+- [[ostra-data-jsou-v-cloudu]] — Ostrá data leží v cloudovém Postgresu za DATABASE_URL, ne v data/pgdata-v5 — lokální kopie zamrzla 29. 7. na 167 firmách a tiše odpoví na každý dotaz · active · 2026-08-18
 - [[personalizace-jen-z-whitelistu]] — Podle čeho firmu vybíráme a co o ní smíme napsat jsou dvě různé množiny — směnný provoz je signál, ale do zprávy nesmí · active · 2026-08-18
 - [[jsonb-se-serializuje-dvakrat]] — JSON.stringify do jsonb sloupce uloží v ostré databázi řetězec místo objektu — PGlite ho rozparsuje, postgres.js serializuje podruhé, takže testy mlčí · active · 2026-08-17
 - [[nowrap-v-gridu-pretece-pres-sousedy]] — Popisek s white-space: nowrap uvnitř gridové buňky nezalomí, ale přeteče přes sousední sloupec — čísla se překryjí a nic to nenahlásí · active · 2026-08-17

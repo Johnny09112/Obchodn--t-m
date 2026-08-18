@@ -232,3 +232,95 @@ describe("zavedení parametru", () => {
     expect(await nactiHodnoty(db, nabidka)).toEqual({ rozvoz_zdarma_od: "30" });
   });
 });
+
+/**
+ * Pojistka v databázi, ne v kódu.
+ *
+ * Objeveno proklikáním 18. 8. 2026: aplikace zapisuje do Supabase přímo
+ * a na `zkontrolujHodnotu` v jádře nedosáhne (Vercel instaluje jen
+ * závislosti `app/`). Do ostré databáze se tak dala uložit cena −5 Kč.
+ * Tvrdá pravidla se vynucují v DB, ne domluvou — proto spoušť.
+ */
+describe("kontrola hodnoty vynucená databází", () => {
+  it("zápornou cenu nepustí ani přímý zápis do tabulky", async () => {
+    const nabidka = await zalozNabidku(db, "ZŠ Přímá");
+    const [cena] = await db.query<{ id: string }>(
+      "select id from parametry_nabidky where kod = 'cena_obeda'",
+    );
+    await expect(
+      db.query(
+        `insert into hodnoty_parametru (nabidka_id, parametr_id, hodnota)
+         values ($1, $2, '-5')`,
+        [nabidka, cena!.id],
+      ),
+    ).rejects.toThrow(/záporn/i);
+  });
+
+  it("do čísla nepustí ani přímý zápis slovo", async () => {
+    const nabidka = await zalozNabidku(db, "ZŠ Slovní");
+    const [cena] = await db.query<{ id: string }>(
+      "select id from parametry_nabidky where kod = 'cena_obeda'",
+    );
+    await expect(
+      db.query(
+        `insert into hodnoty_parametru (nabidka_id, parametr_id, hodnota)
+         values ($1, $2, 'draho')`,
+        [nabidka, cena!.id],
+      ),
+    ).rejects.toThrow(/číslo/i);
+  });
+
+  it("neznámou volbu výběru nepustí ani přímý zápis", async () => {
+    const nabidka = await zalozNabidku(db, "ZŠ Výběrová");
+    const [vydej] = await db.query<{ id: string }>(
+      "select id from parametry_nabidky where kod = 'moznosti_vydeje'",
+    );
+    await expect(
+      db.query(
+        `insert into hodnoty_parametru (nabidka_id, parametr_id, hodnota)
+         values ($1, $2, '["poštou"]')`,
+        [nabidka, vydej!.id],
+      ),
+    ).rejects.toThrow(/poštou/);
+  });
+
+  it("platnou hodnotu spoušť pustí", async () => {
+    const nabidka = await zalozNabidku(db, "ZŠ Platná");
+    const [vydej] = await db.query<{ id: string }>(
+      "select id from parametry_nabidky where kod = 'moznosti_vydeje'",
+    );
+    await db.query(
+      `insert into hodnoty_parametru (nabidka_id, parametr_id, hodnota)
+       values ($1, $2, '["na místě"]')`,
+      [nabidka, vydej!.id],
+    );
+    expect(await nactiHodnoty(db, nabidka)).toEqual({ moznosti_vydeje: '["na místě"]' });
+  });
+});
+
+describe("pořadí nově zavedeného parametru", () => {
+  it("parametr zapsaný bez pořadí se zařadí na konec, ne na začátek", async () => {
+    // Objeveno proklikáním 18. 8. 2026: aplikace zapisuje do Supabase přímo
+    // a pořadí nedopočítává, takže nový parametr skočil nad Cenu oběda.
+    await db.query(
+      `insert into parametry_nabidky (produkt_kod, kod, nazev, druh)
+       values ('cantinero', 'novy_udaj', 'Nový údaj', 'cislo')`,
+    );
+
+    const p = await nactiParametry(db, "cantinero");
+    expect(p[p.length - 1]?.kod).toBe("novy_udaj");
+    expect(p[0]?.kod).toBe("cena_obeda");
+  });
+
+  it("výslovně zadané pořadí zůstane, jak bylo zadáno", async () => {
+    await db.query(
+      `insert into parametry_nabidky (produkt_kod, kod, nazev, druh, poradi)
+       values ('cantinero', 'prvni_udaj', 'První údaj', 'cislo', 1)`,
+    );
+
+    const [r] = await db.query<{ poradi: number }>(
+      "select poradi from parametry_nabidky where kod = 'prvni_udaj'",
+    );
+    expect(r?.poradi).toBe(1);
+  });
+});

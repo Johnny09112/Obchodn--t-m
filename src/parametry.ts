@@ -101,8 +101,13 @@ export function naSeznam(hodnota: string): string[] {
 /**
  * Vrátí větu pro člověka, nebo `null`, když je hodnota v pořádku.
  *
- * Kontroluje se tady, ne v databázi: pátý druh parametru by jinak
- * znamenal migraci, a hlášku „má to být číslo" stejně musí složit kód.
+ * **Tohle je pohodlí, ne záruka.** Zárukou je spoušť
+ * `zkontroluj_hodnotu_parametru` v databázi (migrace 0046) — obrazovka
+ * Jídelny zapisuje do Supabase přímo a na tenhle modul nedosáhne, takže
+ * kontrola jen tady by ji nechala bez pojistky. Ověřeno bolestivě:
+ * 18. 8. 2026 se přes obrazovku uložila cena −5 Kč.
+ *
+ * Smysl má dál: příkazová řádka díky ní selže dřív a s touž větou.
  */
 export function zkontrolujHodnotu(p: ParametrNabidky, hodnota: string): string | null {
   switch (p.druh) {

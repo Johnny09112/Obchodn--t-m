@@ -1181,6 +1181,9 @@ export function PruvodceKampani({
             <button className="tlacitko tise" onClick={onHotovo}>
               Zavřít a vrátit se na kampaně
             </button>
+            <button className="tlacitko tise" onClick={() => setKrok(5)}>
+              Pokračovat na zprávu
+            </button>
             {/* Schvalovat smí jen admin — ostatním se tlačítko nenabízí vůbec,
                 databáze by je stejně zamítla. */}
             {(role === "admin" || role === "super-admin") && (

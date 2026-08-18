@@ -649,3 +649,90 @@ zcela bez nálezu.
   neodpovídal jménu podnikatele** (Lucie Šašková → `sasekmira@seznam.cz`) —
   jméno v adrese se nedomýšlí ani neopravuje, bere se jen fakt, že zdroj
   tenhle e-mail výslovně přiřazuje ke shodujícímu se IČO (úroveň 2, ne 3).
+
+### Běh 2026-08-18 — dohledání `oznaceni` (jednoslovné sebeoznačení) u 16 firem
+
+Cílená dávka na jediný atribut `oznaceni` (kontakty se nesbíraly). 6 z 16
+firem s doloženým jednoslovným sebeoznačením (Centrum pobytových a
+terénních sociálních služeb Zbůch → „centrum", MediSev s.r.o. → „ordinace",
+Centrum látek s.r.o. → „prodejna", FARMACUM s.r.o. → „lékárna", PUNČOCHA
+s.r.o. → „prodejna", Jan Šiman/Autodoprava Šiman → „autodoprava"), 10 bez
+nálezu.
+
+- **Vzor „Zámečnictví Novák nabízí…" ze zadání funguje i obráceně u
+  živnostníků, kde branding webu je Obor+Příjmení, ne zapsané jméno
+  OSVČ** — Jan Šiman (OSVČ, rejstříkové jméno jen „Jan Šiman") provozuje
+  web pod značkou „Autodoprava Šiman", kde `<title>` stránky zní
+  „Autodoprava Šiman | Expresní autodoprava a spedice" — platný zdroj pro
+  `oznaceni`, i když jde o `<title>`/meta popis, ne o větu v běžném textu
+  stránky. Stejně tak u PUNČOCHA s.r.o. posloužil `schema.org` popisek
+  (`"description": "Specializovaná prodejna ponožek..."`) vložený přímo do
+  zdrojového kódu stránky — je to doslovný text od firmy, i když není
+  vidět v běžném vykresleném textu.
+- **Generická slova jako „firma" a „společnost" se jako `oznaceni`
+  nepoužívají, i když jde technicky o podstatné jméno v prvním pádě,
+  kterým se firma sama nazývá** — ZEMAN-CNC obrábění s.r.o. („Jsme moderně
+  vybavená rodinná firma…"), Jokex s.r.o. („Jokex s.r.o. je rodinná
+  dopravní společnost…") a PS-power s.r.o. („Naše firma byla založena v
+  roce 2019.") mají tahle slova doložená, ale nejsou obchod-specifická —
+  věta „pár minut od Vaší firmy" nenese žádnou informaci. Zadání dává
+  jako příklady výhradně oborová slova (truhlárna, pekárna, autoservis,
+  lékárna, penzion, zámečnictví); `oznaceni` se hledá jako obdoba těchto
+  slov, ne jako libovolné sebeoznačení.
+- **Sloveso popisující činnost není totéž jako sebeoznačení místa/subjektu.**
+  U Mobilní autosklo s.r.o. web píše „Poskytuje mobilní servis na opravu
+  či výměnu autoskla" — „servis" je tu objekt slovesa (co firma
+  poskytuje), ne to, jak firma sama sebe nazývá. Podobně u ZPServis
+  (Mgr. Martina Procházková, servis manipulační techniky) věta „Odborný
+  servis manipulační techniky je na velmi vysoké úrovni…" popisuje
+  kvalitu služby, ne sebeoznačení. Oba případy zůstaly bez nálezu — na
+  rozdíl od „Autodoprava Šiman", kde je slovo přímo součástí názvu/brandu.
+- **Skupinový/mateřský web popisující víc sesterských firem najednou
+  nejde bezpečně přiřadit k jedné konkrétní s.r.o.** — `efisan.cz` mluví
+  za celou „skupinu Efisan" (tři IČO) větou „Jsme specialisté v oborech…",
+  navíc v množném čísle — nešlo přiřadit konkrétně k EFISAN Infloor s.r.o.
+  ani formu upravit na jednotné číslo prvního pádu bez domýšlení. Stejná
+  logika jako už zapsaná past u skupinových kariérních portálů (viz výše).
+- **JS-frame weby (frameset se skrytým obsahem v `leva.htm`/`prava.htm`,
+  případně WAF blokující i běžné User-Agenty)** vrátily jen prázdný
+  frameset nebo 403 i po přímém načtení (EMPS s.r.o. — účetní firma) —
+  bez alternativního katalogu s delším popisem činnosti zůstala firma bez
+  nálezu `oznaceni`.
+- **`centrum` jako `oznaceni` je přípustné, i když jde o obecné slovo,
+  pokud je to zároveň doslovně první slovo oficiálního zapsaného názvu
+  firmy** — u Centrum pobytových a terénních sociálních služeb Zbůch
+  (00411949) se homepage sama uvádí větou „Centrum pobytových a
+  terénních sociálních služeb Zbůch je státní příspěvkovou organizací…";
+  na rozdíl od „firma"/„společnost" tu jde o pojmenování, které funguje i
+  samostatně jako typové označení (sociální centrum), ne o univerzální
+  právní formu.
+- **Doména z rejstříkových katalogů občas patří jinému, nesouvisejícímu
+  webu (doména změnila majitele) — než z ní citovat, ověř, že text sedí
+  k oboru firmy.** `amoto.cz` (A MOTO s.r.o., prodej motocyklů a dílů) po
+  načtení ukazuje web stavební firmy „Specialisté na zemní, výkopové
+  práce" — zjevně jiný subjekt na stejné doméně. Bez shody oboru = bez
+  nálezu, i kdyby fetch vrátil hezkou větu se sebeoznačením.
+- **Zaparkovaná/needitovaná doména (placeholder stránka registrátora,
+  např. „Tato doména je umístěna na serveru adSYSTEM") nebo nedostupné
+  DNS u domény z katalogu** — u TADOS Dřevovýroba s.r.o. i u dalších dvou
+  firem v dávce byla doména z vyhledávání mrtvá; katalogové zápisy (typu
+  Živéfirmy.cz) doménu uvádějí, i když už firma web dávno nemá.
+- **Provozovna pod jiným jménem, než je zapsaný název firmy, se dá
+  bezpečně přiřadit, když nezávislý katalog (firmy.cz) u ní uvádí přesně
+  totéž IČO** — Modern design s.r.o. provozuje penzion „Barokní špejchar"
+  na vlastní doméně `barokni-spejchar.cz`; přiřazení potvrdil firmy.cz
+  záznam se stejným IČO 26317079 dřív, než se citovalo sebeoznačení
+  „penzion" z webu provozovny.
+- **U lékařů/OSVČ-podobných s.r.o. bývá firemní web na jméně lékaře, ne na
+  jméně firmy, a vazbu na IČO potvrzuje až patička stránky.** Gynelone
+  s.r.o. (MUDr. Ilona Holubová) má web na `gynekolog.cz/holubova` —
+  copyright v patičce „Copyright © 2025 Gynelone s.r.o., MUDr. Ilona
+  Holubová IČ: 23922168" spojil web s firmou; samo sebeoznačení
+  („Gynekologická ambulance a poradna pro těhotné") bylo na stránce
+  Kontakt, ne na Úvodu.
+- **Výčet služeb/sortimentu v odrážkovém seznamu není totéž jako věta se
+  sebeoznačením** — VITO CZ spol. s r.o. má na stránce „Služby a
+  sortiment" mezi položkami i „autoservis" a „pneuservis", ale jde o
+  položky dlouhého seznamu zboží a služeb obecné prodejny, ne o větu typu
+  „Jsme autoservis…". Bez celé sebeoznačovací věty zůstala firma bez
+  nálezu, přestože slovo na stránce doslova je.

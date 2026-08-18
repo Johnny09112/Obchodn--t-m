@@ -135,4 +135,42 @@ describe("přenos dat do sdílené databáze", { timeout: 60_000 }, () => {
     );
     expect(pocetVychozich[0]!.pocet).toBe(10);
   });
+
+  it("nabídky, vlastní parametr i vyplněné hodnoty se přenesou", async () => {
+    // Cena u jídelny — kdyby se přenos parametrů odbyl, tichým následkem
+    // by byla ztracená cena a mail bez čísla.
+    const [nabidka] = await zdroj.query<{ nabidka_id: string }>(
+      "select nabidka_id from jidelny where id = $1",
+      [jidelnaId],
+    );
+    const [cena] = await zdroj.query<{ id: string }>(
+      "select id from parametry_nabidky where kod = 'cena_obeda'",
+    );
+    await zdroj.query(
+      `insert into hodnoty_parametru (nabidka_id, parametr_id, hodnota)
+       values ($1, $2, '115')`,
+      [nabidka!.nabidka_id, cena!.id],
+    );
+    await zdroj.query(
+      `insert into parametry_nabidky (produkt_kod, kod, nazev, druh, poradi)
+       values ('cantinero', 'rozvoz_zdarma_od', 'Rozvoz zdarma od', 'cislo', 9)`,
+    );
+
+    await prenesData(zdroj, cil);
+
+    // Výchozí čtyři parametry má cíl z vlastní migrace, pátý přibyl přenosem.
+    const p = await cil.query<{ pocet: number }>(
+      "select count(*)::int as pocet from parametry_nabidky where produkt_kod = 'cantinero'",
+    );
+    expect(p[0]!.pocet).toBe(5);
+
+    // Hodnota se musí najít pod parametrem CÍLE, ne pod id ze zdroje —
+    // ta dvě id jsou různá, protože každá databáze si je vygenerovala sama.
+    const h = await cil.query<{ hodnota: string }>(
+      `select h.hodnota from hodnoty_parametru h
+         join parametry_nabidky p on p.id = h.parametr_id
+        where p.kod = 'cena_obeda'`,
+    );
+    expect(h.map((x) => x.hodnota)).toEqual(["115"]);
+  });
 });

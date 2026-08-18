@@ -10,11 +10,11 @@ import { zkontrolujZpravu, ZAKAZANE_FRAZE } from "../src/styl-zpravy.js";
 
 const DOBRA_ZPRAVA = `Dobrý den,
 
-vaříme obědy ve školní jídelně ve Zbůchu, pár minut od vaší provozovny.
+vaříme obědy ve školní jídelně ve Zbůchu, pár minut od Vaší provozovny.
 Denně máme volnou kapacitu, kterou nabízíme firmám v okolí — jídlo se vydá
 ve výdejním okně nebo se doveze, podle toho, co komu vyhovuje.
 
-Má u vás smysl to zkusit, nebo obědy řešíte jinak?
+Má u Vás smysl to zkusit, nebo obědy řešíte jinak?
 
 Jan Laub
 Cantinero s.r.o., IČO 12345678
@@ -87,5 +87,38 @@ Zkusíme to?`;
     expect(ZAKAZANE_FRAZE).toContain("řešení na míru");
     expect(ZAKAZANE_FRAZE).toContain("Doufám, že se máte dobře");
     expect(ZAKAZANE_FRAZE).toHaveLength(13);
+  });
+});
+
+/**
+ * Vykání s velkým písmenem (Vy, Vás, Vaše) je v obchodním dopise úzus —
+ * malé „vaší" v oslovení konkrétní osoby vypadá jako hromadná pošta.
+ * Vyžádal si to majitel 18. 8. 2026, když našel malé v v mých šablonách.
+ */
+describe("vykání velkým písmenem", () => {
+  it("najde malé v tam, kde se vyká", () => {
+    const v = zkontrolujZpravu("Dobrý den, pár minut od vaší firmy vaříme obědy. Zkusíte to?", {
+      predmet: "obědy",
+    });
+    expect(v.some((p) => p.kod === "vykani" && p.detail.includes("vaší"))).toBe(true);
+  });
+
+  it("správně napsané vykání projde", () => {
+    const v = zkontrolujZpravu("Dobrý den, pár minut od Vaší firmy je jídelna. Zkusíte to?", {
+      predmet: "obědy",
+    });
+    expect(v.some((p) => p.kod === "vykani")).toBe(false);
+  });
+
+  it("nehlásí slova, která jen začínají na va", () => {
+    const v = zkontrolujZpravu("Dobrý den, jídelna vaří denně a nabízí varianty. Zkusíte to?", {
+      predmet: "obědy",
+    });
+    expect(v.some((p) => p.kod === "vykani")).toBe(false);
+  });
+
+  it("na začátku věty velké písmeno o vykání nic neříká", () => {
+    const v = zkontrolujZpravu("Dobrý den. Vaše obědy neřešíme. Zkusíte to?", { predmet: "obědy" });
+    expect(v.some((p) => p.kod === "vykani")).toBe(false);
   });
 });

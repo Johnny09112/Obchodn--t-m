@@ -35,6 +35,14 @@ export const ZAKAZANE_FRAZE = [
 /** Slova, po kterých předmět zní jako reklama, ne jako věcná zpráva. */
 const SUPERLATIVY = ["revoluce", "revoluční", "nejlepší", "špičkov", "unikátní", "jedinečn"];
 
+/**
+ * Tvary vykání, které se v obchodním dopise píšou velkým písmenem.
+ * Malé „vaší" v oslovení konkrétní osoby vypadá jako hromadná pošta
+ * (vyžádal si majitel 18. 8. 2026).
+ */
+const TVARY_VYKANI =
+  /(?<!\p{L})(vy|vás|vám|vámi|váš|vaše|vaší|vašeho|vašemu|vašich|vašim|vašimi|vaši)(?!\p{L})/gu;
+
 const MAX_SLOV = 120;
 
 export interface Prohresek {
@@ -45,7 +53,8 @@ export interface Prohresek {
     | "otazka"
     | "jmeno-adresata"
     | "html"
-    | "predmet";
+    | "predmet"
+    | "vykani";
   /** Věta pro člověka, který zprávu píše — ne kód chyby. */
   detail: string;
 }
@@ -107,6 +116,22 @@ export function zkontrolujZpravu(
         detail: `Jméno adresáta je v textu ${vyskyty}×, smí být nejvýš jednou.`,
       });
     }
+  }
+
+  // Vykání velkým písmenem. Hledá se jen uvnitř věty — na začátku věty je
+  // velké písmeno povinné tak jako tak a o vykání nevypovídá nic.
+  const nalezene = new Set<string>();
+  for (const m of telo.matchAll(TVARY_VYKANI)) {
+    const pred = telo.slice(0, m.index).trimEnd();
+    if (pred === "" || /[.!?:]$/.test(pred)) continue;
+    nalezene.add(m[0]);
+  }
+  if (nalezene.size > 0) {
+    const vypis = [...nalezene].map((x) => `„${x}"`).join(", ");
+    prohresky.push({
+      kod: "vykani",
+      detail: `Vyká se velkým písmenem — oprav ${vypis}.`,
+    });
   }
 
   if (/<[a-z/][^>]*>/i.test(telo)) {

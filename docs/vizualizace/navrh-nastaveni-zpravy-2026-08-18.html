@@ -1,0 +1,542 @@
+<title>Nastavení zprávy u kampaně</title>
+<style>
+  :root {
+    --ground: #eeeee7; --karta: #fbfaf6; --karta2: #f3f2eb;
+    --inkoust: #1d211b; --inkoust-slaby: #5c6157; --linka: #cfd0c6;
+    --zelena: #3c6b48; --zelena-svetla: #e2ece3;
+    --cihla: #a4432c; --cihla-svetla: #f7e5df;
+    --zlata: #8d6a1a; --zlata-svetla: #f7eed6;
+    --modra: #2f5d78; --modra-svetla: #e0eaf0;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --stin-okno: 0 8px 24px rgba(29, 33, 27, 0.12);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14170f; --karta: #1c2019; --karta2: #232821;
+      --inkoust: #e8e9e2; --inkoust-slaby: #a0a597; --linka: #363a33;
+      --zelena: #7fb98c; --zelena-svetla: #22301f;
+      --cihla: #e08a70; --cihla-svetla: #33211c;
+      --zlata: #d8b25c; --zlata-svetla: #2f2818;
+      --modra: #8fb8ce; --modra-svetla: #1b2a33;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+      --stin-okno: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #14170f; --karta: #1c2019; --karta2: #232821;
+    --inkoust: #e8e9e2; --inkoust-slaby: #a0a597; --linka: #363a33;
+    --zelena: #7fb98c; --zelena-svetla: #22301f;
+    --cihla: #e08a70; --cihla-svetla: #33211c;
+    --zlata: #d8b25c; --zlata-svetla: #2f2818;
+    --modra: #8fb8ce; --modra-svetla: #1b2a33;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --stin-okno: 0 8px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body { margin: 0; background: var(--ground); color: var(--inkoust);
+         font-family: var(--pismo-text); line-height: 1.6; }
+
+  .stranka { max-width: 58rem; margin: 0 auto; padding: 3rem 1.5rem 5rem;
+             display: flex; flex-direction: column; gap: 3.25rem; }
+
+  .eyebrow { font-family: var(--pismo-data); font-size: 0.75rem; letter-spacing: 0.12em;
+             text-transform: uppercase; color: var(--inkoust-slaby); }
+
+  h1 { font-family: var(--pismo-nadpis); font-size: clamp(1.9rem, 5vw, 2.6rem);
+       line-height: 1.12; margin: 0.5rem 0 0.75rem; text-wrap: balance; }
+  h2 { font-family: var(--pismo-nadpis); font-size: 1.4rem; margin: 0 0 0.35rem;
+       text-wrap: balance; }
+  h3 { font-size: 1rem; margin: 0 0 0.35rem; }
+
+  .cislo { font-family: var(--pismo-data); font-size: 0.75rem; letter-spacing: 0.1em;
+           text-transform: uppercase; color: var(--zelena); display: block;
+           margin-bottom: 0.35rem; }
+
+  .podnadpis { margin: 0 0 1.5rem; color: var(--inkoust-slaby); font-size: 0.9375rem;
+               max-width: 46rem; }
+  .perex { margin: 0; max-width: 46rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+  section > :last-child { margin-bottom: 0; }
+
+  /* ------------------------------------------------------- pruh „nanečisto" */
+  .nanecisto { display: inline-flex; align-items: center; gap: 0.4rem;
+               font-family: var(--pismo-data); font-size: 0.6875rem;
+               letter-spacing: 0.1em; text-transform: uppercase;
+               background: var(--zlata-svetla); color: var(--zlata);
+               padding: 0.2rem 0.6rem; border-radius: 2px; margin-bottom: 0.6rem; }
+
+  /* ------------------------------------------------------- okno aplikace */
+  .okno { background: var(--karta); border: 1px solid var(--linka); border-radius: 6px;
+          box-shadow: var(--stin-okno); overflow: hidden; }
+  .okno-lista { background: var(--karta2); border-bottom: 1px solid var(--linka);
+                padding: 0.55rem 1rem; display: flex; gap: 0.5rem; align-items: center;
+                font-size: 0.8125rem; color: var(--inkoust-slaby); }
+  .puntiky { display: flex; gap: 0.3rem; }
+  .puntik { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--linka); }
+  .okno-telo { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  /* ------------------------------------------------------- tabulka jídelen */
+  .obal-tabulky { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 33rem; }
+  thead th { text-align: left; font-family: var(--pismo-data); font-size: 0.6875rem;
+             letter-spacing: 0.1em; text-transform: uppercase; color: var(--inkoust-slaby);
+             font-weight: 400; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--linka); }
+  tbody td { padding: 0.6rem 0.7rem; border-bottom: 1px dotted var(--linka);
+             font-size: 0.9375rem; vertical-align: top;
+             font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.nove { background: var(--zelena-svetla); }
+  th.nove { color: var(--zelena); }
+
+  .prepinace { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .prep { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 2px;
+          border: 1px solid var(--linka); color: var(--inkoust-slaby); white-space: nowrap; }
+  .prep.zap { background: var(--zelena-svetla); border-color: transparent; color: var(--zelena); }
+
+  /* ------------------------------------------------------- pole u kampaně */
+  .pole-radek { display: grid; grid-template-columns: 8.5rem 11rem 1fr; gap: 0.6rem;
+                align-items: center; padding: 0.6rem 0; border-bottom: 1px dotted var(--linka); }
+  .pole-radek:last-of-type { border-bottom: 0; }
+  .pole-nazev { font-family: var(--pismo-data); font-size: 0.8125rem; }
+  .vyber { border: 1px solid var(--linka); border-radius: 3px; background: var(--karta2);
+           padding: 0.3rem 0.55rem; font-size: 0.875rem; display: flex;
+           justify-content: space-between; gap: 0.5rem; align-items: center; }
+  .vyber::after { content: "▾"; color: var(--inkoust-slaby); font-size: 0.7rem; }
+  .nahled-hodnoty { font-size: 0.875rem; color: var(--inkoust-slaby); }
+  .nahled-hodnoty b { color: var(--inkoust); font-weight: 600; }
+
+  /* ------------------------------------------------------- náhled mailu */
+  .mail-nahled { background: var(--karta2); border: 1px solid var(--linka);
+                 border-radius: 4px; padding: 1rem 1.15rem; white-space: pre-wrap;
+                 font-size: 0.9375rem; }
+  .mail-nahled .pole { background: var(--zelena-svetla); color: var(--zelena);
+                       border-radius: 2px; padding: 0 0.15rem; }
+  .mail-nahled .podminka { background: var(--modra-svetla); color: var(--modra);
+                           border-radius: 2px; padding: 0 0.15rem;
+                           border-bottom: 1px dashed var(--modra); }
+
+  /* ------------------------------------------------------- editor */
+  .editor-lista { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-bottom: 0.75rem;
+                  border-bottom: 1px solid var(--linka); }
+  .tlacitko { font-size: 0.8125rem; padding: 0.3rem 0.7rem; border-radius: 3px;
+              border: 1px solid var(--linka); background: var(--karta2);
+              color: var(--inkoust); white-space: nowrap; }
+  .tlacitko.hlavni { background: var(--zelena); border-color: var(--zelena); color: var(--karta); }
+
+  .bublina { background: var(--modra-svetla); border-left: 3px solid var(--modra);
+             border-radius: 4px; padding: 0.8rem 1rem; font-size: 0.875rem; }
+  .bublina b { display: block; margin-bottom: 0.2rem; }
+
+  /* ------------------------------------------------------- výstrahy */
+  .vystrahy { display: flex; flex-direction: column; gap: 0.5rem; }
+  .vystraha { display: grid; grid-template-columns: 1.4rem 1fr; gap: 0.5rem;
+              font-size: 0.9375rem; background: var(--cihla-svetla);
+              border-left: 3px solid var(--cihla); border-radius: 4px; padding: 0.6rem 0.8rem; }
+  .vystraha .znak { color: var(--cihla); font-weight: 700; }
+
+  /* ------------------------------------------------------- karty kroků */
+  .kroky { display: flex; flex-direction: column; gap: 0.9rem; }
+  .krok-karta { background: var(--karta); border: 1px solid var(--linka);
+                border-left: 3px solid var(--zelena); border-radius: 4px;
+                padding: 1rem 1.2rem; display: grid;
+                grid-template-columns: 2rem 1fr; gap: 0.6rem; }
+  .krok-karta .poradi { font-family: var(--pismo-data); color: var(--zelena);
+                        font-size: 1.1rem; }
+  .krok-karta p { margin: 0.3rem 0 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .krok-karta .co { font-size: 0.8125rem; color: var(--inkoust-slaby);
+                    font-family: var(--pismo-data); margin-top: 0.5rem; }
+
+  .rozhodnuti { background: var(--karta); border: 1px solid var(--linka);
+                border-left: 3px solid var(--zlata); border-radius: 4px;
+                padding: 1.1rem 1.3rem; }
+  .rozhodnuti p { margin: 0 0 0.55rem; font-size: 0.9375rem; }
+  .rozhodnuti p:last-child { margin-bottom: 0; }
+
+  .dvojice { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+             gap: 0.9rem; }
+  .polovina { background: var(--karta); border: 1px solid var(--linka);
+              border-radius: 4px; padding: 1rem 1.15rem; }
+  .polovina p { margin: 0.3rem 0 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+
+  footer { border-top: 1px solid var(--linka); padding-top: 1.25rem;
+           font-size: 0.875rem; color: var(--inkoust-slaby); }
+
+  @media (max-width: 38rem) {
+    .pole-radek { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <span class="eyebrow">Cantinero · návrh k odsouhlasení · 18. 8. 2026</span>
+    <h1>Nastavení zprávy u kampaně</h1>
+    <p class="perex">
+      Text mailu se přestane psát v kódu. Kampaň si vybere šablonu a určí,
+      čím se v ní vyplní jednotlivá pole; jídelna drží fakta, ze kterých se
+      čerpá. Obrazovky níž jsou <strong>nakreslené nanečisto</strong> —
+      nic z toho zatím není postavené.
+    </p>
+  </header>
+
+  <!-- =========================================================== model -->
+  <section>
+    <span class="cislo">Jak to bude fungovat</span>
+    <h2>Dvě místa, dvě různé odpovědnosti</h2>
+    <p class="podnadpis">
+      Tohle je jádro celého návrhu a stojí za to ho mít v hlavě —
+      všechno ostatní z toho plyne.
+    </p>
+
+    <div class="dvojice">
+      <article class="polovina">
+        <h3>Jídelna drží fakta</h3>
+        <p>
+          Cena oběda, naše provize a to, co jídelna umí vydávat. Jsou to
+          skutečnosti dohodnuté s konkrétní jídelnou — mění se, když se
+          změní dohoda, ne když se píše kampaň.
+        </p>
+      </article>
+      <article class="polovina">
+        <h3>Kampaň rozhoduje, co se řekne</h3>
+        <p>
+          Která šablona, čím se vyplní které pole, co se vynechá. Dvě
+          kampaně nad týmž územím můžou říkat jiné věci, aniž by se
+          navzájem přepsaly.
+        </p>
+      </article>
+    </div>
+
+    <p class="podnadpis" style="margin-top: 1rem;">
+      Rozdíl je vidět na ceně: <strong>cena patří jídelně</strong>, protože
+      se s ní dohodla. <strong>Rozhodnutí, jestli se cena v mailu vůbec
+      zmíní, patří kampani.</strong> Proto má každé pole u kampaně jednu ze
+      tří voleb — vzít z dat, napsat natvrdo, nebo vynechat.
+    </p>
+  </section>
+
+  <!-- =========================================================== jídelny -->
+  <section>
+    <span class="cislo">Obrazovka první</span>
+    <h2>Jídelny dostanou cenu a možnosti výdeje</h2>
+    <p class="podnadpis">
+      Přibudou dva sloupce a čtyři přepínače. Vyplňujete je Vy, na téže
+      obrazovce, kde dnes měníte kapacitu.
+    </p>
+
+    <span class="nanecisto">Nakresleno nanečisto · ceny jsou vymyšlené</span>
+    <div class="okno">
+      <div class="okno-lista">
+        <span class="puntiky"><i class="puntik"></i><i class="puntik"></i><i class="puntik"></i></span>
+        <span>Jídelny</span>
+      </div>
+      <div class="okno-telo">
+        <div class="obal-tabulky">
+          <table>
+            <thead>
+              <tr>
+                <th>Jídelna</th>
+                <th>Kapacita</th>
+                <th>Stav</th>
+                <th class="nove">Cena oběda</th>
+                <th class="nove">Naše provize</th>
+                <th class="nove">Umí vydat</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>34. ZŠ Plzeň, Gerská</td>
+                <td>50</td>
+                <td>v provozu</td>
+                <td class="nove">128 Kč</td>
+                <td class="nove">12 Kč</td>
+                <td class="nove">
+                  <span class="prepinace">
+                    <span class="prep zap">na místě</span>
+                    <span class="prep zap">jídlonosič</span>
+                    <span class="prep">obal</span>
+                    <span class="prep">odvoz</span>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>ZŠ a MŠ Hrádek</td>
+                <td>20</td>
+                <td>v provozu</td>
+                <td class="nove">115 Kč</td>
+                <td class="nove">10 Kč</td>
+                <td class="nove">
+                  <span class="prepinace">
+                    <span class="prep zap">na místě</span>
+                    <span class="prep">jídlonosič</span>
+                    <span class="prep">obal</span>
+                    <span class="prep">odvoz</span>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>ZŠ, MŠ a ZUŠ Bezdružice</td>
+                <td>10</td>
+                <td>v provozu</td>
+                <td class="nove">— nevyplněno</td>
+                <td class="nove">—</td>
+                <td class="nove">
+                  <span class="prepinace"><span class="prep">nic nevybráno</span></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="bublina">
+          <b>Proč zrovna tyhle čtyři přepínače</b>
+          Dnešní mail tvrdí „na místě nebo v jídlonosičích“ úplně každé
+          firmě. U Hrádku, který umí jen výdej na místě, by to byla
+          nepravda — a to je přesně ta kategorie chyb, kterou nechceme.
+          Věta o výdeji se proto poskládá z toho, co jídelna doopravdy umí.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== kampaň -->
+  <section>
+    <span class="cislo">Obrazovka druhá</span>
+    <h2>U kampaně přibude krok „Zpráva“</h2>
+    <p class="podnadpis">
+      Průvodce má dnes čtyři kroky (Založení · Území · Průzkum · Seznam
+      firem). Pátý je zpráva: vyberete šablonu a určíte, čím se vyplní
+      pole. Hned pod tím vidíte hotový mail na skutečné firmě ze seznamu.
+    </p>
+
+    <span class="nanecisto">Nakresleno nanečisto · firma je skutečná, čísla ukázková</span>
+    <div class="okno">
+      <div class="okno-lista">
+        <span class="puntiky"><i class="puntik"></i><i class="puntik"></i><i class="puntik"></i></span>
+        <span>Kampaň Zbůch — krok 5 ze 5: Zpráva</span>
+      </div>
+      <div class="okno-telo">
+
+        <div class="pole-radek">
+          <span class="pole-nazev">Šablona</span>
+          <span class="vyber">Hlavní oslovení v1</span>
+          <span class="nahled-hodnoty">schválená 18. 8., 62 slov</span>
+        </div>
+
+        <div style="border-top: 1px solid var(--linka); padding-top: 0.5rem;">
+          <p class="podnadpis" style="margin: 0 0 0.3rem;">Čím se vyplní pole:</p>
+
+          <div class="pole-radek">
+            <span class="pole-nazev">oslovení</span>
+            <span class="vyber">vzít z dat</span>
+            <span class="nahled-hodnoty">
+              jméno adresáta · <b>39 firem</b> jménem, <b>23</b> dostane „Dobrý den“
+            </span>
+          </div>
+
+          <div class="pole-radek">
+            <span class="pole-nazev">vzdálenost</span>
+            <span class="vyber">vzít z dat</span>
+            <span class="nahled-hodnoty">spočítaná k nejbližší jídelně · <b>chybí u 0 firem</b></span>
+          </div>
+
+          <div class="pole-radek">
+            <span class="pole-nazev">obor firmy</span>
+            <span class="vyber">vzít z dat</span>
+            <span class="nahled-hodnoty">doložený obor · <b>chybí u 16 firem</b></span>
+          </div>
+
+          <div class="pole-radek">
+            <span class="pole-nazev">cena</span>
+            <span class="vyber">vzít z dat</span>
+            <span class="nahled-hodnoty">nejnižší z dotčených jídelen · <b>od 115 Kč</b></span>
+          </div>
+        </div>
+
+        <div class="mail-nahled"><span class="pole">Vážená paní Nováková,</span>
+
+<span class="pole">pár minut pěšky</span> <span class="pole">od Vaší truhlárny</span> spolupracujeme se školní jídelnou, která navýšila kapacity i pro okolní firmy.
+
+Kompletní menu vychází na <span class="pole">od 115 Kč</span> <span class="podminka">s možností obědvat na místě nebo si jídlo odvážet v jídlonosičích</span>. Veškeré objednávky i podklady pro rozúčtování přitom snadno vyřešíte přes naši aplikaci.
+
+Řešíte aktuálně obědy pro zaměstnance hromadně, nebo si je každý zajišťuje sám?</div>
+
+        <div class="vystrahy">
+          <div class="vystraha">
+            <span class="znak">!</span>
+            <span><b>16 firem se do kampaně nezahrne</b> — chybí jim obor, takže
+              by se nedalo napsat „od Vaší truhlárny“. V seznamu firem jsou
+              označené; rešerše je dohledá.</span>
+          </div>
+          <div class="vystraha">
+            <span class="znak">!</span>
+            <span><b>Bezdružice nemají vyplněnou cenu.</b> Dokud se nedoplní,
+              firmy z jejich okolí se neosloví.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="podnadpis" style="margin-top: 1rem;">
+      Zelené je pole doplněné z dat, modře podtržené je věta s podmínkou —
+      tady se objeví jen proto, že jídelna umí obojí. U Hrádku by z ní
+      zbylo „s možností obědvat na místě“.
+    </p>
+  </section>
+
+  <!-- =========================================================== editor -->
+  <section>
+    <span class="cislo">Obrazovka třetí</span>
+    <h2>Editor šablony — souvislý text, pole se vkládají tlačítkem</h2>
+    <p class="podnadpis">
+      Vybral jste variantu A: mail zůstane jedním textem tak, jak jste ho
+      napsal. Pole se do něj vkládají tlačítkem, větě se přiřadí podmínka
+      z nabídky. Nikde se nic neprogramuje — podmínka se vybírá, nepíše.
+    </p>
+
+    <span class="nanecisto">Nakresleno nanečisto</span>
+    <div class="okno">
+      <div class="okno-lista">
+        <span class="puntiky"><i class="puntik"></i><i class="puntik"></i><i class="puntik"></i></span>
+        <span>Šablony — Hlavní oslovení, koncept v2</span>
+      </div>
+      <div class="okno-telo">
+
+        <div class="editor-lista">
+          <span class="tlacitko">+ vložit pole</span>
+          <span class="tlacitko">+ podmínka pro označenou větu</span>
+          <span class="tlacitko">náhled na skutečné firmě</span>
+          <span class="tlacitko hlavni">pustit do provozu</span>
+        </div>
+
+        <div class="mail-nahled"><span class="pole">[oslovení]</span>
+
+<span class="pole">[vzdálenost]</span> <span class="pole">[obor firmy]</span> spolupracujeme se školní jídelnou, která navýšila kapacity i pro okolní firmy.
+
+Kompletní menu vychází na <span class="pole">[cena]</span> <span class="podminka">s možností obědvat na místě nebo si jídlo odvážet v jídlonosičích</span>. Veškeré objednávky i podklady pro rozúčtování přitom snadno vyřešíte přes naši aplikaci.
+
+Řešíte aktuálně obědy pro zaměstnance hromadně, nebo si je každý zajišťuje sám?</div>
+
+        <div class="pole-radek">
+          <span class="pole-nazev">označená věta</span>
+          <span class="vyber">jen když jídelna umí…</span>
+          <span class="nahled-hodnoty">
+            <span class="prepinace">
+              <span class="prep zap">na místě</span>
+              <span class="prep zap">jídlonosič</span>
+              <span class="prep">obal</span>
+              <span class="prep">odvoz</span>
+            </span>
+          </span>
+        </div>
+
+        <div class="bublina">
+          <b>Uložení není totéž co spuštění</b>
+          Rozepsaná změna se uloží jako koncept a neodejde nikomu. Platnou
+          verzí se stane teprve tlačítkem „pustit do provozu“ — a stará
+          verze zůstane, protože odeslané zprávy se na ni odkazují.
+        </div>
+
+        <div class="bublina" style="border-color: var(--zelena); background: var(--zelena-svetla);">
+          <b>Co uložení nepustí</b>
+          Text, který neprojde kontrolou stylu (zakázaná fráze, přes 120
+          slov, víc než jedna otázka, malé „vaše“), a pole, které by čerpalo
+          z údaje, jenž do zprávy nesmí. Kontrola se ozve při psaní, ne až
+          při odeslání.
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== cena -->
+  <section>
+    <span class="cislo">Pravidlo</span>
+    <h2>Když kampaň sahá do jídelen s různou cenou</h2>
+
+    <div class="rozhodnuti">
+      <p>
+        <strong>Rozhodl jste 18. 8.:</strong> vezme se nižší cena, případně
+        s „od“. Konkrétně to udělám takhle:
+      </p>
+      <p>
+        Mají-li všechny dotčené jídelny <strong>stejnou cenu</strong>, napíše
+        se „<strong>115 Kč</strong>“ — bez „od“, protože vágní být nemusí.
+        Liší-li se, vezme se <strong>ta nejnižší a předřadí se „od“</strong>:
+        „<strong>od 115 Kč</strong>“.
+      </p>
+      <p>
+        Všichni adresáti jedné kampaně tak dostanou totéž číslo. To se líp
+        kontroluje než různá čísla podle toho, která jídelna koho obsluhuje —
+        a přitom to nikoho neuvede v omyl, protože nižší cenou se nikdo
+        nepoškodí.
+      </p>
+    </div>
+  </section>
+
+  <!-- =========================================================== plán -->
+  <section>
+    <span class="cislo">Postup</span>
+    <h2>Tři kroky místo jednoho velkého</h2>
+    <p class="podnadpis">
+      Chtěl jste obecný editor rovnou a to platí — postaví se celý. Dělím
+      to na tři dodávky proto, aby po každé bylo něco, co jde použít,
+      a aby se ta nejtěžší část stavěla už se zkušeností z ostrého provozu.
+    </p>
+
+    <div class="kroky">
+      <article class="krok-karta">
+        <span class="poradi">1</span>
+        <div>
+          <h3>Jídelny dostanou cenu, provizi a možnosti výdeje</h3>
+          <p>
+            Nejmenší kus a odemyká všechno ostatní: dokud u jídelen nejsou
+            ceny, nemá se pole čím vyplnit. Vy je doplníte hned, jak to bude.
+          </p>
+          <p class="co">nová migrace · obrazovka Jídelny · nic se neodesílá</p>
+        </div>
+      </article>
+
+      <article class="krok-karta">
+        <span class="poradi">2</span>
+        <div>
+          <h3>Krok „Zpráva“ u kampaně</h3>
+          <p>
+            Výběr šablony, vyplnění polí, náhled na skutečné firmě a seznam
+            firem, které vypadnou. Po tomhle kroku je poprvé vidět hotový
+            mail na reálných datech — pořád bez odesílání.
+          </p>
+          <p class="co">nastavení u kampaně · náhled · označení neúplných firem</p>
+        </div>
+      </article>
+
+      <article class="krok-karta">
+        <span class="poradi">3</span>
+        <div>
+          <h3>Editor šablony s podmínkami a verzemi</h3>
+          <p>
+            Psaní textu, vkládání polí, podmínky vybírané z nabídky, koncept
+            a „pustit do provozu“. Nejtěžší část — a po krocích 1 a 2 už
+            budeme vědět, co od ní opravdu potřebujete.
+          </p>
+          <p class="co">obrazovka Šablony · verzování · kontroly při uložení</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    Odesílání zůstává vypnuté po celou dobu (TP-8) a žádný z těchto kroků
+    ho neumí zapnout. Schválená tvrzení i dnešní šablona zůstávají v
+    databázi beze změny — tenhle návrh mění jen to, kde se text nastavuje.
+    Až tohle odsouhlasíte, sepíšu z toho závazné zadání a plán prací.
+  </footer>
+
+</div>

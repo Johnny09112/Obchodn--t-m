@@ -20,7 +20,7 @@ tím pádem pro obrazovku neexistující.**
 nehlídalo, co obrazovka SLIBUJE: aplikace nabídla „objednat rešerši pro
 20 firem" vlastním výpočtem (razítko + spojení), jádro od 13. 8. filtruje
 i stav firmy — a objednávka Hrobců skončila „hotovo, 0 firem" beze slova.
-Řešení stejné: pravidlo do DB (funkce , migrace 0054),
+Řešení stejné: pravidlo do DB (funkce `firmy_pro_reserse`, migrace 0054),
 jádro deleguje, aplikace počítá z téže funkce, paritu hlídá test.
 
 | Co se stalo | Co pravidlo mělo hlídat |

@@ -60,38 +60,31 @@ export async function dalsiReserseKVyrizeni(db: Db): Promise<Reserse | null> {
  */
 export const MAX_POKUSU_RESERSE = 3;
 
+/**
+ * Pravidlo výběru sedí v databázi (funkce `firmy_pro_reserse`, migrace
+ * 0054) — tenhle wrapper ho jen volá.
+ *
+ * Proč: aplikace nabízí „objednat rešerši pro N firem" a musí počítat
+ * TÝMŽ pravidlem, jinak slíbí dávku, kterou jádro po vyzvednutí vybere
+ * prázdnou. Přesně to se stalo 18. 8. 2026 u Hrobců — aplikace počítala
+ * jen razítko a spojení, jádro filtrovalo i stav firmy, a objednávka na
+ * 20 firem skončila „hotovo, 0 firem" bez jediného slova.
+ *
+ * Co funkce filtruje (podrobné zdůvodnění je v migraci): jen vybrané firmy
+ * kampaně, bez razítka `obohaceno_at`, méně než MAX_POKUSU_RESERSE pokusů,
+ * a stavy psané výčtem ZAKÁZANÝCH ([[zamykej-vyjmenovanim-zamcenych-stavu]]):
+ * `cekajici_na_jidelnu` a `zamitnuty` agentní čas nedostanou (rozhodnutí
+ * majitele 13. 8. 2026).
+ */
 export async function firmyProReserse(
   db: Db,
   kampanId: string,
   limit: number,
 ): Promise<FirmaKReserse[]> {
-  return db.query<FirmaKReserse>(
-    `select c.ico, c.nazev, c.skore
-     from kampan_firmy kf
-     join companies c on c.ico = kf.ico
-     where kf.kampan_id = $1
-       and kf.stav = 'vybrana'
-       and c.obohaceno_at is null
-       -- Bez tohohle se firma, u které agent nikdy nic nenajde, vrací do
-       -- každé další dávky a fronta nikdy nedojde (13. 8. 2026).
-       and c.reserse_pokusu < ${MAX_POKUSU_RESERSE}
-       -- Stavy, na které se agentní čas vydávat NEMÁ. Rozhodnutí majitele
-       -- 13. 8. 2026: firma ve stavu cekajici_na_jidelnu je mimo dosah
-       -- jakékoli jídelny — dokud se v jejím okolí nějaká neotevře, nemá jí
-       -- co nabídnout, a až se otevře, dá se dohnat cíleně. Do té doby by to
-       -- byly hodiny práce za nic (v kampani Zkouška průzkumu jich bylo
-       -- 216 proti sedmi kvalifikovaným).
-       --
-       -- Psáno jako výčet ZAKÁZANÝCH stavů, ne povolených
-       -- ([[zamykej-vyjmenovanim-zamcenych-stavu]]): kdyby přibyl nový
-       -- pracovní stav, seznam povolených by ho tiše vyřadil z fronty
-       -- a nikdo by si toho nevšiml. Takhle se nanejvýš zbytečně zpracuje —
-       -- což je vidět ve výpisu dávky.
-       and c.stav not in ('cekajici_na_jidelnu', 'zamitnuty')
-     order by c.skore desc nulls last, c.ico
-     limit $2`,
-    [kampanId, limit],
-  );
+  return db.query<FirmaKReserse>("select ico, nazev, skore from firmy_pro_reserse($1, $2)", [
+    kampanId,
+    limit,
+  ]);
 }
 
 /**

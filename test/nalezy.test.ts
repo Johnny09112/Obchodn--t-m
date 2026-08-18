@@ -384,3 +384,43 @@ describe("fronta rešerše nad kampaní (--kampan)", () => {
     expect(f.map((x) => x.ico).sort()).toEqual(["17255686", "25242407"]);
   });
 });
+
+describe("výběr pro rešerši je jedno pravidlo v databázi", () => {
+  /**
+   * Objeveno 18. 8. 2026: aplikace nabízela „objednat rešerši pro 20 firem"
+   * vlastním výpočtem (razítko + spojení), zatímco jádro od 13. 8. filtruje
+   * i stav firmy a počet pokusů. Majitel objednal, hlídka vyzvedla — a dávka
+   * skončila „hotovo, 0 firem", bez jediného slova. Pravidlo proto sedí
+   * v databázi (funkce firmy_pro_reserse) a obě strany ho čtou odtamtud.
+   */
+  it("databázová funkce vrací tutéž množinu jako firmyProReserse", async () => {
+    const kampanId = await zalozKampan(db, { nazev: "Rešerše DB", spravce: "a@b.cz" });
+    await zalozFirmu(db, firma("48362956", "Čekající s.r.o."));
+    for (const ico of ["25242407", "48362956"]) {
+      await db.query("insert into kampan_firmy (kampan_id, ico) values ($1,$2)", [kampanId, ico]);
+    }
+    // Přesně případ Hrobců: firma čekající na jídelnu do fronty nepatří.
+    await db.query("update companies set stav = 'cekajici_na_jidelnu' where ico = $1", [
+      "48362956",
+    ]);
+
+    const zFunkce = (
+      await db.query<{ ico: string }>("select ico from firmy_pro_reserse($1, null)", [kampanId])
+    ).map((x) => x.ico).sort();
+    const zJadra = (await firmyProReserse(db, kampanId, 100)).map((f) => f.ico).sort();
+
+    expect(zFunkce).toEqual(["25242407"]);
+    expect(zFunkce).toEqual(zJadra);
+  });
+
+  it("limit null znamená všechny — na tom stojí počítadlo v aplikaci", async () => {
+    const kampanId = await zalozKampan(db, { nazev: "Rešerše limit", spravce: "a@b.cz" });
+    for (const ico of ["25242407", "17255686"]) {
+      await db.query("insert into kampan_firmy (kampan_id, ico) values ($1,$2)", [kampanId, ico]);
+    }
+    const vse = await db.query("select ico from firmy_pro_reserse($1, null)", [kampanId]);
+    const jedna = await db.query("select ico from firmy_pro_reserse($1, 1)", [kampanId]);
+    expect(vse.length).toBe(2);
+    expect(jedna.length).toBe(1);
+  });
+});

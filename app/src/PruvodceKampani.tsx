@@ -23,6 +23,7 @@ import {
   nactiProfily,
   nejlepsiUroven,
   posledniReserse,
+  zbyvaProReserse,
   schvalKampan,
   spocitejCekajici,
   stavReserse,
@@ -137,6 +138,9 @@ export function PruvodceKampani({
   const [cekajici, setCekajici] = useState<PocetKosu | null>(null);
   /** Který koš se právě potvrzuje v dialogu. */
   const [pridat, setPridat] = useState<"nezname" | "mikro" | null>(null);
+  /** Kolik firem rešerši ještě potřebuje — počítá databáze, TÝMŽ pravidlem
+      jako hlídka. `null` = ještě se načítá. */
+  const [zbyvaReserse, setZbyvaReserse] = useState<number | null>(null);
   /** Poslední objednávka AI rešerše pro tuhle kampaň, nebo `null`. */
   const [objednavka, setObjednavka] = useState<ObjednavkaReserse | null>(null);
   /** Kolik firem se právě potvrzuje k rešerši v dialogu; `null` = zavřeno. */
@@ -364,6 +368,10 @@ export function PruvodceKampani({
     posledniReserse(id)
       .then(setObjednavka)
       .catch(() => setObjednavka(null));
+    // Skutečná fronta z databáze — TÝMŽ pravidlem, jakým vybírá hlídka.
+    zbyvaProReserse(id)
+      .then(setZbyvaReserse)
+      .catch(() => setZbyvaReserse(null));
   }, [id]);
 
   useEffect(() => {
@@ -919,8 +927,14 @@ export function PruvodceKampani({
         vybraneIca.has(f.ico) &&
         stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f) }) === "neprosla",
     ).length;
-    const davkaReserse = Math.min(20, neprozkoumanych);
-    const zbytekReserse = neprozkoumanych - davkaReserse;
+    // Nabídka se řídí číslem z DATABÁZE (`zbyvaReserse`), ne místním
+    // odhadem `neprozkoumanych`. Ten nezná stav firmy ani vyčerpané pokusy
+    // a 18. 8. 2026 kvůli tomu nabídl 20 firem Hrobců, ze kterých hlídka
+    // vybrala nulu — všechny čekají na jídelnu. Objednávka pak skončila
+    // „hotovo, 0 firem" a vypadalo to, že se systém rozbil.
+    const kObjednani = zbyvaReserse ?? 0;
+    const davkaReserse = Math.min(20, kObjednani);
+    const zbytekReserse = kObjednani - davkaReserse;
     const beziciObjednavka = objednavka && ["ceka", "bezi"].includes(objednavka.stav);
 
     return (
@@ -1024,6 +1038,20 @@ export function PruvodceKampani({
                 <p role="alert">Poslední AI průzkum se nepovedl: {objednavka.chyba}</p>
               )}
 
+              {/* Prázdná objednávka se dřív zavřela beze slova — majitel
+                  18. 8. objednal 20 firem a „nic se nestalo". Hotová dávka
+                  s nulou proto hlásí, jak dopadla. */}
+              {objednavka &&
+                objednavka.stav === "hotovo" &&
+                (objednavka.firemZpracovano ?? 0) === 0 && (
+                  <p>
+                    Poslední objednávka ({objednavka.firemZadano.toLocaleString("cs")}{" "}
+                    {cesky(objednavka.firemZadano, "firma", "firmy", "firem")}) skončila
+                    s nulou — hlídka ji vyzvedla, ale žádná firma podmínky rešerše
+                    nesplňovala.
+                  </p>
+                )}
+
               {neprozkoumanych > 0 && (
                 beziciObjednavka && objednavka ? (
                   <p>
@@ -1034,11 +1062,19 @@ export function PruvodceKampani({
                     {cesky(objednavka.firemZadano, "firma", "firmy", "firem")}. Hlídka u hodin
                     se na frontu dívá třikrát denně. Okno můžete zavřít.
                   </p>
+                ) : kObjednani === 0 ? (
+                  <p>
+                    {neprozkoumanych.toLocaleString("cs")}{" "}
+                    {cesky(neprozkoumanych, "firma sice rešerši nemá", "firmy sice rešerši nemají", "firem sice rešerši nemá")},
+                    ale <strong>objednat ji teď není pro koho</strong> — firmy čekají na
+                    jídelnu v dosahu, nebo už vyčerpaly tři pokusy. Až se v okolí
+                    otevře jídelna, fronta se otevře s ní.
+                  </p>
                 ) : (
                   <>
                     <p>
-                      {neprozkoumanych.toLocaleString("cs")}{" "}
-                      {cesky(neprozkoumanych, "firma v seznamu ještě nemá", "firmy v seznamu ještě nemají", "firem v seznamu ještě nemá")}{" "}
+                      {kObjednani.toLocaleString("cs")}{" "}
+                      {cesky(kObjednani, "firma v seznamu ještě nemá", "firmy v seznamu ještě nemají", "firem v seznamu ještě nemá")}{" "}
                       AI rešerši — agent projde web a podle playbooku dohledá jméno
                       i spojení. Poběží bez dozoru, nic se přitom neodešle.
                     </p>

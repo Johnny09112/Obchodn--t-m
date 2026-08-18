@@ -1760,3 +1760,21 @@ export async function nactiVsechnySablony(): Promise<Array<Sablona & { stav: str
   if (error) throw new Error(error.message);
   return (data ?? []) as Array<Sablona & { stav: string; kanal: string }>;
 }
+
+/**
+ * Kolik firem kampaně rešerši ještě potřebuje.
+ *
+ * Počítá to databázová funkce `firmy_pro_reserse` (migrace 0054) — TÁŽ,
+ * ze které si hlídka vybírá dávku. Aplikace dřív měla vlastní výpočet
+ * (razítko + spojení) a 18. 8. 2026 se s jádrem rozešel: nabídla objednat
+ * 20 firem Hrobců, jádro vybralo nulu (všechny čekají na jídelnu)
+ * a objednávka skončila „hotovo, 0 firem" bez jediného slova.
+ */
+export async function zbyvaProReserse(kampanId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("firmy_pro_reserse", {
+    p_kampan_id: kampanId,
+    p_limit: null,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []).length;
+}

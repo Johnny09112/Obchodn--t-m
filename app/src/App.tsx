@@ -5,11 +5,19 @@ import { Kartoteka } from "./Kartoteka";
 import { Kampane } from "./Kampane";
 import { Oblasti } from "./Oblasti";
 import { Jidelny } from "./Jidelny";
+import { Sablony } from "./Sablony";
 import { Provoz } from "./Provoz";
 import { Signaly } from "./Signaly";
 import { POPIS_ROLE, roleZeSession, supabase } from "./supabase";
 
-type Pohled = "signaly" | "oblasti" | "kartoteka" | "kampane" | "jidelny" | "provoz";
+type Pohled =
+  | "signaly"
+  | "oblasti"
+  | "kartoteka"
+  | "kampane"
+  | "jidelny"
+  | "sablony"
+  | "provoz";
 
 export function App() {
   const { session, nacita } = usePrihlaseni();
@@ -69,6 +77,14 @@ export function App() {
           >
             Jídelny
           </button>
+          {/* Text oslovení čte každý — ať tým ví, co se firmám píše.
+              Měnit a pouštět do provozu smí jen admin. */}
+          <button
+            className={pohled === "sablony" ? "aktivni" : ""}
+            onClick={() => setPohled("sablony")}
+          >
+            Šablony
+          </button>
           {/* Provozní deník je technický — běžnému uživateli by k ničemu nebyl. */}
           {(role === "admin" || role === "super-admin") && (
             <button
@@ -98,6 +114,7 @@ export function App() {
           />
         )}
         {pohled === "jidelny" && <Jidelny role={role} />}
+        {pohled === "sablony" && <Sablony role={role} />}
         {pohled === "provoz" && (role === "admin" || role === "super-admin") && <Provoz />}
       </main>
     </>

@@ -32,6 +32,87 @@ export interface PodkladyFirmy {
   vzdalenostM: number | null;
   /** Už hotový text ceny („115 Kč" nebo „od 110 Kč"), nebo `null`. */
   cena: string | null;
+  /**
+   * Hodnoty parametrů té nabídky, která firmu obsluhuje — podle nich se
+   * vyhodnocují podmíněné věty. Klíčem je kód parametru.
+   */
+  parametry: Record<string, string>;
+}
+
+/**
+ * Podmínka u věty: ukaž ji, jen když parametr nabídky odpovídá.
+ *
+ * Váže se na **pořadí odstavce a věty**, ne na pozici znaku. Pozice se při
+ * psaní posune a podmínka by pak platila pro jinou větu — čehož by si
+ * nikdo nevšiml, dokud by mail neodešel.
+ */
+export interface PodminkaPasaze {
+  odstavec: number;
+  veta: number;
+  parametrKod: string;
+  /** `null` znamená „parametr je vyplněný", bez ohledu na hodnotu. */
+  ocekavanaHodnota: string | null;
+}
+
+/** Věta končí tečkou; dělí se stejně jako při vynechávání pole. */
+function naVety(odstavec: string): string[] {
+  return odstavec.split(/(?<=\.)\s+/);
+}
+
+/** Platí podmínka pro tuhle firmu? */
+function podminkaPlati(p: PodminkaPasaze, parametry: Record<string, string>): boolean {
+  const hodnota = parametry[p.parametrKod];
+  if (hodnota === undefined || hodnota === "") return false;
+  if (p.ocekavanaHodnota === null) return true;
+
+  // Výběr z možností je uložený jako JSON pole — ptáme se na obsažení.
+  if (hodnota.trimStart().startsWith("[")) {
+    try {
+      const volby: unknown = JSON.parse(hodnota);
+      return Array.isArray(volby) && volby.map(String).includes(p.ocekavanaHodnota);
+    } catch {
+      return false;
+    }
+  }
+  return hodnota === p.ocekavanaHodnota;
+}
+
+/**
+ * Vypustí věty, jejichž podmínka pro tuhle firmu neplatí.
+ *
+ * Naléhavý důvod, proč to existuje: šablona tvrdí „na místě **nebo**
+ * v jídlonosičích" a jídelna, která umí jen jedno, by tím rozeslala
+ * nepravdu o službě.
+ */
+function vypustNeplatneVety(
+  telo: string,
+  podminky: PodminkaPasaze[],
+  parametry: Record<string, string>,
+): string {
+  if (podminky.length === 0) return telo;
+
+  // Odstavce se počítají jen ty skutečné, prázdné řádky mezi nimi ne.
+  // Kdo v editoru klikne na druhý odstavec, myslí druhý odstavec — ne
+  // čtvrtý řádek.
+  let poradi = -1;
+
+  return telo
+    .split("\n")
+    .map((odstavec) => {
+      if (odstavec.trim() === "") return odstavec;
+      poradi += 1;
+      const zdejsi = podminky.filter((p) => p.odstavec === poradi);
+      if (zdejsi.length === 0) return odstavec;
+
+      return naVety(odstavec)
+        .filter((_, j) => {
+          const p = zdejsi.find((x) => x.veta === j);
+          return !p || podminkaPlati(p, parametry);
+        })
+        .join(" ")
+        .trim();
+    })
+    .join("\n");
 }
 
 /**
@@ -93,11 +174,14 @@ export function slozText(
   kostra: string,
   nastaveni: NastaveniPole[],
   podklady: PodkladyFirmy,
+  podminky: PodminkaPasaze[] = [],
 ): string {
   const podleKodu = new Map(nastaveni.map((n) => [n.kod, n]));
   const zData = hodnotyZDat(podklady);
 
-  let telo = kostra;
+  // Nejdřív podmínky, teprve pak pole: vypuštěná věta se nemá čím vyplňovat
+  // a vyplněná věta by se hůř poznávala podle pořadí.
+  let telo = vypustNeplatneVety(kostra, podminky, podklady.parametry);
   for (const [, kod] of kostra.matchAll(/\[([a-z_]+)\]/g)) {
     if (kod === undefined) continue;
     const znacka = `[${kod}]`;

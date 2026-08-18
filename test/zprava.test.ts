@@ -386,3 +386,48 @@ describe("krátké označení firmy ve větě", () => {
     expect(z.telo).toContain("od Vás");
   });
 });
+
+describe("podmíněná věta celou cestou z databáze", () => {
+  /** Nastaví jídelně možnosti výdeje a přiřadí větě podmínku. */
+  async function pripravPodminku(db: Db, kampanId: string, volby: string[]) {
+    const [p] = await db.query<{ id: string }>(
+      "select id from parametry_nabidky where kod = 'moznosti_vydeje'",
+    );
+    const [j] = await db.query<{ nabidka_id: string }>("select nabidka_id from jidelny limit 1");
+    await db.query(
+      "insert into hodnoty_parametru (nabidka_id, parametr_id, hodnota) values ($1, $2, $3)",
+      [j!.nabidka_id, p!.id, JSON.stringify(volby)],
+    );
+
+    const [t] = await db.query<{ id: string }>(
+      "select template_id as id from kampane where id = $1",
+      [kampanId],
+    );
+    // Věta o jídlonosičích je ve třetím odstavci (index 2) první (index 0).
+    await db.query(
+      `insert into podminky_pasaze (template_id, odstavec, veta, parametr_kod, ocekavana_hodnota)
+       values ($1, 2, 0, 'moznosti_vydeje', 'do vlastního jídlonosiče')`,
+      [t!.id],
+    );
+  }
+
+  it("jídelna s jídlonosiči větu nechá", async () => {
+    const k = await kampanSJidelnami(db, [["95", "15"]]);
+    await vybavFirmu(db, "10000000", { email: true, obor: true, prijmeni: null });
+    await pripravPodminku(db, k, ["na místě", "do vlastního jídlonosiče"]);
+
+    const z = await slozZpravu(db, k, "10000000");
+    expect(z.telo).toContain("jídlonosičích");
+  });
+
+  it("jídelna, která umí jen výdej na místě, tu větu neřekne", async () => {
+    const k = await kampanSJidelnami(db, [["95", "15"]]);
+    await vybavFirmu(db, "10000000", { email: true, obor: true, prijmeni: null });
+    await pripravPodminku(db, k, ["na místě"]);
+
+    const z = await slozZpravu(db, k, "10000000");
+    expect(z.telo).not.toContain("jídlonosičích");
+    // Zbytek odstavce zůstane — vypadla věta, ne celý odstavec.
+    expect(z.telo).toContain("Veškeré objednávky");
+  });
+});

@@ -1918,3 +1918,37 @@ h3 {
   gap: var(--o1);
   align-items: flex-start;
 }
+
+/* ───────────────────────────────────────────── editor šablony (0052) */
+
+.odstavec-vet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--o1);
+  padding: var(--o2) 0;
+  border-bottom: 1px dotted var(--linka);
+}
+
+.veta-radek {
+  display: grid;
+  grid-template-columns: 1fr 20rem;
+  gap: var(--o2);
+  align-items: center;
+}
+
+.veta-radek .text-vety {
+  font-size: var(--t-drobny);
+}
+
+.vytky {
+  margin: var(--o1) 0 0;
+  padding-left: var(--o4);
+  font-size: var(--t-drobny);
+}
+
+@media (max-width: 48rem) {
+  .veta-radek {
+    grid-template-columns: 1fr;
+    gap: var(--o1);
+  }
+}

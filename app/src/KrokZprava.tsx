@@ -96,6 +96,7 @@ export function KrokZprava({ kampanId, role, onZpet, onHotovo }: Props) {
       oznaceni: string | null;
       vzdalenost_m: number | null;
       cena: string | null;
+      parametry: Record<string, string> | null;
     }>;
     setCena(radky[0]?.cena ?? null);
     setFirmy(
@@ -108,6 +109,7 @@ export function KrokZprava({ kampanId, role, onZpet, onHotovo }: Props) {
           oznaceni: r.oznaceni,
           vzdalenostM: r.vzdalenost_m,
           cena: r.cena,
+          parametry: r.parametry ?? {},
         },
       })),
     );

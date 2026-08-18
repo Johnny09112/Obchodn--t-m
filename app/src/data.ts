@@ -1654,3 +1654,109 @@ export async function ulozSablonuKampane(kampanId: string, templateId: string): 
     throw new Error("Šablonu se nepodařilo uložit — měnit ji smí jen admin.");
   }
 }
+
+/* ───────────────────────────────────────────── šablony a podmínky (0052) */
+
+export interface PodminkaRadek {
+  id: string;
+  odstavec: number;
+  veta: number;
+  parametr_kod: string;
+  ocekavana_hodnota: string | null;
+}
+
+export async function nactiPodminky(templateId: string): Promise<PodminkaRadek[]> {
+  const { data, error } = await supabase
+    .from("podminky_pasaze")
+    .select("id,odstavec,veta,parametr_kod,ocekavana_hodnota")
+    .eq("template_id", templateId);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as PodminkaRadek[];
+}
+
+export async function ulozPodminku(
+  templateId: string,
+  odstavec: number,
+  veta: number,
+  parametrKod: string,
+  ocekavanaHodnota: string | null,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("podminky_pasaze")
+    .upsert(
+      {
+        template_id: templateId,
+        odstavec,
+        veta,
+        parametr_kod: parametrKod,
+        ocekavana_hodnota: ocekavanaHodnota,
+      },
+      { onConflict: "template_id,odstavec,veta" },
+    )
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Podmínku se nepodařilo uložit — měnit ji smí jen admin.");
+  }
+}
+
+export async function smazPodminku(id: string): Promise<void> {
+  const { error } = await supabase.from("podminky_pasaze").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Uloží novou verzi šablony jako koncept. Vrací její id. */
+export async function ulozKoncept(v: {
+  segment: string;
+  kanal: string;
+  predmet: string;
+  telo: string;
+  strukturaId: string | null;
+}): Promise<string> {
+  const { data: verze } = await supabase
+    .from("templates")
+    .select("verze")
+    .eq("segment", v.segment)
+    .eq("kanal", v.kanal)
+    .order("verze", { ascending: false })
+    .limit(1);
+  const dalsi = ((verze?.[0]?.verze as number | undefined) ?? 0) + 1;
+
+  const { data, error } = await supabase
+    .from("templates")
+    .insert({
+      verze: dalsi,
+      segment: v.segment,
+      kanal: v.kanal,
+      predmet: v.predmet,
+      telo: v.telo,
+      struktura_id: v.strukturaId,
+      stav: "navrzeno",
+    })
+    .select("id");
+  if (error) throw new Error(error.message);
+  const id = data?.[0]?.id as string | undefined;
+  if (!id) throw new Error("Koncept se nepodařilo uložit — psát šablony smí jen admin.");
+  return id;
+}
+
+/**
+ * Pustí šablonu do provozu. Starší verze téhož segmentu se vyřadí, aby
+ * platná byla vždy právě jedna (migrace 0052).
+ */
+export async function pustDoProvozu(templateId: string): Promise<void> {
+  const { error } = await supabase.rpc("pust_sablonu_do_provozu", {
+    p_template_id: templateId,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function nactiVsechnySablony(): Promise<Array<Sablona & { stav: string; kanal: string }>> {
+  const { data, error } = await supabase
+    .from("templates")
+    .select("id,verze,segment,kanal,predmet,telo,stav")
+    .order("segment")
+    .order("verze", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Array<Sablona & { stav: string; kanal: string }>;
+}

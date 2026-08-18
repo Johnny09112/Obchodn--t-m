@@ -149,16 +149,16 @@ export async function slozZpravu(db: Db, kampanId: string, ico: string): Promise
   // Kampaň založená dřív, než se šablony zavedly, `template_id` nemá.
   // Ustoupí se na schválenou šablonu — stejně jako `firmyKOsloveni`, ať
   // náhled a výčet firem nemluví každý o jiném textu.
-  const [sablona] = await db.query<{ predmet: string | null; telo: string }>(
-    `select t.predmet, t.telo from templates t
+  const [sablona] = await db.query<{ id: string; predmet: string | null; telo: string }>(
+    `select t.id, t.predmet, t.telo from templates t
        join kampane k on k.template_id = t.id
       where k.id = $1
       union all
-     select t.predmet, t.telo from templates t
+     select t.id, t.predmet, t.telo from templates t
       where t.stav = 'schvaleno'
         and not exists (select 1 from kampane k
                          where k.id = $1 and k.template_id is not null)
-      order by 1 limit 1`,
+      limit 1`,
     [kampanId],
   );
   if (!sablona) throw new Error("Není z čeho skládat — kampaň nemá šablonu a žádná není schválená.");
@@ -173,29 +173,47 @@ export async function slozZpravu(db: Db, kampanId: string, ico: string): Promise
       where n.kampan_id = $1`,
     [kampanId],
   );
+  // Podklady čte tatáž funkce jako obrazovka (migrace 0053) — včetně
+  // parametrů jídelny, podle kterých se vyhodnocují podmíněné věty.
   const [udaje] = await db.query<{
     prijmeni: string | null;
     oznaceni: string | null;
-    vzdalenostM: number | null;
+    vzdalenost_m: number | null;
+    cena: string | null;
+    parametry: Record<string, string> | null;
   }>(
-    `select (select k.prijmeni from contacts k
-              where k.ico = $1 and k.email is not null and k.email <> ''
-              order by (k.prijmeni is null) limit 1) as prijmeni,
-            (select e.hodnota from evidence e
-              where e.ico = $1 and e.atribut = 'oznaceni' limit 1) as oznaceni,
-            (select min(d.vzdalenost_m) from dosah d
-              where d.ico = $1 and d.v_zone) as "vzdalenostM"`,
-    [ico],
+    `select prijmeni, oznaceni, vzdalenost_m, cena, parametry
+       from nahled_kampane($1) where ico = $2`,
+    [kampanId, ico],
+  );
+
+  const podminky = await db.query<{
+    odstavec: number;
+    veta: number;
+    parametrKod: string;
+    ocekavanaHodnota: string | null;
+  }>(
+    `select pp.odstavec, pp.veta, pp.parametr_kod as "parametrKod",
+            pp.ocekavana_hodnota as "ocekavanaHodnota"
+       from podminky_pasaze pp
+      where pp.template_id = $1`,
+    [sablona.id],
   );
 
   // Skládá `text-zpravy.ts` — týž kód, jaký použije obrazovka kampaně.
   // Dvě implementace by znamenaly dva různé maily pod jedním jménem.
-  const telo = slozText(sablona.telo, nastaveni as NastaveniPole[], {
-    prijmeni: udaje?.prijmeni ?? null,
-    oznaceni: udaje?.oznaceni ?? null,
-    vzdalenostM: udaje?.vzdalenostM != null ? Number(udaje.vzdalenostM) : null,
-    cena: await cenaKampane(db, kampanId),
-  });
+  const telo = slozText(
+    sablona.telo,
+    nastaveni as NastaveniPole[],
+    {
+      prijmeni: udaje?.prijmeni ?? null,
+      oznaceni: udaje?.oznaceni ?? null,
+      vzdalenostM: udaje?.vzdalenost_m != null ? Number(udaje.vzdalenost_m) : null,
+      cena: udaje?.cena ?? null,
+      parametry: udaje?.parametry ?? {},
+    },
+    podminky,
+  );
 
   return { predmet: sablona.predmet ?? "", telo, chybi: stav?.chybi ?? [] };
 }

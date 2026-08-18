@@ -13,9 +13,12 @@
 
 ## ▶ Rozdělaná práce
 
-Nic rozdělaného. Když majitel napíše jen **„pokračujeme"**, přečti
-`_claude/memory/context/project-context.md` — živý stav a otevřené body
-jsou tam.
+**S0.5 tvrzení a šablony — čeká na schválení majitelem.** Texty jsou hotové
+a prošly kontrolou stylu; v databázi zatím nic (claims i templates 0 řádků).
+Podrobnosti a seznam toho, co zbývá, jsou v souboru
+`_claude/memory/context/project-context.md`, sekce „Tvrzení a šablony (S0.5)".
+
+Když majitel napíše jen **„pokračujeme"**, začni tím souborem.
 
 ## Jak používat tuto paměť
 

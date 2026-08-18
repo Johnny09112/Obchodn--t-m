@@ -308,48 +308,77 @@ a **S0.7 odesílací doména** (dlouhé lhůty). Skilly z S0.3 neexistují.
 **Re-design přes Claude Design není zapsaný nikde** — majitel ho zmínil
 17. 8., v repozitáři ani ve vaultu po něm není stopa.
 
-## Tvrzení a šablony (S0.5) — rozpracované, 18. 8.
+## Tvrzení a šablony (S0.5) — stav k 18. 8. 2026
 
-Majitel popsal službu (17. 8.), z toho vznikl návrh: osm doložitelných
-tvrzení, čtyři zákazy a tři maily. **Nic není v databázi** — čeká na
-schválení; `claims` i `templates` mají 0 řádků.
+**Nic není v databázi.** `claims` i `templates` mají 0 řádků a čekají na
+schválení textů. Odesílání zůstává vypnuté (TP-8).
 
-**Zpětná vazba majitele 18. 8.:** maily byly moc popisné a toporné.
-Přepsané mají 56–64 slov (bylo 86–99), vypadla z nich mechanika
-objednávání a končí zjišťovací otázkou. Cena zůstává, ale přibližně
-([[cena-v-osloveni]]); podpis se neřeší.
+### Hotové
 
-**Práh pro automatické povýšení varianty snížen ze 150 na 80** zpráv na
-rameno (změna SPEC kap. 10.5, rozhodnutí majitele 18. 8. —
-[[prah-povyseni-varianty-80]]). Se 150 by test nikdy nedoběhl: 300 oslovení
-proti 165 kvalifikovaným firmám. Cena je menší statistická jistota; do té
-doby schvaluje varianty majitel.
+- **Fakta o službě** od majitele (17.–18. 8.): čtyři varianty odběru,
+  objednávání dopředu v aplikaci s uzávěrkou den předem, platba individuálně
+  přes bránu nebo firemní fakturou, cena zhruba 90–130 Kč včetně provize,
+  provoz vázaný na školní rok.
+- **Osm doložitelných tvrzení** a čtyři věci, které se tvrdit nesmí
+  (zdravější zaměstnanci, srovnání se stravenkami, „jedinečné", zmínka
+  o zkušenosti s firmami — žádná firma zatím neodebírá).
+- **Text mailu** — majitelova formulace, 62 slov, prošla kontrolou stylu.
+  Návrh se všemi variantami: `docs/vizualizace/navrh-tvrzeni-a-sablony.html`.
+- **Kontrola stylu v kódu** (`src/styl-zpravy.ts`): 13 zakázaných frází,
+  délka 120 slov, odrážky, právě jedna otázka, jméno adresáta nejvýš jednou,
+  prostý text, předmět bez superlativů a **vykání velkým písmenem**.
+- **Rozhodnutí zapsaná do SPEC:** práh povýšení varianty 150 → 80
+  ([[prah-povyseni-varianty-80]]), podobnost až od 20 zpráv denně a segmenty
+  z reakcí ([[podobnost-podle-objemu]]).
 
-**Otázka v mailu pro mikropodniky je majitelova formulace** — „Řešíte si vy
-a vaši zaměstnanci obědy svépomocí, nebo centralizovaně?“ Moje verze byla
-česky kostrbatá.
+### Co zbývá v S0.5
 
-**Nápad k produktizaci:** [[onboarding-dotaznik-pro-prodej]] — u cizího
-zákazníka nikdo rozhovor o produktu nepovede, systém se musí umět vyptat sám.
+1. **Schválit tvrzení a text mailu** — majitel je zatím neschválil.
+2. **Uložit je do databáze** po schválení: tvrzení do `claims` (stav
+   `schvaleno`), text do `templates` jako verze 1. Zápis se ještě nikdy
+   nedělal, cesta není napsaná — bude potřeba příkaz nebo obrazovka.
+3. **Adresa stránky s ceníkem** — v mailu je přibližná cena, přesný ceník má
+   být na webu. Bez adresy se odkaz do textu nedává.
+4. **Poučení podle čl. 14 GDPR** do mailu, protože se oslovuje jménem.
+   Znění patří na právní konzultaci (S0.8), ne do mé hlavy.
+5. **Revize „od září"** k 1. 9. ([[revize-zari]]).
 
-**Třetí revize 18. 8. — věcná oprava:** psal jsem „vaříme“, ale Cantinero
-nevaří. Vaří jídelna, my zajišťujeme spojení mezi jídelnou a strávníkem.
-V oslovení se navíc **konkrétní jídelna nejmenuje** (šla by obejít) — uvádí
-se jen vzdálenost od firmy. Oslovuje se jménem, což má právní dopad:
-poučení podle čl. 14 GDPR. Vše v [[kdo-vari-a-co-se-neprozrazuje]].
+### Co zbývá jinde ve fázi 0
 
-**Meze personalizace:** [[personalizace-jen-z-whitelistu]] — směnný provoz
-ani web do zprávy nesmí, obor ano. Plnou kvalitu oslovení (jméno + obor)
-unese zhruba polovina kvalifikovaných firem: ze 165 jde napsat 104,
-oslovit jménem 59, obor známe u 91.
+| Session | Co | Stav |
+|---|---|---|
+| S0.7 | Odesílací doména | postup připravený (`docs/ODESILANI-DOMENA.md`), čeká na majitelovo klikání v Resendu a Cloudflare |
+| S0.8 | Právní konzultace | brief hotový 11. 8., konzultace nedomluvená |
+| S0.2 | ADR o technologii | rozhodnutí platí, ale není zapsané jako ADR |
+| S0.9 | Go/no-go | neproběhlo |
+| fáze 1 | Ruční kontrola vzorku 30 firem | stránka připravená, čeká hodina majitelova času |
 
-**Hotové v kódu:** kontrola stylu podle SPEC kap. 6 (`src/styl-zpravy.ts`)
-— třináct zakázaných frází, délka, odrážky, jedna otázka, jméno adresáta,
-HTML, předmět. Je to zároveň jedna z podmínek automatického povýšení.
+### Otevřené k rozhodnutí
 
-**Revize:** [[revize-zari]] — k 1. 9. přepsat „od září" v šablonách.
+- **7 → 0 vadných oborů** je hotové, ale zůstává **duplicitní kontakt**
+  (tentýž e-mail ze dvou podstránek jako dva záznamy) — rozsah nespočítán.
+- **Překvalifikace 2 301 plzeňských firem** čeká na kapacitu jídelen.
+- **Re-design aplikace (S0.11)** — naplánovaný, spouští se na signál.
+- **Onboarding pro prodej systému** ([[onboarding-dotaznik-pro-prodej]]) — až
+  po prvním ostrém prodeji vlastní službou.
 
 ## Aktuální focus
+
+**Fáze 0 se dobírá ke konci; poslední velký kus je S0.5 (tvrzení a šablony),
+který čeká na schválení textů majitelem.** Podrobný stav a co zbývá je
+v sekci „Tvrzení a šablony (S0.5)" výš.
+
+Nejbližší kroky, seřazené podle toho, co na co čeká:
+
+1. Majitel odklikne doménu v Resendu a Cloudflare (S0.7) — nejdelší lhůty,
+   postup je hotový v `docs/ODESILANI-DOMENA.md`.
+2. Schválí tvrzení a text mailu; teprve pak se ukládá do `claims`
+   a `templates`.
+3. Projde vzorek 30 firem ke kontrole kvality — poslední kritérium fáze 1,
+   stránka je vygenerovaná příkazem `vzorek-kontroly`.
+4. Domluví právní konzultaci (S0.8). Potřeba i kvůli poučení podle čl. 14
+   GDPR, které patří do mailu, protože se oslovuje jménem.
+
 
 **Fáze 1 je hotová a rešerše doběhla na všech kvalifikovaných firmách.**
 Obrazovka „Co je nového" (obchodní podněty) je postavená a používá se.

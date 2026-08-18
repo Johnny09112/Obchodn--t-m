@@ -280,7 +280,7 @@ hranice`, `nechte mě vědět`, `Doufám, že se máte dobře`.
 - Předstírat předchozí kontakt nebo doporučení, které neexistuje.
 - Vymyšlený kompliment firmě ("sleduji dlouhodobě vaši práci").
 - Falešná naléhavost, časově omezené nabídky, umělá exkluzivita.
-- Stejný skelet u všech zpráv. Délka i stavba se musí lišit — generátor
+- Stejný skelet u všech zpráv **nad 20 zpráv denně**. Délka i stavba se pak musí lišit — generátor
   drží tři až pět odlišných struktur na segment a střídá je.
 - Nadužívání pomlček, trojic a souvětí se stejným rytmem.
 
@@ -289,6 +289,21 @@ hranice`, `nechte mě vědět`, `Doufám, že se máte dobře`.
 Automatická kontrola odmítne zprávu, která obsahuje zakázanou frázi,
 překračuje délku, obsahuje pole bez evidence, nebo se shoduje s jinou
 odeslanou zprávou na více než 70 % textu.
+
+> **Kontrola podobnosti se zapíná až nad 20 odeslaných zpráv denně**
+> (rozhodnutí majitele 18. 8. 2026). Do té doby stačí, že je zpráva
+> adresovaná konkrétnímu člověku a nese doložený údaj o jeho firmě.
+>
+> Důvod je změřený, ne odhadnutý: u zprávy o šedesáti slovech mění
+> personalizace pět slov, takže dvě takové zprávy se shodují na 80–88 %
+> — vysoká shoda je matematicky nevyhnutelná a pravidlo by tlačilo
+> k delším mailům, což je proti záměru kapitoly. Různě stavěné varianty
+> mají shodu 42–45 %. Riziko pro doručitelnost přitom neroste
+> s podobností, ale s objemem; při deseti až dvaceti personalizovaných
+> zprávách denně váží víc reputace domény, autentizace a stížnosti.
+>
+> Nad dvacet zpráv denně platí pravidlo beze změny a generátor musí
+> střídat varianty.
 
 ---
 
@@ -507,6 +522,12 @@ poštovních klientech.
 v rámci schválených tvrzení, rešeršovat, vyhodnocovat.
 
 **Nesmí:** nasadit variantu do produkce.
+
+**Segmenty se odvozují z reakcí, ne z tabulky velikostí** (rozhodnutí
+majitele 18. 8. 2026). Oslovení začíná jedním textem pro všechny; teprve
+podle toho, kdo jak odpovídá, se texty rozdělí. Segment je pak nález,
+ne domněnka. Podmínka: u každé odpovědi musí být známý text, se kterým
+zpráva odešla — drží ho sloupec messages.finalni_text (TP-13).
 
 **Automatické povýšení** je možné, pokud varianta zvítězila při minimálně
 80 odeslaných zprávách na rameno, nezavádí nové tvrzení, nový segment ani

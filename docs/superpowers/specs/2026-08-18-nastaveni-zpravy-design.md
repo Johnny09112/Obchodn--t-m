@@ -33,10 +33,12 @@ cena v mailu vůbec zmíní, patří kampani.
 ## 2. Naléhavý důvod, proč to není jen pohodlí
 
 Dnešní šablona tvrdí každé firmě „s možností obědvat na místě **nebo** si
-jídlo odvážet v jídlonosičích". ZŠ a MŠ Hrádek podle majitele umí jen výdej
-na místě. Kdyby se dnes odesílalo, **rozeslal by systém nepravdivé tvrzení
-o službě** — přesně ta kategorie chyby, kvůli které existuje knihovna
-tvrzení a kontrola stylu.
+jídlo odvážet v jídlonosičích". Majitel 18. 8. upozornil, že jídelna může
+umět jen výdej do jídlonosičů, nebo naopak jen stravování na místě —
+**u které jídelny to jak je, zatím nikde zapsané není.** Jakmile bude
+mezi partnery jídelna jen s jednou z těch možností a odesílalo by se,
+**rozešle systém nepravdivé tvrzení o službě** — přesně ta kategorie chyby,
+kvůli které existuje knihovna tvrzení a kontrola stylu.
 
 Věta o výdeji se proto musí skládat z toho, co konkrétní nabídka umí.
 
@@ -209,7 +211,7 @@ Nad PGlite, bez sítě, jako zbytek sady:
   funguje stejně;
 - pole v režimu `z_dat` napojené na parametr nabídky se vyplní jeho hodnotou;
 - pole v režimu `vynechat` odstraní ze zprávy celou větu, ve které stojí;
-- podmíněná pasáž se vypustí, když parametr neodpovídá (Hrádek bez
+- podmíněná pasáž se vypustí, když parametr neodpovídá (jídelna bez
   jídlonosičů → „s možností obědvat na místě");
 - **cena: stejné ceny → bez „od"; různé → nejnižší s „od"**;
 - firma bez povinného pole se do seznamu k oslovení nedostane a nese důvod;

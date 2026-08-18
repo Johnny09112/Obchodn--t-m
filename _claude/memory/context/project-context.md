@@ -26,8 +26,8 @@ odesílací doména, právní konzultace.
 | Z toho se spojením | 648 |
 | Oblastí · kampaní | 7 · 5 |
 | Náklady na API | **0 USD** — placené nikdy neběželo, agent jde z předplatného |
-| Migrace | po `0047_poradi_parametru.sql`, nasazeno |
-| Testy | **789 zelených, 84 souborů** (k 18. 8.) |
+| Migrace | po `0051_pristup_k_obsahu.sql`, nasazeno |
+| Testy | **843 zelených, 87 souborů** (k 18. 8.) |
 | Odesílání | **vypnuté** (ověřeno 18. 8.), zpráv 0 |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -355,15 +355,30 @@ systém nebo on-line služba.
 - Návrh nanečisto: `docs/vizualizace/navrh-nastaveni-zpravy-2026-08-18.html`
 - Plán 1. dodávky: `docs/superpowers/plans/2026-08-18-parametry-nabidky.md`
 
-**První dodávka je HOTOVÁ a nasazená** (migrace 0045–0047): nabídky oddělené
-od jídelen, parametry čtyř druhů, okno u jídelny s tlačítkem *Upravit*
-a zavádění vlastních parametrů. Proklikáno v prohlížeči — našly se přitom
-dvě vady, obě opravené ([[pravidlo-v-jadru-nehlida-obrazovku]]).
+**Dodávky 1 a 2 jsou HOTOVÉ a nasazené** (migrace 0045–0051).
 
-**Čeká na majitele: vyplnit ceny, provize a možnosti výdeje u jídelen.**
-Bez toho nemá druhá dodávka co ukazovat.
+1. **Parametry nabídky** — nabídky oddělené od jídelen, parametry čtyř
+   druhů, okno u jídelny s tlačítkem *Upravit*, zavádění vlastních
+   parametrů. Majitel ceny vyplnil (95–105 Kč, provize 15 Kč) a **sám si
+   zavedl vlastní parametr „Platba na místě"** — obecnost se tím ověřila
+   v praxi, ne jen v návrhu.
+2. **Krok „Zpráva" u kampaně** — výběr šablony, režim každého pole
+   (vzít z dat / napsat natvrdo / vynechat větu), náhled hotového mailu na
+   skutečné firmě a výčet vyřazených i s důvodem. Ověřeno na kampani
+   Bezdružice: 10 firem připravených, 13 vypadne, cena 115 Kč.
 
-Zbývají dodávky 2 (krok „Zpráva" u kampaně) a 3 (editor šablony).
+**Cena pro firmu = cena oběda + provize** (rozhodl majitel 18. 8.).
+**Vzdálenost se píše časem, ne kilometry** — po pěti minutách, do 2 km
+pěšky, dál autem, s přirážkou na okliku, protože uložená vzdálenost je
+vzdušná čára.
+
+**Čmuchal doplnil krátká označení firem** (atribut `oznaceni`, migrace
+0049): 91 firem v šesti dávkách, 22 doložených nálezů, z toho 17 se ve
+větě „od Vaší truhlárny" použije. Zbytek dostane „od Vás“
+([[sklonovani-do-zpravy]]).
+
+Zbývá **dodávka 3 — editor šablony** (psaní textu, podmíněné pasáže,
+koncept a „pustit do provozu").
 
 ### Co zbývá v S0.5
 

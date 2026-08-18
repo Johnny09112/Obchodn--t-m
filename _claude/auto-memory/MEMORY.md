@@ -13,10 +13,9 @@
 
 ## ▶ Rozdělaná práce
 
-**Nastavení zprávy u kampaně — 1. dodávka hotová 18. 8.** Parametry nabídky
-jdou zavádět a vyplňovat v aplikaci (okno u jídelny). **Čeká na majitele:
-vyplnit ceny a možnosti výdeje u jídelen** — bez toho nemá 2. dodávka co
-ukazovat.
+**Nastavení zprávy u kampaně — dodávky 1 a 2 hotové 18. 8.** Parametry
+nabídky se zavádějí v aplikaci a kampaň má krok „Zpráva" s náhledem
+hotového mailu na skutečné firmě. **Zbývá dodávka 3 — editor šablony.**
 
 **S0.5 — texty schválené 18. 8. a uložené.** V ostré databázi je 8 tvrzení
 a šablona `vsichni/email` v1. Zbývá **cena u jídelny** (čeká na majitelovo

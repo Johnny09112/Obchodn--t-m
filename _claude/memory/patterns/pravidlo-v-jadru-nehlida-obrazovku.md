@@ -16,6 +16,13 @@ závislosti `app/` ([[vercel-instaluje-jen-app-zavislosti]]). Zapisuje proto
 do Supabase přímo, přes datové API. **Každé pravidlo napsané jen v jádře je
 tím pádem pro obrazovku neexistující.**
 
+**Třetí výskyt téhož dne, tentokrát obráceně** — pravidlo v jádru
+nehlídalo, co obrazovka SLIBUJE: aplikace nabídla „objednat rešerši pro
+20 firem" vlastním výpočtem (razítko + spojení), jádro od 13. 8. filtruje
+i stav firmy — a objednávka Hrobců skončila „hotovo, 0 firem" beze slova.
+Řešení stejné: pravidlo do DB (funkce , migrace 0054),
+jádro deleguje, aplikace počítá z téže funkce, paritu hlídá test.
+
 | Co se stalo | Co pravidlo mělo hlídat |
 |---|---|
 | Do ostré databáze se uložila **cena −5 Kč** | `zkontrolujHodnotu` v `src/parametry.ts` zápornou hodnotu odmítá |

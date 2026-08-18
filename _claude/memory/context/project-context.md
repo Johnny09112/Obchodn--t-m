@@ -26,8 +26,8 @@ odesílací doména, právní konzultace.
 | Z toho se spojením | 648 |
 | Oblastí · kampaní | 7 · 5 |
 | Náklady na API | **0 USD** — placené nikdy neběželo, agent jde z předplatného |
-| Migrace | po `0053_nahled_s_parametry.sql`, nasazeno |
-| Testy | **851 zelených, 88 souborů** (k 18. 8.) |
+| Migrace | po `0054_firmy_pro_reserse.sql`, nasazeno |
+| Testy | **853 zelených, 88 souborů** (k 18. 8.) |
 | Odesílání | **vypnuté** (ověřeno 18. 8.), zpráv 0 |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.

@@ -9,10 +9,11 @@
 - [[use-casy]] — Které use-casy dnes systém obsluhuje — stravování pro střední a větší firmy, docházkové systémy pro obce i firmy · active · 2026-08-10
 
 ## Decisions
-- [[cena-v-osloveni]] — V mailu je přibližné číslo a přesný ceník na webu — hlídat ceny u každé jídelny zvlášť je neudržitelné · active · 2026-08-18
+- [[cena-v-osloveni]] — Cena patří ke konkrétní jídelně, ne do šablony ani na ceník — před spuštěním kampaně se odsouhlasí · active · 2026-08-18
 - [[kdo-vari-a-co-se-neprozrazuje]] — Cantinero nevaří — zajišťuje spojení mezi jídelnou a strávníkem; a v oslovení se konkrétní jídelna nejmenuje, aby ji zákazník neobešel · active · 2026-08-18
 - [[podobnost-podle-objemu]] — Kontrola podobnosti zpráv se zapíná až nad 20 mailů denně a segmenty vznikají z reakcí, ne z tabulky velikostí · active · 2026-08-18
 - [[prah-povyseni-varianty-80]] — Práh pro automatické povýšení varianty šablony snížen ze 150 na 80 zpráv na rameno — se 165 firmami by test se 150 nikdy nedoběhl · active · 2026-08-18
+- [[sablona-ma-tri-vrstvy]] — Přenositelná je stavba zprávy, ne její slova — u nového zákazníka si tvrzení vyptá agent a slova z nich složí · active · 2026-08-18
 - [[detail-firmy-ma-porad-sekci]] — Detail firmy má pevné pořadí sekcí od oboru po chybějící údaje a ukazuje pět nejbližších jídelen do 50 km · active · 2026-08-17
 - [[firma-smi-byt-prilezitost-i-neoslovovat]] — Firma může mít současně příležitostní i vylučovací podnět — je to platný stav, ne chyba; podněty se netřídí podle firem a nic se neskrývá · active · 2026-08-17
 - [[kapacita-se-upravuje-v-aplikaci]] — Volná kapacita jídelny se mění v aplikaci na obrazovce Jídelny a dělí se na „v provozu" a „v přípravě" — sečíst je dohromady by tvrdilo, že máme víc, než máme · active · 2026-08-17

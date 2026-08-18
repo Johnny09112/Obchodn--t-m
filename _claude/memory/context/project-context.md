@@ -333,15 +333,23 @@ schválení textů. Odesílání zůstává vypnuté (TP-8).
 
 ### Co zbývá v S0.5
 
-1. **Schválit tvrzení a text mailu** — majitel je zatím neschválil.
+1. **Schválit tvrzení a maily** — majitel je 18. 8. chtěl nejdřív vidět celé
+   a maily si přepsat sám. Dostal je na jedné stránce k proklikání
+   a přepsání: `docs/vizualizace/tvrzeni-a-maily-ke-schvaleni-2026-08-18.html`
+   (osm tvrzení s dokladem, čtyři zákazy, tři maily jako editovatelná pole
+   s živou kontrolou stylu). **Čeká se na jeho upravené texty.**
 2. **Uložit je do databáze** po schválení: tvrzení do `claims` (stav
    `schvaleno`), text do `templates` jako verze 1. Zápis se ještě nikdy
    nedělal, cesta není napsaná — bude potřeba příkaz nebo obrazovka.
-3. **Adresa stránky s ceníkem** — v mailu je přibližná cena, přesný ceník má
-   být na webu. Bez adresy se odkaz do textu nedává.
+3. **Cena u jídelny místo ceníku** ([[cena-v-osloveni]] přepsáno 18. 8.):
+   sloupec s cenou a provizí u jídelny, pole na obrazovce Jídelny a potvrzení
+   ceny před spuštěním kampaně. Návrh předložen, **čeká na majitelovo ano**.
 4. **Poučení podle čl. 14 GDPR** do mailu, protože se oslovuje jménem.
    Znění patří na právní konzultaci (S0.8), ne do mé hlavy.
 5. **Revize „od září"** k 1. 9. ([[revize-zari]]).
+
+Majitel 18. 8. zároveň řekl, že texty musí být nasaditelné i u jiné firmy
+a že skládat je má umět agent — zapsáno jako [[sablona-ma-tri-vrstvy]].
 
 ### Co zbývá jinde ve fázi 0
 

@@ -70,11 +70,15 @@ export const MAX_POKUSU_RESERSE = 3;
  * jen razítko a spojení, jádro filtrovalo i stav firmy, a objednávka na
  * 20 firem skončila „hotovo, 0 firem" bez jediného slova.
  *
- * Co funkce filtruje (podrobné zdůvodnění je v migraci): jen vybrané firmy
- * kampaně, bez razítka `obohaceno_at`, méně než MAX_POKUSU_RESERSE pokusů,
- * a stavy psané výčtem ZAKÁZANÝCH ([[zamykej-vyjmenovanim-zamcenych-stavu]]):
- * `cekajici_na_jidelnu` a `zamitnuty` agentní čas nedostanou (rozhodnutí
- * majitele 13. 8. 2026).
+ * Co funkce filtruje (podrobné zdůvodnění je v migracích 0054 a 0055):
+ * jen vybrané firmy kampaně, bez razítka `obohaceno_at`, méně než
+ * MAX_POKUSU_RESERSE pokusů, a bez stavu `zamitnuty`.
+ *
+ * Firmy **čekající na jídelnu do fronty patří** — rozhodl majitel
+ * 18. 8. 2026 (ruší přísnější pravidlo z 13. 8.): data se předpřipravují
+ * i v oblasti bez jídelny, zastavuje se až odeslání. Ta zábrana stojí
+ * v `nahled_kampane`: bez jídelny není vzdálenost ani cena, takže se
+ * firma z oslovení vyřadí sama.
  */
 export async function firmyProReserse(
   db: Db,

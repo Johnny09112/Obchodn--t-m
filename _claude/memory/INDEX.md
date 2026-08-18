@@ -14,6 +14,7 @@
 - [[kdo-vari-a-co-se-neprozrazuje]] — Cantinero nevaří — zajišťuje spojení mezi jídelnou a strávníkem; a v oslovení se konkrétní jídelna nejmenuje, aby ji zákazník neobešel · active · 2026-08-18
 - [[podobnost-podle-objemu]] — Kontrola podobnosti zpráv se zapíná až nad 20 mailů denně a segmenty vznikají z reakcí, ne z tabulky velikostí · active · 2026-08-18
 - [[prah-povyseni-varianty-80]] — Práh pro automatické povýšení varianty šablony snížen ze 150 na 80 zpráv na rameno — se 165 firmami by test se 150 nikdy nedoběhl · active · 2026-08-18
+- [[reserse-i-bez-jidelny]] — Rešerše smí i na firmy bez jídelny v dosahu — data se předpřipravují, tvrdá zábrana je až u odeslání · active · 2026-08-18
 - [[sablona-ma-tri-vrstvy]] — Přenositelná je stavba zprávy, ne její slova — u nového zákazníka si tvrzení vyptá agent a slova z nich složí · active · 2026-08-18
 - [[detail-firmy-ma-porad-sekci]] — Detail firmy má pevné pořadí sekcí od oboru po chybějící údaje a ukazuje pět nejbližších jídelen do 50 km · active · 2026-08-17
 - [[firma-smi-byt-prilezitost-i-neoslovovat]] — Firma může mít současně příležitostní i vylučovací podnět — je to platný stav, ne chyba; podněty se netřídí podle firem a nic se neskrývá · active · 2026-08-17

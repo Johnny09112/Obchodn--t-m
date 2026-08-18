@@ -102,16 +102,18 @@ describe("pokusy o rešerši", () => {
     expect(await vycerpanePokusy(db, kampanId)).toBe(1);
   });
 
-  it("firma čekající na jídelnu do fronty nepatří", async () => {
+  it("firma čekající na jídelnu do fronty PATŘÍ — data se předpřipravují i bez jídelny", async () => {
+    // Rozhodl majitel 18. 8. 2026 a zrušil tím přísnější pravidlo z 13. 8.:
+    // „předpřipravit data si v oblasti přeci mohu." Tvrdá zábrana zůstává
+    // až u odeslání — bez jídelny není vzdálenost ani cena, takže firmu
+    // vyřadí `nahled_kampane`, ne fronta rešerše.
     await firmaVKampani("25232657", 50);
     await firmaVKampani("25242407", 40);
     await db.query(
       "update companies set stav = 'cekajici_na_jidelnu' where ico = '25242407'",
     );
     const f = await firmyProReserse(db, kampanId, 10);
-    // Obě strany zvlášť: kvalifikovaná zůstává, čekající vypadne. Test,
-    // který tvrdí jen jedno, by neodlišil filtr od úplného vyprázdnění.
-    expect(f.map((x) => x.ico)).toEqual(["25232657"]);
+    expect(f.map((x) => x.ico).sort()).toEqual(["25232657", "25242407"]);
   });
 
   it("zamítnutá firma do fronty nepatří", async () => {
@@ -134,9 +136,9 @@ describe("pokusy o rešerši", () => {
   it("soubor s prací dostane přesně firmy z fronty, ne vlastní výběr", async () => {
     await firmaVKampani("25232657", 50);
     await firmaVKampani("25242407", 40);
-    await db.query(
-      "update companies set stav = 'cekajici_na_jidelnu' where ico = '25242407'",
-    );
+    // Zamítnutá firma je to, co fronta filtruje i po 18. 8. — na ní se
+    // pozná, že práce kopíruje frontu a nevybírá si sama.
+    await db.query("update companies set stav = 'zamitnuty' where ico = '25242407'");
 
     const fronta = await firmyProReserse(db, kampanId, 10);
     expect(fronta.map((x) => x.ico)).toEqual(["25232657"]);
@@ -146,7 +148,7 @@ describe("pokusy o rešerši", () => {
       profilKod: "cantinero",
       limit: fronta.length,
     });
-    // Čekající firma se do práce nesmí dostat, i když je v kampani.
+    // Zamítnutá firma se do práce nesmí dostat, i když je v kampani.
     expect(prace.map((p) => p.ico)).toEqual(["25232657"]);
   });
 

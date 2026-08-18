@@ -1066,9 +1066,9 @@ export function PruvodceKampani({
                   <p>
                     {neprozkoumanych.toLocaleString("cs")}{" "}
                     {cesky(neprozkoumanych, "firma sice rešerši nemá", "firmy sice rešerši nemají", "firem sice rešerši nemá")},
-                    ale <strong>objednat ji teď není pro koho</strong> — firmy čekají na
-                    jídelnu v dosahu, nebo už vyčerpaly tři pokusy. Až se v okolí
-                    otevře jídelna, fronta se otevře s ní.
+                    ale <strong>objednat ji teď není pro koho</strong> — zbylé firmy
+                    už mají razítko z dřívějších běhů, vyčerpaly tři pokusy, nebo
+                    jsou zamítnuté.
                   </p>
                 ) : (
                   <>

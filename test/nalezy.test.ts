@@ -396,20 +396,25 @@ describe("výběr pro rešerši je jedno pravidlo v databázi", () => {
   it("databázová funkce vrací tutéž množinu jako firmyProReserse", async () => {
     const kampanId = await zalozKampan(db, { nazev: "Rešerše DB", spravce: "a@b.cz" });
     await zalozFirmu(db, firma("48362956", "Čekající s.r.o."));
-    for (const ico of ["25242407", "48362956"]) {
+    await zalozFirmu(db, firma("17255686", "Zamítnutá s.r.o."));
+    for (const ico of ["25242407", "48362956", "17255686"]) {
       await db.query("insert into kampan_firmy (kampan_id, ico) values ($1,$2)", [kampanId, ico]);
     }
-    // Přesně případ Hrobců: firma čekající na jídelnu do fronty nepatří.
+    // Firma čekající na jídelnu do fronty PATŘÍ — data se předpřipravují
+    // i v oblasti bez jídelny; zastavuje se až odeslání (rozhodnutí
+    // majitele 18. 8. 2026, ruší přísnější pravidlo z 13. 8.).
     await db.query("update companies set stav = 'cekajici_na_jidelnu' where ico = $1", [
       "48362956",
     ]);
+    // Zamítnutá firma agentní čas nedostane dál — to se nemění.
+    await db.query("update companies set stav = 'zamitnuty' where ico = $1", ["17255686"]);
 
     const zFunkce = (
       await db.query<{ ico: string }>("select ico from firmy_pro_reserse($1, null)", [kampanId])
     ).map((x) => x.ico).sort();
     const zJadra = (await firmyProReserse(db, kampanId, 100)).map((f) => f.ico).sort();
 
-    expect(zFunkce).toEqual(["25242407"]);
+    expect(zFunkce).toEqual(["25242407", "48362956"]);
     expect(zFunkce).toEqual(zJadra);
   });
 

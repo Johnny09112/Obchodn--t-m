@@ -329,12 +329,12 @@ describe("vzdálenost slovy", () => {
 
   it("do dvou kilometrů trasy je to pěšky, po pěti minutách", () => {
     // 1000 m vzdušnou čarou = 1300 m trasy = 17 minut → zaokrouhleno na 20.
-    expect(vzdalenostSlovy(1000)).toBe("asi 20 minut pěšky");
+    expect(vzdalenostSlovy(1000)).toBe("přibližně 20 minut pěšky");
   });
 
   it("dál se jede autem", () => {
     // 5 km vzdušnou čarou = 6,5 km trasy ≈ 16 minut → zaokrouhleno na 20.
-    expect(vzdalenostSlovy(5000)).toBe("asi 20 minut autem");
+    expect(vzdalenostSlovy(5000)).toBe("přibližně 20 minut autem");
   });
 
   it("v textu se nikdy neobjeví kilometry ani metry", () => {

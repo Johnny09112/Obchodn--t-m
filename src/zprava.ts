@@ -187,13 +187,13 @@ export interface UdajeFirmy {
  * neodpovídaly tomu, co člověk ujde.
  *
  * Doba cesty počítá s oklikou a zaokrouhluje **nahoru** po pěti minutách
- * (`dobaCestyMin` v `geo.ts`). Slovo „asi" tam patří: je to odhad a nemá
+ * (`dobaCestyMin` v `geo.ts`). Slovo „přibližně" tam patří: je to odhad a nemá
  * se tvářit jinak.
  */
 export function vzdalenostSlovy(metru: number): string {
   const { zpusob, minut } = dobaCestyMin(metru);
   if (zpusob === "blizko") return "pár minut pěšky";
-  return `asi ${minut} ${cesky(minut, "minutu", "minuty", "minut")} ${
+  return `přibližně ${minut} ${cesky(minut, "minutu", "minuty", "minut")} ${
     zpusob === "pesky" ? "pěšky" : "autem"
   }`;
 }

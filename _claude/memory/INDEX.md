@@ -10,6 +10,9 @@
 
 ## Decisions
 - [[cena-v-osloveni]] — V mailu je přibližné číslo a přesný ceník na webu — hlídat ceny u každé jídelny zvlášť je neudržitelné · active · 2026-08-18
+- [[kdo-vari-a-co-se-neprozrazuje]] — Cantinero nevaří — zajišťuje spojení mezi jídelnou a strávníkem; a v oslovení se konkrétní jídelna nejmenuje, aby ji zákazník neobešel · active · 2026-08-18
+- [[podobnost-podle-objemu]] — Kontrola podobnosti zpráv se zapíná až nad 20 mailů denně a segmenty vznikají z reakcí, ne z tabulky velikostí · active · 2026-08-18
+- [[prah-povyseni-varianty-80]] — Práh pro automatické povýšení varianty šablony snížen ze 150 na 80 zpráv na rameno — se 165 firmami by test se 150 nikdy nedoběhl · active · 2026-08-18
 - [[detail-firmy-ma-porad-sekci]] — Detail firmy má pevné pořadí sekcí od oboru po chybějící údaje a ukazuje pět nejbližších jídelen do 50 km · active · 2026-08-17
 - [[firma-smi-byt-prilezitost-i-neoslovovat]] — Firma může mít současně příležitostní i vylučovací podnět — je to platný stav, ne chyba; podněty se netřídí podle firem a nic se neskrývá · active · 2026-08-17
 - [[kapacita-se-upravuje-v-aplikaci]] — Volná kapacita jídelny se mění v aplikaci na obrazovce Jídelny a dělí se na „v provozu" a „v přípravě" — sečíst je dohromady by tvrdilo, že máme víc, než máme · active · 2026-08-17
@@ -35,6 +38,8 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[js-hranice-slova-a-diakritika]] — \b v JavaScriptu nezná diakritiku — /\bvaší\b/ nenajde nic, protože „í" není slovní znak; použij hranice přes \p{L} · active · 2026-08-18
+- [[personalizace-jen-z-whitelistu]] — Podle čeho firmu vybíráme a co o ní smíme napsat jsou dvě různé množiny — směnný provoz je signál, ale do zprávy nesmí · active · 2026-08-18
 - [[jsonb-se-serializuje-dvakrat]] — JSON.stringify do jsonb sloupce uloží v ostré databázi řetězec místo objektu — PGlite ho rozparsuje, postgres.js serializuje podruhé, takže testy mlčí · active · 2026-08-17
 - [[nowrap-v-gridu-pretece-pres-sousedy]] — Popisek s white-space: nowrap uvnitř gridové buňky nezalomí, ale přeteče přes sousední sloupec — čísla se překryjí a nic to nenahlásí · active · 2026-08-17
 - [[spojeni-neni-pocet-kontaktu]] — „Spojení" znamená kontakt s e-mailem nebo telefonem — počet kontaktů je jiné číslo a smíchat je znamená protimluv na jedné obrazovce · active · 2026-08-17
@@ -65,5 +70,7 @@
 - [[zapis-po-jedne-je-lokalne-neviditelny]] — Přepočet oblasti vkládal firmy po jedné — na PGlite rychle, přes síť minuty · fixed · 2026-08-01
 
 ## Research
+- [[onboarding-dotaznik-pro-prodej]] — Při prodeji systému jinému podniku si musí agent nejdřív sám vyptat, čím zákazník podniká — jinak neví, co má psát do šablon · navrzeno · 2026-08-18
+- [[podobnost-mailu-zmereno]] — Dva personalizované maily z jedné kostry se shodují na 80–88 %, různě stavěné varianty na 42–45 % — pravidlo o 70 % tedy u krátkých zpráv trestá stručnost · active · 2026-08-18
 - [[otevrene-pozadavky-majitele]] — Co majitel vyžádal nebo co čeká na jeho rozhodnutí, k 3. 8. 2026 · active · 2026-08-03
 

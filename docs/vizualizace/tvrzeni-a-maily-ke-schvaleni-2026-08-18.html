@@ -1,0 +1,686 @@
+<title>Osm tvrzení a tři maily</title>
+<style>
+  :root {
+    --ground: #eeeee7; --karta: #fbfaf6; --karta2: #f3f2eb;
+    --inkoust: #1d211b; --inkoust-slaby: #5c6157; --linka: #cfd0c6;
+    --zelena: #3c6b48; --zelena-svetla: #e2ece3;
+    --cihla: #a4432c; --cihla-svetla: #f7e5df;
+    --zlata: #8d6a1a; --zlata-svetla: #f7eed6;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14170f; --karta: #1c2019; --karta2: #232821;
+      --inkoust: #e8e9e2; --inkoust-slaby: #a0a597; --linka: #363a33;
+      --zelena: #7fb98c; --zelena-svetla: #22301f;
+      --cihla: #e08a70; --cihla-svetla: #33211c;
+      --zlata: #d8b25c; --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #14170f; --karta: #1c2019; --karta2: #232821;
+    --inkoust: #e8e9e2; --inkoust-slaby: #a0a597; --linka: #363a33;
+    --zelena: #7fb98c; --zelena-svetla: #22301f;
+    --cihla: #e08a70; --cihla-svetla: #33211c;
+    --zlata: #d8b25c; --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body { margin: 0; background: var(--ground); color: var(--inkoust);
+         font-family: var(--pismo-text); line-height: 1.6; }
+
+  .stranka { max-width: 56rem; margin: 0 auto; padding: 3rem 1.5rem 5rem;
+             display: flex; flex-direction: column; gap: 3rem; }
+
+  .eyebrow { font-family: var(--pismo-data); font-size: 0.75rem; letter-spacing: 0.12em;
+             text-transform: uppercase; color: var(--inkoust-slaby); }
+
+  h1 { font-family: var(--pismo-nadpis); font-size: clamp(1.9rem, 5vw, 2.6rem);
+       line-height: 1.12; margin: 0.5rem 0 0.75rem; text-wrap: balance; }
+
+  h2 { font-family: var(--pismo-nadpis); font-size: 1.4rem; margin: 0 0 0.35rem;
+       text-wrap: balance; }
+
+  .cislo { font-family: var(--pismo-data); font-size: 0.75rem; letter-spacing: 0.1em;
+           text-transform: uppercase; color: var(--zelena); display: block;
+           margin-bottom: 0.35rem; }
+
+  .podnadpis { margin: 0 0 1.5rem; color: var(--inkoust-slaby); font-size: 0.9375rem;
+               max-width: 46rem; }
+  .perex { margin: 0; max-width: 46rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+
+  section > :last-child { margin-bottom: 0; }
+
+  /* ---------------------------------------------------------------- tvrzení */
+  .tvrzeni-seznam { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .tvrzeni { background: var(--karta); border: 1px solid var(--linka); border-radius: 4px;
+             box-shadow: var(--stin); display: grid;
+             grid-template-columns: 2.25rem 1fr; align-items: start; }
+
+  .tvrzeni .poradi { font-family: var(--pismo-data); font-size: 0.8125rem;
+                     color: var(--inkoust-slaby); padding: 1rem 0 1rem 0.9rem;
+                     font-variant-numeric: tabular-nums; }
+
+  .tvrzeni .telo-tvrzeni { padding: 1rem 1.15rem 1rem 0.35rem; }
+  .tvrzeni p { margin: 0; }
+  .tvrzeni .veta { font-size: 1rem; }
+  .tvrzeni .doklad { margin-top: 0.45rem; font-size: 0.875rem; color: var(--inkoust-slaby); }
+  .tvrzeni .doklad b { color: var(--inkoust); font-weight: 600; }
+
+  .tvrzeni.ceka { border-left: 3px solid var(--zlata); }
+  .tvrzeni.zmena { border-left: 3px solid var(--zlata); background: var(--zlata-svetla); }
+
+  /* ---------------------------------------------------------------- zákazy */
+  .zakazy { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+            gap: 0.9rem; }
+
+  .zakaz { background: var(--cihla-svetla); border-left: 3px solid var(--cihla);
+           border-radius: 4px; padding: 1rem 1.15rem; }
+  .zakaz h3 { font-size: 0.9375rem; margin: 0 0 0.35rem; }
+  .zakaz p { margin: 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .zakaz .misto { display: block; margin-top: 0.5rem; color: var(--zelena);
+                  font-weight: 600; font-size: 0.9375rem; }
+
+  /* ---------------------------------------------------------------- maily */
+  .maily { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .mail { background: var(--karta); border: 1px solid var(--linka); border-radius: 4px;
+          box-shadow: var(--stin); overflow: hidden; }
+
+  .mail-hlava { padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--linka);
+                display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline;
+                background: var(--karta2); }
+  .mail-hlava h3 { font-family: var(--pismo-nadpis); font-size: 1.0625rem; margin: 0; }
+  .mail-hlava .kdy { font-size: 0.875rem; color: var(--inkoust-slaby); }
+
+  .radek-pole { display: grid; grid-template-columns: 5.5rem 1fr; align-items: center;
+                gap: 0.5rem; padding: 0.6rem 1.25rem; border-bottom: 1px dotted var(--linka); }
+  .radek-pole label { font-family: var(--pismo-data); font-size: 0.6875rem;
+                      letter-spacing: 0.1em; text-transform: uppercase;
+                      color: var(--inkoust-slaby); }
+
+  .mail input, .mail textarea {
+    width: 100%; font-family: var(--pismo-text); font-size: 0.9375rem; line-height: 1.6;
+    color: var(--inkoust); background: transparent; border: 1px solid transparent;
+    border-radius: 3px; padding: 0.35rem 0.5rem; resize: vertical;
+  }
+  .mail input:hover, .mail textarea:hover { border-color: var(--linka); }
+  .mail input:focus, .mail textarea:focus {
+    outline: none; border-color: var(--zelena); background: var(--karta2);
+  }
+  .mail textarea { display: block; min-height: 11rem; padding: 1rem 1.25rem; }
+
+  .mail-pata { padding: 0.75rem 1.25rem; border-top: 1px solid var(--linka);
+               display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center;
+               background: var(--karta2); }
+
+  .rozbor { padding: 0 1.25rem 1.15rem; font-size: 0.875rem; color: var(--inkoust-slaby);
+            margin: 0; }
+
+  .stitek { font-family: var(--pismo-data); font-size: 0.6875rem; letter-spacing: 0.06em;
+            text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 2px;
+            white-space: nowrap; background: var(--ground); color: var(--inkoust-slaby);
+            border: 1px solid var(--linka); font-variant-numeric: tabular-nums; }
+  .stitek.ok { background: var(--zelena-svetla); color: var(--zelena); border-color: transparent; }
+  .stitek.spatne { background: var(--cihla-svetla); color: var(--cihla); border-color: transparent; }
+  .stitek.ceka { background: var(--zlata-svetla); color: var(--zlata); border-color: transparent; }
+
+  .vytky { margin: 0; padding: 0 1.25rem 1rem; list-style: none;
+           display: flex; flex-direction: column; gap: 0.3rem; }
+  .vytky li { font-size: 0.875rem; color: var(--cihla); }
+  .vytky:empty { display: none; }
+
+  .lista { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  button { font-family: var(--pismo-text); font-size: 0.9375rem; padding: 0.5rem 1rem;
+           border-radius: 3px; border: 1px solid var(--zelena); background: var(--zelena);
+           color: var(--karta); cursor: pointer; }
+  button:hover { filter: brightness(1.08); }
+  button:focus-visible { outline: 2px solid var(--inkoust); outline-offset: 2px; }
+  button.tichy { background: transparent; color: var(--zelena); }
+  .hlaska { font-size: 0.875rem; color: var(--inkoust-slaby); }
+
+  /* ---------------------------------------------------------------- rozhodnutí */
+  .rozhodnuti { background: var(--karta); border: 1px solid var(--linka);
+                border-left: 3px solid var(--zlata); border-radius: 4px;
+                padding: 1.15rem 1.35rem; }
+  .rozhodnuti h3 { font-size: 1rem; margin: 0 0 0.4rem; }
+  .rozhodnuti p { margin: 0 0 0.6rem; font-size: 0.9375rem; }
+  .rozhodnuti p:last-child { margin-bottom: 0; }
+  .rozhodnuti ol { margin: 0.4rem 0 0; padding-left: 1.25rem;
+                   font-size: 0.9375rem; display: flex; flex-direction: column; gap: 0.35rem; }
+
+  .duvod { color: var(--inkoust-slaby); }
+
+  .obal-tabulky { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 32rem; background: var(--karta);
+          border: 1px solid var(--linka); border-radius: 4px; }
+  thead th { text-align: left; font-family: var(--pismo-data); font-size: 0.6875rem;
+             letter-spacing: 0.1em; text-transform: uppercase; color: var(--inkoust-slaby);
+             font-weight: 400; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--linka); }
+  tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px dotted var(--linka);
+             font-size: 0.9375rem; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  footer { border-top: 1px solid var(--linka); padding-top: 1.25rem;
+           font-size: 0.875rem; color: var(--inkoust-slaby); }
+
+  @media (max-width: 34rem) {
+    .radek-pole { grid-template-columns: 1fr; gap: 0.15rem; }
+  }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <span class="eyebrow">Cantinero · session S0.5 · ke schválení</span>
+    <h1>Osm tvrzení a tři maily</h1>
+    <p class="perex">
+      Tady je všechno, co jsem k oslovení napsal — celé, ne jen výtah.
+      Maily jsou <strong>rovnou přepisovatelné</strong>: klikněte do textu
+      a pište. Pod každým se počítají slova a hlídají pravidla ze zadání.
+      V databázi zatím není nic a odesílání je vypnuté.
+    </p>
+  </header>
+
+  <!-- ============================================================ tvrzení -->
+  <section>
+    <span class="cislo">Část první</span>
+    <h2>Co smíme o službě tvrdit</h2>
+    <p class="podnadpis">
+      Tvrzení je věta, kterou smí agent použít ve zprávě, a ke které umíme
+      říct, čím ji podložíme, kdyby se firma zeptala. Co tady není, to se
+      psát nesmí — ani „jinými slovy“.
+    </p>
+
+    <div class="tvrzeni-seznam">
+
+      <article class="tvrzeni">
+        <span class="poradi">1</span>
+        <div class="telo-tvrzeni">
+          <p class="veta">Ve školní jídelně se vaří denně mimo školní prázdniny.</p>
+          <p class="doklad">Doklad: provoz partnerské jídelny; sezónnost plyne ze školního roku.</p>
+        </div>
+      </article>
+
+      <article class="tvrzeni">
+        <span class="poradi">2</span>
+        <div class="telo-tvrzeni">
+          <p class="veta">Menu je polévka, hlavní jídlo, obvykle přídavek a na místě nápoj (voda, čaj nebo džus).</p>
+          <p class="doklad">Doklad: skladba jídelníčku partnerské jídelny.</p>
+        </div>
+      </article>
+
+      <article class="tvrzeni zmena">
+        <span class="poradi">3</span>
+        <div class="telo-tvrzeni">
+          <p class="veta">
+            Cena za celé menu je <strong>u každé jídelny jiná</strong> a je
+            uvedená v kartě té jídelny, ze které se pro danou firmu vaří —
+            včetně naší provize.
+          </p>
+          <p class="doklad">
+            <b>Přepsáno podle Vaší odpovědi 18. 8.</b> Původně tu stálo pevné
+            rozpětí 90–130 Kč. Co to znamená pro kód, je v části čtvrté.
+          </p>
+        </div>
+      </article>
+
+      <article class="tvrzeni">
+        <span class="poradi">4</span>
+        <div class="telo-tvrzeni">
+          <p class="veta">Objednává se dopředu z vystaveného jídelníčku v aplikaci; objednávka se obvykle uzavírá den před varným dnem.</p>
+          <p class="doklad">Doklad: fungování systému Cantinero.</p>
+        </div>
+      </article>
+
+      <article class="tvrzeni">
+        <span class="poradi">5</span>
+        <div class="telo-tvrzeni">
+          <p class="veta">Platit může každý strávník sám přes platební bránu, nebo firma souhrnně na fakturu — počty jsou v systému.</p>
+          <p class="doklad">Doklad: fungování systému Cantinero, firemní profil.</p>
+        </div>
+      </article>
+
+      <article class="tvrzeni">
+        <span class="poradi">6</span>
+        <div class="telo-tvrzeni">
+          <p class="veta">Jídlo lze sníst v jídelně, odnést ve vlastním jídlonosiči nebo jednorázovém obalu, odvézt hromadně firmou, nebo ho jídelna doveze a dopravu doúčtuje.</p>
+          <p class="doklad">Doklad: Vaše provozní varianty — podle Vás pokrývají 99 % případů.</p>
+        </div>
+      </article>
+
+      <article class="tvrzeni">
+        <span class="poradi">7</span>
+        <div class="telo-tvrzeni">
+          <p class="veta">Školní jídelny vaří dětem podle výživových norem (spotřebního koše) daných vyhláškou č. 107/2005 Sb.; obědy pro firmy vznikají z téhož jídelníčku.</p>
+          <p class="doklad">
+            Doklad: vyhláška o školním stravování, ověřeno 17. 8. 2026.
+            <b>Formulace je záměrná</b> — normy platí na dětské porce, ne na
+            dospělé strávníky. Proto „vaří dětem podle norem“, ne „splňuje normy“.
+          </p>
+        </div>
+      </article>
+
+      <article class="tvrzeni">
+        <span class="poradi">8</span>
+        <div class="telo-tvrzeni">
+          <p class="veta">Firemní obědy se vaří ve volné kapacitě vedle hlavní činnosti, tedy vedle stravování dětí.</p>
+          <p class="doklad">Doklad: doplňková činnost školní jídelny; hlavní činnost nesmí být omezena.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ zákazy -->
+  <section>
+    <span class="cislo">Část druhá</span>
+    <h2>Co se tvrdit nesmí</h2>
+    <p class="podnadpis">
+      Čtyři věci, které jste zmínil a které dávají smysl jako Vaše přesvědčení,
+      ale do zprávy nepatří — nedokážeme je podložit. U každé je napsané, čím
+      je nahradit.
+    </p>
+
+    <div class="zakazy">
+
+      <article class="zakaz">
+        <h3>„Vaše obědy splňují výživové normy“</h3>
+        <p>
+          Normy a spotřební koš se vztahují na dětské porce podle věkových
+          kategorií. Na dospělé cizí strávníky ne, takže by to bylo nepřesné.
+        </p>
+        <span class="misto">Místo toho: tvrzení č. 7 — jídelna vaří dětem podle norem a firemní obědy vznikají z téhož jídelníčku.</span>
+      </article>
+
+      <article class="zakaz">
+        <h3>„Pestrá strava = zdravější zaměstnanci“</h3>
+        <p>
+          Rozumná úvaha, ale je to tvrzení o příčině a následku, které
+          o Vaší službě nikdo neměřil.
+        </p>
+        <span class="misto">Místo toho: popsat, co je v menu, a nechat úsudek na příjemci.</span>
+      </article>
+
+      <article class="zakaz">
+        <h3>„Levnější než stravenky“ a srovnání s konkurencí</h3>
+        <p>
+          Sám jste řekl, že stravenka je způsob výplaty peněz, ne konkurenční
+          služba. Srovnávat je zavádějící a úsporu doložit neumíme.
+        </p>
+        <span class="misto">Místo toho: uvést cenu za menu a co v ní je.</span>
+      </article>
+
+      <article class="zakaz">
+        <h3>Jakákoli zmínka o zkušenosti s firmami</h3>
+        <p>
+          Zatím žádná firma neodebírá — začínáte. Věta „vaříme pro firmy
+          v okolí“ by byla nepravdivá a zadání ji zakazuje výslovně.
+        </p>
+        <span class="misto">Místo toho: „jídelna navýšila kapacity i pro okolní firmy“.</span>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ maily -->
+  <section>
+    <span class="cislo">Část třetí</span>
+    <h2>Tři maily k přepsání</h2>
+    <p class="podnadpis">
+      Klikněte do textu a pište přímo do něj. Pod každým mailem se průběžně
+      počítají slova a kontrolují pravidla ze zadání — zakázané fráze, délka,
+      právě jedna otázka, vykání velkým písmenem. Až budete hotov, tlačítko
+      dole zkopíruje všechny tři i s Vašimi úpravami, ať mi je můžete poslat.
+    </p>
+
+    <div class="maily">
+
+      <article class="mail" data-mail="A">
+        <div class="mail-hlava">
+          <h3>A — Váš text</h3>
+          <span class="kdy">nejkratší · zná jméno i obor</span>
+        </div>
+        <div class="radek-pole">
+          <label for="predmet-A">Předmět</label>
+          <input id="predmet-A" class="predmet" type="text"
+                 value="obědy ze školní jídelny pár minut od Vás">
+        </div>
+        <textarea class="telo" aria-label="Tělo mailu A">Vážená paní Nováková,
+
+pár minut pěšky od Vaší truhlárny spolupracujeme se školní jídelnou, která navýšila kapacity i pro okolní firmy.
+
+Kompletní menu vychází na cca 120 Kč s možností obědvat na místě nebo si jídlo odvážet v jídlonosičích. Veškeré objednávky i podklady pro rozúčtování přitom snadno vyřešíte přes naši aplikaci.
+
+Řešíte aktuálně obědy pro zaměstnance hromadně, nebo si je každý zajišťuje sám?</textarea>
+        <ul class="vytky"></ul>
+        <div class="mail-pata"></div>
+        <p class="rozbor">
+          Začíná vztahem k adresátovi („od Vaší truhlárny“), ne popisem nás.
+          Role je přitom jasná — spolupracujeme s jídelnou, nevaříme.
+          <strong>Číslo 120 Kč</strong> se po části čtvrté bude brát z karty
+          jídelny, ne psát ručně.
+        </p>
+      </article>
+
+      <article class="mail" data-mail="B">
+        <div class="mail-hlava">
+          <h3>B — jiná stavba, stejné sdělení</h3>
+          <span class="kdy">delší · zmiňuje placení</span>
+        </div>
+        <div class="radek-pole">
+          <label for="predmet-B">Předmět</label>
+          <input id="predmet-B" class="predmet" type="text"
+                 value="obědy pro Vaše zaměstnance ze školní jídelny v okolí">
+        </div>
+        <textarea class="telo" aria-label="Tělo mailu B">Vážený pane Procházko,
+
+Vaše dřevovýroba to má čtyři kilometry ke školní jídelně, se kterou spolupracujeme a která navýšila kapacity i pro firmy v okolí.
+
+Zaměstnanci si vybírají z jídelníčku dopředu, jedí na místě nebo si oběd odvezou. Kompletní menu vychází na cca 120 Kč a rozúčtování i objednávky běží přes naši aplikaci — buď platí každý sám, nebo firma jednou fakturou.
+
+Řešíte aktuálně obědy pro zaměstnance hromadně, nebo si je každý zajišťuje sám?</textarea>
+        <ul class="vytky"></ul>
+        <div class="mail-pata"></div>
+        <p class="rozbor">
+          Používá se tam, kde se dá čekat, že placení bude první otázka —
+          u firem s desítkami lidí.
+        </p>
+      </article>
+
+      <article class="mail" data-mail="C">
+        <div class="mail-hlava">
+          <h3>C — když neznáme jméno ani obor</h3>
+          <span class="kdy">nouzová verze</span>
+        </div>
+        <div class="radek-pole">
+          <label for="predmet-C">Předmět</label>
+          <input id="predmet-C" class="predmet" type="text"
+                 value="obědy ze školní jídelny pro Vaše zaměstnance">
+        </div>
+        <textarea class="telo" aria-label="Tělo mailu C">Dobrý den,
+
+tři kilometry od Vašeho areálu spolupracujeme se školní jídelnou, která od září navýšila kapacity i pro okolní firmy.
+
+Kompletní menu vychází na cca 120 Kč. Zaměstnanci si můžou dojít sami, nebo si obědy odvezete hromadně; objednávky i podklady pro rozúčtování vyřešíte přes naši aplikaci.
+
+Komu u Vás dává smysl tohle poslat dál?</textarea>
+        <ul class="vytky"></ul>
+        <div class="mail-pata"></div>
+        <p class="rozbor">
+          Je vidět, o kolik je slabší — a proto se vyplatí dohledat jméno
+          dřív, než se odešle. Věta „od září“ přestane platit 1. 9., mám to
+          zapsané k revizi.
+        </p>
+      </article>
+
+    </div>
+
+    <div class="lista" style="margin-top: 1.25rem;">
+      <button type="button" id="kopiruj">Zkopírovat všechny tři i s úpravami</button>
+      <button type="button" class="tichy" id="vrat">Vrátit původní znění</button>
+      <span class="hlaska" id="hlaska"></span>
+    </div>
+
+    <p class="podnadpis" style="margin-top: 1rem;">
+      Kontrola na téhle stránce je <strong>orientační náhled</strong> téže
+      kontroly, která běží v systému. Závazná je ta v kódu — pustím ji na
+      Vaše finální znění, než se cokoli uloží.
+    </p>
+  </section>
+
+  <!-- ============================================================ cena -->
+  <section>
+    <span class="cislo">Část čtvrtá</span>
+    <h2>Cena: Váš návrh a co znamená</h2>
+    <p class="podnadpis">
+      Napsal jste, že pevný ceník neexistuje — každá jídelna má svoji cenu
+      a na ni je navázaná provize; cenu chcete zadat u jídelny a při spuštění
+      kampaně ji odsouhlasit. Beru to a je to lepší než odkaz na ceník.
+      Tady je, co z toho plyne.
+    </p>
+
+    <div class="rozhodnuti">
+      <h3>Tři věci, které se tím mění</h3>
+      <ol>
+        <li>
+          <strong>U jídelny přibude cena oběda a provize.</strong> Vyplňuje se
+          na obrazovce Jídelny, tam, kde se dnes mění volná kapacita. Bez ceny
+          jídelna nebrání ničemu — jen se z ní nesmí posílat mail, který cenu
+          zmiňuje.
+        </li>
+        <li>
+          <strong>Cena v mailu se přestane psát ručně.</strong> Číslo se vezme
+          z karty té jídelny, která firmu obsluhuje. Když u jídelny cena není,
+          agent větu o ceně vynechá — místo aby si vymyslel číslo.
+        </li>
+        <li>
+          <strong>Před spuštěním kampaně vyskočí potvrzení ceny.</strong>
+          Ukáže se, ze kterých jídelen se bude vařit a s jakou cenou, a dokud
+          to neodklepnete, kampaň se nespustí. Zestárlá cena je pak Vaše
+          vědomé rozhodnutí, ne přehlédnutí.
+        </li>
+      </ol>
+      <p class="duvod" style="margin-top: 0.75rem;">
+        Zapisuju to jako návrh, ne jako hotovou věc — je to práce na pár hodin
+        a chci k ní Vaše „ano“, protože sahá do obrazovky Jídelny i do
+        schvalování kampaně.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ jinde -->
+  <section>
+    <span class="cislo">Část pátá</span>
+    <h2>Až se to bude nasazovat u jiné firmy</h2>
+    <p class="podnadpis">
+      Ptal jste se, jak se tyhle texty budou ladit u zákazníka, o kterém
+      nevíme nic. Odpověď je, že tyhle tři maily se u něj ladit nebudou —
+      jsou o školních jídelnách. Přenositelná je jejich <strong>stavba</strong>,
+      ne slova.
+    </p>
+
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr>
+            <th>Vrstva</th>
+            <th>Co to je</th>
+            <th>Kdo to u nového zákazníka vytvoří</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Stavba</strong></td>
+            <td>Vztah k adresátovi → co nabízíme → jak to prakticky chodí → právě jedna otázka s nízkým prahem. Plus pravidla: do 120 slov, bez odrážek, prostý text.</td>
+            <td>Zůstává. Je to majetek systému, ne zákazníka — v databázi na to je připravené pole u šablony.</td>
+          </tr>
+          <tr>
+            <td><strong>Tvrzení</strong></td>
+            <td>Osm vět z části první. U jiného zákazníka jich bude osm jiných.</td>
+            <td><strong>Agent se doptá</strong> — čím podniká, co prodává, čím to doloží, co se tvrdit nesmí. Odpovědi převede na tvrzení a předloží ke schválení, přesně jako teď Vám.</td>
+          </tr>
+          <tr>
+            <td><strong>Slova</strong></td>
+            <td>Konkrétní věty mailu.</td>
+            <td>Agent je složí ze schválených tvrzení podle stavby a nechá zákazníka přepsat — tahle stránka je ten krok.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="podnadpis" style="margin-top: 1rem;">
+      Jinými slovy: to, co spolu právě děláme, je zároveň zkouška postupu,
+      který u dalšího zákazníka odjede agent sám. Proto se vyplatí vydržet
+      to takhle podrobně jednou.
+    </p>
+  </section>
+
+  <footer>
+    Nic z toho zatím není v databázi — tvrzení i šablony mají 0 řádků a
+    odesílání je vypnuté (TP-8). Až mi pošlete upravené texty, pustím na ně
+    závaznou kontrolu stylu, uložím tvrzení jako schválená a maily jako
+    verzi 1. Zbývá pak ještě poučení podle článku 14 GDPR, které patří na
+    právní konzultaci, ne do mé hlavy.
+  </footer>
+
+</div>
+
+<script>
+  // Náhled téže kontroly, kterou dělá src/styl-zpravy.ts (SPEC kap. 6).
+  // Závazná je ta v kódu; tady jde o okamžitou zpětnou vazbu při psaní.
+  const ZAKAZANE_FRAZE = [
+    "V dnešní uspěchané době", "Dovolte mi představit", "Rád bych Vás oslovil s",
+    "Věřím, že by Vás mohlo zaujmout", "nezávazně", "řešení na míru", "inovativní",
+    "komplexní řešení", "win-win", "synergie", "posouváme hranice",
+    "nechte mě vědět", "Doufám, že se máte dobře",
+  ];
+  const SUPERLATIVY = ["revoluce", "revoluční", "nejlepší", "špičkov", "unikátní", "jedinečn"];
+  const TVARY_VYKANI =
+    /(?<!\p{L})(vy|vás|vám|vámi|váš|vaše|vaší|vašeho|vašemu|vašich|vašim|vašimi|vaši)(?!\p{L})/gu;
+  const MAX_SLOV = 120;
+
+  const normalizuj = (s) => s.replace(/\s+/g, " ").toLowerCase();
+
+  function zkontroluj(telo, predmet) {
+    const vytky = [];
+    const norm = normalizuj(telo);
+
+    for (const fraze of ZAKAZANE_FRAZE) {
+      if (norm.includes(normalizuj(fraze))) vytky.push("Zakázaná fráze „" + fraze + "“.");
+    }
+
+    const slov = telo.trim().split(/\s+/).filter(Boolean).length;
+    if (slov > MAX_SLOV) vytky.push("Zpráva má " + slov + " slov, povoleno je " + MAX_SLOV + ".");
+
+    if (telo.split("\n").some((r) => /^\s*([-*•·]|\d+[.)])\s+/.test(r))) {
+      vytky.push("Odrážky s benefity do prvního oslovení nepatří — napište to větou.");
+    }
+
+    const otazniku = (telo.match(/\?/g) || []).length;
+    if (otazniku === 0) vytky.push("Chybí otázka na konci — jedna konkrétní, s nízkým prahem.");
+    else if (otazniku > 1) vytky.push("Otázek je " + otazniku + ", má být právě jedna.");
+
+    const nalezene = new Set();
+    for (const m of telo.matchAll(TVARY_VYKANI)) {
+      const pred = telo.slice(0, m.index).trimEnd();
+      if (pred === "" || /[.!?:]$/.test(pred)) continue;
+      nalezene.add(m[0]);
+    }
+    if (nalezene.size > 0) {
+      vytky.push("Vyká se velkým písmenem — opravte " +
+        [...nalezene].map((x) => "„" + x + "“").join(", ") + ".");
+    }
+
+    if (/<[a-z\/][^>]*>/i.test(telo)) vytky.push("Zpráva je prostý text — bez HTML a obrázků.");
+
+    if (/\?!|!\?|!{2,}|\?{2,}/.test(predmet)) {
+      vytky.push("Předmět nemá být clickbait — bez „?!“ a vykřičníků.");
+    } else if (SUPERLATIVY.some((s) => normalizuj(predmet).includes(s))) {
+      vytky.push("Předmět má být věcný, bez superlativů.");
+    }
+
+    return { vytky, slov };
+  }
+
+  const puvodni = new Map();
+
+  function prekresli(mail) {
+    const telo = mail.querySelector(".telo");
+    const predmet = mail.querySelector(".predmet");
+    const pata = mail.querySelector(".mail-pata");
+    const seznam = mail.querySelector(".vytky");
+
+    const { vytky, slov } = zkontroluj(telo.value, predmet.value);
+
+    pata.innerHTML = "";
+    const pocet = document.createElement("span");
+    pocet.className = "stitek" + (slov > MAX_SLOV ? " spatne" : "");
+    pocet.textContent = slov + " slov ze 120";
+    pata.appendChild(pocet);
+
+    const verdikt = document.createElement("span");
+    verdikt.className = "stitek " + (vytky.length === 0 ? "ok" : "spatne");
+    verdikt.textContent = vytky.length === 0
+      ? "bez výhrad"
+      : vytky.length + (vytky.length < 5 ? " výtky" : " výtek");
+    pata.appendChild(verdikt);
+
+    seznam.innerHTML = "";
+    for (const v of vytky) {
+      const li = document.createElement("li");
+      li.textContent = v;
+      seznam.appendChild(li);
+    }
+  }
+
+  const maily = [...document.querySelectorAll(".mail")];
+
+  for (const mail of maily) {
+    const telo = mail.querySelector(".telo");
+    const predmet = mail.querySelector(".predmet");
+    puvodni.set(mail, { telo: telo.value, predmet: predmet.value });
+
+    // Textarea si sedne na výšku svého obsahu, ať se nikde neschová řádek.
+    const dorovnej = () => {
+      telo.style.height = "auto";
+      telo.style.height = telo.scrollHeight + "px";
+    };
+    dorovnej();
+
+    const zmena = () => { dorovnej(); prekresli(mail); };
+    telo.addEventListener("input", zmena);
+    predmet.addEventListener("input", () => prekresli(mail));
+    prekresli(mail);
+  }
+
+  const hlaska = document.getElementById("hlaska");
+
+  function poskladej() {
+    return maily.map((mail) => {
+      const znacka = mail.dataset.mail;
+      const predmet = mail.querySelector(".predmet").value;
+      const telo = mail.querySelector(".telo").value;
+      return "=== Varianta " + znacka + " ===\nPředmět: " + predmet + "\n\n" + telo;
+    }).join("\n\n");
+  }
+
+  document.getElementById("kopiruj").addEventListener("click", async () => {
+    const text = poskladej();
+    try {
+      await navigator.clipboard.writeText(text);
+      hlaska.textContent = "Zkopírováno — vložte mi to do chatu.";
+    } catch {
+      // Schránka může být zakázaná; ať má uživatel pořád cestu ven.
+      const pomocna = document.createElement("textarea");
+      pomocna.value = text;
+      pomocna.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0";
+      document.body.appendChild(pomocna);
+      pomocna.select();
+      const slo = document.execCommand && document.execCommand("copy");
+      pomocna.remove();
+      hlaska.textContent = slo
+        ? "Zkopírováno — vložte mi to do chatu."
+        : "Schránka je zakázaná — označte texty myší a zkopírujte je ručně.";
+    }
+  });
+
+  document.getElementById("vrat").addEventListener("click", () => {
+    for (const mail of maily) {
+      const p = puvodni.get(mail);
+      mail.querySelector(".telo").value = p.telo;
+      mail.querySelector(".predmet").value = p.predmet;
+      mail.querySelector(".telo").dispatchEvent(new Event("input"));
+    }
+    hlaska.textContent = "Vráceno původní znění.";
+  });
+</script>

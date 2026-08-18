@@ -63,4 +63,42 @@ describe("role a pravidla přístupu", () => {
     const p = await db.query(`select 1 from pg_policies where tablename = '_migrace'`);
     expect(p).toHaveLength(0);
   });
+
+  /**
+   * Tabulka se zapnutým RLS a bez jediné politiky je pro datové API
+   * neviditelná — a mlčky: nevrátí chybu, vrátí nula řádků.
+   *
+   * Přesně to potkalo `templates` a `claims` (objeveno proklikáním
+   * 18. 8. 2026): RLS jim zaplo plošné 0015, politiky rozdávalo 0016
+   * podle výčtu a ony v něm nebyly, protože tehdy byly prázdné. Krok
+   * „Zpráva" u kampaně pak ukazoval prázdno, zatímco příkazová řádka
+   * tytéž údaje četla správně.
+   */
+  it("bez politiky jsou jen vyjmenované tabulky, které se ještě nepoužívají", async () => {
+    const bezPolitiky = await db.query<{ tabulka: string }>(
+      `select c.relname as tabulka
+         from pg_class c
+         join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
+          and c.relname <> '_migrace'
+          and not exists (select 1 from pg_policies p
+                           where p.schemaname = 'public' and p.tablename = c.relname)
+        order by 1`,
+    );
+
+    // Tabulky fáze 3 a dál — zatím prázdné a aplikace na ně nesahá. Až se
+    // začnou používat, dostanou pravidla; do té doby je neviditelnost
+    // správně. Seznam je vyjmenovaný schválně: nová tabulka bez politiky
+    // tenhle test shodí, takže se na ni nedá zapomenout tak, jako se
+    // zapomnělo na `templates` a `claims`.
+    expect(bezPolitiky.map((x) => x.tabulka)).toEqual([
+      "consents",
+      "events",
+      "incidents",
+      "messages",
+      "partneri",
+      "proposals",
+      "suppressions",
+    ]);
+  });
 });

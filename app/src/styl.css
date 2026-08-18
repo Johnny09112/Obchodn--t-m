@@ -1910,3 +1910,11 @@ h3 {
   font-size: var(--t-drobny);
   line-height: 1.65;
 }
+
+/* Důvodů může být víc; každý na svůj řádek, ať se neslijí do jedné věty. */
+.duvody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--o1);
+  align-items: flex-start;
+}

@@ -308,7 +308,7 @@ export function KrokZprava({ kampanId, role, onZpet, onHotovo }: Props) {
                 {vyrazene.map((f) => (
                   <tr key={f.ico}>
                     <td>{f.nazev}</td>
-                    <td>
+                    <td className="duvody">
                       {f.chybi.map((d) => (
                         <span className="stav je-zamitnuty" key={d}>
                           <span className="znak" />

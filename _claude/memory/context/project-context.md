@@ -319,12 +319,18 @@ Přepsané mají 56–64 slov (bylo 86–99), vypadla z nich mechanika
 objednávání a končí zjišťovací otázkou. Cena zůstává, ale přibližně
 ([[cena-v-osloveni]]); podpis se neřeší.
 
-**Poctivé zjištění o zlepšování textu:** SPEC kap. 10.5 dovoluje
-automatické povýšení varianty až po **150 zprávách na rameno** testu. Dvě
-varianty tedy potřebují 300 oslovení, a kvalifikovaných firem je 165 —
-při pravidle jedna firma = jedno oslovení (TP-5) se první A/B test
-**nedá dokončit**. Varianty bude první měsíce schvalovat majitel podle
-odpovědí, ne statistika.
+**Práh pro automatické povýšení varianty snížen ze 150 na 80** zpráv na
+rameno (změna SPEC kap. 10.5, rozhodnutí majitele 18. 8. —
+[[prah-povyseni-varianty-80]]). Se 150 by test nikdy nedoběhl: 300 oslovení
+proti 165 kvalifikovaným firmám. Cena je menší statistická jistota; do té
+doby schvaluje varianty majitel.
+
+**Otázka v mailu pro mikropodniky je majitelova formulace** — „Řešíte si vy
+a vaši zaměstnanci obědy svépomocí, nebo centralizovaně?“ Moje verze byla
+česky kostrbatá.
+
+**Nápad k produktizaci:** [[onboarding-dotaznik-pro-prodej]] — u cizího
+zákazníka nikdo rozhovor o produktu nepovede, systém se musí umět vyptat sám.
 
 **Hotové v kódu:** kontrola stylu podle SPEC kap. 6 (`src/styl-zpravy.ts`)
 — třináct zakázaných frází, délka, odrážky, jedna otázka, jméno adresáta,

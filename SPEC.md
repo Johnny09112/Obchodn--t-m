@@ -509,9 +509,17 @@ v rámci schválených tvrzení, rešeršovat, vyhodnocovat.
 **Nesmí:** nasadit variantu do produkce.
 
 **Automatické povýšení** je možné, pokud varianta zvítězila při minimálně
-150 odeslaných zprávách na rameno, nezavádí nové tvrzení, nový segment ani
+80 odeslaných zprávách na rameno, nezavádí nové tvrzení, nový segment ani
 nový kanál, a prošla kontrolou stylu podle kapitoly 6. Vše ostatní čeká na
 schválení.
+
+> Práh snížen ze 150 na 80 rozhodnutím majitele 18. 8. 2026. Důvod: při
+> deseti zprávách denně je 80 zhruba týden provozu, kdežto 150 na rameno
+> znamenalo 300 oslovení na jeden test — víc, než kolik je dnes
+> kvalifikovaných firem, takže by test nikdy nedoběhl. Cena za to je
+> **menší statistická jistota**: rozdíl pod zhruba deset procentních bodů
+> se při téhle velikosti vzorku od náhody nerozezná. Než práh padne,
+> schvaluje varianty majitel.
 
 ### 10.6 Obchodní ředitel — dohled
 

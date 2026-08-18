@@ -4,11 +4,16 @@
 > Plný katalog on-demand záznamů. Always-load vrstvu viz auto-memory/MEMORY.md.
 
 ## Context
-- [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-17
+- [[project-context]] — Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, aktuální focus · active · 2026-08-18
+- [[revize-zari]] — K 1. září ověřit větu „od září vaříme" v šablonách — po začátku školního roku přestane platit · active · 2026-08-18
 - [[use-casy]] — Které use-casy dnes systém obsluhuje — stravování pro střední a větší firmy, docházkové systémy pro obce i firmy · active · 2026-08-10
 
 ## Decisions
+- [[cena-v-osloveni]] — V mailu je přibližné číslo a přesný ceník na webu — hlídat ceny u každé jídelny zvlášť je neudržitelné · active · 2026-08-18
+- [[detail-firmy-ma-porad-sekci]] — Detail firmy má pevné pořadí sekcí od oboru po chybějící údaje a ukazuje pět nejbližších jídelen do 50 km · active · 2026-08-17
+- [[firma-smi-byt-prilezitost-i-neoslovovat]] — Firma může mít současně příležitostní i vylučovací podnět — je to platný stav, ne chyba; podněty se netřídí podle firem a nic se neskrývá · active · 2026-08-17
 - [[kapacita-se-upravuje-v-aplikaci]] — Volná kapacita jídelny se mění v aplikaci na obrazovce Jídelny a dělí se na „v provozu" a „v přípravě" — sečíst je dohromady by tvrdilo, že máme víc, než máme · active · 2026-08-17
+- [[odesilaci-domena-a-adresa]] — Posílá se z adresy přihlášeného uživatele přes Resend a odesílací doména musí být nastavitelná per firma, protože se systém bude prodávat · active · 2026-08-17
 - [[produkt-neni-vazany-na-obor]] — Cantinero se prodává firmám z jakéhokoli oboru — jídelny jsou jen jeden z use-caseů, žádná data se nesmí odepsat jako nepotřebná · active · 2026-08-10
 - [[dve-vrstvy-znalost-a-zprava]] — Whitelist váže obsah zprávy, ne sběr — SPEC kap. 5 rozdělena na znalost o firmě a obsah oslovení · active · 2026-08-06
 - [[male-firmy-a-nezname-jde-pribrat]] — Firmy bez známé velikosti i firmy do 24 zaměstnanců jde do kampaně přibrat dodatečně, každé vlastním tlačítkem · active · 2026-08-04
@@ -30,6 +35,9 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[jsonb-se-serializuje-dvakrat]] — JSON.stringify do jsonb sloupce uloží v ostré databázi řetězec místo objektu — PGlite ho rozparsuje, postgres.js serializuje podruhé, takže testy mlčí · active · 2026-08-17
+- [[nowrap-v-gridu-pretece-pres-sousedy]] — Popisek s white-space: nowrap uvnitř gridové buňky nezalomí, ale přeteče přes sousední sloupec — čísla se překryjí a nic to nenahlásí · active · 2026-08-17
+- [[spojeni-neni-pocet-kontaktu]] — „Spojení" znamená kontakt s e-mailem nebo telefonem — počet kontaktů je jiné číslo a smíchat je znamená protimluv na jedné obrazovce · active · 2026-08-17
 - [[dosah-je-tabulka-ne-sloupec]] — Dosah jídelen drží tabulka `dosah`, ne `companies.nejblizsi_jidelna_id` — dotaz na sloupec ukáže nulu i tam, kde dosah je · active · 2026-08-13
 - [[firma-bez-razitka-se-vraci-navzdy]] — Firmu, kterou agent tiše přeskočí, nikdo nerazítkuje — vrací se do každé další dávky a fronta nikdy nedojde · active · 2026-08-13
 - [[dva-profily-sber-a-reserse]] — Profil se čte ze dvou míst — sběr bere globálně aktivní, rešerše profil kampaně; kdo ho čte, musí říct který · active · 2026-08-07
@@ -49,6 +57,7 @@
 - [[zelene-testy-nejsou-hotova-obrazovka]] — Testy a typy nechytí vady toku a pořadí — frontend se musí proklikat · active · 2026-08-01
 
 ## Bugs
+- [[uroven1-merena-ze-spatneho-zakladu]] — Metrika „podíl kontaktů úrovně 1" počítala i jednatele bez adresy a agent dával jmenným adresám obchodníků jedničku — dvě různé chyby dávající totéž číslo · fixed · 2026-08-17
 - [[pootocene-urovne-adres]] — Obrazovka i příkazová řádka hlásily úroveň 1 jako jmenovanou osobu, ačkoli TP-6 říká opak — a právě to číslo hlídá GDPR · fixed · 2026-08-06
 - [[chybejici-index-na-contacts]] — Kartotéka se načítala 20+ s, protože contacts.ico neměl index — cizí klíč index nedělá · fixed · 2026-08-03
 - [[sber-neukladal-velikost]] — Oprava velikosti byla jen zpětná — sběr ji dál nezapisoval, takže nová kampaň měla nula firem · fixed · 2026-08-03

@@ -13,6 +13,7 @@
 
 import type { Db } from "./db.js";
 import { osloveni, oznaceniFirmy } from "./osloveni.js";
+import { cesky } from "./cestina.js";
 
 /**
  * Cena, která půjde do zprávy.
@@ -176,13 +177,27 @@ export interface UdajeFirmy {
   cena: string | null;
 }
 
-/** Vzdálenost lidsky: do 1,2 km pěšky, dál v kilometrech. */
+/**
+ * Vzdálenost lidsky: do 1,2 km pěšky, dál v kilometrech.
+ *
+ * Skloňování má dvě pravidla, která se pletou i lidem:
+ * celé číslo se řídí počtem (2–4 kilometry, 5 kilometrů), kdežto
+ * **desetinné číslo je vždycky druhý pád jednotného čísla** —
+ * „3,2 kilometru", nikdy „3,2 kilometry".
+ */
 export function vzdalenostSlovy(metru: number): string {
   if (metru <= 400) return "pár minut pěšky";
+  // Zhruba 80 metrů za minutu — pomalejší chůze, ať to není přehnané.
   if (metru <= 1200) return `${Math.round(metru / 80)} minut pěšky`;
+
   const km = metru / 1000;
-  const cislo = km < 10 ? km.toFixed(1).replace(".", ",") : String(Math.round(km));
-  return `${cislo} kilometru`.replace(/^([2-4]),/, "$1,").replace("kilometru", km >= 2 ? "kilometry" : "kilometru");
+  const zaokrouhlene = Math.round(km * 10) / 10;
+
+  if (Number.isInteger(zaokrouhlene)) {
+    const n = zaokrouhlene;
+    return `${n} ${cesky(n, "kilometr", "kilometry", "kilometrů")}`;
+  }
+  return `${zaokrouhlene.toFixed(1).replace(".", ",")} kilometru`;
 }
 
 export interface Nastaveni {
@@ -248,12 +263,22 @@ export interface Nahled {
  * volající — hlídá ji test, aby se personalizací nedalo pravidla obejít.
  */
 export async function slozZpravu(db: Db, kampanId: string, ico: string): Promise<Nahled> {
+  // Kampaň založená dřív, než se šablony zavedly, `template_id` nemá.
+  // Ustoupí se na schválenou šablonu — stejně jako `firmyKOsloveni`, ať
+  // náhled a výčet firem nemluví každý o jiném textu.
   const [sablona] = await db.query<{ predmet: string | null; telo: string }>(
     `select t.predmet, t.telo from templates t
-       join kampane k on k.template_id = t.id where k.id = $1`,
+       join kampane k on k.template_id = t.id
+      where k.id = $1
+      union all
+     select t.predmet, t.telo from templates t
+      where t.stav = 'schvaleno'
+        and not exists (select 1 from kampane k
+                         where k.id = $1 and k.template_id is not null)
+      order by 1 limit 1`,
     [kampanId],
   );
-  if (!sablona) throw new Error("Kampaň nemá vybranou šablonu.");
+  if (!sablona) throw new Error("Není z čeho skládat — kampaň nemá šablonu a žádná není schválená.");
 
   const { pripravene, vyrazene } = await firmyKOsloveni(db, kampanId);
   const stav = [...pripravene, ...vyrazene].find((f) => f.ico === ico);

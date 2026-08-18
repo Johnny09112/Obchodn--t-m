@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { pripojPglite, spustMigrace, type Db } from "../src/db.js";
 import { ulozSablonu } from "../src/obsah.js";
 import { SABLONA_HLAVNI } from "../src/obsah-schvaleny.js";
-import { cenaKampane, firmyKOsloveni, nastavPole, slozZpravu } from "../src/zprava.js";
+import {
+  cenaKampane,
+  firmyKOsloveni,
+  nastavPole,
+  slozZpravu,
+  vzdalenostSlovy,
+} from "../src/zprava.js";
 import { zkontrolujZpravu } from "../src/styl-zpravy.js";
 
 /**
@@ -298,5 +304,39 @@ describe("složení zprávy", () => {
 
     const z = await slozZpravu(db, k, "10000000");
     expect(zkontrolujZpravu(z.telo, { predmet: z.predmet, jmenoAdresata: "Procházka" })).toEqual([]);
+  });
+});
+
+describe("kampaň bez vybrané šablony", () => {
+  it("použije se schválená šablona, ne prázdno", async () => {
+    const k = await kampanSJidelnami(db, [["95", "15"]]);
+    await vybavFirmu(db, "10000000", { email: true, obor: true, prijmeni: null });
+    // Kampaň založená dřív, než se šablony zavedly, template_id nemá.
+    await db.query("update kampane set template_id = null where id = $1", [k]);
+
+    const z = await slozZpravu(db, k, "10000000");
+    expect(z.telo).toContain("spolupracujeme se školní jídelnou");
+  });
+});
+
+describe("vzdálenost slovy", () => {
+  it("blízko je pěšky, ne v metrech", () => {
+    expect(vzdalenostSlovy(300)).toBe("pár minut pěšky");
+    expect(vzdalenostSlovy(800)).toBe("10 minut pěšky");
+  });
+
+  it("celé kilometry se skloňují podle počtu", () => {
+    expect(vzdalenostSlovy(2000)).toBe("2 kilometry");
+    expect(vzdalenostSlovy(4000)).toBe("4 kilometry");
+    expect(vzdalenostSlovy(5000)).toBe("5 kilometrů");
+    expect(vzdalenostSlovy(12000)).toBe("12 kilometrů");
+  });
+
+  it("desetinné číslo má vždycky druhý pád jednotného čísla", () => {
+    // „1,6 kilometru", nikdy „1,6 kilometry" — desetinné číslo se chová
+    // jako zlomek, tedy jednotné číslo.
+    expect(vzdalenostSlovy(1600)).toBe("1,6 kilometru");
+    expect(vzdalenostSlovy(3200)).toBe("3,2 kilometru");
+    expect(vzdalenostSlovy(5500)).toBe("5,5 kilometru");
   });
 });

@@ -24,6 +24,7 @@ import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
 import { nactiSchvalenaTvrzeni, ulozSablonu, ulozTvrzeni, vyplnPriklady } from "./obsah.js";
 import { nactiHodnoty, nactiParametry, ulozHodnotu } from "./parametry.js";
+import { cenaKampane, firmyKOsloveni, nastavPole, slozZpravu } from "./zprava.js";
 import { SABLONA_HLAVNI, TVRZENI } from "./obsah-schvaleny.js";
 import { novePoznatky } from "./playbook.js";
 import { doplnKontakty } from "./kontakty.js";
@@ -2012,6 +2013,78 @@ async function cmdObsah(argv: string[]): Promise<void> {
 }
 
 /**
+ * Náhled zprávy kampaně.
+ *
+ * **Nic neodesílá ani nepřipravuje k odeslání** — složí text tak, jak by
+ * vypadal, a vypíše, komu se poslat nedá a proč. Odesílání je vypnuté
+ * (TP-8) a přijde na řadu ve fázi 3.
+ */
+async function cmdZprava(argv: string[]): Promise<void> {
+  const podprikaz = argv[0] === "nastav" ? "nastav" : "nahled";
+  const { values } = parseArgs({
+    args: podprikaz === "nastav" ? argv.slice(1) : argv,
+    options: {
+      kampan: { type: "string" },
+      ico: { type: "string" },
+      pole: { type: "string" },
+      rezim: { type: "string" },
+      hodnota: { type: "string" },
+    },
+    allowPositionals: true,
+  });
+
+  if (!values.kampan) {
+    console.log("Chybí --kampan <id>.");
+    return;
+  }
+
+  const db = await pripojDb();
+  try {
+    if (podprikaz === "nastav") {
+      if (!values.pole || !values.rezim) {
+        console.log("Chybí --pole nebo --rezim.");
+        return;
+      }
+      const rezim = values.rezim as "z_dat" | "pevne" | "vynechat";
+      await nastavPole(db, values.kampan, values.pole, rezim, values.hodnota ?? null);
+      console.log(`Pole „${values.pole}" nastaveno na ${rezim}.`);
+      return;
+    }
+
+    const cena = await cenaKampane(db, values.kampan);
+    console.log(`Cena do zprávy: ${cena ?? "— nemá se odkud vzít"}`);
+
+    const { pripravene, vyrazene } = await firmyKOsloveni(db, values.kampan);
+    console.log(`Připraveno k oslovení: ${pripravene.length}`);
+    console.log(`Vypadne z kampaně: ${vyrazene.length}`);
+
+    const duvody = new Map<string, number>();
+    for (const f of vyrazene) {
+      for (const d of f.chybi) duvody.set(d, (duvody.get(d) ?? 0) + 1);
+    }
+    for (const [duvod, pocet] of [...duvody].sort((a, b) => b[1] - a[1])) {
+      console.log(`  ${pocet}× ${duvod}`);
+    }
+
+    const ico = values.ico ?? pripravene[0]?.ico;
+    if (!ico) {
+      console.log("\nŽádná firma není připravená, náhled se nemá na čem ukázat.");
+      return;
+    }
+
+    const z = await slozZpravu(db, values.kampan, ico);
+    console.log(`\n── náhled pro ${ico} ──`);
+    console.log(`Předmět: ${z.predmet}\n`);
+    console.log(z.telo);
+    if (z.chybi.length > 0) {
+      console.log(`\nNEODESLALO BY SE: ${z.chybi.join(" · ")}`);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
  * Parametry nabídky z příkazové řádky.
  *
  * Obrazovka je hlavní cesta; tohle je záchranná brzda pro případ, kdy je
@@ -2279,6 +2352,9 @@ switch (prikaz) {
   case "obsah":
     await cmdObsah(zbytek);
     break;
+  case "zprava":
+    await cmdZprava(zbytek);
+    break;
   case "parametry":
     await cmdParametry(zbytek);
     break;
@@ -2372,6 +2448,9 @@ switch (prikaz) {
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)
   obsah [seznam]                   vypíše schválená tvrzení a šablony v databázi
   obsah nahraj [--potvrdit]        nahraje schválený text ze src/obsah-schvaleny.ts
+  zprava --kampan <id> [--ico <ico>]
+                                   náhled zprávy kampaně; NIC NEODESÍLÁ
+  zprava nastav --kampan <id> --pole <kod> --rezim z_dat|pevne|vynechat [--hodnota …]
   parametry [seznam] [--produkt cantinero]
                                    vypíše parametry nabídky a jejich hodnoty
   parametry nastav --jidelna <id> --kod <kod> --hodnota <text>

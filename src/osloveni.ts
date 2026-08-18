@@ -69,13 +69,58 @@ export function osloveni(prijmeni: string | null): string {
  * **„od Vás"**. Je to vždycky správně česky a vždycky pravda; horší je
  * „od Vaší Bezpečnostní agentura poskytující ochranu osob".
  */
+/**
+ * Mužská podstatná jména zakončená na -a. Koncovka o rodu nerozhoduje:
+ * „truhlárna" je ženská, „specialista" mužský, a obojí končí stejně.
+ * Bez téhle výjimky by vzniklo „od Vaší specialisty".
+ *
+ * Přibylo 18. 8. 2026, když Čmuchal přinesl z ostrého běhu „specialistu"
+ * jako sebeoznačení firmy.
+ */
+const MUZSKA_NA_A = /(ista|sta|ita|ca|ga|ha|cha)$/u;
+
+/**
+ * Slova, která o firmě neřeknou nic. Čmuchal je 18. 8. 2026 přinesl
+ * z ostrého běhu jako sebeoznačení — „Naše firma s dvacetiletou tradicí…"
+ * je doslova doložené, jenže věta „pár minut od Vaší firmy" je prázdná.
+ * Horší než „od Vás": zabírá místo a tváří se jako personalizace.
+ */
+const OBECNA_SLOVA = new Set([
+  "firma",
+  "společnost",
+  "spolek",
+  "organizace",
+  "provozovna",
+  "podnik",
+  "centrum",
+  "sdružení",
+]);
+
+/**
+ * Označení člověka nebo role. Ve větě „pár minut pěšky od Vašeho
+ * distributora" by tvrdila něco jiného, než chceme: mluvíme o té firmě,
+ * ne o někom, ke komu ona chodí. Vyskloňovat by to šlo, dávat smysl ne.
+ */
+const OSOBY_A_ROLE = /(tel|tor|ent|log|ář|íř|ník|ista|sta)$/u;
+
 export function oznaceniFirmy(obor: string | null): string {
   const o = (obor ?? "").trim();
   const OBECNE = "od Vás";
   if (o === "" || o.includes(" ")) return OBECNE;
+  if (OBECNA_SLOVA.has(o.toLowerCase())) return OBECNE;
+  if (OSOBY_A_ROLE.test(o) || MUZSKA_NA_A.test(o)) return OBECNE;
+
+  // Střední na -ství/-ctví: druhý pád je stejný (sklenářství, zahradnictví).
+  if (/(ství|ctví)$/u.test(o)) return `od Vašeho ${o}`;
+
+  // Ženské na -ce: druhý pád je taky stejný (ordinace, ambulance).
+  if (/ce$/u.test(o)) return `od Vaší ${o}`;
 
   // Ženské na -a: truhlárna → truhlárny, pekárna → pekárny.
   if (/[a-záčďéěíňóřšťúůýž]a$/u.test(o)) return `od Vaší ${o.slice(0, -1)}y`;
+
+  // Mužské neživotné na tvrdou souhlásku: penzion → penzionu, e-shop → e-shopu.
+  if (/[a-záčďéěíňóřšťúůýž]$/u.test(o)) return `od Vašeho ${o}u`;
 
   return OBECNE;
 }

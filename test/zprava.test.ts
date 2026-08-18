@@ -7,8 +7,8 @@ import {
   firmyKOsloveni,
   nastavPole,
   slozZpravu,
-  vzdalenostSlovy,
 } from "../src/zprava.js";
+import { vzdalenostSlovy } from "../src/text-zpravy.js";
 import { zkontrolujZpravu } from "../src/styl-zpravy.js";
 
 /**

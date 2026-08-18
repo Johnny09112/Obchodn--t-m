@@ -1568,3 +1568,89 @@ export async function zavedParametrProduktu(v: {
     throw new Error("Parametr se nepodařilo zavést — zavádět je smí jen admin.");
   }
 }
+
+/* ───────────────────────────────────────────── krok Zpráva (0048) */
+
+export interface PoleSablony {
+  id: string;
+  kod: string;
+  nazev: string;
+  povinne: boolean;
+  poradi: number;
+}
+
+export interface NastaveniPoleRadek {
+  pole_id: string;
+  rezim: "z_dat" | "pevne" | "vynechat";
+  hodnota: string | null;
+}
+
+export interface Sablona {
+  id: string;
+  verze: number;
+  segment: string;
+  predmet: string | null;
+  telo: string;
+}
+
+/** Šablony, ze kterých jde u kampaně vybírat — jen schválené. */
+export async function nactiSablony(): Promise<Sablona[]> {
+  const { data, error } = await supabase
+    .from("templates")
+    .select("id,verze,segment,predmet,telo")
+    .eq("stav", "schvaleno")
+    .order("verze", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Sablona[];
+}
+
+export async function nactiPoleSablony(templateId: string): Promise<PoleSablony[]> {
+  const { data, error } = await supabase
+    .from("pole_sablony")
+    .select("id,kod,nazev,povinne,poradi")
+    .eq("template_id", templateId)
+    .order("poradi");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as PoleSablony[];
+}
+
+export async function nactiNastaveniPoli(kampanId: string): Promise<NastaveniPoleRadek[]> {
+  const { data, error } = await supabase
+    .from("nastaveni_pole")
+    .select("pole_id,rezim,hodnota")
+    .eq("kampan_id", kampanId);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as NastaveniPoleRadek[];
+}
+
+/**
+ * Zamítnutý zápis Supabase nehlásí jako chybu — jen změní nula řádků
+ * (past `zamitnuty-zapis-bez-chyby`).
+ */
+export async function ulozNastaveniPole(
+  kampanId: string,
+  poleId: string,
+  rezim: "z_dat" | "pevne" | "vynechat",
+  hodnota: string | null,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("nastaveni_pole")
+    .upsert({ kampan_id: kampanId, pole_id: poleId, rezim, hodnota }, { onConflict: "kampan_id,pole_id" })
+    .select("pole_id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Nastavení se nepodařilo uložit — měnit ho smí jen admin.");
+  }
+}
+
+export async function ulozSablonuKampane(kampanId: string, templateId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("kampane")
+    .update({ template_id: templateId })
+    .eq("id", kampanId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Šablonu se nepodařilo uložit — měnit ji smí jen admin.");
+  }
+}

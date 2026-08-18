@@ -1884,3 +1884,29 @@ h3 {
     gap: var(--o1);
   }
 }
+
+/* ───────────────────────────────────────────── náhled zprávy (krok 5) */
+
+.nahled-zpravy {
+  background: var(--karta);
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.nahled-zpravy .predmet-radek {
+  margin: 0;
+  padding: var(--o3);
+  border-bottom: 1px solid var(--linka);
+  font-size: var(--t-drobny);
+}
+
+/* Zpráva je prostý text — zalomení a odstavce jsou její součást. */
+.nahled-zpravy .telo-zpravy {
+  margin: 0;
+  padding: var(--o4);
+  white-space: pre-wrap;
+  font: inherit;
+  font-size: var(--t-drobny);
+  line-height: 1.65;
+}

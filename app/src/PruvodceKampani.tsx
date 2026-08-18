@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Krokovnik } from "./Krokovnik";
+import { KrokZprava } from "./KrokZprava";
 import { MapaOblasti } from "./MapaOblasti";
 import {
   jeKampanZamcena,
@@ -92,8 +93,8 @@ export function PruvodceKampani({
   onHotovo: () => void;
 }) {
   const [id, setId] = useState<string | null>(kampan?.id ?? null);
-  const [krok, setKrok] = useState<1 | 2 | 3 | 4>(
-    kampan ? (Math.min(Math.max(kampan.krok, 1), 4) as 1 | 2 | 3 | 4) : 1,
+  const [krok, setKrok] = useState<1 | 2 | 3 | 4 | 5>(
+    kampan ? (Math.min(Math.max(kampan.krok, 1), 5) as 1 | 2 | 3 | 4 | 5) : 1,
   );
   const [nazev, setNazev] = useState(kampan?.nazev ?? "");
   const [kontext, setKontext] = useState("");
@@ -860,6 +861,25 @@ export function PruvodceKampani({
           </p>
         )}
       </div>
+    );
+  }
+
+  // ── krok 5: zpráva
+
+  if (krok === 5 && id) {
+    return (
+      <>
+        <div className="sloupec">
+          <h2>{nazev}</h2>
+          <Krokovnik krok={5} />
+        </div>
+        <KrokZprava
+          kampanId={id}
+          role={role}
+          onZpet={() => setKrok(4)}
+          onHotovo={onHotovo}
+        />
+      </>
     );
   }
 

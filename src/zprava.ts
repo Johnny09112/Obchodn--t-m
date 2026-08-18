@@ -12,9 +12,7 @@
  */
 
 import type { Db } from "./db.js";
-import { osloveni, oznaceniFirmy } from "./osloveni.js";
-import { cesky } from "./cestina.js";
-import { dobaCestyMin } from "./geo.js";
+import { slozText, vzdalenostSlovy, type NastaveniPole } from "./text-zpravy.js";
 
 /**
  * Cena, která půjde do zprávy.
@@ -68,16 +66,6 @@ export interface StavFirmy {
 }
 
 /**
- * Věty pro člověka podle kódu pole. Jsou tu, a ne v databázi, protože se
- * netýkají dat, ale toho, jak se o chybějícím údaji mluví k majiteli.
- */
-const POPIS_CHYBI: Record<string, string> = {
-  od_vasi_firmy: "chybí obor — nevíme, jak firmu pojmenovat",
-  vzdalenost: "není spočítaná vzdálenost k jídelně",
-  cena: "u jídelny v dosahu není vyplněná cena",
-};
-
-/**
  * Kdo se v kampani osloví a kdo ne.
  *
  * Rozhodl majitel 18. 8. 2026: chybějící **jméno** firmu nevyřazuje
@@ -94,108 +82,22 @@ export async function firmyKOsloveni(
   db: Db,
   kampanId: string,
 ): Promise<{ pripravene: StavFirmy[]; vyrazene: StavFirmy[] }> {
-  const povinna = await db.query<{ kod: string }>(
-    `select p.kod from pole_sablony p
-       join kampane k on k.template_id = p.template_id
-      where k.id = $1 and p.povinne`,
-    [kampanId],
-  );
-  // Kampaň bez vybrané šablony: povinná pole se berou ze šablony, která
-  // je v provozu. Bez toho by přehled tvrdil, že je připravená každá firma.
-  const kody =
-    povinna.length > 0
-      ? povinna.map((x) => x.kod)
-      : (
-          await db.query<{ kod: string }>(
-            `select distinct p.kod from pole_sablony p
-               join templates t on t.id = p.template_id
-              where t.stav = 'schvaleno' and p.povinne`,
-          )
-        ).map((x) => x.kod);
-
-  const firmy = await db.query<{
-    ico: string;
-    nazev: string;
-    ma_email: boolean;
-    ma_obor: boolean;
-    ma_vzdalenost: boolean;
-    ma_cenu: boolean;
-  }>(
-    `select distinct c.ico, c.nazev,
-            exists (select 1 from contacts k
-                     where k.ico = c.ico and k.email is not null and k.email <> '')
-              as ma_email,
-            exists (select 1 from evidence e
-                     where e.ico = c.ico and e.atribut = 'obor') as ma_obor,
-            exists (select 1 from dosah d where d.ico = c.ico and d.v_zone)
-              as ma_vzdalenost,
-            exists (
-              select 1 from dosah d
-                join jidelny j on j.id = d.jidelna_id
-                join parametry_nabidky p
-                  on p.kod = 'cena_obeda' and p.produkt_kod = 'cantinero'
-                join hodnoty_parametru h
-                  on h.nabidka_id = j.nabidka_id and h.parametr_id = p.id
-               where d.ico = c.ico and d.v_zone
-            ) as ma_cenu
-       from kampan_oblasti ko
-       join oblast_firmy of on of.oblast_id = ko.oblast_id
-       join companies c on c.ico = of.ico
-      where ko.kampan_id = $1
-      order by c.nazev`,
+  // Pravidlo „co firmě chybí" počítá databáze (migrace 0050), ne tenhle
+  // modul — musí platit stejně pro příkazovou řádku i pro obrazovku
+  // kampaně, a ta na jádro nedosáhne.
+  const firmy = await db.query<{ ico: string; nazev: string; chybi: string[] }>(
+    "select ico, nazev, chybi from nahled_kampane($1)",
     [kampanId],
   );
 
   const pripravene: StavFirmy[] = [];
   const vyrazene: StavFirmy[] = [];
-
   for (const f of firmy) {
-    const chybi: string[] = [];
-    if (!f.ma_email) chybi.push("není kam napsat — chybí e-mail");
-    if (kody.includes("od_vasi_firmy") && !f.ma_obor) chybi.push(POPIS_CHYBI.od_vasi_firmy!);
-    if (kody.includes("vzdalenost") && !f.ma_vzdalenost) chybi.push(POPIS_CHYBI.vzdalenost!);
-    if (kody.includes("cena") && !f.ma_cenu) chybi.push(POPIS_CHYBI.cena!);
-
-    const stav: StavFirmy = { ico: f.ico, nazev: f.nazev, chybi };
-    if (chybi.length === 0) pripravene.push(stav);
+    const stav: StavFirmy = { ico: f.ico, nazev: f.nazev, chybi: f.chybi ?? [] };
+    if (stav.chybi.length === 0) pripravene.push(stav);
     else vyrazene.push(stav);
   }
-
   return { pripravene, vyrazene };
-}
-
-/**
- * Kterým údajem se pole vyplní, když je v režimu „vzít z dat".
- *
- * Zdroje jsou dané kódem, protože každý je dotaz do jiných dat. Nový
- * **parametr nabídky** je mezi nimi automaticky — proto `cena` čte
- * `hodnoty_parametru`, ne sloupec.
- */
-export interface UdajeFirmy {
-  prijmeni: string | null;
-  obor: string | null;
-  vzdalenostM: number | null;
-  cena: string | null;
-}
-
-/**
- * Vzdálenost do zprávy — **časem, ne kilometry**.
- *
- * Vyžádal si majitel 18. 8. 2026 a má pravdu hned dvakrát. Za prvé: adresáta
- * zajímá, jak dlouho mu to trvá, ne kolik to měří. Za druhé, a to je horší:
- * uložená vzdálenost je **vzdušná čára**, takže napsané kilometry by ani
- * neodpovídaly tomu, co člověk ujde.
- *
- * Doba cesty počítá s oklikou a zaokrouhluje **nahoru** po pěti minutách
- * (`dobaCestyMin` v `geo.ts`). Slovo „přibližně" tam patří: je to odhad a nemá
- * se tvářit jinak.
- */
-export function vzdalenostSlovy(metru: number): string {
-  const { zpusob, minut } = dobaCestyMin(metru);
-  if (zpusob === "blizko") return "pár minut pěšky";
-  return `přibližně ${minut} ${cesky(minut, "minutu", "minuty", "minut")} ${
-    zpusob === "pesky" ? "pěšky" : "autem"
-  }`;
 }
 
 export interface Nastaveni {
@@ -227,23 +129,6 @@ export async function nastavPole(
        set rezim = excluded.rezim, hodnota = excluded.hodnota`,
     [kampanId, pole.id, rezim, hodnota],
   );
-}
-
-/**
- * Vymaže větu, ve které stojí zástupný údaj.
- *
- * Věta je úsek mezi tečkami. Maže se celá schválně: vynechat jen číslo by
- * nechalo „Kompletní menu vychází na  s možností…", což je horší než nic.
- */
-function vymazVetuS(telo: string, znacka: string): string {
-  return telo
-    .split("\n")
-    .map((odstavec) => {
-      if (!odstavec.includes(znacka)) return odstavec;
-      const vety = odstavec.split(/(?<=\.)\s+/);
-      return vety.filter((v) => !v.includes(znacka)).join(" ").trim();
-    })
-    .join("\n");
 }
 
 export interface Nahled {
@@ -288,49 +173,29 @@ export async function slozZpravu(db: Db, kampanId: string, ico: string): Promise
       where n.kampan_id = $1`,
     [kampanId],
   );
-  const podleKodu = new Map(nastaveni.map((n) => [n.kod, n]));
-
-  const [udaje] = await db.query<UdajeFirmy>(
+  const [udaje] = await db.query<{
+    prijmeni: string | null;
+    oznaceni: string | null;
+    vzdalenostM: number | null;
+  }>(
     `select (select k.prijmeni from contacts k
               where k.ico = $1 and k.email is not null and k.email <> ''
               order by (k.prijmeni is null) limit 1) as prijmeni,
             (select e.hodnota from evidence e
-              where e.ico = $1 and e.atribut = 'oznaceni' limit 1) as obor,
+              where e.ico = $1 and e.atribut = 'oznaceni' limit 1) as oznaceni,
             (select min(d.vzdalenost_m) from dosah d
               where d.ico = $1 and d.v_zone) as "vzdalenostM"`,
     [ico],
   );
 
-  const cena = await cenaKampane(db, kampanId);
+  // Skládá `text-zpravy.ts` — týž kód, jaký použije obrazovka kampaně.
+  // Dvě implementace by znamenaly dva různé maily pod jedním jménem.
+  const telo = slozText(sablona.telo, nastaveni as NastaveniPole[], {
+    prijmeni: udaje?.prijmeni ?? null,
+    oznaceni: udaje?.oznaceni ?? null,
+    vzdalenostM: udaje?.vzdalenostM != null ? Number(udaje.vzdalenostM) : null,
+    cena: await cenaKampane(db, kampanId),
+  });
 
-  const zData: Record<string, string | null> = {
-    osloveni: osloveni(udaje?.prijmeni ?? null),
-    // Bez doloženého označení se nevrací prázdno, ale „od Vás" — věta pak
-    // dává smysl i tak. Vyřazovat firmu kvůli slovu, které se nedá bezpečně
-    // vyskloňovat, by ubralo 90 firem z 91 (změřeno 18. 8.).
-    od_vasi_firmy: oznaceniFirmy(udaje?.obor ?? null),
-    vzdalenost: udaje?.vzdalenostM != null ? vzdalenostSlovy(Number(udaje.vzdalenostM)) : null,
-    cena,
-  };
-
-  let telo = sablona.telo;
-  for (const [, kod] of telo.matchAll(/\[([a-z_]+)\]/g)) {
-    if (kod === undefined) continue;
-    const znacka = `[${kod}]`;
-    const n = podleKodu.get(kod);
-
-    if (n?.rezim === "vynechat") {
-      telo = vymazVetuS(telo, znacka);
-      continue;
-    }
-    const hodnota = n?.rezim === "pevne" ? n.hodnota : zData[kod];
-    if (hodnota == null) continue; // chybějící údaj hlásí `chybi`, text zůstane
-    telo = telo.split(znacka).join(hodnota);
-  }
-
-  return {
-    predmet: sablona.predmet ?? "",
-    telo: telo.replace(/[ \t]+\n/g, "\n").trim(),
-    chybi: stav?.chybi ?? [],
-  };
+  return { predmet: sablona.predmet ?? "", telo, chybi: stav?.chybi ?? [] };
 }

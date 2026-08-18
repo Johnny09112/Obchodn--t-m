@@ -13,10 +13,11 @@
 
 ## ▶ Rozdělaná práce
 
-**S0.5 tvrzení a šablony — čeká na schválení majitelem.** Texty jsou hotové
-a prošly kontrolou stylu; v databázi zatím nic (claims i templates 0 řádků).
-Podrobnosti a seznam toho, co zbývá, jsou v souboru
-`_claude/memory/context/project-context.md`, sekce „Tvrzení a šablony (S0.5)".
+**S0.5 — texty schválené 18. 8. a uložené.** V ostré databázi je 8 tvrzení
+a šablona `vsichni/email` v1. Zbývá **cena u jídelny** (čeká na majitelovo
+ano) a **upozornění + vyřazení firem bez povinných údajů** (rozhodnuto,
+nepostavené). Podrobnosti v `_claude/memory/context/project-context.md`,
+sekce „Co zbývá v S0.5".
 
 Když majitel napíše jen **„pokračujeme"**, začni tím souborem.
 

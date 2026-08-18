@@ -14,6 +14,7 @@ export const POVOLENE_ATRIBUTY = [
   "ucel_adresy",
   "kontakt",
   "obor",
+  "oznaceni",
   "adresa",
 ] as const;
 

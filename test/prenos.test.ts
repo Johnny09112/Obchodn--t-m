@@ -128,12 +128,13 @@ describe("přenos dat do sdílené databáze", { timeout: 60_000 }, () => {
     );
     expect(pa).toHaveLength(1);
 
-    // Výchozích deset atributů (8 původních + smenny_provoz + web) zůstalo
+    // Výchozích jedenáct atributů (8 původních + smenny_provoz + web +
+    // oznaceni) zůstalo
     // v cíli jen jednou, ne zdvojených.
     const pocetVychozich = await cil.query<{ pocet: number }>(
       "select count(*)::int as pocet from atributy where kod <> 'test_custom'",
     );
-    expect(pocetVychozich[0]!.pocet).toBe(10);
+    expect(pocetVychozich[0]!.pocet).toBe(11);
   });
 
   it("nabídky, vlastní parametr i vyplněné hodnoty se přenesou", async () => {

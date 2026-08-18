@@ -14,6 +14,7 @@
 import type { Db } from "./db.js";
 import { osloveni, oznaceniFirmy } from "./osloveni.js";
 import { cesky } from "./cestina.js";
+import { dobaCestyMin } from "./geo.js";
 
 /**
  * Cena, která půjde do zprávy.
@@ -178,26 +179,23 @@ export interface UdajeFirmy {
 }
 
 /**
- * Vzdálenost lidsky: do 1,2 km pěšky, dál v kilometrech.
+ * Vzdálenost do zprávy — **časem, ne kilometry**.
  *
- * Skloňování má dvě pravidla, která se pletou i lidem:
- * celé číslo se řídí počtem (2–4 kilometry, 5 kilometrů), kdežto
- * **desetinné číslo je vždycky druhý pád jednotného čísla** —
- * „3,2 kilometru", nikdy „3,2 kilometry".
+ * Vyžádal si majitel 18. 8. 2026 a má pravdu hned dvakrát. Za prvé: adresáta
+ * zajímá, jak dlouho mu to trvá, ne kolik to měří. Za druhé, a to je horší:
+ * uložená vzdálenost je **vzdušná čára**, takže napsané kilometry by ani
+ * neodpovídaly tomu, co člověk ujde.
+ *
+ * Doba cesty počítá s oklikou a zaokrouhluje **nahoru** po pěti minutách
+ * (`dobaCestyMin` v `geo.ts`). Slovo „asi" tam patří: je to odhad a nemá
+ * se tvářit jinak.
  */
 export function vzdalenostSlovy(metru: number): string {
-  if (metru <= 400) return "pár minut pěšky";
-  // Zhruba 80 metrů za minutu — pomalejší chůze, ať to není přehnané.
-  if (metru <= 1200) return `${Math.round(metru / 80)} minut pěšky`;
-
-  const km = metru / 1000;
-  const zaokrouhlene = Math.round(km * 10) / 10;
-
-  if (Number.isInteger(zaokrouhlene)) {
-    const n = zaokrouhlene;
-    return `${n} ${cesky(n, "kilometr", "kilometry", "kilometrů")}`;
-  }
-  return `${zaokrouhlene.toFixed(1).replace(".", ",")} kilometru`;
+  const { zpusob, minut } = dobaCestyMin(metru);
+  if (zpusob === "blizko") return "pár minut pěšky";
+  return `asi ${minut} ${cesky(minut, "minutu", "minuty", "minut")} ${
+    zpusob === "pesky" ? "pěšky" : "autem"
+  }`;
 }
 
 export interface Nastaveni {
@@ -297,7 +295,7 @@ export async function slozZpravu(db: Db, kampanId: string, ico: string): Promise
               where k.ico = $1 and k.email is not null and k.email <> ''
               order by (k.prijmeni is null) limit 1) as prijmeni,
             (select e.hodnota from evidence e
-              where e.ico = $1 and e.atribut = 'obor' limit 1) as obor,
+              where e.ico = $1 and e.atribut = 'oznaceni' limit 1) as obor,
             (select min(d.vzdalenost_m) from dosah d
               where d.ico = $1 and d.v_zone) as "vzdalenostM"`,
     [ico],
@@ -307,7 +305,10 @@ export async function slozZpravu(db: Db, kampanId: string, ico: string): Promise
 
   const zData: Record<string, string | null> = {
     osloveni: osloveni(udaje?.prijmeni ?? null),
-    od_vasi_firmy: udaje?.obor ? oznaceniFirmy(udaje.obor) : null,
+    // Bez doloženého označení se nevrací prázdno, ale „od Vás" — věta pak
+    // dává smysl i tak. Vyřazovat firmu kvůli slovu, které se nedá bezpečně
+    // vyskloňovat, by ubralo 90 firem z 91 (změřeno 18. 8.).
+    od_vasi_firmy: oznaceniFirmy(udaje?.obor ?? null),
     vzdalenost: udaje?.vzdalenostM != null ? vzdalenostSlovy(Number(udaje.vzdalenostM)) : null,
     cena,
   };

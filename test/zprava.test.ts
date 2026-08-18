@@ -254,7 +254,10 @@ describe("složení zprávy", () => {
 
     const z = await slozZpravu(db, k, "10000000");
     expect(z.telo).toContain("Vážený pane Procházko,");
-    expect(z.telo).toContain("truhlárny");
+    // Bez doloženého krátkého označení se firma pojmenuje obecně —
+    // popis oboru („truhlárna, výroba nábytku na míru") se do vazby
+    // „od Vaší…" vyskloňovat nedá.
+    expect(z.telo).toContain("od Vás");
     expect(z.telo).toContain("110 Kč");
     // Žádný nevyplněný zástupný údaj.
     expect(z.telo).not.toMatch(/\[[a-z_]+\]/);
@@ -320,23 +323,66 @@ describe("kampaň bez vybrané šablony", () => {
 });
 
 describe("vzdálenost slovy", () => {
-  it("blízko je pěšky, ne v metrech", () => {
-    expect(vzdalenostSlovy(300)).toBe("pár minut pěšky");
-    expect(vzdalenostSlovy(800)).toBe("10 minut pěšky");
+  it("úplně blízko se čas neuvádí", () => {
+    expect(vzdalenostSlovy(200)).toBe("pár minut pěšky");
   });
 
-  it("celé kilometry se skloňují podle počtu", () => {
-    expect(vzdalenostSlovy(2000)).toBe("2 kilometry");
-    expect(vzdalenostSlovy(4000)).toBe("4 kilometry");
-    expect(vzdalenostSlovy(5000)).toBe("5 kilometrů");
-    expect(vzdalenostSlovy(12000)).toBe("12 kilometrů");
+  it("do dvou kilometrů trasy je to pěšky, po pěti minutách", () => {
+    // 1000 m vzdušnou čarou = 1300 m trasy = 17 minut → zaokrouhleno na 20.
+    expect(vzdalenostSlovy(1000)).toBe("asi 20 minut pěšky");
   });
 
-  it("desetinné číslo má vždycky druhý pád jednotného čísla", () => {
-    // „1,6 kilometru", nikdy „1,6 kilometry" — desetinné číslo se chová
-    // jako zlomek, tedy jednotné číslo.
-    expect(vzdalenostSlovy(1600)).toBe("1,6 kilometru");
-    expect(vzdalenostSlovy(3200)).toBe("3,2 kilometru");
-    expect(vzdalenostSlovy(5500)).toBe("5,5 kilometru");
+  it("dál se jede autem", () => {
+    // 5 km vzdušnou čarou = 6,5 km trasy ≈ 16 minut → zaokrouhleno na 20.
+    expect(vzdalenostSlovy(5000)).toBe("asi 20 minut autem");
+  });
+
+  it("v textu se nikdy neobjeví kilometry ani metry", () => {
+    for (const m of [200, 900, 1600, 3000, 9000, 40000]) {
+      expect(vzdalenostSlovy(m)).not.toMatch(/metr|kilometr|km/);
+    }
+  });
+
+  it("čas je vždycky násobek pěti minut", () => {
+    for (const m of [700, 1000, 1600, 3000, 9000]) {
+      const t = vzdalenostSlovy(m).match(/(\d+) minut/);
+      if (t?.[1]) expect(Number(t[1]) % 5).toBe(0);
+    }
+  });
+});
+
+describe("krátké označení firmy ve větě", () => {
+  it("doložené označení se použije a vyskloňuje", async () => {
+    const k = await kampanSJidelnami(db, [["95", "15"]]);
+    await vybavFirmu(db, "10000000", { email: true, obor: true, prijmeni: null });
+    await db.query(
+      `insert into evidence (ico, atribut, hodnota, zdroj_url, citace)
+       values ('10000000', 'oznaceni', 'truhlárna', 'https://priklad.cz',
+               'Naše truhlárna vyrábí nábytek na míru')`,
+    );
+
+    const z = await slozZpravu(db, k, "10000000");
+    expect(z.telo).toContain("od Vaší truhlárny");
+  });
+
+  it("bez označení ustoupí na „od Vás“, i když popis oboru známe", async () => {
+    const k = await kampanSJidelnami(db, [["95", "15"]]);
+    await vybavFirmu(db, "10000000", { email: true, obor: true, prijmeni: null });
+
+    const z = await slozZpravu(db, k, "10000000");
+    expect(z.telo).toContain("od Vás");
+    expect(z.telo).not.toContain("truhlárna ");
+  });
+
+  it("víceslovné označení se nepoužije — nedá se vyskloňovat", async () => {
+    const k = await kampanSJidelnami(db, [["95", "15"]]);
+    await vybavFirmu(db, "10000000", { email: true, obor: true, prijmeni: null });
+    await db.query(
+      `insert into evidence (ico, atribut, hodnota, zdroj_url, citace)
+       values ('10000000', 'oznaceni', 'truhlárna a nábytkářství', 'https://priklad.cz', 'citace')`,
+    );
+
+    const z = await slozZpravu(db, k, "10000000");
+    expect(z.telo).toContain("od Vás");
   });
 });

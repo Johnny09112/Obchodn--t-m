@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dobaChuzeMin, klasifikujZonu, vzdalenostM } from "../src/geo.js";
+import { dobaCestyMin, dobaChuzeMin, klasifikujZonu, vzdalenostM } from "../src/geo.js";
 
 describe("vzdalenostM", () => {
   it("spočítá známou vzdálenost (Staroměstské nám. → Václavské nám., ~1.1 km)", () => {
@@ -36,5 +36,38 @@ describe("klasifikujZonu", () => {
   });
   it("nad zónu je mimo", () => {
     expect(klasifikujZonu(3001, 3000)).toBe("mimo");
+  });
+});
+
+/**
+ * Doba cesty do zprávy.
+ *
+ * Uložená vzdálenost je **vzdušná čára** (haversine), skutečná trasa je
+ * delší. Do prvního oslovení se proto nesmí psát čas spočítaný přímo
+ * z ní — byl by to slib kratší cesty, než jaká je.
+ */
+describe("doba cesty pro zprávu", () => {
+  it("trasa se počítá delší než vzdušná čára", () => {
+    // Zástavbou se nechodí přímo; obvyklá oklika je kolem třetiny navíc.
+    expect(dobaCestyMin(1000).minut).toBeGreaterThan(1000 / 80);
+  });
+
+  it("do dvou kilometrů trasy se chodí pěšky", () => {
+    expect(dobaCestyMin(1000).zpusob).toBe("pesky");
+  });
+
+  it("dál se jede autem", () => {
+    expect(dobaCestyMin(5000).zpusob).toBe("autem");
+  });
+
+  it("čas se zaokrouhluje nahoru po pěti minutách", () => {
+    // Nikdy dolů: kratší slíbený čas je drobná nepravda hned v první větě.
+    expect(dobaCestyMin(1000).minut % 5).toBe(0);
+    expect(dobaCestyMin(1600).minut % 5).toBe(0);
+    expect(dobaCestyMin(9000).minut % 5).toBe(0);
+  });
+
+  it("úplně blízká jídelna se nepočítá na minuty", () => {
+    expect(dobaCestyMin(200).zpusob).toBe("blizko");
   });
 });

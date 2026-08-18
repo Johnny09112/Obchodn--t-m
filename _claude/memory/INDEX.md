@@ -45,6 +45,7 @@
 - [[ostra-data-jsou-v-cloudu]] — Ostrá data leží v cloudovém Postgresu za DATABASE_URL, ne v data/pgdata-v5 — lokální kopie zamrzla 29. 7. na 167 firmách a tiše odpoví na každý dotaz · active · 2026-08-18
 - [[personalizace-jen-z-whitelistu]] — Podle čeho firmu vybíráme a co o ní smíme napsat jsou dvě různé množiny — směnný provoz je signál, ale do zprávy nesmí · active · 2026-08-18
 - [[pravidlo-v-jadru-nehlida-obrazovku]] — Pravidlo napsané v src/ nehlídá obrazovku — aplikace zapisuje do Supabase přímo a na jádro nedosáhne; patří do databáze · active · 2026-08-18
+- [[sklonovani-do-zpravy]] — Údaj do české věty potřebuje pád — skloňuj jen tam, kde je pravidlo jisté, jinak ustup na tvar, který je vždycky správně · active · 2026-08-18
 - [[jsonb-se-serializuje-dvakrat]] — JSON.stringify do jsonb sloupce uloží v ostré databázi řetězec místo objektu — PGlite ho rozparsuje, postgres.js serializuje podruhé, takže testy mlčí · active · 2026-08-17
 - [[nowrap-v-gridu-pretece-pres-sousedy]] — Popisek s white-space: nowrap uvnitř gridové buňky nezalomí, ale přeteče přes sousední sloupec — čísla se překryjí a nic to nenahlásí · active · 2026-08-17
 - [[spojeni-neni-pocet-kontaktu]] — „Spojení" znamená kontakt s e-mailem nebo telefonem — počet kontaktů je jiné číslo a smíchat je znamená protimluv na jedné obrazovce · active · 2026-08-17

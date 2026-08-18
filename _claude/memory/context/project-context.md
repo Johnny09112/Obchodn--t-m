@@ -26,8 +26,8 @@ odesílací doména, právní konzultace.
 | Z toho se spojením | 648 |
 | Oblastí · kampaní | 7 · 5 |
 | Náklady na API | **0 USD** — placené nikdy neběželo, agent jde z předplatného |
-| Migrace | po `0044_stav_jidelny.sql`, nasazeno |
-| Testy | **760 zelených, 83 souborů** (k 18. 8.) |
+| Migrace | po `0047_poradi_parametru.sql`, nasazeno |
+| Testy | **789 zelených, 84 souborů** (k 18. 8.) |
 | Odesílání | **vypnuté** (ověřeno 18. 8.), zpráv 0 |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -344,21 +344,37 @@ Cesta: `src/obsah.ts` (zástupné údaje, zápis), `src/obsah-schvaleny.ts`
 (schválený text jako zdroj pravdy v gitu), příkaz `obsah` / `obsah nahraj
 --potvrdit`. Kontroluje se **při zápisu**: kontrola stylu a whitelist zdrojů.
 
+### Nastavení zprávy u kampaně — schváleno 18. 8., staví se
+
+Majitel rozhodl, že **nastavení e-mailu patří ke kampani** (jeden produkt
+může mít víc oblastí a naopak) a že údaje o nabídce musí jít zavádět
+**bez kódování**, protože nabídkou nemusí být jídelna, ale docházkový
+systém nebo on-line služba.
+
+- Zadání: `docs/superpowers/specs/2026-08-18-nastaveni-zpravy-design.md`
+- Návrh nanečisto: `docs/vizualizace/navrh-nastaveni-zpravy-2026-08-18.html`
+- Plán 1. dodávky: `docs/superpowers/plans/2026-08-18-parametry-nabidky.md`
+
+**První dodávka je HOTOVÁ a nasazená** (migrace 0045–0047): nabídky oddělené
+od jídelen, parametry čtyř druhů, okno u jídelny s tlačítkem *Upravit*
+a zavádění vlastních parametrů. Proklikáno v prohlížeči — našly se přitom
+dvě vady, obě opravené ([[pravidlo-v-jadru-nehlida-obrazovku]]).
+
+**Čeká na majitele: vyplnit ceny, provize a možnosti výdeje u jídelen.**
+Bez toho nemá druhá dodávka co ukazovat.
+
+Zbývají dodávky 2 (krok „Zpráva" u kampaně) a 3 (editor šablony).
+
 ### Co zbývá v S0.5
 
-1. **Cena u jídelny místo ceníku** ([[cena-v-osloveni]] přepsáno 18. 8.):
-   sloupec s cenou a provizí u jídelny, pole na obrazovce Jídelny a potvrzení
-   ceny před spuštěním kampaně. Návrh předložen, **čeká na majitelovo ano**.
-   Dokud cena není, `[cena]` se nemá čím vyplnit a připravených firem je 0.
-2. **Upozornění v tabulce firem + vyřazení z kampaně**, když povinný údaj
-   chybí. Rozhodnuto, nepostavené. Jediný zdroj pravdy o tom, co je povinné,
-   je `POVINNE_SLOTY` v `src/obsah.ts` — ať nevznikne čtvrtá kopie seznamu
-   ([[tri-kopie-seznamu-atributu]]).
-3. **Poučení podle čl. 14 GDPR** do mailu, protože se oslovuje jménem.
+1. **Poučení podle čl. 14 GDPR** do mailu, protože se oslovuje jménem.
    Znění patří na právní konzultaci (S0.8), ne do mé hlavy.
-4. **Revize „od září"** k 1. 9. ([[revize-zari]]).
-5. **Zapsat do SPEC** jednu šablonu místo segmentů — majitel rozhodl,
-   zadání to zatím neví. Nedělat bez jeho pokynu.
+2. **Revize „od září"** k 1. 9. ([[revize-zari]]).
+3. **Zapsat do SPEC** jednu šablonu místo segmentů a nastavení zprávy
+   u kampaně — majitel rozhodl, zadání to zatím neví. Nedělat bez pokynu.
+4. **Upozornění v tabulce firem + vyřazení z kampaně** je součástí
+   2. dodávky. Zdroj pravdy o povinnosti bude `pole_sablony.povinne`,
+   ne seznam v kódu ([[tri-kopie-seznamu-atributu]]).
 
 Majitel 18. 8. zároveň řekl, že texty musí být nasaditelné i u jiné firmy
 a že skládat je má umět agent — zapsáno jako [[sablona-ma-tri-vrstvy]].

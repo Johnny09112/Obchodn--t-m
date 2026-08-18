@@ -26,8 +26,8 @@ odesílací doména, právní konzultace.
 | Z toho se spojením | 648 |
 | Oblastí · kampaní | 7 · 5 |
 | Náklady na API | **0 USD** — placené nikdy neběželo, agent jde z předplatného |
-| Migrace | po `0051_pristup_k_obsahu.sql`, nasazeno |
-| Testy | **843 zelených, 87 souborů** (k 18. 8.) |
+| Migrace | po `0053_nahled_s_parametry.sql`, nasazeno |
+| Testy | **851 zelených, 88 souborů** (k 18. 8.) |
 | Odesílání | **vypnuté** (ověřeno 18. 8.), zpráv 0 |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
@@ -355,7 +355,7 @@ systém nebo on-line služba.
 - Návrh nanečisto: `docs/vizualizace/navrh-nastaveni-zpravy-2026-08-18.html`
 - Plán 1. dodávky: `docs/superpowers/plans/2026-08-18-parametry-nabidky.md`
 
-**Dodávky 1 a 2 jsou HOTOVÉ a nasazené** (migrace 0045–0051).
+**Všechny tři dodávky jsou HOTOVÉ a nasazené** (migrace 0045–0053).
 
 1. **Parametry nabídky** — nabídky oddělené od jídelen, parametry čtyř
    druhů, okno u jídelny s tlačítkem *Upravit*, zavádění vlastních
@@ -377,8 +377,18 @@ vzdušná čára.
 větě „od Vaší truhlárny" použije. Zbytek dostane „od Vás“
 ([[sklonovani-do-zpravy]]).
 
-Zbývá **dodávka 3 — editor šablony** (psaní textu, podmíněné pasáže,
-koncept a „pustit do provozu").
+3. **Editor šablony** — obrazovka Šablony v hlavním menu: psaní textu,
+   vkládání polí, živá kontrola stylu (kontroluje se VYPLNĚNÝ text, ne
+   kostra), podmínky u vět vybírané z parametrů nabídky, koncept
+   a „pustit do provozu" (starší verzi vyřadí — platná je vždy právě
+   jedna). Podmínka se váže na pořadí odstavce a věty, ne pozici znaku.
+   Skládání i kontrola jsou čisté moduly (,
+   ) — obrazovka pouští týž kód jako jádro.
+
+**U věty o jídlonosičích je nastavená podmínka** „jen když možnosti
+výdeje zahrnují do vlastního jídlonosiče" — dnešní jídelny ji všechny
+splňují, takže výstup se nemění; jídelna bez jídlonosičů tu větu
+automaticky neřekne. Nastaveno při proklikání 18. 8.
 
 ### Co zbývá v S0.5
 

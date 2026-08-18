@@ -13,9 +13,9 @@
 
 ## ▶ Rozdělaná práce
 
-**Nastavení zprávy u kampaně — dodávky 1 a 2 hotové 18. 8.** Parametry
-nabídky se zavádějí v aplikaci a kampaň má krok „Zpráva" s náhledem
-hotového mailu na skutečné firmě. **Zbývá dodávka 3 — editor šablony.**
+**Nastavení zprávy u kampaně — HOTOVO celé, tři dodávky 18. 8.** Parametry
+nabídky, krok „Zpráva" u kampaně i editor šablon s podmíněnými větami
+běží v aplikaci. Text mailu se od teď mění bez sahání do kódu.
 
 **S0.5 — texty schválené 18. 8. a uložené.** V ostré databázi je 8 tvrzení
 a šablona `vsichni/email` v1. Zbývá **cena u jídelny** (čeká na majitelovo

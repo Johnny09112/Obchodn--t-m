@@ -129,6 +129,27 @@
               color: var(--inkoust); white-space: nowrap; }
   .tlacitko.hlavni { background: var(--zelena); border-color: var(--zelena); color: var(--karta); }
 
+  /* ------------------------------------------------------- vyskakovací okno */
+  .dialog-plocha { background: var(--karta2); border: 1px dashed var(--linka);
+                   border-radius: 6px; padding: 1.5rem 1rem; display: flex;
+                   justify-content: center; }
+  .dialog { background: var(--karta); border: 1px solid var(--linka); border-radius: 6px;
+            box-shadow: var(--stin-okno); width: 100%; max-width: 34rem; overflow: hidden; }
+  .dialog.uzky { max-width: 27rem; }
+  .dialog-hlava { display: flex; align-items: center; gap: 1rem;
+                  padding: 0.85rem 1.15rem; border-bottom: 1px solid var(--linka); }
+  .dialog-hlava h3 { font-family: var(--pismo-nadpis); font-size: 1.0625rem; margin: 0; }
+  .dialog-hlava .zavrit { margin-left: auto; color: var(--inkoust-slaby); font-size: 0.9rem; }
+  .dialog-telo { padding: 0.5rem 1.15rem 1.15rem; }
+  .skupina-nadpis { font-family: var(--pismo-data); font-size: 0.6875rem;
+                    letter-spacing: 0.1em; text-transform: uppercase;
+                    color: var(--inkoust-slaby); margin: 1rem 0 0.15rem; }
+  .skupina-nadpis .pocet { background: var(--karta2); border-radius: 2px;
+                           padding: 0 0.35rem; margin-left: 0.3rem; }
+  .dialog-pata { display: flex; gap: 0.5rem; align-items: center;
+                 margin-top: 1.1rem; padding-top: 0.9rem;
+                 border-top: 1px solid var(--linka); }
+
   .bublina { background: var(--modra-svetla); border-left: 3px solid var(--modra);
              border-radius: 4px; padding: 0.8rem 1rem; font-size: 0.875rem; }
   .bublina b { display: block; margin-bottom: 0.2rem; }
@@ -179,9 +200,11 @@
     <h1>Nastavení zprávy u kampaně</h1>
     <p class="perex">
       Text mailu se přestane psát v kódu. Kampaň si vybere šablonu a určí,
-      čím se v ní vyplní jednotlivá pole; jídelna drží fakta, ze kterých se
-      čerpá. Obrazovky níž jsou <strong>nakreslené nanečisto</strong> —
-      nic z toho zatím není postavené.
+      čím se v ní vyplní jednotlivá pole; nabídka drží fakta, ze kterých se
+      čerpá — a <strong>jaké údaje o nabídce sledujeme, si zavedete sám</strong>,
+      takže systém sedne i na docházkový systém nebo on-line službu.
+      Obrazovky níž jsou <strong>nakreslené nanečisto</strong> — nic z toho
+      zatím není postavené.
     </p>
   </header>
 
@@ -196,11 +219,12 @@
 
     <div class="dvojice">
       <article class="polovina">
-        <h3>Jídelna drží fakta</h3>
+        <h3>Nabídka drží fakta</h3>
         <p>
-          Cena oběda, naše provize a to, co jídelna umí vydávat. Jsou to
-          skutečnosti dohodnuté s konkrétní jídelnou — mění se, když se
-          změní dohoda, ne když se píše kampaň.
+          Cena, provize, co umíme dodat. Jsou to skutečnosti o tom, co
+          prodáváme — mění se, když se změní dohoda, ne když se píše
+          kampaň. Dnes je nabídkou jídelna. Jindy to bude docházkový
+          systém nebo on-line služba.
         </p>
       </article>
       <article class="polovina">
@@ -214,20 +238,47 @@
     </div>
 
     <p class="podnadpis" style="margin-top: 1rem;">
-      Rozdíl je vidět na ceně: <strong>cena patří jídelně</strong>, protože
-      se s ní dohodla. <strong>Rozhodnutí, jestli se cena v mailu vůbec
-      zmíní, patří kampani.</strong> Proto má každé pole u kampaně jednu ze
-      tří voleb — vzít z dat, napsat natvrdo, nebo vynechat.
+      Rozdíl je vidět na ceně: <strong>cena patří nabídce</strong>, protože
+      se na ní někdo dohodl. <strong>Rozhodnutí, jestli se cena v mailu
+      vůbec zmíní, patří kampani.</strong> Proto má každé pole u kampaně
+      jednu ze tří voleb — vzít z dat, napsat natvrdo, nebo vynechat.
     </p>
+
+    <div class="bublina" style="margin-top: 1rem;">
+      <b>Jídelna není zvláštní případ, je první případ</b>
+      Údaje, které o nabídce sledujeme, nebudou napevno v kódu. Nabídka má
+      <strong>parametry, které si zavedete sám</strong> — u jídelen cena,
+      provize a možnosti výdeje, u docházkového systému třeba počet
+      zaměstnanců v ceně nebo délka zkušebního provozu. Jídelna si nechává
+      navíc jen to, co je opravdu jen její: polohu, zónu a volnou kapacitu,
+      protože podle nich se počítá dosah.
+    </div>
+
+    <div class="bublina" style="border-color: var(--zelena); background: var(--zelena-svetla);">
+      <b>Zavedený parametr je hned použitelný v textu</b>
+      Jakmile parametr přidáte, objeví se sám jako pole, které jde vložit do
+      šablony, i jako podmínka, kterou jde větě přiřadit. Bez toho by
+      přidávání parametrů bylo k ničemu — sledoval byste údaj, který nejde
+      použít.
+    </div>
+
+    <div class="vystraha" style="margin-top: 0.9rem;">
+      <span class="znak">!</span>
+      <span><b>Parametr popisuje naši nabídku, ne cizí firmu.</b> Údaj
+        o oslovované firmě se sem zavést nedá a je to schválně: o firmě smí
+        do zprávy jen to, co je doložené zdrojem a citací. Tyhle dvě věci
+        se nesmí smíchat.</span>
+    </div>
   </section>
 
   <!-- =========================================================== jídelny -->
   <section>
     <span class="cislo">Obrazovka první</span>
-    <h2>Jídelny dostanou cenu a možnosti výdeje</h2>
+    <h2>Seznam zůstane čitelný, údaje se mění v okně</h2>
     <p class="podnadpis">
-      Přibudou dva sloupce a čtyři přepínače. Vyplňujete je Vy, na téže
-      obrazovce, kde dnes měníte kapacitu.
+      V seznamu přibude jeden sloupec se souhrnem a tlačítko <em>Upravit</em>.
+      Všechno ostatní se děje v okně, které se nad seznamem otevře — tam se
+      parametry vyplňují a tam se taky nové zavádějí.
     </p>
 
     <span class="nanecisto">Nakresleno nanečisto · ceny jsou vymyšlené</span>
@@ -244,9 +295,8 @@
                 <th>Jídelna</th>
                 <th>Kapacita</th>
                 <th>Stav</th>
-                <th class="nove">Cena oběda</th>
-                <th class="nove">Naše provize</th>
-                <th class="nove">Umí vydat</th>
+                <th class="nove">Parametry nabídky</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -254,54 +304,149 @@
                 <td>34. ZŠ Plzeň, Gerská</td>
                 <td>50</td>
                 <td>v provozu</td>
-                <td class="nove">128 Kč</td>
-                <td class="nove">12 Kč</td>
-                <td class="nove">
-                  <span class="prepinace">
-                    <span class="prep zap">na místě</span>
-                    <span class="prep zap">jídlonosič</span>
-                    <span class="prep">obal</span>
-                    <span class="prep">odvoz</span>
-                  </span>
-                </td>
+                <td class="nove">128 Kč · 4 ze 4 vyplněno</td>
+                <td><span class="tlacitko">Upravit</span></td>
               </tr>
               <tr>
                 <td>ZŠ a MŠ Hrádek</td>
                 <td>20</td>
                 <td>v provozu</td>
-                <td class="nove">115 Kč</td>
-                <td class="nove">10 Kč</td>
-                <td class="nove">
-                  <span class="prepinace">
-                    <span class="prep zap">na místě</span>
-                    <span class="prep">jídlonosič</span>
-                    <span class="prep">obal</span>
-                    <span class="prep">odvoz</span>
-                  </span>
-                </td>
+                <td class="nove">115 Kč · 4 ze 4 vyplněno</td>
+                <td><span class="tlacitko">Upravit</span></td>
               </tr>
               <tr>
                 <td>ZŠ, MŠ a ZUŠ Bezdružice</td>
                 <td>10</td>
                 <td>v provozu</td>
-                <td class="nove">— nevyplněno</td>
-                <td class="nove">—</td>
-                <td class="nove">
-                  <span class="prepinace"><span class="prep">nic nevybráno</span></span>
-                </td>
+                <td class="nove" style="color: var(--cihla);">chybí cena · 1 ze 4</td>
+                <td><span class="tlacitko">Upravit</span></td>
               </tr>
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
 
-        <div class="bublina">
-          <b>Proč zrovna tyhle čtyři přepínače</b>
-          Dnešní mail tvrdí „na místě nebo v jídlonosičích“ úplně každé
-          firmě. U Hrádku, který umí jen výdej na místě, by to byla
-          nepravda — a to je přesně ta kategorie chyb, kterou nechceme.
-          Věta o výdeji se proto poskládá z toho, co jídelna doopravdy umí.
+    <p class="podnadpis" style="margin-top: 1.5rem;">
+      A takhle vypadá to okno po kliknutí na <em>Upravit</em>:
+    </p>
+
+    <div class="dialog-plocha">
+      <div class="dialog">
+        <div class="dialog-hlava">
+          <h3>ZŠ a MŠ Hrádek</h3>
+          <span class="zavrit" aria-hidden="true">✕</span>
+        </div>
+        <div class="dialog-telo">
+
+          <p class="skupina-nadpis">Vlastní jídelně</p>
+          <div class="pole-radek">
+            <span class="pole-nazev">Volná kapacita</span>
+            <span class="vyber">20 obědů/den</span>
+            <span class="nahled-hodnoty">podle ní se počítá, komu smíme psát</span>
+          </div>
+          <div class="pole-radek">
+            <span class="pole-nazev">Stav</span>
+            <span class="vyber">v provozu</span>
+            <span class="nahled-hodnoty">v přípravě = kapacita je zatím potenciál</span>
+          </div>
+
+          <p class="skupina-nadpis">Parametry nabídky <span class="pocet">4</span></p>
+
+          <div class="pole-radek">
+            <span class="pole-nazev">Cena oběda</span>
+            <span class="vyber">115 Kč</span>
+            <span class="nahled-hodnoty">číslo · korun</span>
+          </div>
+          <div class="pole-radek">
+            <span class="pole-nazev">Naše provize</span>
+            <span class="vyber">10 Kč</span>
+            <span class="nahled-hodnoty">číslo · korun</span>
+          </div>
+          <div class="pole-radek">
+            <span class="pole-nazev">Možnosti výdeje</span>
+            <span class="vyber">vybráno 1 ze 4</span>
+            <span class="nahled-hodnoty">
+              <span class="prepinace">
+                <span class="prep zap">na místě</span>
+                <span class="prep">jídlonosič</span>
+                <span class="prep">obal</span>
+                <span class="prep">odvoz</span>
+              </span>
+            </span>
+          </div>
+          <div class="pole-radek">
+            <span class="pole-nazev">Vaří o prázdninách</span>
+            <span class="vyber">ne</span>
+            <span class="nahled-hodnoty">ano / ne</span>
+          </div>
+
+          <div class="dialog-pata">
+            <span class="tlacitko">+ Přidat parametr</span>
+            <span style="flex: 1"></span>
+            <span class="tlacitko">Zrušit</span>
+            <span class="tlacitko hlavni">Uložit</span>
+          </div>
         </div>
       </div>
+    </div>
+
+    <p class="podnadpis" style="margin-top: 1.5rem;">
+      Tlačítko <em>Přidat parametr</em> otevře krátký formulář. Tohle je to
+      místo, kde se systém přizpůsobí jinému produktu, aniž by se sáhlo do kódu:
+    </p>
+
+    <div class="dialog-plocha">
+      <div class="dialog uzky">
+        <div class="dialog-hlava">
+          <h3>Nový parametr</h3>
+          <span class="zavrit" aria-hidden="true">✕</span>
+        </div>
+        <div class="dialog-telo">
+          <div class="pole-radek">
+            <span class="pole-nazev">Název</span>
+            <span class="vyber">Rozvoz zdarma od</span>
+            <span class="nahled-hodnoty">jak se bude jmenovat v seznamu</span>
+          </div>
+          <div class="pole-radek">
+            <span class="pole-nazev">Druh údaje</span>
+            <span class="vyber">číslo</span>
+            <span class="nahled-hodnoty">číslo · text · ano/ne · výběr z možností</span>
+          </div>
+          <div class="pole-radek">
+            <span class="pole-nazev">Jednotka</span>
+            <span class="vyber">obědů</span>
+            <span class="nahled-hodnoty">nepovinné, jen pro čitelnost</span>
+          </div>
+          <div class="pole-radek">
+            <span class="pole-nazev">Platí pro</span>
+            <span class="vyber">Školní obědy</span>
+            <span class="nahled-hodnoty">produkt, kterého se parametr týká</span>
+          </div>
+          <div class="dialog-pata">
+            <span style="flex: 1"></span>
+            <span class="tlacitko">Zrušit</span>
+            <span class="tlacitko hlavni">Přidat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bublina" style="margin-top: 1.25rem;">
+      <b>Čtyři druhy údaje stačí na všechno, co jste jmenoval</b>
+      <strong>Číslo</strong> (cena, provize, počet zaměstnanců v ceně),
+      <strong>text</strong> (název tarifu), <strong>ano/ne</strong> (vaří
+      o prázdninách) a <strong>výběr z možností</strong> (možnosti výdeje —
+      a pátou možnost si přidáte sám). Víc druhů by znamenalo víc rozhodování
+      při každém novém parametru, a zatím nevím, k čemu.
+    </div>
+
+    <div class="bublina" style="border-color: var(--zelena); background: var(--zelena-svetla);">
+      <b>Proč jsou možnosti výdeje jeden parametr, a ne čtyři přepínače</b>
+      Dnešní mail tvrdí „na místě nebo v jídlonosičích“ úplně každé firmě.
+      U Hrádku, který umí jen výdej na místě, by to byla nepravda. Jako
+      <em>výběr z možností</em> to zvládne i jídelnu, která bude jednou umět
+      něco pátého — beze změny kódu.
     </div>
   </section>
 
@@ -495,12 +640,14 @@ Kompletní menu vychází na <span class="pole">[cena]</span> <span class="podmi
       <article class="krok-karta">
         <span class="poradi">1</span>
         <div>
-          <h3>Jídelny dostanou cenu, provizi a možnosti výdeje</h3>
+          <h3>Parametry nabídky a okno, ve kterém se vyplňují</h3>
           <p>
-            Nejmenší kus a odemyká všechno ostatní: dokud u jídelen nejsou
-            ceny, nemá se pole čím vyplnit. Vy je doplníte hned, jak to bude.
+            Zavádění parametrů, jejich čtyři druhy, okno u jídelny a tlačítko
+            <em>Přidat parametr</em>. Odemyká všechno ostatní: dokud u jídelen
+            nejsou ceny, nemá se pole v mailu čím vyplnit. Vy je doplníte
+            hned, jak to bude hotové.
           </p>
-          <p class="co">nová migrace · obrazovka Jídelny · nic se neodesílá</p>
+          <p class="co">migrace pro parametry a hodnoty · okno u jídelny · nic se neodesílá</p>
         </div>
       </article>
 

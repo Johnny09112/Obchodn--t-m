@@ -1824,3 +1824,63 @@ h3 {
 .tabulka .tlacitka {
   margin-top: 0;
 }
+
+/* ───────────────────────────────────────────── parametry nabídky (0045) */
+
+.dialog.parametry {
+  max-width: 34rem;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.parametr-radek {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: var(--o2);
+  align-items: center;
+}
+
+.parametr-radek > label {
+  font-size: var(--t-drobny);
+}
+
+.novy-parametr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--o2);
+  padding: var(--o3);
+  border: 1px dashed var(--linka);
+  border-radius: var(--r);
+}
+
+.volby {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--o1);
+}
+
+/* Stav nese barva i rámeček — samotná barva by v odstínech šedi zmizela. */
+.volba {
+  font: inherit;
+  font-size: var(--t-drobny);
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--linka);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--inkoust-slaby);
+  cursor: pointer;
+}
+
+.volba.zap {
+  border-color: var(--zelen);
+  background: var(--zelen-svetle);
+  color: var(--zelen);
+  font-weight: 600;
+}
+
+@media (max-width: 34rem) {
+  .parametr-radek {
+    grid-template-columns: 1fr;
+    gap: var(--o1);
+  }
+}

@@ -49,6 +49,8 @@ export interface Jidelna {
   stav: StavJidelny;
   /** Jestli se s jídelnou vůbec pracuje — `false` = mimo provoz. */
   aktivni: boolean;
+  /** Nabídka, na které visí parametry — cena, možnosti výdeje… (migrace 0045). */
+  nabidka_id: string;
 }
 
 export interface Kategorie {
@@ -142,7 +144,7 @@ export async function nactiFirmy(): Promise<Firma[]> {
 export async function nactiJidelny(): Promise<Jidelna[]> {
   const { data, error } = await supabase
     .from("jidelny")
-    .select("id,nazev,obec,lat,lng,zona_metru,kapacita_volna,stav,aktivni")
+    .select("id,nazev,obec,lat,lng,zona_metru,kapacita_volna,stav,aktivni,nabidka_id")
     .order("nazev");
   if (error) throw new Error(error.message);
   return (data ?? []) as Jidelna[];
@@ -1468,4 +1470,101 @@ export async function nactiFirmu(ico: string): Promise<Firma | null> {
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data ?? null) as unknown as Firma | null;
+}
+
+/* ───────────────────────────────────────────── parametry nabídky (0045) */
+
+/**
+ * Co o nabídce sledujeme. Definice zavádí majitel v aplikaci, ne kód —
+ * u jídelny je to cena a možnosti výdeje, u jiného produktu něco jiného.
+ *
+ * Typ je opsaný z `src/parametry.ts` schválně: aplikace nesmí sáhnout na
+ * kořenové zdroje, protože Vercel instaluje jen závislosti `app/`
+ * (past `vercel-instaluje-jen-app-zavislosti`).
+ */
+export interface ParametrNabidky {
+  id: string;
+  kod: string;
+  nazev: string;
+  druh: "cislo" | "text" | "ano_ne" | "vyber";
+  jednotka: string | null;
+  moznosti: string[];
+  poradi: number;
+}
+
+export async function nactiParametryProduktu(produktKod: string): Promise<ParametrNabidky[]> {
+  const { data, error } = await supabase
+    .from("parametry_nabidky")
+    .select("id,kod,nazev,druh,jednotka,moznosti,poradi")
+    .eq("produkt_kod", produktKod)
+    .order("poradi");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ParametrNabidky[];
+}
+
+/**
+ * Hodnoty pod **id** parametru — aplikace je potřebuje k zápisu.
+ *
+ * Jádro (`src/parametry.ts`) je vrací pod kódem, protože tam je píše
+ * člověk do příkazové řádky. Dvě různé potřeby, ne nedopatření.
+ */
+export async function nactiHodnotyNabidky(nabidkaId: string): Promise<Record<string, string>> {
+  const { data, error } = await supabase
+    .from("hodnoty_parametru")
+    .select("parametr_id,hodnota")
+    .eq("nabidka_id", nabidkaId);
+  if (error) throw new Error(error.message);
+  return Object.fromEntries((data ?? []).map((r) => [r.parametr_id as string, r.hodnota as string]));
+}
+
+/**
+ * Zamítnutý zápis Supabase nehlásí jako chybu — jen změní nula řádků.
+ * Proto `select` a kontrola počtu (past `zamitnuty-zapis-bez-chyby`).
+ */
+export async function ulozHodnotuParametru(
+  nabidkaId: string,
+  parametrId: string,
+  hodnota: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("hodnoty_parametru")
+    .upsert(
+      {
+        nabidka_id: nabidkaId,
+        parametr_id: parametrId,
+        hodnota,
+        zmeneno_at: new Date().toISOString(),
+      },
+      { onConflict: "nabidka_id,parametr_id" },
+    )
+    .select("parametr_id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Hodnotu se nepodařilo uložit — měnit ji smí jen admin.");
+  }
+}
+
+export async function zavedParametrProduktu(v: {
+  produktKod: string;
+  kod: string;
+  nazev: string;
+  druh: string;
+  jednotka: string | null;
+  moznosti: string[];
+}): Promise<void> {
+  const { data, error } = await supabase
+    .from("parametry_nabidky")
+    .insert({
+      produkt_kod: v.produktKod,
+      kod: v.kod,
+      nazev: v.nazev,
+      druh: v.druh,
+      jednotka: v.jednotka,
+      moznosti: v.moznosti,
+    })
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Parametr se nepodařilo zavést — zavádět je smí jen admin.");
+  }
 }

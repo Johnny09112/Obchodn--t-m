@@ -27,7 +27,13 @@ import type { Db } from "./db.js";
  * `profily`, které v cíli existují vždy.
  */
 const TABULKY = [
+  // Nabídka musí být před jídelnou — jídelna na ni ukazuje (migrace 0045).
+  "nabidky",
   "jidelny",
+  // Parametry jsou číselník se stejnou povahou jako `atributy`: cíl si
+  // výchozí čtyři založil migrací, ale majitel si smí zavést vlastní.
+  // Hodnoty musí být až za nimi a přemapovávají se — viz `prenesHodnoty`.
+  "parametry_nabidky",
   "atributy",
   "profil_atributy",
   "companies",
@@ -47,7 +53,11 @@ const TABULKY = [
  * klíče místo aby na nich spadl. `radku` ve výsledku pak značí, kolik řádků
  * v cíli OPRAVDU PŘIBYLO, ne kolik jich bylo ve zdroji.
  */
-const CISELNIKY_S_DUPLICITOU = new Set<string>(["atributy", "profil_atributy"]);
+const CISELNIKY_S_DUPLICITOU = new Set<string>([
+  "atributy",
+  "profil_atributy",
+  "parametry_nabidky",
+]);
 
 /** Tabulky, jejichž neprázdnost znamená, že se do cíle už zapisovalo. */
 const KONTROLOVANE = ["jidelny", "companies", "oblasti", "agent_runs"] as const;
@@ -101,5 +111,55 @@ export async function prenesData(zdroj: Db, cil: Db): Promise<PrenosRadek[]> {
     vysledek.push({ tabulka, radku: tolerujDuplicity ? vlozeno : radky.length });
   }
 
+  vysledek.push(await prenesHodnoty(zdroj, cil));
+
   return vysledek;
+}
+
+/**
+ * Hodnoty parametrů se přenášejí zvlášť, protože se musí **přemapovat**.
+ *
+ * `parametry_nabidky` má náhodné id a cíl si výchozí čtyři parametry
+ * zakládá vlastní migrací — id téhož parametru je proto v obou databázích
+ * jiné. Kopie řádku beze změny by spadla na cizí klíč, a co hůř, po
+ * doplnění by ukazovala na cizí parametr. Párovacím klíčem je dvojice
+ * `produkt_kod` + `kod`, tedy totéž, co drží jednoznačnost v databázi.
+ *
+ * Nabídky se přenášejí normálně (mají vlastní id a v prázdném cíli
+ * nekolidují), takže `nabidka_id` se přemapovávat nemusí.
+ */
+async function prenesHodnoty(zdroj: Db, cil: Db): Promise<PrenosRadek> {
+  const radky = await zdroj.query<{
+    nabidka_id: string;
+    hodnota: string;
+    produkt_kod: string;
+    kod: string;
+  }>(
+    `select h.nabidka_id, h.hodnota, p.produkt_kod, p.kod
+       from hodnoty_parametru h
+       join parametry_nabidky p on p.id = h.parametr_id`,
+  );
+
+  let vlozeno = 0;
+  for (const r of radky) {
+    const [cilovy] = await cil.query<{ id: string }>(
+      "select id from parametry_nabidky where produkt_kod = $1 and kod = $2",
+      [r.produkt_kod, r.kod],
+    );
+    // Parametr, který v cíli není, znamená, že se nepřenesl jeho číselník.
+    // Tiše hodnotu zahodit by znamenalo ztracenou cenu bez jediné stopy.
+    if (!cilovy) {
+      throw new Error(
+        `Hodnotu nelze přenést — cíl nezná parametr „${r.kod}" produktu „${r.produkt_kod}".`,
+      );
+    }
+    await cil.query(
+      `insert into hodnoty_parametru (nabidka_id, parametr_id, hodnota)
+       values ($1, $2, $3)`,
+      [r.nabidka_id, cilovy.id, r.hodnota],
+    );
+    vlozeno++;
+  }
+
+  return { tabulka: "hodnoty_parametru", radku: vlozeno };
 }

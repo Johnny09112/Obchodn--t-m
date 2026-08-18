@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
+import { OknoParametru } from "./OknoParametru";
 import {
   nactiFiremVDosahu,
+  nactiHodnotyNabidky,
   nactiJidelny,
+  nactiParametryProduktu,
   soucetKapacit,
   ulozKapacituJidelny,
   ulozStavJidelny,
   type Jidelna,
+  type ParametrNabidky,
   type StavJidelny,
 } from "./data";
 import type { Role } from "./supabase";
@@ -38,6 +42,27 @@ function obedu(n: number): string {
   return `${n.toLocaleString("cs")} obědů/den`;
 }
 
+/**
+ * Krátký souhrn parametrů do seznamu — cena a kolik údajů je vyplněných.
+ *
+ * Do seznamu patří jen tolik, aby bylo vidět, kde čeká práce; zbytek je
+ * v okně. `chybi` rozhoduje o barvě, ať se to pozná bez čtení.
+ */
+function souhrnParametru(
+  parametry: ParametrNabidky[],
+  hodnoty: Record<string, string> | undefined,
+): { text: string; chybi: boolean } {
+  if (parametry.length === 0) return { text: "—", chybi: false };
+  const h = hodnoty ?? {};
+  const vyplnenych = parametry.filter((p) => (h[p.id] ?? "") !== "").length;
+  const cena = parametry.find((p) => p.kod === "cena_obeda");
+  const cenaHodnota = cena ? h[cena.id] : undefined;
+  return {
+    text: `${cenaHodnota ? `${cenaHodnota} Kč · ` : ""}${vyplnenych} z ${parametry.length} vyplněno`,
+    chybi: !cenaHodnota,
+  };
+}
+
 export function Jidelny({ role }: Props) {
   const [jidelny, setJidelny] = useState<Jidelna[]>([]);
   const [vDosahu, setVDosahu] = useState<Record<string, number>>({});
@@ -47,6 +72,11 @@ export function Jidelny({ role }: Props) {
   const [pracuje, setPracuje] = useState(false);
   /** Řádek, který se právě upravuje. Text, ne číslo — prázdné pole = neuvedeno. */
   const [upravovana, setUpravovana] = useState<{ id: string; hodnota: string } | null>(null);
+  /** Jídelna, jejíž parametry se právě upravují v okně. */
+  const [parametryJidelny, setParametryJidelny] = useState<Jidelna | null>(null);
+  const [parametry, setParametry] = useState<ParametrNabidky[]>([]);
+  /** Hodnoty podle id jídelny; uvnitř podle id parametru. */
+  const [hodnoty, setHodnoty] = useState<Record<string, Record<string, string>>>({});
 
   const smiUpravovat = role === "admin" || role === "super-admin";
 
@@ -57,6 +87,12 @@ export function Jidelny({ role }: Props) {
         setChyba(null);
         // Počty se dotahují až po seznamu — bez seznamu není co počítat.
         setVDosahu(await nactiFiremVDosahu(j.map((x) => x.id)));
+
+        setParametry(await nactiParametryProduktu("cantinero"));
+        const dvojice = await Promise.all(
+          j.map(async (x) => [x.id, await nactiHodnotyNabidky(x.nabidka_id)] as const),
+        );
+        setHodnoty(Object.fromEntries(dvojice));
       })
       .catch((e: Error) => setChyba(e.message));
   }
@@ -178,6 +214,7 @@ export function Jidelny({ role }: Props) {
                   <th className="cislo">Zóna</th>
                   <th className="cislo">Firem v dosahu</th>
                   <th>Volná kapacita</th>
+                  <th>Parametry nabídky</th>
                   <th></th>
                 </tr>
               </thead>
@@ -250,6 +287,17 @@ export function Jidelny({ role }: Props) {
                         )}
                       </td>
                       <td>
+                        {(() => {
+                          const s = souhrnParametru(parametry, hodnoty[j.id]);
+                          return (
+                            <span className={`stav ${s.chybi ? "je-ceka" : "je-kvalifikovany"}`}>
+                              <span className="znak" />
+                              {s.text}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td>
                         {!smiUpravovat ? null : upravuje ? (
                           <span className="tlacitka vlevo">
                             <button
@@ -283,6 +331,19 @@ export function Jidelny({ role }: Props) {
                             Změnit kapacitu
                           </button>
                         )}
+                        {smiUpravovat && !upravuje && (
+                          <button
+                            className="tlacitko tise"
+                            disabled={pracuje}
+                            onClick={() => {
+                              setChyba(null);
+                              setUlozeno(null);
+                              setParametryJidelny(j);
+                            }}
+                          >
+                            Upravit
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -300,6 +361,14 @@ export function Jidelny({ role }: Props) {
           jídelna v přípravě dál sbírá firmy v okolí, právě tím se připravuje.
         </p>
       </div>
+
+      {parametryJidelny && (
+        <OknoParametru
+          jidelna={parametryJidelny}
+          onZavri={() => setParametryJidelny(null)}
+          onUlozeno={() => void obnov()}
+        />
+      )}
     </>
   );
 }

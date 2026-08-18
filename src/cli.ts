@@ -23,6 +23,7 @@ import { vytvorRegistrKlienta, zdrojVelikosti } from "./registr.js";
 import { firmyKObohaceni, zapisDavku } from "./nalezy.js";
 import { vygenerujKartoteku } from "./kartoteka.js";
 import { nactiSchvalenaTvrzeni, ulozSablonu, ulozTvrzeni, vyplnPriklady } from "./obsah.js";
+import { nactiHodnoty, nactiParametry, ulozHodnotu } from "./parametry.js";
 import { SABLONA_HLAVNI, TVRZENI } from "./obsah-schvaleny.js";
 import { novePoznatky } from "./playbook.js";
 import { doplnKontakty } from "./kontakty.js";
@@ -2011,6 +2012,68 @@ async function cmdObsah(argv: string[]): Promise<void> {
 }
 
 /**
+ * Parametry nabídky z příkazové řádky.
+ *
+ * Obrazovka je hlavní cesta; tohle je záchranná brzda pro případ, kdy je
+ * potřeba se podívat, co je v datech, aniž by se otevíral prohlížeč.
+ */
+async function cmdParametry(argv: string[]): Promise<void> {
+  const podprikaz = argv[0] ?? "seznam";
+  const { values } = parseArgs({
+    args: podprikaz === "seznam" ? argv : argv.slice(1),
+    options: {
+      jidelna: { type: "string" },
+      kod: { type: "string" },
+      hodnota: { type: "string" },
+      produkt: { type: "string", default: "cantinero" },
+    },
+    allowPositionals: true,
+  });
+
+  const produkt = values.produkt ?? "cantinero";
+  const db = await pripojDb();
+  try {
+    if (podprikaz === "nastav") {
+      if (!values.jidelna || !values.kod || values.hodnota === undefined) {
+        console.log("Chybí --jidelna, --kod nebo --hodnota.");
+        return;
+      }
+      const [j] = await db.query<{ nabidka_id: string; nazev: string }>(
+        "select nabidka_id, nazev from jidelny where id = $1",
+        [values.jidelna],
+      );
+      if (!j) {
+        console.log("Taková jídelna není.");
+        return;
+      }
+      await ulozHodnotu(db, j.nabidka_id, values.kod, values.hodnota);
+      console.log(`${j.nazev}: ${values.kod} = ${values.hodnota}`);
+      return;
+    }
+
+    const parametry = await nactiParametry(db, produkt);
+    console.log(`Parametry produktu „${produkt}" (${parametry.length}):`);
+    for (const p of parametry) {
+      const jednotka = p.jednotka ? ` [${p.jednotka}]` : "";
+      const moznosti = p.moznosti.length > 0 ? ` — ${p.moznosti.join(" · ")}` : "";
+      console.log(`  ${p.kod}${jednotka} (${p.druh}) — ${p.nazev}${moznosti}`);
+    }
+
+    const jidelny = await db.query<{ id: string; nazev: string; nabidka_id: string }>(
+      "select id, nazev, nabidka_id from jidelny order by nazev",
+    );
+    console.log("\nHodnoty u jídelen:");
+    for (const j of jidelny) {
+      const h = await nactiHodnoty(db, j.nabidka_id);
+      const vypis = parametry.map((p) => `${p.kod}=${h[p.kod] ?? "—"}`).join(" · ");
+      console.log(`  ${j.nazev}: ${vypis}`);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
  * Vzorek ke kontrole kvality (SPEC kap. 12, fáze 1 — „ruční kontrola vzorku
  * 30 firem"). Metriku „podíl chybných záznamů" nespočítá dotaz, musí ji
  * změřit člověk; tenhle příkaz mu k tomu připraví stránku.
@@ -2216,6 +2279,9 @@ switch (prikaz) {
   case "obsah":
     await cmdObsah(zbytek);
     break;
+  case "parametry":
+    await cmdParametry(zbytek);
+    break;
   default:
     console.log(`Cantinero — fáze 1 (Čmuchal). Příkazy:
   migrate                          založí/aktualizuje schéma (lokálně, nebo na DATABASE_URL)
@@ -2306,6 +2372,9 @@ switch (prikaz) {
   metriky                          metriky fáze 1 (cíl: 200 ověřených firem)
   obsah [seznam]                   vypíše schválená tvrzení a šablony v databázi
   obsah nahraj [--potvrdit]        nahraje schválený text ze src/obsah-schvaleny.ts
+  parametry [seznam] [--produkt cantinero]
+                                   vypíše parametry nabídky a jejich hodnoty
+  parametry nastav --jidelna <id> --kod <kod> --hodnota <text>
   vzorek-kontroly [--pocet 30] [--vystup cesta.html]
                                    připraví vzorek k ruční kontrole kvality —
                                    různorodý výběr firem s hodnotami, citacemi

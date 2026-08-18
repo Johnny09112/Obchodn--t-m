@@ -40,6 +40,7 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[cantinero-data-dir-vs-database-url]] — CANTINERO_DATA_DIR neplatí, když je nastavené DATABASE_URL · active · 2026-08-18
 - [[js-hranice-slova-a-diakritika]] — \b v JavaScriptu nezná diakritiku — /\bvaší\b/ nenajde nic, protože „í" není slovní znak; použij hranice přes \p{L} · active · 2026-08-18
 - [[ostra-data-jsou-v-cloudu]] — Ostrá data leží v cloudovém Postgresu za DATABASE_URL, ne v data/pgdata-v5 — lokální kopie zamrzla 29. 7. na 167 firmách a tiše odpoví na každý dotaz · active · 2026-08-18
 - [[personalizace-jen-z-whitelistu]] — Podle čeho firmu vybíráme a co o ní smíme napsat jsou dvě různé množiny — směnný provoz je signál, ale do zprávy nesmí · active · 2026-08-18
@@ -54,7 +55,6 @@
 - [[zamykej-vyjmenovanim-zamcenych-stavu]] — Zámek psaný jako „otevřený je jen jeden stav" zamkne i pracovní stavy — vyjmenuj stavy zamčené · active · 2026-08-04
 - [[ares-nedoplni-velikost]] — Dotaz do ARESu na velikost firmy nevrátí nic navíc proti souboru ČSÚ — je to tentýž registr · active · 2026-08-02
 - [[automaticka-uprava-textu-potrebuje-guard]] — Skript, který jen vypíše hotovo, nic nedokazuje — hlídej každou náhradu zvlášť · active · 2026-08-01
-- [[cantinero-data-dir-vs-database-url]] — CANTINERO_DATA_DIR neplatí, když je nastavené DATABASE_URL · active · 2026-08-01
 - [[hook-cjs-v-esm-projektu]] — Hooky ze šablon bývají CommonJS, ale tenhle projekt má type: module · active · 2026-08-01
 - [[postgrest-strop-na-radky]] — Server má strop na počet řádků a .limit() ho nepřebije · active · 2026-08-01
 - [[powershell-ps1-potrebuje-bom]] — PowerShell 5.1 čte .ps1 jako ANSI — soubory s diakritikou potřebují UTF-8 BOM · active · 2026-08-01

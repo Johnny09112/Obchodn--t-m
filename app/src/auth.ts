@@ -34,3 +34,31 @@ export function usePrihlaseni(): StavPrihlaseni {
 
   return { session, nacita };
 }
+
+/**
+ * Je tohle chyba přihlašovacího tokenu, kterou vyřeší nové přihlášení?
+ *
+ * Stalo se 19. 8. 2026: majiteli se při otevření ukázalo „Nepodařilo se
+ * načíst podněty: JWT issued at future" a aplikace ho nechala tu hlášku
+ * luštit. Uložený token měl vadný časový údaj (hodiny počítače proti
+ * serveru přitom šly správně — vada byla jen v tokenu z dřívějška);
+ * jediná náprava je token zahodit a přihlásit se znovu. To má udělat
+ * aplikace sama, ne majitel podle kryptické věty.
+ */
+export function jeChybaTokenu(zprava: string): boolean {
+  const z = zprava.toLowerCase();
+  return (
+    z.includes("jwt") ||
+    z.includes("token") ||
+    z.includes("not authenticated") ||
+    z.includes("refresh_token")
+  );
+}
+
+/**
+ * Zahodí vadné přihlášení. `scope: "local"` schválně — maže se jen tenhle
+ * prohlížeč; odhlašovat majitele všude kvůli vadnému tokenu tady netřeba.
+ */
+export async function odhlasVadnePrihlaseni(): Promise<void> {
+  await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+}

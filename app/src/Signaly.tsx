@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { jeChybaTokenu } from "./auth";
 import { DetailFirmy } from "./DetailFirmy";
 import {
   nactiFirmu,
@@ -203,6 +204,11 @@ export function Signaly({ email }: { email: string }) {
   }
 
   if (nacita) return <p className="nacitani">Moment…</p>;
+  // Vadný token řeší App sám (odhlásí a řekne proč) — tady se mezitím nemá
+  // ukazovat anglická hláška, kterou majitel nemá jak rozluštit.
+  if (chyba && jeChybaTokenu(chyba)) {
+    return <p className="nacitani">Přihlášení se obnovuje…</p>;
+  }
   if (chyba) return <p className="hlaska">Nepodařilo se načíst podněty: {chyba}</p>;
 
   return (

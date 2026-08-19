@@ -1974,3 +1974,13 @@ h3 {
   align-items: baseline;
   cursor: pointer;
 }
+
+/* Výběr firem k rešerši potřebuje víc místa než potvrzovací dialogy —
+   je v něm seznam desítek firem. O ~30 % širší i vyšší (majitel 19. 8.). */
+.dialog.vyber-reserse {
+  max-width: 36rem;
+}
+
+.dialog.vyber-reserse .vyctove-firmy {
+  max-height: 19rem;
+}

@@ -47,11 +47,17 @@ export function usePrihlaseni(): StavPrihlaseni {
  */
 export function jeChybaTokenu(zprava: string): boolean {
   const z = zprava.toLowerCase();
+  // Konkrétní fráze, ne obecné „key": to by chytilo i „duplicate key value
+  // violates unique constraint", což je obyčejná databázová chyba a nové
+  // přihlášení ji nespraví. Fráze pocházejí z ověřování podpisu tokenu
+  // (PostgREST/GoTrue); „no suitable key" přinesla simulace 19. 8. 2026.
   return (
     z.includes("jwt") ||
     z.includes("token") ||
     z.includes("not authenticated") ||
-    z.includes("refresh_token")
+    z.includes("no suitable key") ||
+    z.includes("wrong key type") ||
+    z.includes("invalid claim")
   );
 }
 

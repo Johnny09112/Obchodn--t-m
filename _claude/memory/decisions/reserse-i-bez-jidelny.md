@@ -34,3 +34,13 @@ rešerše nad Hrobcemi (61 firem, všechny čekající na jídelnu) skončila
 „hotovo, 0 firem". Napřed se opravilo mlčení obrazovky (0054), pak
 majitel přehodnotil samotné pravidlo. Hrobce mají po změně 26 firem
 ve frontě.
+
+**Doplněk 19. 8. 2026 — objednávka po částech.** Majitel: *„chci mít
+možnost tu rešerši udělat jen částečnou — třeba kvůli času… odklikat
+počet, který mi časově dává smysl."* Objednávka proto nese **jmenovitý
+výběr firem** (`reserse_firmy`, migrace 0056): dialog ukáže celou frontu
+se zaškrtávátky (výchozí vše), Označit/Zrušit vše a odhad času, který se
+přepočítává s každým kliknutím. Hlídka zpracuje přesně výběr, protnutý
+s aktuální frontou. Objednávka bez výběru = vršek fronty podle skóre.
+Stav rešerše po firmách: sloupec „Rešerše" v seznamu (čeká na rešerši /
+3 pokusy bez nálezu / prošla · spojení / prošla · bez stopy).

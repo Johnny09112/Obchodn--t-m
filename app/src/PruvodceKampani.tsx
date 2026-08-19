@@ -70,9 +70,18 @@ function odhadReserse(firem: number): string {
   const minut = Math.round((firem * 64) / 60);
   if (minut < 1) return "necelou minutu";
   if (minut < 60) return `zhruba ${minut} ${cesky(minut, "minutu", "minuty", "minut")}`;
-  const hodin = Math.round(minut / 60);
-  if (hodin === 1) return "zhruba hodinu";
-  return `zhruba ${hodin} ${cesky(hodin, "hodinu", "hodiny", "hodin")}`;
+  // Nad hodinu se říká i zbytek minut (po pěti): majitel si dávku ladí
+  // odškrtáváním firem a „zhruba 2 hodiny" by se dlouho nehnulo — každé
+  // kliknutí má být na čísle vidět (požadavek 19. 8. 2026).
+  const hodin = Math.floor(minut / 60);
+  const zbytek = Math.round((minut % 60) / 5) * 5;
+  const hodinText = hodin === 1 ? "zhruba hodinu" : `zhruba ${hodin} ${cesky(hodin, "hodinu", "hodiny", "hodin")}`;
+  if (zbytek === 0) return hodinText;
+  if (zbytek === 60) {
+    const h = hodin + 1;
+    return h === 1 ? "zhruba hodinu" : `zhruba ${h} ${cesky(h, "hodinu", "hodiny", "hodin")}`;
+  }
+  return `${hodinText} a ${zbytek} minut`;
 }
 
 /**

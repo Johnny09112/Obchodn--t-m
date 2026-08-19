@@ -24,6 +24,7 @@ import {
   nejlepsiUroven,
   posledniReserse,
   zbyvaProReserse,
+  firmyProReserseNahled,
   schvalKampan,
   spocitejCekajici,
   stavReserse,
@@ -145,6 +146,8 @@ export function PruvodceKampani({
   const [objednavka, setObjednavka] = useState<ObjednavkaReserse | null>(null);
   /** Kolik firem se právě potvrzuje k rešerši v dialogu; `null` = zavřeno. */
   const [reserseZadost, setReserseZadost] = useState<number | null>(null);
+  /** Jmenovitý seznam firem pro dialog — ať se neobjednává naslepo. */
+  const [reserseFirmy, setReserseFirmy] = useState<Array<{ ico: string; nazev: string }>>([]);
 
   const smi = smiUpravovat(kampan, role, email);
   /**
@@ -377,6 +380,23 @@ export function PruvodceKampani({
   useEffect(() => {
     if (krok === 4) nactiObjednavku();
   }, [krok, nactiObjednavku]);
+
+  /**
+   * Otevře potvrzení objednávky i se jmenovitým seznamem firem — TÍM, který
+   * vybere hlídka (databázová funkce `firmy_pro_reserse`). Objednávka tak
+   * není naslepo; vyžádal si majitel 19. 8. 2026.
+   */
+  async function otevriDialogReserse(pocet: number) {
+    if (!id) return;
+    setReserseZadost(pocet);
+    setReserseFirmy([]);
+    try {
+      setReserseFirmy(await firmyProReserseNahled(id));
+    } catch {
+      // Bez seznamu se dialog nezavírá — počet platí i tak, jen se
+      // jména nepovedlo načíst.
+    }
+  }
 
   /** Objedná dávku AI rešerše. Agenta to nespustí — jen zapíše do fronty. */
   async function objednatReserse(pocet: number) {
@@ -925,7 +945,7 @@ export function PruvodceKampani({
     const neprozkoumanych = udajeFirem.filter(
       (f) =>
         vybraneIca.has(f.ico) &&
-        stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f) }) === "neprosla",
+        stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f), reserse_pokusu: f.reserse_pokusu }) === "neprosla",
     ).length;
     // Nabídka se řídí číslem z DATABÁZE (`zbyvaReserse`), ne místním
     // odhadem `neprozkoumanych`. Ten nezná stav firmy ani vyčerpané pokusy
@@ -933,8 +953,6 @@ export function PruvodceKampani({
     // vybrala nulu — všechny čekají na jídelnu. Objednávka pak skončila
     // „hotovo, 0 firem" a vypadalo to, že se systém rozbil.
     const kObjednani = zbyvaReserse ?? 0;
-    const davkaReserse = Math.min(20, kObjednani);
-    const zbytekReserse = kObjednani - davkaReserse;
     const beziciObjednavka = objednavka && ["ceka", "bezi"].includes(objednavka.stav);
 
     return (
@@ -1078,26 +1096,28 @@ export function PruvodceKampani({
                       AI rešerši — agent projde web a podle playbooku dohledá jméno
                       i spojení. Poběží bez dozoru, nic se přitom neodešle.
                     </p>
+                    {/* Jedno tlačítko na celou frontu. Dřívější dělení
+                        20 + zbytek bylo jen zvykem obrazovky — čas běhu
+                        agenta se počítá podle počtu firem (stropMs), takže
+                        dělit nemusí ani majitel, ani my. Vyžádal si to
+                        19. 8. 2026: „to už mohlo jít dohromady". */}
                     <div className="tlacitka vlevo">
                       <button
                         className="tlacitko"
                         disabled={uklada}
-                        onClick={() => setReserseZadost(davkaReserse)}
+                        onClick={() => void otevriDialogReserse(kObjednani)}
                       >
-                        Objednat rešerši pro {davkaReserse.toLocaleString("cs")}{" "}
-                        {cesky(davkaReserse, "firmu", "firmy", "firem")}
+                        Objednat rešerši pro{" "}
+                        {kObjednani === 1
+                          ? "poslední firmu"
+                          : `všech ${kObjednani.toLocaleString("cs")} ${cesky(kObjednani, "firmu", "firmy", "firem")}`}
                       </button>
-                      {zbytekReserse > 0 && (
-                        <button
-                          className="tlacitko tise"
-                          disabled={uklada}
-                          onClick={() => setReserseZadost(zbytekReserse)}
-                        >
-                          A zbytek — {zbytekReserse.toLocaleString("cs")}{" "}
-                          {cesky(zbytekReserse, "firmu", "firmy", "firem")}
-                        </button>
-                      )}
                     </div>
+                    <p className="poznamka">
+                      Komu rešerše proběhla a kdo na ni čeká, ukazuje sloupec
+                      „Rešerše“ v tabulce firem níž — filtr „čeká na rešerši“
+                      vypíše přesně ty, které dostane tahle objednávka.
+                    </p>
                   </>
                 )
               )}
@@ -1379,6 +1399,16 @@ export function PruvodceKampani({
                 <strong>{odhadReserse(reserseZadost)}</strong>.{" "}
                 <strong>Nic se neodesílá</strong> — jen se doplní kontakty.
               </p>
+              {reserseFirmy.length > 0 && (
+                <>
+                  <p className="poznamka">Které firmy dávka dostane:</p>
+                  <ul className="vyctove-firmy">
+                    {reserseFirmy.slice(0, reserseZadost).map((f) => (
+                      <li key={f.ico}>{f.nazev}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
               <div className="tlacitka vlevo">
                 <button className="tlacitko tise" onClick={() => setReserseZadost(null)}>
                   Ještě ne

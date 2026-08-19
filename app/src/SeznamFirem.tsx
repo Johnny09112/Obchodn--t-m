@@ -45,13 +45,18 @@ function den(iso: string): string {
 }
 
 const POPIS_RESERSE: Record<StavReserse, { popis: string; trida: string }> = {
-  neprosla: { popis: "neprošla", trida: "" },
+  // „Čeká na rešerši" místo dřívějšího „neprošla": tohle jsou přesně firmy,
+  // které vezme příští objednávka. Vedle nich stojí „3 pokusy bez nálezu" —
+  // taky bez razítka, ale fronta je už nevezme. Majitel 19. 8. 2026 z toho
+  // sloupce nedokázal poznat, koho objednávka dostane.
+  neprosla: { popis: "čeká na rešerši", trida: "je-ceka" },
+  vycerpala_pokusy: { popis: "3 pokusy bez nálezu", trida: "je-zamitnuty" },
   prosla_se_spojenim: { popis: "prošla · spojení", trida: "je-hotovo" },
   prosla_bez_spojeni: { popis: "prošla · bez stopy", trida: "je-zamitnuty" },
 };
 
 function Reserse({ f }: { f: Firma }) {
-  const s = stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f) });
+  const s = stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f), reserse_pokusu: f.reserse_pokusu });
   const p = POPIS_RESERSE[s];
   return (
     <span
@@ -98,7 +103,7 @@ export function SeznamFirem({
       if (obor && f.kategorie !== obor) return false;
       if (spojeni === "ma" && !maSpojeni(f)) return false;
       if (spojeni === "nema" && maSpojeni(f)) return false;
-      if (reserse && stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f) }) !== reserse) {
+      if (reserse && stavReserse({ obohaceno_at: f.obohaceno_at, maSpojeni: maSpojeni(f), reserse_pokusu: f.reserse_pokusu }) !== reserse) {
         return false;
       }
       if (!q) return true;
@@ -209,7 +214,8 @@ export function SeznamFirem({
             onChange={(e) => setReserse(e.target.value as StavReserse | "")}
           >
             <option value="">nerozhoduje</option>
-            <option value="neprosla">neprošla</option>
+            <option value="neprosla">čeká na rešerši</option>
+            <option value="vycerpala_pokusy">3 pokusy bez nálezu</option>
             <option value="prosla_se_spojenim">prošla se spojením</option>
             <option value="prosla_bez_spojeni">prošla bez spojení</option>
           </select>

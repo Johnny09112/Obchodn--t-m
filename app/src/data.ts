@@ -34,6 +34,8 @@ export interface Firma {
   contacts: { email: string | null; telefon: string | null }[];
   /** Kdy firma naposledy prošla rešerší; `null` = neprošla nikdy. */
   obohaceno_at: string | null;
+  /** Kolikrát už se firma rešerší zkoušela — po třech pokusech ji fronta pustí. */
+  reserse_pokusu: number;
 }
 
 export interface Jidelna {
@@ -91,7 +93,7 @@ export interface RadekOblasti {
 // „koho vůbec chceme oslovit" (src/kvalifikace.ts) v kroku 2 průvodce.
 const SLOUPCE_FIRMY =
   "ico,nazev,obec,lat,lng,velikost_kategorie,zamestnanci_odhad,kategorie,skore,stav," +
-  "cz_nace,pravni_forma,ma_vlastni_jidelnu,contacts(email,telefon),obohaceno_at";
+  "cz_nace,pravni_forma,ma_vlastni_jidelnu,contacts(email,telefon),obohaceno_at,reserse_pokusu";
 
 /**
  * Načte všechny firmy najednou.
@@ -447,12 +449,50 @@ export function pocetSpojeni(f: Firma): number {
   return f.contacts.filter((k) => k.email !== null || k.telefon !== null).length;
 }
 
-/** Stav rešerše u firmy — tři možnosti, které majitel chtěl rozlišit. */
-export type StavReserse = "neprosla" | "prosla_se_spojenim" | "prosla_bez_spojeni";
+/**
+ * Stav rešerše u firmy.
+ *
+ * „Čeká na rešerši" a „vyčerpala pokusy" jsou schválně dva stavy: obojí
+ * znamená firmu bez razítka, ale jen ta první se objeví v příští dávce.
+ * Majitel 19. 8. 2026 nemohl poznat, komu rešerše proběhla a koho
+ * objednávka vůbec vezme — sloupec musí říkat obojí.
+ */
+export type StavReserse =
+  | "neprosla"
+  | "vycerpala_pokusy"
+  | "prosla_se_spojenim"
+  | "prosla_bez_spojeni";
 
-export function stavReserse(f: { obohaceno_at: string | null; maSpojeni: boolean }): StavReserse {
-  if (f.obohaceno_at === null) return "neprosla";
+export function stavReserse(f: {
+  obohaceno_at: string | null;
+  maSpojeni: boolean;
+  reserse_pokusu: number;
+}): StavReserse {
+  if (f.obohaceno_at === null) {
+    // Trojka je zapsaná i ve funkci firmy_pro_reserse (migrace 0054/0055) —
+    // odtud si ji bere fronta. Změna čísla znamená novou migraci a tohle místo.
+    return f.reserse_pokusu >= 3 ? "vycerpala_pokusy" : "neprosla";
+  }
   return f.maSpojeni ? "prosla_se_spojenim" : "prosla_bez_spojeni";
+}
+
+/**
+ * Jmenovitý seznam firem, které dostane příští dávka rešerše — TATÁŽ
+ * databázová funkce, ze které vybírá hlídka. Objednávka díky tomu není
+ * naslepo: dialog ukáže konkrétní firmy, ne jen počet.
+ */
+export async function firmyProReserseNahled(
+  kampanId: string,
+): Promise<Array<{ ico: string; nazev: string }>> {
+  const { data, error } = await supabase.rpc("firmy_pro_reserse", {
+    p_kampan_id: kampanId,
+    p_limit: null,
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Array<{ ico: string; nazev: string }>).map((f) => ({
+    ico: f.ico,
+    nazev: f.nazev,
+  }));
 }
 
 /**

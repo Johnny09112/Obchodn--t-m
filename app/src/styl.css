@@ -1952,3 +1952,12 @@ h3 {
     gap: var(--o1);
   }
 }
+
+/* Jmenovitý seznam firem v potvrzení rešerše — dialog nesmí přerůst okno. */
+.vyctove-firmy {
+  margin: 0;
+  padding-left: var(--o4);
+  max-height: 14rem;
+  overflow-y: auto;
+  font-size: var(--t-drobny);
+}

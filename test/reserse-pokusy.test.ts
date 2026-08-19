@@ -6,6 +6,7 @@ import { zalozFirmu } from "../src/repo.js";
 import {
   MAX_POKUSU_RESERSE,
   firmyProReserse,
+  firmyProReserseObjednavky,
   vycerpanePokusy,
   zaznamenejPokusReserse,
 } from "../src/reserse.js";
@@ -165,5 +166,48 @@ describe("pokusy o rešerši", () => {
     }
     await db.query("update companies set obohaceno_at = now() where ico = '25232657'");
     expect(await vycerpanePokusy(db, kampanId)).toBe(0);
+  });
+});
+
+describe("objednávka s jmenovitým výběrem firem", () => {
+  /**
+   * Majitel 19. 8. 2026: „chci mít možnost tu rešerši udělat jen částečnou
+   * — třeba kvůli času… odklikat počet, který mi časově dává smysl."
+   * Objednávka proto nese jmenovitý výběr (tabulka reserse_firmy) a hlídka
+   * zpracuje přesně jej — proti aktuální frontě, ne slepě.
+   */
+  it("dávka dostane přesně vybrané firmy, které jsou pořád ve frontě", async () => {
+    await firmaVKampani("25232657", 50);
+    await firmaVKampani("25242407", 40);
+    await firmaVKampani("48362956", 30);
+    // Jedna z vybraných mezitím dostala razítko — do dávky nesmí.
+    await db.query("update companies set obohaceno_at = now() where ico = '48362956'");
+
+    const [o] = await db.query<{ id: string }>(
+      `insert into reserse (kampan_id, firem_zadano, zadani, pozadal)
+       values ($1, 2, 'test', 'a@b.cz') returning id`,
+      [kampanId],
+    );
+    for (const ico of ["25242407", "48362956"]) {
+      await db.query("insert into reserse_firmy (reserse_id, ico) values ($1, $2)", [o!.id, ico]);
+    }
+
+    const davka = await firmyProReserseObjednavky(db, o!.id, kampanId);
+    // Nevybraná 25232657 se nepřidá, orazítkovaná 48362956 vypadne.
+    expect(davka.map((f) => f.ico)).toEqual(["25242407"]);
+  });
+
+  it("objednávka bez výběru se chová jako dřív — vezme frontu podle skóre", async () => {
+    await firmaVKampani("25232657", 50);
+    await firmaVKampani("25242407", 40);
+
+    const [o] = await db.query<{ id: string }>(
+      `insert into reserse (kampan_id, firem_zadano, zadani, pozadal)
+       values ($1, 1, 'test', 'a@b.cz') returning id`,
+      [kampanId],
+    );
+
+    const davka = await firmyProReserseObjednavky(db, o!.id, kampanId);
+    expect(davka.map((f) => f.ico)).toEqual(["25232657"]);
   });
 });

@@ -59,8 +59,9 @@ import {
 import { rozhlednuti, vyridPruzkum } from "./cmuchal-oblast.js";
 import { dalsiKVyrizeni, odemkni, tep, zamkni } from "./fronta.js";
 import {
-  dalsiReserseKVyrizeni, firmyProReserse, pocetSeSpojenim, pocetZpracovanych, selhalaReserse,
-  uzavriReserse, vycerpanePokusy, zahajReserse, zaznamenejPokusReserse,
+  dalsiReserseKVyrizeni, firmyProReserseObjednavky, pocetSeSpojenim,
+  pocetZpracovanych, selhalaReserse, uzavriReserse, vycerpanePokusy, zahajReserse,
+  zaznamenejPokusReserse,
 } from "./reserse.js";
 // Aliasováno — `spustCmuchala` už je jméno funkce z cmuchal.ts (obohacení
 // nad jídelnou), tohle je jiná věc: spuštění Čmuchala jako procesu.
@@ -1294,7 +1295,9 @@ async function cmdReserse(argv: string[]): Promise<void> {
         return;
       }
 
-      const firmy = await firmyProReserse(db, o.kampanId, o.firemZadano);
+      // Objednávka může nést jmenovitý výběr firem (majitel 19. 8. 2026) —
+      // pak dávka obsahuje přesně jej, protnutý s aktuální frontou.
+      const firmy = await firmyProReserseObjednavky(db, o.id, o.kampanId);
       if (firmy.length === 0) {
         // Prázdná dávka není selhání — všechny firmy už rešerší prošly.
         await uzavriReserse(db, o.id, { firemZpracovano: 0, firemSNalezem: 0 });

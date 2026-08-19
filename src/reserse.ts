@@ -192,3 +192,45 @@ export async function pocetZpracovanych(db: Db, ica: readonly string[]): Promise
   );
   return r[0]?.pocet ?? 0;
 }
+
+/**
+ * Dávka pro konkrétní objednávku.
+ *
+ * Objednávka může nést **jmenovitý výběr firem** (`reserse_firmy`) —
+ * vyžádal si majitel 19. 8. 2026, aby mohl rešerši dělat po částech a
+ * vyloučit firmy, u kterých nedává smysl. Vybrané firmy se ale berou
+ * **proti aktuální frontě**: kdo mezitím dostal razítko, vyčerpal pokusy
+ * nebo byl zamítnut, do dávky nejde, i když ho výběr jmenuje.
+ *
+ * Objednávka bez výběru se chová jako dřív — vršek fronty podle skóre,
+ * ořezaný na `firem_zadano`.
+ */
+export async function firmyProReserseObjednavky(
+  db: Db,
+  reserseId: string,
+  kampanId: string,
+): Promise<FirmaKReserse[]> {
+  const vyber = await db.query<{ ico: string }>(
+    "select ico from reserse_firmy where reserse_id = $1",
+    [reserseId],
+  );
+
+  const [objednavka] = await db.query<{ firem_zadano: number }>(
+    "select firem_zadano from reserse where id = $1",
+    [reserseId],
+  );
+  const zadano = Number(objednavka?.firem_zadano ?? 0);
+
+  if (vyber.length === 0) {
+    return firmyProReserse(db, kampanId, zadano);
+  }
+
+  const vybrane = new Set(vyber.map((v) => v.ico));
+  // Fronta bez limitu a filtr až tady — pravidlo výběru zůstává jen
+  // v databázové funkci, tenhle kód jen protíná množiny.
+  const fronta = await db.query<FirmaKReserse>(
+    "select ico, nazev, skore from firmy_pro_reserse($1, null)",
+    [kampanId],
+  );
+  return fronta.filter((f) => vybrane.has(f.ico)).slice(0, zadano || undefined);
+}

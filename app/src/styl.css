@@ -1961,3 +1961,16 @@ h3 {
   overflow-y: auto;
   font-size: var(--t-drobny);
 }
+
+/* Zaškrtávací výběr firem k rešerši — každá na řádku, klik na celý popisek. */
+.vyctove-firmy.zaskrtavaci {
+  list-style: none;
+  padding-left: 0;
+}
+
+.vyctove-firmy.zaskrtavaci label {
+  display: flex;
+  gap: var(--o2);
+  align-items: baseline;
+  cursor: pointer;
+}

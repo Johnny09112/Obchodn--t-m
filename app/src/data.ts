@@ -1266,14 +1266,32 @@ export async function objednejReserse(
   kampanId: string,
   firemZadano: number,
   pozadal: string,
+  /**
+   * Jmenovitý výběr firem (majitel 19. 8. 2026) — hlídka pak zpracuje
+   * přesně tyhle, protnuté s aktuální frontou. Bez seznamu se bere vršek
+   * fronty podle skóre jako dřív.
+   */
+  ica?: string[],
 ): Promise<void> {
-  const { error } = await supabase.from("reserse").insert({
-    kampan_id: kampanId,
-    firem_zadano: firemZadano,
-    zadani: ZADANI_VYCHOZI,
-    pozadal,
-  });
+  const { data, error } = await supabase
+    .from("reserse")
+    .insert({
+      kampan_id: kampanId,
+      firem_zadano: firemZadano,
+      zadani: ZADANI_VYCHOZI,
+      pozadal,
+    })
+    .select("id");
   if (error) throw new Error(error.message);
+  const id = data?.[0]?.id as string | undefined;
+  if (!id) throw new Error("Objednávku se nepodařilo zapsat.");
+
+  if (ica && ica.length > 0) {
+    const { error: chybaVyberu } = await supabase
+      .from("reserse_firmy")
+      .insert(ica.map((ico) => ({ reserse_id: id, ico })));
+    if (chybaVyberu) throw new Error(chybaVyberu.message);
+  }
 }
 
 /** Poslední objednávka kampaně, nebo `null`. */

@@ -144,10 +144,16 @@ export function PruvodceKampani({
   const [zbyvaReserse, setZbyvaReserse] = useState<number | null>(null);
   /** Poslední objednávka AI rešerše pro tuhle kampaň, nebo `null`. */
   const [objednavka, setObjednavka] = useState<ObjednavkaReserse | null>(null);
-  /** Kolik firem se právě potvrzuje k rešerši v dialogu; `null` = zavřeno. */
-  const [reserseZadost, setReserseZadost] = useState<number | null>(null);
-  /** Jmenovitý seznam firem pro dialog — ať se neobjednává naslepo. */
+  /** Je otevřený dialog objednávky rešerše? */
+  const [reserseDialog, setReserseDialog] = useState(false);
+  /** Jmenovitý seznam firem fronty pro dialog — ať se neobjednává naslepo. */
   const [reserseFirmy, setReserseFirmy] = useState<Array<{ ico: string; nazev: string }>>([]);
+  /**
+   * Zaškrtnuté firmy v dialogu. Výchozí je všechno; majitel odškrtává, co
+   * teď nedává smysl — částečná dávka podle času je jeho požadavek
+   * z 19. 8. 2026 („odklikat počet, který mi časově dává smysl").
+   */
+  const [reserseVybrane, setReserseVybrane] = useState<Set<string>>(new Set());
 
   const smi = smiUpravovat(kampan, role, email);
   /**
@@ -386,26 +392,42 @@ export function PruvodceKampani({
    * vybere hlídka (databázová funkce `firmy_pro_reserse`). Objednávka tak
    * není naslepo; vyžádal si majitel 19. 8. 2026.
    */
-  async function otevriDialogReserse(pocet: number) {
+  async function otevriDialogReserse() {
     if (!id) return;
-    setReserseZadost(pocet);
+    setReserseDialog(true);
     setReserseFirmy([]);
+    setReserseVybrane(new Set());
     try {
-      setReserseFirmy(await firmyProReserseNahled(id));
-    } catch {
-      // Bez seznamu se dialog nezavírá — počet platí i tak, jen se
-      // jména nepovedlo načíst.
+      const fronta = await firmyProReserseNahled(id);
+      setReserseFirmy(fronta);
+      // Výchozí stav: všechno zaškrtnuté. Odškrtává se, co nedává smysl.
+      setReserseVybrane(new Set(fronta.map((f) => f.ico)));
+    } catch (e) {
+      setReserseDialog(false);
+      setChyba((e as Error).message);
     }
   }
 
+  function prepniVyberReserse(ico: string) {
+    setReserseVybrane((v) => {
+      const nove = new Set(v);
+      if (nove.has(ico)) nove.delete(ico);
+      else nove.add(ico);
+      return nove;
+    });
+  }
+
   /** Objedná dávku AI rešerše. Agenta to nespustí — jen zapíše do fronty. */
-  async function objednatReserse(pocet: number) {
-    if (!id) return;
+  async function objednatReserse() {
+    if (!id || reserseVybrane.size === 0) return;
     setUklada(true);
     setChyba(null);
     try {
-      await objednejReserse(id, pocet, email);
-      setReserseZadost(null);
+      // Jmenovitý výběr se posílá vždy — i „všechno zaškrtnuté" je výběr.
+      // Fronta se totiž může do vyzvednutí změnit a majitel schválil
+      // TENHLE seznam, ne „cokoli tam zrovna bude".
+      await objednejReserse(id, reserseVybrane.size, email, [...reserseVybrane]);
+      setReserseDialog(false);
       nactiObjednavku();
     } catch (e) {
       setChyba((e as Error).message);
@@ -1105,7 +1127,7 @@ export function PruvodceKampani({
                       <button
                         className="tlacitko"
                         disabled={uklada}
-                        onClick={() => void otevriDialogReserse(kObjednani)}
+                        onClick={() => void otevriDialogReserse()}
                       >
                         Objednat rešerši pro{" "}
                         {kObjednani === 1
@@ -1381,7 +1403,7 @@ export function PruvodceKampani({
           </div>
         )}
 
-        {reserseZadost !== null && (
+        {reserseDialog && (
           <div
             className="zaclona"
             role="dialog"
@@ -1389,36 +1411,75 @@ export function PruvodceKampani({
             aria-label="Objednat AI průzkum"
           >
             <div className="dialog">
-              <h3>
-                Objednat AI průzkum pro {reserseZadost.toLocaleString("cs")}{" "}
-                {cesky(reserseZadost, "firmu", "firmy", "firem")}?
-              </h3>
+              <h3>Objednat AI průzkum</h3>
               <p>
                 Agent poběží bez dozoru a podle playbooku dohledá jméno i spojení
-                na firmu. Zabere to zhruba{" "}
-                <strong>{odhadReserse(reserseZadost)}</strong>.{" "}
-                <strong>Nic se neodesílá</strong> — jen se doplní kontakty.
+                na firmu. <strong>Nic se neodesílá</strong> — jen se doplní
+                kontakty. Odškrtněte firmy, u kterých teď rešerše nedává smysl.
               </p>
-              {reserseFirmy.length > 0 && (
+
+              {reserseFirmy.length === 0 ? (
+                <p className="nacitani">Načítám frontu…</p>
+              ) : (
                 <>
-                  <p className="poznamka">Které firmy dávka dostane:</p>
-                  <ul className="vyctove-firmy">
-                    {reserseFirmy.slice(0, reserseZadost).map((f) => (
-                      <li key={f.ico}>{f.nazev}</li>
+                  <div className="tlacitka vlevo">
+                    <button
+                      className="tlacitko tise"
+                      disabled={uklada || reserseVybrane.size === reserseFirmy.length}
+                      onClick={() =>
+                        setReserseVybrane(new Set(reserseFirmy.map((f) => f.ico)))
+                      }
+                    >
+                      Označit vše
+                    </button>
+                    <button
+                      className="tlacitko tise"
+                      disabled={uklada || reserseVybrane.size === 0}
+                      onClick={() => setReserseVybrane(new Set())}
+                    >
+                      Zrušit vše
+                    </button>
+                  </div>
+
+                  <ul className="vyctove-firmy zaskrtavaci">
+                    {reserseFirmy.map((f) => (
+                      <li key={f.ico}>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={reserseVybrane.has(f.ico)}
+                            disabled={uklada}
+                            onChange={() => prepniVyberReserse(f.ico)}
+                          />{" "}
+                          {f.nazev}
+                        </label>
+                      </li>
                     ))}
                   </ul>
+
+                  {/* Čas se přepočítává s každým kliknutím — majitel si
+                      dávku ladí podle času, ne podle počtu. */}
+                  <p>
+                    Vybráno {reserseVybrane.size.toLocaleString("cs")}{" "}
+                    {cesky(reserseVybrane.size, "firma", "firmy", "firem")} z{" "}
+                    {reserseFirmy.length.toLocaleString("cs")} — zabere to{" "}
+                    <strong>{odhadReserse(reserseVybrane.size)}</strong>.
+                  </p>
                 </>
               )}
+
               <div className="tlacitka vlevo">
-                <button className="tlacitko tise" onClick={() => setReserseZadost(null)}>
+                <button className="tlacitko tise" onClick={() => setReserseDialog(false)}>
                   Ještě ne
                 </button>
                 <button
                   className="tlacitko"
-                  disabled={uklada}
-                  onClick={() => objednatReserse(reserseZadost)}
+                  disabled={uklada || reserseVybrane.size === 0}
+                  onClick={() => void objednatReserse()}
                 >
-                  {uklada ? "Objednávám…" : "Objednat"}
+                  {uklada
+                    ? "Objednávám…"
+                    : `Objednat pro ${reserseVybrane.size.toLocaleString("cs")} ${cesky(reserseVybrane.size, "firmu", "firmy", "firem")}`}
                 </button>
               </div>
             </div>

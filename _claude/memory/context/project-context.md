@@ -319,6 +319,37 @@ data ani kód s tím nic nenadělají.
 (`.claude/skills/`: overeni-firmy, kontrola-kvality, tydenni-report),
 checklist fáze 0 je v tomhle bodě zastaralý.
 
+**Opraveno týž den:** psal jsem, že zahřívání domény je nejdelší lhůta —
+neplatí. `docs/ODESILANI-DOMENA.md` to zpřesnil už 17. 8.: týdny platí pro
+stovky zpráv denně, při deseti je to mírné. Navíc `cantinero.cz` existuje,
+DNS je na Cloudflare a DMARC běží. **Nejdelší lhůtu má právní konzultace.**
+
+## Fáze 3 otevřena 20. 8. 2026 — a co už z ní stojí
+
+**Majitel výslovně schválil stavbu odesílací cesty** (souhlas se stavbou,
+ne s odesíláním; vypínač zůstává na člověku). Zároveň rozhodl, že druhá
+firma pojede na **vlastní instanci** ([[druha-firma-vlastni-instance]])
+a že se nejdřív posílají **zkušební zprávy na jeho vlastní adresu**
+([[zkusebni-odeslani-na-vlastni-adresu]]).
+
+Odpracováno 20. 8. (vše nasazené, testy 880 zelených, 91 souborů):
+
+| Co | Stav |
+|---|---|
+| Aplikace se bez nastavení nepřipojí k cizí databázi | ✅ nasazeno, ověřeno v prohlížeči |
+| Nabídka bez spádového bodu (migrace 0057) | ✅ nasazeno, Cantinero beze změny |
+| Pojistky zkušebního odeslání (migrace 0058) | ✅ nasazeno, ověřeno i na ostré DB |
+| Zkušební rozeslání kampaně (`src/odeslani.ts`) | ✅ hotovo, za rozhraním `Odesilatel` |
+| Napojení na Resend | ⏳ **čeká na ověřenou doménu** |
+| Ostré odesílání, povinná pasáž GDPR, ruční schválení prvních 50 | ⏳ nezačato |
+
+Plán celku: `docs/superpowers/plans/2026-08-20-druha-firma.md`.
+Vizuál pro majitele: `docs/vizualizace/druha-firma-plan-2026-08-20.html`.
+
+**Nerozhodnuto:** ruční kontrola vzorku 30 firem. Majitel na otázku „kdy"
+odpověděl zkušebním odesíláním, takže otázka zůstala viset. **Připomenout
+před prvním odesláním skutečné firmě.**
+
 ## Kde je zapsaný plán
 
 Fáze 0–5 = SPEC kap. 12; sessions přípravné fáze = `docs/FAZE-0.md`.
@@ -452,9 +483,12 @@ Podklad, který schvaloval:
 
 ## Aktuální focus
 
-**Fáze 0 se dobírá ke konci; poslední velký kus je S0.5 (tvrzení a šablony),
-který čeká na schválení textů majitelem.** Podrobný stav a co zbývá je
-v sekci „Tvrzení a šablony (S0.5)" výš.
+**Od 20. 8. běží fáze 3 (odesílání) souběžně s dobíháním fáze 0.** Nejbližší
+překážkou je **ověřená odesílací doména** — bez ní nejde poslat ani zkouška
+majiteli. Stav rozestavěné odesílací cesty je v sekci „Fáze 3 otevřena" výš.
+
+S0.5 (tvrzení a šablony) je hotové; zbývá poučení podle čl. 14 GDPR, které
+patří na právní konzultaci.
 
 Nejbližší kroky, seřazené podle toho, co na co čeká:
 

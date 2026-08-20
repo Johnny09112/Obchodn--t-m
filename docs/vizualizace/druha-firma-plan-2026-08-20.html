@@ -1,0 +1,459 @@
+<title>Druhá firma na vlastní instanci</title>
+<style>
+  :root {
+    --ground: #eeede7;
+    --karta: #fbfaf6;
+    --karta2: #f4f3ec;
+    --inkoust: #1d211b;
+    --inkoust-slaby: #5c6157;
+    --linka: #cfd0c6;
+    --linka-slaba: #e3e2d9;
+    --zelena: #3c6b48;
+    --zelena-svetla: #e3ece3;
+    --cihla: #a4432c;
+    --cihla-svetla: #f6e5df;
+    --zlata: #8d6a1a;
+    --zlata-svetla: #f6eed7;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141710;
+      --karta: #1c2019;
+      --karta2: #232821;
+      --inkoust: #e8e9e2;
+      --inkoust-slaby: #a0a597;
+      --linka: #363a33;
+      --linka-slaba: #2b2f28;
+      --zelena: #7fb98c;
+      --zelena-svetla: #22301f;
+      --cihla: #e08a70;
+      --cihla-svetla: #33211c;
+      --zlata: #d8b25c;
+      --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #141710;
+    --karta: #1c2019;
+    --karta2: #232821;
+    --inkoust: #e8e9e2;
+    --inkoust-slaby: #a0a597;
+    --linka: #363a33;
+    --linka-slaba: #2b2f28;
+    --zelena: #7fb98c;
+    --zelena-svetla: #22301f;
+    --cihla: #e08a70;
+    --cihla-svetla: #33211c;
+    --zlata: #d8b25c;
+    --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    line-height: 1.6;
+  }
+
+  .stranka {
+    max-width: 58rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .eyebrow {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    line-height: 1.15;
+    margin: 0.5rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  h2 { font-family: var(--pismo-nadpis); font-size: 1.375rem; margin: 0 0 0.4rem; text-wrap: balance; }
+  h3 { font-family: var(--pismo-nadpis); font-size: 1.0625rem; margin: 0; }
+
+  .perex { margin: 0; max-width: 44rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+  .podnadpis { margin: 0 0 1.5rem; color: var(--inkoust-slaby); font-size: 0.9375rem; max-width: 44rem; }
+
+  /* ───────────────────────────── rozhodnutí: dvě cesty vedle sebe */
+
+  .volba { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+
+  .cesta {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    box-shadow: var(--stin);
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .cesta.zvolena { border-color: var(--zelena); border-width: 2px; }
+  .cesta.zamitnuta { opacity: 0.75; }
+  .cesta p { margin: 0; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .cesta .verdikt {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    align-self: flex-start;
+  }
+  .cesta.zvolena .verdikt { background: var(--zelena-svetla); color: var(--zelena); }
+  .cesta.zamitnuta .verdikt { background: var(--cihla-svetla); color: var(--cihla); }
+
+  /* ───────────────────────────── pořadí prací */
+
+  .postup { display: flex; flex-direction: column; }
+
+  .uzel {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 0 1.25rem;
+    position: relative;
+    padding-bottom: 1.5rem;
+  }
+  .uzel:last-child { padding-bottom: 0; }
+
+  /* Čára spojuje kroky, protože na sebe skutečně navazují. */
+  .uzel::before {
+    content: "";
+    position: absolute;
+    left: 1.1rem;
+    top: 2.1rem;
+    bottom: -0.25rem;
+    width: 2px;
+    background: var(--linka);
+  }
+  .uzel:last-child::before { display: none; }
+
+  .cislo {
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--pismo-data);
+    font-size: 0.9375rem;
+    background: var(--karta);
+    border: 2px solid var(--linka);
+    position: relative;
+    z-index: 1;
+  }
+  .uzel.hned .cislo { border-color: var(--cihla); color: var(--cihla); }
+  .uzel.pak .cislo { border-color: var(--zlata); color: var(--zlata); }
+  .uzel.pozdeji .cislo { border-color: var(--linka); color: var(--inkoust-slaby); }
+
+  .telo {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    box-shadow: var(--stin);
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .telo p { margin: 0; font-size: 0.9375rem; }
+  .telo ul { margin: 0; padding-left: 1.1rem; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .telo li { margin-bottom: 0.25rem; }
+  .telo li:last-child { margin-bottom: 0; }
+
+  .hlava { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.75rem; }
+
+  .stitek {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .stitek.hned { background: var(--cihla-svetla); color: var(--cihla); }
+  .stitek.pak { background: var(--zlata-svetla); color: var(--zlata); }
+  .stitek.pozdeji { background: var(--karta2); color: var(--inkoust-slaby); }
+
+  .patka {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--linka-slaba);
+    font-family: var(--pismo-data);
+    font-size: 0.8125rem;
+    color: var(--inkoust-slaby);
+  }
+
+  code {
+    font-family: var(--pismo-data);
+    font-size: 0.875em;
+    background: var(--karta2);
+    padding: 0.05rem 0.3rem;
+    border-radius: 2px;
+  }
+
+  /* ───────────────────────────── riziko a požadavky */
+
+  .ram {
+    border: 1px solid var(--linka);
+    border-left: 4px solid var(--cihla);
+    border-radius: 3px;
+    background: var(--karta);
+    box-shadow: var(--stin);
+    padding: 1.25rem 1.4rem;
+  }
+  .ram p { margin: 0 0 0.7rem; font-size: 0.9375rem; }
+  .ram p:last-child { margin-bottom: 0; }
+
+  .seznam-pozadavku { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1px; background: var(--linka); border: 1px solid var(--linka); border-radius: 3px; overflow: hidden; }
+  .pozadavek { background: var(--karta); padding: 0.9rem 1.1rem; display: flex; flex-direction: column; gap: 0.25rem; }
+  .pozadavek .co { font-size: 0.9375rem; }
+  .pozadavek .kdo { font-family: var(--pismo-data); font-size: 0.75rem; color: var(--inkoust-slaby); }
+
+  footer { border-top: 1px solid var(--linka); padding-top: 1.25rem; font-size: 0.8125rem; color: var(--inkoust-slaby); }
+  footer p { margin: 0 0 0.35rem; }
+
+  a { color: var(--zelena); }
+  a:focus-visible { outline: 2px solid var(--zlata); outline-offset: 2px; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <p class="eyebrow">Cantinero · plán z 20. 8. 2026</p>
+    <h1>Jak spustíme druhou firmu</h1>
+    <p class="perex">
+      Druhá firma se rozjela dřív, než se čekalo, prodává produkt nevázaný na
+      místo a má se spustit <strong>včetně odesílání</strong>. Tady je, jak to
+      technicky vyřeším, v jakém pořadí a co k tomu potřebuji od Vás.
+    </p>
+  </header>
+
+  <section>
+    <p class="eyebrow">Rozhodnutí</p>
+    <h2>Vlastní instance na zákazníka, ne přestavba na víc firem</h2>
+    <p class="podnadpis">
+      Ověřeno v kódu: systém dnes nezná pojem „zákazník" — ani jedna migrace
+      nemá vlastníka záznamu. To dává jen dvě cesty.
+    </p>
+    <div class="volba">
+      <article class="cesta zvolena">
+        <span class="verdikt">▲ tudy jdeme</span>
+        <h3>Samostatná instance</h3>
+        <p>
+          Vlastní databáze, vlastní nasazení, vlastní tajemství. Data se nemají
+          kde potkat. Kód je připravený — přepínač pro druhý projekt už
+          existuje.
+        </p>
+        <p><strong>Cena:</strong> každá instance se aktualizuje zvlášť.</p>
+      </article>
+      <article class="cesta zamitnuta">
+        <span class="verdikt">■ ne teď</span>
+        <h3>Víc firem v jedné databázi</h3>
+        <p>
+          Znamená sáhnout na každou tabulku i na každé tvrdé pravidlo. Týdny
+          práce a jedna chyba znamená, že zákazník uvidí cizí data.
+        </p>
+        <p><strong>Vrátí se to</strong>, až bude zákazníků řádově deset.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Pořadí prací</p>
+    <h2>Pět kroků, každý navazuje na předchozí</h2>
+    <p class="podnadpis">
+      Odhady jsou odhady, ne sliby. Označuji je jako odhad všude, kde nejsou
+      podložené odpracovanou prací.
+    </p>
+
+    <div class="postup">
+
+      <div class="uzel hned">
+        <span class="cislo">0</span>
+        <div class="telo">
+          <div class="hlava">
+            <h3>Aplikace se nesmí tiše připojit k cizí databázi</h3>
+            <span class="stitek hned">bezpečnost · první</span>
+          </div>
+          <p>
+            Dnes má aplikace v sobě zapsanou záložní adresu naší databáze.
+            Kdyby druhé nasazení zapomnělo nastavit připojení, <strong>tiše by
+            sáhlo do dat první firmy</strong>. Nově chybějící nastavení aplikaci
+            zastaví a řekne to nahlas.
+          </p>
+          <p>
+            <strong>Pozor na pořadí:</strong> nejdřív se doplní nastavení
+            u stávajícího projektu, teprve pak se nasadí verze bez záložní
+            hodnoty — jinak spadne dnešní provoz.
+          </p>
+          <p class="patka"><span>Dělá: Claude</span><span>Odhad: hodiny</span><span>Potřebuje: 2 minuty vašeho klikání</span></p>
+        </div>
+      </div>
+
+      <div class="uzel hned">
+        <span class="cislo">1</span>
+        <div class="telo">
+          <div class="hlava">
+            <h3>Produkt, který není vázaný na místo</h3>
+            <span class="stitek hned">jádro</span>
+          </div>
+          <p>
+            Dobrá zpráva: vrstva „koho oslovit" o jídelnách vůbec neví.
+            Zadrátovaná je jen vrstva „kde" — a ta musí jít vypnout.
+          </p>
+          <ul>
+            <li>Profil produktu dostane příznak „vázáno na místo: ano/ne"</li>
+            <li>Cena a vzdálenost se přestanou brát z konstanty a vezmou se z profilu</li>
+            <li>U nemístního produktu se tyhle dvě položky nevyžadují vůbec</li>
+            <li>Firmy bez jídelny v dosahu se přestanou zasekávat</li>
+          </ul>
+          <p>
+            Bez toho by z kampaně vypadly <strong>úplně všechny firmy</strong> —
+            přesně jako dnes Čachrov, 0 z 91.
+          </p>
+          <p class="patka"><span>Dělá: Claude</span><span>Odhad: 1 pracovní celek</span></p>
+        </div>
+      </div>
+
+      <div class="uzel pak">
+        <span class="cislo">2</span>
+        <div class="telo">
+          <div class="hlava">
+            <h3>Odesílací cesta</h3>
+            <span class="stitek pak">otevírá fázi 3</span>
+          </div>
+          <p>
+            Dnes v systému není ani řádek, který by uměl odeslat — pravidla to
+            přípravným fázím zakazují. Tímhle krokem se fáze 3 otevírá.
+          </p>
+          <ul>
+            <li>Odesílatel = přihlášený uživatel, doména z nastavení instance</li>
+            <li>Každá odeslaná zpráva se zapíše, platí denní limit</li>
+            <li>Jedna firma = jedno oslovení, hlídané v databázi, ne na obrazovce</li>
+            <li>Bez poučení podle GDPR systém odeslání odmítne</li>
+            <li>Prvních 50 zpráv schvalujete ručně</li>
+            <li>Vypínač odesílání zůstává v rukou člověka — na tom se nemění nic</li>
+          </ul>
+          <p class="patka"><span>Dělá: Claude</span><span>Odhad: 2 pracovní celky</span><span>Čeká na: doménu a právní text</span></p>
+        </div>
+      </div>
+
+      <div class="uzel pak">
+        <span class="cislo">3</span>
+        <div class="telo">
+          <div class="hlava">
+            <h3>Založení druhé instance</h3>
+            <span class="stitek pak">provoz</span>
+          </div>
+          <p>
+            Databáze, nasazení, tajemství, migrace. Pak profil produktu,
+            nabídka s parametry a šablona zprávy — <strong>to všechno už jde
+            nastavit bez programování</strong>, přesně kvůli tomuhle to tak
+            vzniklo.
+          </p>
+          <p class="patka"><span>Dělá: Claude + majitel</span><span>Odhad: půl dne, většina čekání</span></p>
+        </div>
+      </div>
+
+      <div class="uzel pozdeji">
+        <span class="cislo">4</span>
+        <div class="telo">
+          <div class="hlava">
+            <h3>Režim s API místo předplatného</h3>
+            <span class="stitek pozdeji">zapsáno, staví se později</span>
+          </div>
+          <p>
+            Označil jste to za nutnou funkci do budoucna. <strong>Není to
+            slepá ulička</strong> — cesta přes API v systému pořád je a agent
+            ji používá přes stejné rozhraní. Doplní se k tomu účtování na
+            zákazníka, limity a klíče mimo repozitář.
+          </p>
+          <p class="patka"><span>Dělá: Claude</span><span>Spouští: první platící zákazník</span></p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Riziko, které nemám v odhadech</p>
+    <h2>„Prodává se kamkoli" mění sběr, ne jen kampaň</h2>
+    <div class="ram">
+      <p>
+        Dnešní sběr je vedený územím: nakreslí se oblast a v ní se hledá. Když
+        produkt není vázaný na místo, <strong>území přestane být přirozený
+        filtr</strong> a jeho práci musí převzít profil — obory a velikost, ale
+        nad celým rejstříkem, ne nad obcí. To může být větší kus práce než
+        všechno ostatní v tomhle plánu dohromady.
+      </p>
+      <p>
+        <strong>Praktický obchvat:</strong> i firma, která prodává
+        celorepublikově, může začít v jednom kraji. Území pak zůstane jako filtr
+        objemu, ne jako vlastnost produktu — a krok 1 stačí. Doporučuji začít
+        takhle a celorepublikový sběr řešit, teprve až se ukáže, že je ho
+        potřeba.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Co potřebuji od Vás</p>
+    <h2>Pět věcí, bez kterých se to nerozjede</h2>
+    <div class="seznam-pozadavku">
+      <div class="pozadavek"><span class="co">Doména druhé firmy a přístup k jejímu DNS</span><span class="kdo">majitel · týden předem</span></div>
+      <div class="pozadavek"><span class="co">Kdo je u nich podepsaný pod zprávami a čte odpovědi</span><span class="kdo">majitel</span></div>
+      <div class="pozadavek"><span class="co">Znění poučení podle GDPR — od advokáta, ne ode mě</span><span class="kdo">advokát</span></div>
+      <div class="pozadavek"><span class="co">Vědomé ano k tomu, že fáze 3 se otevírá dřív než uzavření fáze 0</span><span class="kdo">majitel · rozhodnutí</span></div>
+      <div class="pozadavek"><span class="co">Peníze za druhou databázi a nasazení (bezplatná pásma neověřena)</span><span class="kdo">majitel · rozhodnutí</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Co se nemění</p>
+    <h2>Druhá firma nedostane měkčí pravidla</h2>
+    <div class="ram" style="border-left-color: var(--zelena);">
+      <p>
+        Firma vzniká jen po ověření v rejstříku. Každý údaj má zdroj a doslovnou
+        citaci. Do zprávy smí jen povolené údaje. Jedna firma = jedno oslovení.
+        Vypínač odesílání přepíná jedině člověk. Každý běh agenta se zapisuje.
+      </p>
+      <p>
+        Platí to pro každou instanci stejně — jsou to pravidla vynucená
+        v databázi, ne dobrá vůle v návodu.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Podklad:</strong> <code>docs/superpowers/plans/2026-08-20-druha-firma.md</code></p>
+    <p><strong>Ověřeno v kódu</strong>, ne odhadem: chybějící pojem zákazníka v migracích, zadrátovaná cena a vzdálenost v přehledu kampaně, záložní adresa databáze v aplikaci, existující rozhraní pro API cestu.</p>
+  </footer>
+
+</div>

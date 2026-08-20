@@ -1,19 +1,26 @@
 import { createClient } from "@supabase/supabase-js";
+import { prectiPripojeni } from "./nastaveni";
 
 /**
- * Připojení ke sdílené databázi (projekt `Customer_finder`, eu-central-1).
+ * Připojení ke sdílené databázi — **kterou určuje nastavení nasazení**, ne kód.
  *
  * Klíč je **publishable** — je určený k tomu, aby byl vidět v prohlížeči.
  * Sám o sobě neotevírá nic: co uvidí přihlášený uživatel, rozhoduje Row
  * Level Security v databázi (migrace 0015–0016). Klíč `service_role`
  * pravidla obchází, a proto se do aplikace nikdy nesmí dostat.
  */
-const URL = import.meta.env.VITE_SUPABASE_URL ?? "https://sedjnwllzyeuiruxgoil.supabase.co";
-const KLIC =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  "sb_publishable_e5Nd48dJni1kxogupcOvVQ_RC-KA7RR";
+const PRIPOJENI = prectiPripojeni(import.meta.env as unknown as Record<string, unknown>);
 
-export const supabase = createClient(URL, KLIC);
+/**
+ * Které proměnné chybí. Prázdné pole = smí se připojovat.
+ *
+ * Aplikace to musí zkontrolovat **dřív, než se na cokoli zeptá databáze**
+ * (viz `App.tsx`) — jinak by uživatel viděl jen nekonečné načítání a nevěděl
+ * proč. Záložní adresa tu schválně není: podrobnosti v `nastaveni.ts`.
+ */
+export const CHYBI_NASTAVENI: readonly string[] = PRIPOJENI.chybi;
+
+export const supabase = createClient(PRIPOJENI.url, PRIPOJENI.klic);
 
 export type Role = "super-admin" | "admin" | "uzivatel" | "host";
 

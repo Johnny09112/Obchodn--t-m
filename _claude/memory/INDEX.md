@@ -42,6 +42,7 @@
 - [[zastup-spravce-a-zamceni-kampani]] — Kampaň upravuje správce, jeho zástup a admin; mazat smí jen admin · active · 2026-08-01
 
 ## Patterns
+- [[zalozni-adresa-databaze-je-past]] — Záložní („??") adresa databáze v kódu aplikace se u druhého nasazení mění v tiché připojení k cizím datům — nastavení musí chybět hlasitě · active · 2026-08-20
 - [[cantinero-data-dir-vs-database-url]] — CANTINERO_DATA_DIR neplatí, když je nastavené DATABASE_URL · active · 2026-08-18
 - [[js-hranice-slova-a-diakritika]] — \b v JavaScriptu nezná diakritiku — /\bvaší\b/ nenajde nic, protože „í" není slovní znak; použij hranice přes \p{L} · active · 2026-08-18
 - [[ostra-data-jsou-v-cloudu]] — Ostrá data leží v cloudovém Postgresu za DATABASE_URL, ne v data/pgdata-v5 — lokální kopie zamrzla 29. 7. na 167 firmách a tiše odpoví na každý dotaz · active · 2026-08-18

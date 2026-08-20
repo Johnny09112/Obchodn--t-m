@@ -1,0 +1,551 @@
+<title>Doména krok za krokem</title>
+<style>
+  :root {
+    --ground: #eeede7;
+    --karta: #fbfaf6;
+    --karta2: #f4f3ec;
+    --inkoust: #1d211b;
+    --inkoust-slaby: #5c6157;
+    --linka: #cfd0c6;
+    --linka-slaba: #e3e2d9;
+    --zelena: #3c6b48;
+    --zelena-svetla: #e3ece3;
+    --cihla: #a4432c;
+    --cihla-svetla: #f6e5df;
+    --zlata: #8d6a1a;
+    --zlata-svetla: #f6eed7;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141710;
+      --karta: #1c2019;
+      --karta2: #232821;
+      --inkoust: #e8e9e2;
+      --inkoust-slaby: #a0a597;
+      --linka: #363a33;
+      --linka-slaba: #2b2f28;
+      --zelena: #7fb98c;
+      --zelena-svetla: #22301f;
+      --cihla: #e08a70;
+      --cihla-svetla: #33211c;
+      --zlata: #d8b25c;
+      --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #141710;
+    --karta: #1c2019;
+    --karta2: #232821;
+    --inkoust: #e8e9e2;
+    --inkoust-slaby: #a0a597;
+    --linka: #363a33;
+    --linka-slaba: #2b2f28;
+    --zelena: #7fb98c;
+    --zelena-svetla: #22301f;
+    --cihla: #e08a70;
+    --cihla-svetla: #33211c;
+    --zlata: #d8b25c;
+    --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    line-height: 1.65;
+  }
+
+  .stranka {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .eyebrow {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    line-height: 1.15;
+    margin: 0.5rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  h2 { font-family: var(--pismo-nadpis); font-size: 1.5rem; margin: 0 0 0.5rem; text-wrap: balance; }
+  h3 { font-family: var(--pismo-nadpis); font-size: 1.125rem; margin: 0; }
+
+  .perex { margin: 0; max-width: 42rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+  .podnadpis { margin: 0 0 1.5rem; color: var(--inkoust-slaby); font-size: 0.9375rem; max-width: 42rem; }
+
+  p { margin: 0 0 0.75rem; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ───────────────────────────── kroky */
+
+  .kroky { display: flex; flex-direction: column; }
+
+  .krok {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 0 1.25rem;
+    position: relative;
+    padding-bottom: 1.5rem;
+  }
+  .krok:last-child { padding-bottom: 0; }
+
+  /* Čára drží pořadí — tyhle kroky na sebe opravdu navazují a přeskočit
+     se nedají (bez ověřené domény nemá klíč co dělat). */
+  .krok::before {
+    content: "";
+    position: absolute;
+    left: 1.15rem;
+    top: 2.2rem;
+    bottom: -0.25rem;
+    width: 2px;
+    background: var(--linka);
+  }
+  .krok:last-child::before { display: none; }
+
+  .cislo {
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--pismo-data);
+    font-size: 0.9375rem;
+    background: var(--karta);
+    border: 2px solid var(--zelena);
+    color: var(--zelena);
+    position: relative;
+    z-index: 1;
+  }
+  .krok.pozor .cislo { border-color: var(--cihla); color: var(--cihla); }
+
+  .telo {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    box-shadow: var(--stin);
+    padding: 1.1rem 1.3rem;
+  }
+
+  .kde {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    margin: 0 0 0.35rem;
+  }
+
+  code {
+    font-family: var(--pismo-data);
+    font-size: 0.875em;
+    background: var(--karta2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+    word-break: break-word;
+  }
+
+  pre {
+    font-family: var(--pismo-data);
+    font-size: 0.8125rem;
+    background: var(--karta2);
+    border: 1px solid var(--linka-slaba);
+    border-radius: 3px;
+    padding: 0.75rem 0.9rem;
+    overflow-x: auto;
+    margin: 0.5rem 0 0.75rem;
+  }
+  pre code { background: none; padding: 0; }
+
+  .obal-tabulky { overflow-x: auto; border: 1px solid var(--linka); border-radius: 3px; margin: 0.75rem 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+  th, td { padding: 0.5rem 0.8rem; text-align: left; border-bottom: 1px solid var(--linka-slaba); vertical-align: top; }
+  th {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    background: var(--karta2);
+  }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: 0.8125rem; }
+
+  /* ───────────────────────────── varování a poznámky */
+
+  .pozor-ram {
+    border: 1px solid var(--linka);
+    border-left: 4px solid var(--cihla);
+    border-radius: 3px;
+    background: var(--karta);
+    box-shadow: var(--stin);
+    padding: 1.1rem 1.3rem;
+    margin: 0.75rem 0;
+  }
+  .pozor-ram .nadpis {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cihla);
+    margin: 0 0 0.5rem;
+  }
+  .pozor-ram ol { margin: 0; padding-left: 1.2rem; }
+  .pozor-ram li { margin-bottom: 0.5rem; }
+  .pozor-ram li:last-child { margin-bottom: 0; }
+
+  .klidny-ram {
+    border: 1px solid var(--linka);
+    border-left: 4px solid var(--zelena);
+    border-radius: 3px;
+    background: var(--karta);
+    box-shadow: var(--stin);
+    padding: 1.25rem 1.4rem;
+  }
+
+  .zlaty-ram {
+    border: 1px solid var(--linka);
+    border-left: 4px solid var(--zlata);
+    border-radius: 3px;
+    background: var(--karta);
+    box-shadow: var(--stin);
+    padding: 1.25rem 1.4rem;
+  }
+
+  .duvody { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin-top: 1rem; }
+  .duvod {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    box-shadow: var(--stin);
+    padding: 1.1rem 1.25rem;
+  }
+  .duvod h3 { margin-bottom: 0.4rem; }
+  .duvod p { font-size: 0.9375rem; color: var(--inkoust-slaby); }
+
+  hr.del { border: none; border-top: 1px solid var(--linka); margin: 0; }
+
+  footer { border-top: 1px solid var(--linka); padding-top: 1.25rem; font-size: 0.8125rem; color: var(--inkoust-slaby); }
+
+  a { color: var(--zelena); }
+  a:focus-visible { outline: 2px solid var(--zlata); outline-offset: 2px; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <p class="eyebrow">Cantinero · 20. 8. 2026</p>
+    <h1>Odesílací doména: co přesně naklikat</h1>
+    <p class="perex">
+      Osm kroků, zhruba hodina. Nic z toho nevyžaduje programování — jen
+      opisování tří řádků z jednoho okna do druhého. Na konci stránky je
+      vysvětlení, proč do mailu musí ještě přijít odstavec o ochraně údajů.
+    </p>
+  </header>
+
+  <section>
+    <p class="eyebrow">Než začnete</p>
+    <div class="klidny-ram">
+      <p>
+        <strong>Budete potřebovat:</strong> přihlášení do Cloudflare (tam máte
+        nastavené DNS pro <code>cantinero.cz</code>) a asi hodinu času.
+      </p>
+      <p>
+        <strong>Vaší dnešní poště se nic nestane.</strong> Maily
+        <code>@cantinero.cz</code> chodí dál přes Forpsi a v celém postupu se
+        na ně nesahá. Přidávají se jen nové řádky pro podsložku
+        <code>send</code>.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Postup</p>
+    <h2>Krok za krokem</h2>
+
+    <div class="kroky">
+
+      <div class="krok">
+        <span class="cislo">1</span>
+        <div class="telo">
+          <p class="kde">resend.com</p>
+          <h3>Založte účet v Resendu</h3>
+          <p>
+            Resend je služba, která maily technicky odesílá. Na
+            <code>resend.com</code> kliknete na <strong>Sign up</strong>.
+          </p>
+          <p>
+            <strong>Nic to nestojí.</strong> Bezplatné pásmo je 100 zpráv
+            denně a 3 000 měsíčně; my počítáme s deseti denně, takže se do něj
+            vejdeme s velkou rezervou. Platit se začne, až kdyby objem výrazně
+            narostl.
+          </p>
+        </div>
+      </div>
+
+      <div class="krok">
+        <span class="cislo">2</span>
+        <div class="telo">
+          <p class="kde">Resend → Domains</p>
+          <h3>Přidejte doménu</h3>
+          <p>
+            <strong>Domains → Add Domain</strong>, napište
+            <code>cantinero.cz</code> a jako region vyberte
+            <strong>EU (Ireland)</strong>.
+          </p>
+          <p>
+            Region volíme kvůli tomu, aby data zůstala v Evropě — hodí se to
+            i k argumentaci o ochraně údajů, o které je řeč níž.
+          </p>
+        </div>
+      </div>
+
+      <div class="krok">
+        <span class="cislo">3</span>
+        <div class="telo">
+          <p class="kde">Resend</p>
+          <h3>Resend Vám ukáže tři řádky — nechte to okno otevřené</h3>
+          <p>
+            Budete je opisovat do Cloudflare. <strong>Konkrétní hodnoty se
+            vygenerují pro Váš účet</strong>, takže je nemůžu předepsat
+            dopředu; tvar bude tenhle:
+          </p>
+          <div class="obal-tabulky">
+            <table>
+              <thead>
+                <tr><th>Typ</th><th>Name</th><th>Hodnota</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>MX</td><td><code>send</code></td><td><code>feedback-smtp.eu-west-1.amazonses.com</code> (priorita 10)</td></tr>
+                <tr><td>TXT</td><td><code>send</code></td><td><code>v=spf1 include:amazonses.com ~all</code></td></tr>
+                <tr><td>TXT</td><td><code>resend._domainkey</code></td><td><code>p=…</code> (velmi dlouhý klíč)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="krok pozor">
+        <span class="cislo">4</span>
+        <div class="telo">
+          <p class="kde">Cloudflare → DNS → Records</p>
+          <h3>Vložte je do Cloudflare</h3>
+          <p>
+            Třikrát <strong>Add record</strong>, pokaždé jeden řádek z tabulky
+            výš.
+          </p>
+          <div class="pozor-ram">
+            <p class="nadpis">Tři místa, kde to nejčastěji ztroskotá</p>
+            <ol>
+              <li>
+                Do políčka <strong>Name</strong> patří jen <code>send</code>,
+                <strong>ne</strong> <code>send.cantinero.cz</code>. Cloudflare
+                si doménu doplní sám — jinak vznikne
+                <code>send.cantinero.cz.cantinero.cz</code> a nic nefunguje.
+              </li>
+              <li>
+                <strong>Proxy musí být vypnutá</strong> — šedý mráček,
+                „DNS only". Oranžový mráček znamená, že Cloudflare záznam
+                přepisuje, a ověření pak nikdy neprojde.
+              </li>
+              <li>
+                <strong>Stávající MX a SPF nechte být.</strong> Hlavně
+                nepřidávejte na hlavní doménu druhý řádek začínající
+                <code>v=spf1</code> — dvě takové na jedné doméně jsou chyba
+                a Vaše pošta by začala padat do spamu.
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="krok">
+        <span class="cislo">5</span>
+        <div class="telo">
+          <p class="kde">Resend → Domains</p>
+          <h3>Klikněte na Verify</h3>
+          <p>
+            Resend si zkontroluje, že záznamy vidí. Obvykle to trvá minuty —
+            Cloudflare mění DNS rychle. Když to napoprvé neprojde, dejte tomu
+            deset minut a zkuste znovu; nejčastější příčina je ten oranžový
+            mráček.
+          </p>
+        </div>
+      </div>
+
+      <div class="krok">
+        <span class="cislo">6</span>
+        <div class="telo">
+          <p class="kde">Cloudflare → DNS → záznam <code>_dmarc</code></p>
+          <h3>Doplňte adresu pro hlášení</h3>
+          <p>
+            Dnešní nastavení funguje, ale <strong>nikam neposílá hlášení</strong>,
+            takže byste se o problému s doručováním nedozvěděl. Upravte
+            existující TXT záznam <code>_dmarc</code> na:
+          </p>
+          <pre><code>v=DMARC1; p=quarantine; rua=mailto:dmarc@cantinero.cz; pct=100; adkim=r; aspf=r</code></pre>
+          <p>
+            Adresa <code>dmarc@cantinero.cz</code> musí fungovat — stačí
+            přesměrování do schránky, kterou už máte. Hlášení chodí jednou
+            denně jako soubor od velkých poskytovatelů; číst je nemusíte,
+            stačí je mít.
+          </p>
+        </div>
+      </div>
+
+      <div class="krok pozor">
+        <span class="cislo">7</span>
+        <div class="telo">
+          <p class="kde">Resend → API Keys</p>
+          <h3>Vytvořte klíč a uložte ho k ostatním tajemstvím</h3>
+          <p>
+            Klíč je heslo, kterým se náš systém Resendu představí. Vytvořte ho
+            v <strong>API Keys → Create API Key</strong> a vložte do souboru
+            s tajemstvími, který leží <strong>mimo pracovní složku</strong>:
+          </p>
+          <pre><code>~/.cantinero/.env
+
+RESEND_API_KEY=re_…</code></pre>
+          <div class="pozor-ram">
+            <p class="nadpis">Neposílejte mi ten klíč do chatu</p>
+            <p>
+              Všechno, co projde konverzací, v ní zůstane. Klíč patří jen do
+              toho souboru — já si ho odtamtud přečtu, když bude potřeba,
+              a do gitu se nikdy nedostane.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="krok">
+        <span class="cislo">8</span>
+        <div class="telo">
+          <p class="kde">Chat</p>
+          <h3>Napište mi, že je hotovo</h3>
+          <p>
+            Dodělám napojení na Resend, ověřím to zkušební zprávou a
+            <strong>pošlu Vám první dávku do schránky</strong> — přesně to,
+            co by dostaly firmy, jen doručené Vám.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="pozor-ram">
+      <p class="nadpis">Jedno varování na závěr</p>
+      <p>
+        <strong>Dokud Resend neukáže doménu jako ověřenou, neposílejte přes ni
+        nic.</strong> Vaše nastavení <code>p=quarantine</code> je přísné:
+        nevyhovující zpráva jde rovnou do spamu — a tím byste si zbytečně
+        pokazil reputaci domény ještě předtím, než se s ní vůbec začne
+        pracovat.
+      </p>
+    </div>
+  </section>
+
+  <hr class="del" />
+
+  <section>
+    <p class="eyebrow">Druhá otázka</p>
+    <h2>Proč do mailu musí odstavec o ochraně údajů</h2>
+    <p class="podnadpis">
+      Ptal jste se, proč to vůbec potřebujeme. Odpověď je kratší, než se zdá.
+    </p>
+
+    <div class="klidny-ram">
+      <p>
+        <strong>Píšeme lidem jménem — ale to jméno jsme nedostali od nich.</strong>
+        Vzali jsme ho z webu firmy, z veřejného rejstříku nebo z pracovního
+        inzerátu. A pravidlo, kterému se říká článek 14, zní jednoduše:
+        <strong>když o někom získáte údaje jinde než od něj samotného, musíte
+        mu při prvním kontaktu říct, že je máte, odkud a proč.</strong>
+      </p>
+      <p>
+        Lidsky: „nevzali jsme to od Vás, tak Vám to aspoň říkáme." Prakticky je
+        to krátký odstavec na konci mailu — kdo jsme, proč píšeme, odkud máme
+        kontakt, jak dlouho ho držíme a jak jednoduše říct „už mi nepište".
+      </p>
+    </div>
+
+    <div class="duvody">
+      <div class="duvod">
+        <h3>Není to jen povinnost</h3>
+        <p>
+          Bez toho odstavce mail vypadá jako spam. S ním vypadá jako od někoho,
+          kdo ví, co dělá — a to rozhoduje o tom, jestli ho příjemce vůbec
+          dočte.
+        </p>
+      </div>
+      <div class="duvod">
+        <h3>Chrání doménu</h3>
+        <p>
+          Dává příjemci snadnou cestu říct „nepište mi" místo tlačítka
+          „nahlásit spam". Reputaci domény neničí objem, ale stížnosti —
+          a tohle je přesně ta pojistka proti nim.
+        </p>
+      </div>
+      <div class="duvod">
+        <h3>Je to první otázka úřadu</h3>
+        <p>
+          Kdyby si někdo stěžoval, tohle se kontroluje nejdřív. Sankce
+          u firem jdou do milionů a odpovědnost je objektivní — na tom,
+          že to dělal stroj, nezáleží.
+        </p>
+      </div>
+    </div>
+
+    <div class="zlaty-ram" style="margin-top: 1rem;">
+      <p><strong>Proč to znění nenapíšu já</strong></p>
+      <p>
+        Není to text, který má znít právnicky — je to <strong>prohlášení
+        o tom, co s daty doopravdy děláme</strong>: na jakém právním základu,
+        jak dlouho je držíme, kdo za ně odpovídá. Kdybych to složil sám,
+        vznikl by odstavec, který vypadá správně a nikdo za něj neručí.
+        Proto je to v podkladu pro advokáta otázka číslo 8.
+      </p>
+      <p>
+        Dobrá zpráva: <strong>jedna schůzka vyřeší tři věci naráz</strong> —
+        tohle poučení, jestli je „oprávněný zájem" správný právní základ,
+        a co všechno má zpráva obsahovat, aby byla v pořádku.
+      </p>
+      <p>
+        A ještě jedna věc, která se bude hodit u BeHere: <strong>správcem dat
+        je vždycky ta firma, která oslovuje</strong>. Až systém pojede u nich,
+        půjde o jejich text, ne o náš. Proto se poučení vkládá do šablony jako
+        povinná pasáž, kterou jde vyměnit bez zásahu do programu.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Podrobný technický postup:</strong> <code>docs/ODESILANI-DOMENA.md</code> · <strong>Otázky pro advokáta:</strong> <code>docs/pravni-brief.md</code> (hotový od 11. 8.)</p>
+  </footer>
+
+</div>

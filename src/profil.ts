@@ -25,6 +25,15 @@ export interface Profil {
   jenObory: ReadonlySet<string>;
   /** Obory, které neprojdou nikdy. Uplatní se i na seznam „jen tyhle". */
   vylouceneObory: ReadonlySet<string>;
+  /**
+   * Má nabídka místo, ke kterému se počítá vzdálenost? U Cantinera je to
+   * jídelna; druhý zákazník (20. 8. 2026) žádné takové místo nemá. Bez něj
+   * je kvalifikovaná firma rovnou kvalifikovaná — nemá na co čekat.
+   *
+   * Schválně „spádový bod", ne „jídelna": u dalšího zákazníka to může být
+   * třeba obchodní konzultant.
+   */
+  maSpadovyBod: boolean;
 }
 
 export interface PolozkaSeznamu {
@@ -38,10 +47,11 @@ export interface PolozkaSeznamu {
 export async function nactiProfil(db: Db, kod?: string): Promise<Profil> {
   const r = await db.query<{
     kod: string; nazev: string; popis: string | null; min_zamestnancu: number | null;
+    ma_spadovy_bod: boolean;
   }>(
     kod
-      ? "select kod, nazev, popis, min_zamestnancu from profily where kod = $1"
-      : "select kod, nazev, popis, min_zamestnancu from profily where aktivni",
+      ? "select kod, nazev, popis, min_zamestnancu, ma_spadovy_bod from profily where kod = $1"
+      : "select kod, nazev, popis, min_zamestnancu, ma_spadovy_bod from profily where aktivni",
     kod ? [kod] : [],
   );
   const p = r[0];
@@ -64,6 +74,7 @@ export async function nactiProfil(db: Db, kod?: string): Promise<Profil> {
     formy: new Set(formy.map((f) => f.pravni_forma)),
     jenObory: new Set(obory.filter((o) => o.smer === "ano").map((o) => o.nace_oddil)),
     vylouceneObory: new Set(obory.filter((o) => o.smer === "ne").map((o) => o.nace_oddil)),
+    maSpadovyBod: p.ma_spadovy_bod,
   };
 }
 

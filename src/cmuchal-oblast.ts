@@ -316,7 +316,10 @@ export async function zpracujFirmuVOblasti(
   // svůj stav i skóre z lepších podkladů (často včetně vzdálenosti k jídelně)
   // a tady se nepřepisuje.
   if (ares) {
-    await nastavStav(db, ico, "cekajici_na_jidelnu");
+    // Bez spádového bodu (druhý zákazník, 20. 8. 2026) není na co čekat —
+    // žádná jídelna nikdy nepřibude, a stav „čeká na jídelnu" by firmu jen
+    // držel mimo kampaň.
+    await nastavStav(db, ico, profil.maSpadovyBod ? "cekajici_na_jidelnu" : "kvalifikovany");
 
     /*
      * Velikost se zapisuje **hned při sběru**, ne až zpětným doplněním.

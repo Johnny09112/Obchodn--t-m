@@ -24,7 +24,11 @@ u varianty „agent běží sám na serveru", která dnes na stole není.
 
 ## Pořadí prací
 
-### 0. Aplikace se nesmí tiše připojit k cizí databázi *(bezpečnost, malé)*
+### 0. Aplikace se nesmí tiše připojit k cizí databázi — ✅ HOTOVO 20. 8.
+
+> Postaveno a otestováno; **nenasazeno**, čeká na doplnění proměnných
+> `VITE_SUPABASE_URL` a `VITE_SUPABASE_PUBLISHABLE_KEY` u stávajícího projektu
+> ve Vercelu. Podrobnosti a past: [[zalozni-adresa-databaze-je-past]].
 
 Dnes v `app/src/supabase.ts`:
 
@@ -39,7 +43,10 @@ k databázi první firmy**. Nově: chybějící nastavení aplikaci zastaví a �
 ve Vercelu, teprve pak se smí nasadit verze bez záložní hodnoty. Jinak spadne
 dnešní provoz.
 
-### 1. Nabídka bez spádového bodu *(jádro)*
+### 1. Nabídka bez spádového bodu — ✅ HOTOVO 20. 8.
+
+> Migrace `0057_bez_spadoveho_bodu.sql`, `Profil.maSpadovyBod`, stav v
+> `cmuchal-oblast.ts`. Rozhodnutí a podrobnosti: [[spadovy-bod-je-volitelny]].
 
 > **Upřesnil majitel 20. 8.:** „prodej kamkoliv" **neznamená, že přestaneme
 > ohraničovat území**. Území se kreslí dál jako dnes — jen v něm není spádová

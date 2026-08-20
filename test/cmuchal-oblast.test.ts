@@ -370,6 +370,47 @@ describe("zpracujFirmuVOblasti", () => {
     expect(vOblasti.length).toBe(1);
   });
 
+  /**
+   * Druhý zákazník (20. 8. 2026) žádnou jídelnu nemá. Stav „čeká na jídelnu"
+   * by u něj znamenal čekání na něco, co nikdy nepřijde — a firma by se
+   * nedostala do kampaně. Bez spádového bodu je kvalifikovaná firma prostě
+   * kvalifikovaná.
+   */
+  it("bez spádového bodu je firma rovnou kvalifikovaná, ne čekající na jídelnu", async () => {
+    await db.query(
+      `insert into profily (kod, nazev, min_zamestnancu, ma_spadovy_bod)
+       select 'bez-bodu', 'Bez spádového bodu', min_zamestnancu, false
+         from profily where kod = 'cantinero'`,
+    );
+    await db.query(
+      `insert into profil_formy (profil_kod, pravni_forma)
+       select 'bez-bodu', pravni_forma from profil_formy where profil_kod = 'cantinero'`,
+    );
+    await db.query(
+      `insert into profil_obory (profil_kod, smer, nace_oddil)
+       select 'bez-bodu', smer, nace_oddil from profil_obory where profil_kod = 'cantinero'`,
+    );
+
+    const { deps } = falesneDeps(db);
+    const zaznamy = await deps.registr!.zamestnavateleVJednotkach([559661]);
+    const zaznamUvnitr = zaznamy.find((z) => z.ico === uvnitr.ico)!;
+
+    await zpracujFirmuVOblasti(deps, {
+      zaznam: zaznamUvnitr,
+      oblast: OBLAST,
+      oblastId,
+      behId,
+      ...pravidla,
+      profil: await nactiProfil(db, "bez-bodu"),
+    });
+
+    const [firma] = await db.query<{ stav: string }>(
+      "select stav from companies where ico = $1",
+      [uvnitr.ico],
+    );
+    expect(firma?.stav).toBe("kvalifikovany");
+  });
+
   it("firma mimo tvar se neuloží a přibude řádek do vyrazeni", async () => {
     const { deps } = falesneDeps(db);
     const zaznamy = await deps.registr!.zamestnavateleVJednotkach([559661]);

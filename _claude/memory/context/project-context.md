@@ -4,7 +4,7 @@ description: Živý stav projektu obchodni-tym (Cantinero) — fáze, milníky, 
 type: context
 status: active
 created: 2026-08-01
-updated: 2026-08-18
+updated: 2026-08-20
 ---
 
 # obchodni-tym — živý kontext
@@ -18,17 +18,19 @@ naostro, protože se na reálných datech kalibruje líp než na úvahách. Do f
 (oslovování) se nesmí, dokud není hotový zbytek fáze 0: tvrzení, šablony,
 odesílací doména, právní konzultace.
 
-Čísla z ostré databáze (cloud za DATABASE_URL) k 18. 8. 2026:
+Čísla z ostré databáze (cloud za DATABASE_URL) k 20. 8. 2026:
 
 | Údaj | Hodnota |
 |---|---|
-| Firem v kartotéce | **13 919** |
-| Z toho se spojením | 648 |
-| Oblastí · kampaní | 7 · 5 |
+| Firem v kartotéce | **13 980** |
+| Kvalifikovaných · z toho bez rešerše | 165 · **0** |
+| Záznamů v evidenci · běhů agenta | 8 065 · 82 |
+| Kampaní · z toho s vybranou šablonou | 8 · **0** |
+| Tvrzení schválených · šablon v provozu | 8 · 1 |
 | Náklady na API | **0 USD** — placené nikdy neběželo, agent jde z předplatného |
 | Migrace | po `0056_reserse_vyber_firem.sql`, nasazeno |
-| Testy | **855 zelených, 88 souborů** (k 19. 8.) |
-| Odesílání | **vypnuté** (ověřeno 18. 8.), zpráv 0 |
+| Testy | **855 zelených, 87 souborů** (ověřeno 20. 8.) |
+| Odesílání | **vypnuté** (ověřeno 20. 8.), zpráv 0, denní limit 10 |
 
 Aplikace běží na `https://cantinero-find.vercel.app`, staví se z `main`.
 Vývojový server: `npm run dev --prefix app` (port 5173).
@@ -294,6 +296,28 @@ jádro ho umělo, jen nešel zadat z příkazové řádky.
 **Za pozornost stojí:** u REVIANTu je obor z katalogu `jenfirmy.cz`, ne
 z webu firmy — vlastní web se nenašel. Doložený je, ale je to popis
 katalogu, ne slova firmy.
+
+## Co chybí ke spuštění odesílání — přehled z 20. 8. 2026
+
+Na žádost majitele vznikl souhrn „co je hotové a co čeká":
+`docs/vizualizace/co-zbyva-ke-spusteni-2026-08-20.html`. Čísla načtená
+z ostré databáze, připravenost kampaní spočítaná funkcí `nahled_kampane`
+— tedy tímtéž pravidlem, jaké běží v aplikaci.
+
+**Blokuje odeslání (čtyři věci):** odesílací doména (S0.7, nejdelší lhůty),
+právní konzultace a poučení podle čl. 14 GDPR (S0.8), **odesílací cesta
+v kódu — dnes v repozitáři neexistuje ani řádek** (schválně, TP-8), a výběr
+šablony u kampaně (**0 z 8 kampaní má `template_id`** — krok Zpráva je
+postavený, ale nikdo v něm nic neuložil).
+
+**Připravenost firem k oslovení (kontrola úplnosti, 20. 8.):** Bezdružice
+10 z 23, Plzeň 52 z 12 762, Čachrov 0 z 91, Hrobce 0 z 61, Staříč 0 z 61.
+U Čachrova, Hrobců a Staříče chybí **jídelna v dosahu** u všech firem —
+data ani kód s tím nic nenadělají.
+
+**Opraveno proti zápisu ve `docs/FAZE-0.md`:** skilly ze S0.3 **existují**
+(`.claude/skills/`: overeni-firmy, kontrola-kvality, tydenni-report),
+checklist fáze 0 je v tomhle bodě zastaralý.
 
 ## Kde je zapsaný plán
 

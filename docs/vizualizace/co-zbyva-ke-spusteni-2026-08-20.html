@@ -299,7 +299,8 @@
   <section class="verdikt">
     <p class="hlavni">
       Ke spuštění chybí <strong>čtyři věci</strong>. Tři z nich jsou na Vás,
-      jedna na mně. Nejdelší lhůtu má odesílací doména — týdny, ne dny.
+      jedna na mně. Nejdelší lhůtu má právní konzultace — ta visí na cizím
+      kalendáři, ostatní jde udělat tento týden.
     </p>
     <p>
       Obsah je hotový: schválená tvrzení i šablona jsou v ostré databázi a mail
@@ -413,22 +414,22 @@
         <div class="krok-hlava">
           <span class="znak blokuje" aria-hidden="true">▲</span>
           <h3>1. Odesílací doména</h3>
-          <span class="stitek blokuje">blokuje · nejdelší lhůta</span>
+          <span class="stitek blokuje">blokuje · hodina klikání</span>
         </div>
         <p>
-          Bez vlastní ověřené domény skončí mail ve spamu, nebo se neodešle
-          vůbec. Je potřeba založit účet v Resendu, vložit tři DNS záznamy do
-          Cloudflare, ověřit je a pak nechat doménu „zahřát“ — posílat zprvu
-          jednotky zpráv denně, aby si ji poštovní servery zapamatovaly jako
-          slušnou. Zahřívání je ta část, která trvá týdny, a proto se s tím má
-          začít jako s prvním.
+          Doménu <code>cantinero.cz</code> už máte, DNS běží na Cloudflare
+          a DMARC je nastavený — ověřeno 17. 8. Zbývá založit účet v Resendu,
+          vložit tři DNS záznamy, které Resend vypíše, a ověřit je. Posílat se
+          bude z adresy přihlášeného uživatele, takže podepsaný je vždy ten,
+          kdo zprávu poslal. Stávající pošta na Forpsi se nijak nedotkne.
         </p>
         <p>
-          Postup krok za krokem je připravený v <code>docs/ODESILANI-DOMENA.md</code>.
-          Zároveň se tím vyřeší podepsaná osoba — podepsaný je ten, kdo zprávu
-          poslal.
+          Zahřívání domény je při deseti zprávách denně mírné — týdny platí pro
+          rozesílání ve stovkách. Bezplatné pásmo Resendu (100 zpráv denně)
+          pokryje celou fázi 3. Postup krok za krokem:
+          <code>docs/ODESILANI-DOMENA.md</code>.
         </p>
-        <p class="kdo"><span>V ruce má: majitel</span><span>Klikání: ~1 hodina</span><span>Čekání: týdny</span></p>
+        <p class="kdo"><span>V ruce má: majitel</span><span>Klikání: ~1 hodina</span><span>Ověření: minuty</span></p>
       </article>
 
       <article class="krok blokuje">
@@ -448,7 +449,7 @@
           Jakmile znění budu mít, doplní se do šablony jako povinná pasáž —
           bez zásahu do kódu.
         </p>
-        <p class="kdo"><span>V ruce má: majitel</span><span>Podklady: hotové</span><span>Odhad: schůzka + 1 hodina úprav</span></p>
+        <p class="kdo"><span>V ruce má: majitel</span><span>Podklady: hotové</span><span>Nejdelší lhůta ze všech</span></p>
       </article>
 
       <article class="krok blokuje">
@@ -609,7 +610,8 @@
       <p>
         Systém tomu odpovídá: denní limit je nastavený na 10 zpráv a platí
         pravidlo jedna firma = jedno oslovení, žádné upomínací sekvence.
-        Zahřívání domény ostatně stejně nedovolí posílat víc.
+        Reputaci domény ostatně neničí objem, ale stížnosti — proto se prvních
+        padesát zpráv schvaluje ručně.
       </p>
       <p>
         Prakticky to znamená, že prvních pár týdnů po spuštění je hlavní práce

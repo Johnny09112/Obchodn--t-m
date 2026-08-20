@@ -1,0 +1,627 @@
+<title>Cesta k prvnímu mailu</title>
+<style>
+  :root {
+    --ground: #eeede7;
+    --karta: #fbfaf6;
+    --karta2: #f4f3ec;
+    --inkoust: #1d211b;
+    --inkoust-slaby: #5c6157;
+    --linka: #cfd0c6;
+    --linka-slaba: #e3e2d9;
+    --zelena: #3c6b48;
+    --zelena-svetla: #e3ece3;
+    --cihla: #a4432c;
+    --cihla-svetla: #f6e5df;
+    --zlata: #8d6a1a;
+    --zlata-svetla: #f6eed7;
+    --stin: 0 1px 3px rgba(29, 33, 27, 0.07);
+    --pismo-nadpis: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --pismo-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pismo-data: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141710;
+      --karta: #1c2019;
+      --karta2: #232821;
+      --inkoust: #e8e9e2;
+      --inkoust-slaby: #a0a597;
+      --linka: #363a33;
+      --linka-slaba: #2b2f28;
+      --zelena: #7fb98c;
+      --zelena-svetla: #22301f;
+      --cihla: #e08a70;
+      --cihla-svetla: #33211c;
+      --zlata: #d8b25c;
+      --zlata-svetla: #2f2818;
+      --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #141710;
+    --karta: #1c2019;
+    --karta2: #232821;
+    --inkoust: #e8e9e2;
+    --inkoust-slaby: #a0a597;
+    --linka: #363a33;
+    --linka-slaba: #2b2f28;
+    --zelena: #7fb98c;
+    --zelena-svetla: #22301f;
+    --cihla: #e08a70;
+    --cihla-svetla: #33211c;
+    --zlata: #d8b25c;
+    --zlata-svetla: #2f2818;
+    --stin: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--inkoust);
+    font-family: var(--pismo-text);
+    line-height: 1.6;
+  }
+
+  .stranka {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .eyebrow {
+    font-family: var(--pismo-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--pismo-nadpis);
+    font-size: clamp(2rem, 5vw, 2.6rem);
+    line-height: 1.15;
+    margin: 0.5rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  h2 {
+    font-family: var(--pismo-nadpis);
+    font-size: 1.375rem;
+    margin: 0 0 0.4rem;
+    text-wrap: balance;
+  }
+
+  h3 { font-family: var(--pismo-text); font-size: 1rem; margin: 0; }
+
+  .perex { margin: 0; max-width: 44rem; color: var(--inkoust-slaby); font-size: 1.0625rem; }
+  .podnadpis { margin: 0 0 1.5rem; color: var(--inkoust-slaby); font-size: 0.9375rem; max-width: 44rem; }
+
+  /* ───────────────────────────────────────── verdikt nahoře */
+
+  .verdikt {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-left: 4px solid var(--cihla);
+    border-radius: 3px;
+    box-shadow: var(--stin);
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .verdikt p { margin: 0; }
+  .verdikt .hlavni { font-family: var(--pismo-nadpis); font-size: 1.25rem; line-height: 1.4; }
+
+  .prepinac {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--linka-slaba);
+    font-size: 0.9375rem;
+    color: var(--inkoust-slaby);
+  }
+
+  .prepinac b { font-family: var(--pismo-data); color: var(--cihla); font-weight: 600; }
+
+  /* ───────────────────────────────────────── čísla z databáze */
+
+  .cisla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 1px;
+    background: var(--linka);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .cislo { background: var(--karta); padding: 1rem 1.1rem; }
+  .cislo .hodnota {
+    font-family: var(--pismo-data);
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    display: block;
+  }
+  .cislo .popis { font-size: 0.8125rem; color: var(--inkoust-slaby); display: block; margin-top: 0.2rem; }
+  .cislo.vypnuto .hodnota { color: var(--cihla); }
+
+  /* ───────────────────────────────────────── hotovo */
+
+  .hotovo-mrizka {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+  }
+
+  .polozka {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-radius: 3px;
+    box-shadow: var(--stin);
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .polozka ul { margin: 0; padding-left: 1.1rem; font-size: 0.9375rem; color: var(--inkoust-slaby); }
+  .polozka li { margin-bottom: 0.2rem; }
+  .polozka li:last-child { margin-bottom: 0; }
+  .polozka .zahlavi { display: flex; align-items: baseline; gap: 0.6rem; }
+
+  /* Stav se kóduje tvarem i barvou — kvůli barvosleposti a tisku. */
+  .znak {
+    font-family: var(--pismo-data);
+    font-size: 0.9375rem;
+    line-height: 1;
+    flex: none;
+    width: 1rem;
+    text-align: center;
+  }
+  .znak.hotovo { color: var(--zelena); }
+  .znak.blokuje { color: var(--cihla); }
+  .znak.ceka { color: var(--zlata); }
+
+  /* ───────────────────────────────────────── zbývá */
+
+  .kroky { display: flex; flex-direction: column; gap: 1rem; }
+
+  .krok {
+    background: var(--karta);
+    border: 1px solid var(--linka);
+    border-left: 4px solid var(--linka);
+    border-radius: 3px;
+    box-shadow: var(--stin);
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .krok.blokuje { border-left-color: var(--cihla); }
+  .krok.ceka { border-left-color: var(--zlata); }
+
+  .krok-hlava { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.75rem; }
+  .krok-hlava h3 { font-size: 1.0625rem; font-family: var(--pismo-nadpis); }
+
+  .stitek {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .stitek.blokuje { background: var(--cihla-svetla); color: var(--cihla); }
+  .stitek.ceka { background: var(--zlata-svetla); color: var(--zlata); }
+  .stitek.hotovo { background: var(--zelena-svetla); color: var(--zelena); }
+
+  .krok p { margin: 0; font-size: 0.9375rem; }
+  .krok .kdo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--linka-slaba);
+    font-family: var(--pismo-data);
+    font-size: 0.8125rem;
+    color: var(--inkoust-slaby);
+  }
+
+  /* ───────────────────────────────────────── tabulka připravenosti */
+
+  .obal-tabulky { overflow-x: auto; border: 1px solid var(--linka); border-radius: 3px; background: var(--karta); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9375rem; }
+  th, td { padding: 0.6rem 0.9rem; text-align: left; border-bottom: 1px solid var(--linka-slaba); }
+  th {
+    font-family: var(--pismo-data);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--inkoust-slaby);
+    background: var(--karta2);
+  }
+  tr:last-child td { border-bottom: none; }
+  td.cifra { font-family: var(--pismo-data); font-variant-numeric: tabular-nums; text-align: right; }
+  td.pripraveno { color: var(--zelena); font-weight: 600; }
+
+  /* ───────────────────────────────────────── poznámka a patička */
+
+  .poznamka {
+    background: var(--karta2);
+    border: 1px solid var(--linka-slaba);
+    border-radius: 3px;
+    padding: 1.1rem 1.3rem;
+    font-size: 0.9375rem;
+    color: var(--inkoust-slaby);
+  }
+  .poznamka p { margin: 0 0 0.6rem; }
+  .poznamka p:last-child { margin-bottom: 0; }
+  .poznamka strong { color: var(--inkoust); }
+
+  footer {
+    border-top: 1px solid var(--linka);
+    padding-top: 1.25rem;
+    font-size: 0.8125rem;
+    color: var(--inkoust-slaby);
+  }
+  footer p { margin: 0 0 0.35rem; }
+
+  a { color: var(--zelena); }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--zlata); outline-offset: 2px; }
+</style>
+
+<div class="stranka">
+
+  <header>
+    <p class="eyebrow">Cantinero · stav k 20. 8. 2026</p>
+    <h1>Co je hotové a co ještě chybí, než odejde první e-mail</h1>
+    <p class="perex">
+      „Spustit“ tady znamená jedinou věc: <strong>systém pošle nabídku skutečné
+      firmě</strong>. Všechno ostatní — sběr firem, rešerše, kampaně, texty —
+      už běží naostro. Tahle stránka říká, co mezi dneškem a tím prvním
+      odeslaným mailem ještě stojí, kdo to má v ruce a co z toho trvá nejdéle.
+    </p>
+  </header>
+
+  <section class="verdikt">
+    <p class="hlavni">
+      Ke spuštění chybí <strong>čtyři věci</strong>. Tři z nich jsou na Vás,
+      jedna na mně. Nejdelší lhůtu má odesílací doména — týdny, ne dny.
+    </p>
+    <p>
+      Obsah je hotový: schválená tvrzení i šablona jsou v ostré databázi a mail
+      se skládá ze skutečných dat o firmě. Chybí kanál, kterým ho poslat,
+      právní věta, která v něm musí být, a kód, který odesílání provede.
+    </p>
+    <p class="prepinac">
+      <span>Pojistka proti nechtěnému odeslání je zapnutá:</span>
+      <b>sending_enabled = false</b>
+      <span>Přepnout ji smí jen člověk (pravidlo TP-8). Odeslaných zpráv: 0.</span>
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Čísla z ostré databáze, ne odhad</p>
+    <h2>Kde systém dnes stojí</h2>
+    <p class="podnadpis">
+      Načteno přímo z provozní databáze 20. 8. 2026.
+    </p>
+    <div class="cisla">
+      <div class="cislo"><span class="hodnota">13 980</span><span class="popis">firem v kartotéce</span></div>
+      <div class="cislo"><span class="hodnota">165</span><span class="popis">kvalifikovaných firem</span></div>
+      <div class="cislo"><span class="hodnota">8 065</span><span class="popis">doložených údajů se zdrojem</span></div>
+      <div class="cislo"><span class="hodnota">80</span><span class="popis">obědů/den k prodeji</span></div>
+      <div class="cislo"><span class="hodnota">8</span><span class="popis">schválených tvrzení</span></div>
+      <div class="cislo vypnuto"><span class="hodnota">0</span><span class="popis">odeslaných zpráv</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Hotovo</p>
+    <h2>Co je postavené a ověřené</h2>
+    <p class="podnadpis">
+      Všechno níž je nasazené a použité na skutečných datech — ne rozpracované
+      a ne jen otestované.
+    </p>
+    <div class="hotovo-mrizka">
+
+      <article class="polozka">
+        <div class="zahlavi"><span class="znak hotovo" aria-hidden="true">●</span><h3>Kartotéka a rešerše</h3></div>
+        <ul>
+          <li>13 980 firem, každý údaj s odkazem na zdroj a doslovnou citací</li>
+          <li>Rešerše doběhla na <strong>všech</strong> kvalifikovaných firmách</li>
+          <li>82 běhů agenta zaznamenaných v Provozu</li>
+          <li>Rešerši lze objednat po částech s odhadem času</li>
+        </ul>
+      </article>
+
+      <article class="polozka">
+        <div class="zahlavi"><span class="znak hotovo" aria-hidden="true">●</span><h3>Jídelny a kapacita</h3></div>
+        <ul>
+          <li>5 jídelen, kapacita se mění v aplikaci</li>
+          <li>80 obědů/den v provozu, dalších 40 v přípravě</li>
+          <li>U každé jídelny cena oběda i provize</li>
+        </ul>
+      </article>
+
+      <article class="polozka">
+        <div class="zahlavi"><span class="znak hotovo" aria-hidden="true">●</span><h3>Obsah zprávy</h3></div>
+        <ul>
+          <li>8 schválených tvrzení a 4 zákazy, co se tvrdit nesmí</li>
+          <li>Jedna hlavní šablona v provozu (verze 1)</li>
+          <li>Editor šablon: text, vkládaná pole, podmíněné věty</li>
+          <li>Kontrola stylu běží nad vyplněným textem, ne nad kostrou</li>
+        </ul>
+      </article>
+
+      <article class="polozka">
+        <div class="zahlavi"><span class="znak hotovo" aria-hidden="true">●</span><h3>Nastavení bez programování</h3></div>
+        <ul>
+          <li>Parametry nabídky čtyř druhů, vlastní si zavedete sami</li>
+          <li>Nastavení mailu patří ke kampani, ne k celému systému</li>
+          <li>Připraveno i pro jiný produkt než obědy</li>
+        </ul>
+      </article>
+
+      <article class="polozka">
+        <div class="zahlavi"><span class="znak hotovo" aria-hidden="true">●</span><h3>Aplikace</h3></div>
+        <ul>
+          <li>Sedm obrazovek, nasazená a používaná</li>
+          <li>Náhled hotového mailu na skutečné firmě</li>
+          <li>Vadné přihlášení si aplikace zahodí sama</li>
+        </ul>
+      </article>
+
+      <article class="polozka">
+        <div class="zahlavi"><span class="znak hotovo" aria-hidden="true">●</span><h3>Pojistky</h3></div>
+        <ul>
+          <li>Odesílání vypnuté v databázi, ne jen v kódu</li>
+          <li>Firma vzniká jen po ověření v ARES</li>
+          <li>Do zprávy smí jen povolené údaje</li>
+          <li>855 automatických testů, všechny zelené</li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Zbývá · seřazeno podle toho, co na co čeká</p>
+    <h2>Čtyři věci mezi dneškem a prvním mailem</h2>
+    <p class="podnadpis">
+      Červený pruh znamená, že bez toho odeslat nejde. Žlutý pruh znamená, že
+      to odeslání nebrání, ale mělo by být hotové dřív, než se pošle víc než
+      pár zpráv.
+    </p>
+
+    <div class="kroky">
+
+      <article class="krok blokuje">
+        <div class="krok-hlava">
+          <span class="znak blokuje" aria-hidden="true">▲</span>
+          <h3>1. Odesílací doména</h3>
+          <span class="stitek blokuje">blokuje · nejdelší lhůta</span>
+        </div>
+        <p>
+          Bez vlastní ověřené domény skončí mail ve spamu, nebo se neodešle
+          vůbec. Je potřeba založit účet v Resendu, vložit tři DNS záznamy do
+          Cloudflare, ověřit je a pak nechat doménu „zahřát“ — posílat zprvu
+          jednotky zpráv denně, aby si ji poštovní servery zapamatovaly jako
+          slušnou. Zahřívání je ta část, která trvá týdny, a proto se s tím má
+          začít jako s prvním.
+        </p>
+        <p>
+          Postup krok za krokem je připravený v <code>docs/ODESILANI-DOMENA.md</code>.
+          Zároveň se tím vyřeší podepsaná osoba — podepsaný je ten, kdo zprávu
+          poslal.
+        </p>
+        <p class="kdo"><span>V ruce má: majitel</span><span>Klikání: ~1 hodina</span><span>Čekání: týdny</span></p>
+      </article>
+
+      <article class="krok blokuje">
+        <div class="krok-hlava">
+          <span class="znak blokuje" aria-hidden="true">▲</span>
+          <h3>2. Právní konzultace a poučení podle GDPR</h3>
+          <span class="stitek blokuje">blokuje</span>
+        </div>
+        <p>
+          Oslovujeme lidi jménem, takže mail musí obsahovat poučení podle
+          článku 14 GDPR — odkud jsme kontakt vzali a jak se dá odmítnout.
+          Přesné znění nemám vymýšlet já; patří na konzultaci s advokátem.
+          Podklady pro něj jsou hotové od 11. srpna
+          (<code>docs/pravni-brief.md</code>), konzultace není domluvená.
+        </p>
+        <p>
+          Jakmile znění budu mít, doplní se do šablony jako povinná pasáž —
+          bez zásahu do kódu.
+        </p>
+        <p class="kdo"><span>V ruce má: majitel</span><span>Podklady: hotové</span><span>Odhad: schůzka + 1 hodina úprav</span></p>
+      </article>
+
+      <article class="krok blokuje">
+        <div class="krok-hlava">
+          <span class="znak blokuje" aria-hidden="true">▲</span>
+          <h3>3. Samotné odesílání ještě není naprogramované</h3>
+          <span class="stitek blokuje">blokuje · na mně</span>
+        </div>
+        <p>
+          Tohle je záměr, ne opomenutí: pravidlo TP-8 zakazuje, aby kód
+          přípravných fází uměl odesílat. V repozitáři proto dnes není ani
+          řádek, který by mail poslal. Až budou hotové první dva body, postaví
+          se odesílací cesta: napojení na Resend, zápis každé odeslané zprávy,
+          denní limit (dnes nastavený na 10), hlídání pravidla „jedna firma =
+          jedno oslovení“ a místo, kde se čtou odpovědi.
+        </p>
+        <p>
+          Dokud doména neexistuje, nemá se to na co napojit — proto to stojí
+          až tady, ne první.
+        </p>
+        <p class="kdo"><span>V ruce má: Claude</span><span>Odhad: 2 pracovní celky</span><span>Předpoklad: body 1 a 2</span></p>
+      </article>
+
+      <article class="krok blokuje">
+        <div class="krok-hlava">
+          <span class="znak blokuje" aria-hidden="true">▲</span>
+          <h3>4. Vybrat kampaň, nastavit jí zprávu a schválit ji</h3>
+          <span class="stitek blokuje">blokuje · práce na minuty</span>
+        </div>
+        <p>
+          Žádná z osmi kampaní zatím nemá vybranou šablonu — krok „Zpráva“ jsem
+          postavil, ale nikdo v něm nic neuložil. Než se pošle, musí jedna
+          kampaň projít celou cestou: území → firmy → zpráva → schválení.
+          Práce je to na pár minut, ale bez ní není co odeslat.
+        </p>
+        <p>
+          Zároveň je to poslední místo, kde uvidíte přesný text i seznam firem
+          dřív, než cokoli odejde.
+        </p>
+        <p class="kdo"><span>V ruce má: majitel</span><span>Odhad: 15 minut</span></p>
+      </article>
+
+      <article class="krok ceka">
+        <div class="krok-hlava">
+          <span class="znak ceka" aria-hidden="true">■</span>
+          <h3>Kontrola vzorku 30 firem</h3>
+          <span class="stitek ceka">neblokuje, ale mělo by předcházet</span>
+        </div>
+        <p>
+          Poslední nesplněné kritérium fáze 1: projít třicet náhodných firem
+          a spočítat, kolik údajů je špatně. Stránka ke kliknutí je
+          vygenerovaná, chybí hodina Vašeho času. Smysl je jednoduchý —
+          než se data pošlou ven, ať víme, jak moc se jim dá věřit.
+        </p>
+        <p class="kdo"><span>V ruce má: majitel</span><span>Odhad: 1 hodina</span></p>
+      </article>
+
+      <article class="krok ceka">
+        <div class="krok-hlava">
+          <span class="znak ceka" aria-hidden="true">■</span>
+          <h3>Formality k uzavření přípravné fáze</h3>
+          <span class="stitek ceka">neblokuje</span>
+        </div>
+        <p>
+          Zbývá sepsat rozhodnutí o technologii jako samostatný dokument
+          a projít závěrečný přehled „jdeme / nejdeme“. Ani jedno nebrání
+          odeslání; je to úklid, aby za půl roku bylo jasné, proč je systém
+          postavený takhle.
+        </p>
+        <p>
+          Do stejné kolonky patří jeden bezpečnostní úklid: <strong>změnit
+          heslo k databázi</strong>. Při ověřování bezpečnosti 6. srpna prošel
+          obsah souboru s tajemstvími kontextem agenta.
+        </p>
+        <p class="kdo"><span>V ruce má: Claude + majitel</span><span>Odhad: půl dne</span></p>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Kontrola úplnosti</p>
+    <h2>Komu by dnes vůbec šlo napsat</h2>
+    <p class="podnadpis">
+      Systém firmu do kampaně nepustí, pokud jí chybí něco, co je v mailu
+      potřeba. Takhle to vypadá dnes u kampaní, které mají naplněné firmy —
+      spočítáno stejným pravidlem, jaké běží v aplikaci.
+    </p>
+    <div class="obal-tabulky">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Kampaň</th>
+            <th scope="col">Firem</th>
+            <th scope="col">Připraveno</th>
+            <th scope="col">Co nejčastěji chybí</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Bezdružice</td>
+            <td class="cifra">23</td>
+            <td class="cifra pripraveno">10</td>
+            <td>e-mail (10), obor (5)</td>
+          </tr>
+          <tr>
+            <td>Firmy Čachrov</td>
+            <td class="cifra">91</td>
+            <td class="cifra">0</td>
+            <td>žádná jídelna v dosahu (91), e-mail (84)</td>
+          </tr>
+          <tr>
+            <td>Kampaň Hrobce</td>
+            <td class="cifra">61</td>
+            <td class="cifra">0</td>
+            <td>žádná jídelna v dosahu</td>
+          </tr>
+          <tr>
+            <td>Kampaň Staříč</td>
+            <td class="cifra">61</td>
+            <td class="cifra">0</td>
+            <td>žádná jídelna v dosahu</td>
+          </tr>
+          <tr>
+            <td>Zkouška průzkumu (Plzeň)</td>
+            <td class="cifra">12 762</td>
+            <td class="cifra pripraveno">52</td>
+            <td>e-mail (12 484), obor (12 578)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="poznamka" style="margin-top: 1rem;">
+      <p>
+        <strong>Čte se to takhle:</strong> k odeslání je dnes připraveno
+        <strong>10 firem v Bezdružicích</strong> a 52 v Plzni. Čachrov, Hrobce
+        ani Staříč nemají v dosahu jídelnu — dokud tam partner nebude, nemá jim
+        co nabídnout, i kdyby o nich systém věděl všechno.
+      </p>
+      <p>
+        Plzeňských 52 je špička ledovce: 2 301 plzeňských firem má jídelnu
+        v dosahu, ale zůstává vědomě neodemčených, protože volná kapacita je
+        80 obědů denně.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Střízlivá poznámka</p>
+    <h2>Kolik firem má vůbec smysl oslovit</h2>
+    <div class="poznamka">
+      <p>
+        <strong>80 obědů denně vystačí zhruba na dvě až tři firmy.</strong>
+        To není nedostatek dat ani kódu — to je strop obchodu. Dokud
+        nepřibudou jídelny nebo kapacita, není cílem poslat sto mailů, ale pár
+        dobře mířených.
+      </p>
+      <p>
+        Systém tomu odpovídá: denní limit je nastavený na 10 zpráv a platí
+        pravidlo jedna firma = jedno oslovení, žádné upomínací sekvence.
+        Zahřívání domény ostatně stejně nedovolí posílat víc.
+      </p>
+      <p>
+        Prakticky to znamená, že prvních pár týdnů po spuštění je hlavní práce
+        jinde než v odesílání — v získávání dalších jídelen.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Zdroj čísel:</strong> ostrá databáze Cantinera, dotazy spuštěné 20. 8. 2026. Testy: <code>npm test</code>, 855 zelených.</p>
+    <p><strong>Co se v dokumentu neodhaduje:</strong> počty firem, kapacity, tvrzení, šablony a stav odesílání jsou načtené z dat. Odhady času jsou označené jako odhad.</p>
+    <p>Podrobný stav sessions přípravné fáze: <code>docs/FAZE-0.md</code>. Živý kontext projektu: <code>_claude/memory/context/project-context.md</code>.</p>
+  </footer>
+
+</div>

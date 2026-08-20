@@ -11,6 +11,7 @@
 ## Decisions
 - [[druha-firma-vlastni-instance]] — Druhý zákazník dostane vlastní instanci (databáze, nasazení, tajemství), ne přestavbu na víc firem v jedné databázi — a tím se otevírá fáze 3 · active · 2026-08-20
 - [[spadovy-bod-je-volitelny]] — Nabídka nemusí mít místo, ke kterému se počítá vzdálenost — profil nese příznak ma_spadovy_bod a bez něj se vzdálenost ani cena nevyžadují · active · 2026-08-20
+- [[zkusebni-odeslani-na-vlastni-adresu]] — Zkušební zprávy chodí na vlastní adresu majitele, mají vlastní přepínač oddělený od ostrého odesílání a nepočítají se do TP-5 · active · 2026-08-20
 - [[cena-v-osloveni]] — Cena patří ke konkrétní jídelně, ne do šablony ani na ceník — před spuštěním kampaně se odsouhlasí · active · 2026-08-18
 - [[jedna-sablona-a-uplnost-blokuje]] — Jedna hlavní šablona pro všechny; chybějící jméno se nahradí „Dobrý den“, chybějící ostatní údaj firmu z kampaně vyřadí a je vidět v tabulce · active · 2026-08-18
 - [[kdo-vari-a-co-se-neprozrazuje]] — Cantinero nevaří — zajišťuje spojení mezi jídelnou a strávníkem; a v oslovení se konkrétní jídelna nejmenuje, aby ji zákazník neobešel · active · 2026-08-18

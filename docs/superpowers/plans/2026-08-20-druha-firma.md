@@ -79,8 +79,32 @@ firmy, které dnes vypadnou na chybějící vzdálenosti a ceně.
 
 ### 2. Odesílací cesta *(otevírá fázi 3)*
 
-Dnes v repozitáři **není ani řádek, který by uměl odeslat** — TP-8 to fázím
-0–2 zakazuje. Tímto krokem se otevírá fáze 3. Co musí vzniknout:
+> **Schváleno majitelem 20. 8. 2026** — výslovný souhlas s otevřením fáze 3.
+> Souhlas je **se stavbou, ne s odesíláním**; vypínač zůstává na člověku.
+>
+> **Majitel k tomu přidal požadavek:** nejdřív „fake tvorby" — skutečné zprávy
+> pro skutečné firmy, ale **doručené na jeho jednu až dvě vlastní adresy**,
+> aby viděl, jak to vypadá. Teprve pak se posílá dál.
+
+#### 2a. Zkušební odeslání na vlastní adresu
+
+Zpráva se složí pro konkrétní firmu ze skutečných dat, ale **příjemce se
+nahradí vlastní adresou**. Podmínky, bez kterých to nesmí existovat:
+
+- **Zkušební zpráva nesmí spálit jediné oslovení firmy** (TP-5). Do fronty
+  „oslovených" se nezapisuje a firma zůstává neoslovená.
+- **Firma se nesmí dostat do role příjemce, dokud je vypínač vypnutý.**
+  Vynucené v databázi: dokud `sending_enabled` = false, smí být příjemcem
+  jedině zapsaná zkušební adresa. Ne kontrola v obrazovce — spoušť.
+- **Přesměrování musí být vidět**, nikdy tiché: v zápisu i v aplikaci je
+  poznat, že šlo o zkoušku a komu doopravdy odešla.
+- Zkušební režim má **vlastní vypínač**, oddělený od ostrého odesílání.
+  Kdyby se sdílel, muselo by se kvůli zkoušce zapnout ostré odesílání —
+  a jediná chyba by pak psala skutečným firmám.
+
+#### 2b. Ostré odesílání
+
+Co musí vzniknout:
 
 - napojení na Resend; odesílatel = přihlášený uživatel, **doména z nastavení
   instance**, ne z konstanty (podmínka produktizace, rozhodnuto 17. 8.),

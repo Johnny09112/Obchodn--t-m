@@ -11,7 +11,11 @@ related: [odesilaci-domena-a-adresa, sablona-ma-tri-vrstvy, produkt-neni-vazany-
 **Rozhodl majitel 20. 8. 2026.** Druhá firma se rozjela dřív, než se čekalo,
 a má se spustit **hned včetně odesílání e-mailů**. Odpověděl na tři otázky:
 
-1. Její produkt **není vázaný na místo** (prodává se kamkoli).
+1. Její produkt **není vázaný na spádovou jídelnu**. Majitel to týž den
+   upřesnil: **„prodej kamkoliv" neznamená, že přestaneme ohraničovat
+   území** — území se kreslí dál jako dnes, jen v něm není spádová jídelna.
+   U jiného zákazníka může být spádovým bodem třeba obchodní konzultant;
+   **to se zatím neřeší.**
 2. Agent poběží **z předplatného** (jeho nebo kolegy) — ale **napojení na API
    je do budoucna nutná funkce**, ne „možná".
 3. „Spustit" znamená **včetně odesílání**, ne jen příprava dat.
@@ -55,7 +59,12 @@ je to riziko, ne rozhodnutí.
 Plán: `docs/superpowers/plans/2026-08-20-druha-firma.md`.
 Vizuál pro majitele: `docs/vizualizace/druha-firma-plan-2026-08-20.html`.
 
-**Největší otevřené riziko:** „prodává se kamkoli" mění **sběr**, ne jen
-kampaň — území dnes dělá filtr a u nemístního produktu tu práci musí převzít
-profil nad celým rejstříkem. Doporučený obchvat: i celorepublikový prodejce
-začne v jednom kraji, území zůstane filtrem objemu a stačí úprava kampaně.
+**Riziko „mění se i sběr" padlo** upřesněním majitele (viz bod 1 nahoře) —
+území zůstává, sběr se nemění. Zbývá jediné vědomě odložené místo: zobecnění
+spádového bodu (jídelna → konzultant). Dnešní práce to nesmí zavřít, proto se
+příznak na profilu jmenuje **„má spádový bod"**, ne „je to jídelna".
+
+**Kde se stav nastavuje:** firma sebraná nad územím dostává
+`cekajici_na_jidelnu` v `src/cmuchal-oblast.ts` (a `src/cmuchal.ts`). Bez
+spádového bodu není na co čekat — firma, která projde kvalifikací, je prostě
+kvalifikovaná.

@@ -39,24 +39,36 @@ k databázi první firmy**. Nově: chybějící nastavení aplikaci zastaví a �
 ve Vercelu, teprve pak se smí nasadit verze bez záložní hodnoty. Jinak spadne
 dnešní provoz.
 
-### 1. Produkt bez místa *(jádro)*
+### 1. Nabídka bez spádového bodu *(jádro)*
 
-Vrstva „koho oslovit" (kvalifikace, síto, obor, velikost) o jídelnách neví —
-je to v `src/kvalifikace.ts` napsané i dodržené. Zadrátovaná je jen vrstva
-„kde", a ta musí jít vypnout:
+> **Upřesnil majitel 20. 8.:** „prodej kamkoliv" **neznamená, že přestaneme
+> ohraničovat území**. Území se kreslí dál jako dnes — jen v něm není spádová
+> jídelna. U jiného zákazníka může být spádovým bodem třeba obchodní
+> konzultant; **to se teď neřeší.**
 
-- `profily` dostanou příznak `mistni` (výchozí `true`, aby se Cantinero
-  nezměnilo). Data, ne kód — stejně jako obory a velikost.
+Tím se úkol scvrkl. Nemění se sběr ani území, mění se jediné: **spádový bod
+je od teď volitelný.**
+
+- `profily` dostanou příznak „má spádový bod" (výchozí `true`, aby se
+  Cantinero nezměnilo). Data, ne kód — stejně jako obory a velikost.
 - `nahled_kampane` má dnes natvrdo `produkt_kod = 'cantinero'`, `cena_obeda`
   a `provize` (migrace 0050 a 0053). U jiného produktu vyjdou obě pole vždycky
   prázdná, takže **z kampaně vypadnou všechny firmy** — přesně jako dnes
   Čachrov, 0 z 91. Pole a jejich zdroje se musí brát z profilu, ne z konstanty.
-- U nemístního produktu se vzdálenost ani cena za oběd nevyžadují.
-- Firmy bez jídelny v dosahu se nesmí zaseknout ve stavu `cekajici_na_jidelnu`.
-- Kapacitní strop (volná kapacita jídelen) se u nemístního produktu nepočítá.
+- Bez spádového bodu se vzdálenost ani cena za oběd nevyžadují.
+- **Firma sebraná nad územím se nesmí zaseknout ve stavu
+  `cekajici_na_jidelnu`** (`src/cmuchal-oblast.ts:319`). Bez spádového bodu
+  není na co čekat — firma v území, která projde kvalifikací, je prostě
+  kvalifikovaná.
+- Kapacitní strop se bez spádového bodu nepočítá.
 
-**Test, který to hlídá:** kampaň nad nemístním profilem pustí dál firmy, které
-dnes vypadnou na chybějící vzdálenosti a ceně.
+**Co schválně NEstavím:** obecný spádový bod (jídelna → provozovna →
+konzultant). Majitel to odložil a předstírat, že známe budoucí tvar, by byla
+věštba. Dnešní práce to ale nesmí zavřít — proto příznak zní „má spádový bod",
+ne „je to jídelna".
+
+**Test, který to hlídá:** kampaň nad profilem bez spádového bodu pustí dál
+firmy, které dnes vypadnou na chybějící vzdálenosti a ceně.
 
 ### 2. Odesílací cesta *(otevírá fázi 3)*
 
@@ -90,18 +102,17 @@ Není to slepá ulička — je to druhá implementace téhož rozhraní.
 K tomu bude patřit účtování na zákazníka, limity a klíče mimo repozitář
 (SPEC kap. 13 to má jako podmínku produktizace).
 
-## Největší otevřené riziko
+## Riziko, které padlo
 
-**„Prodává se kamkoli" mění sběr, ne jen kampaň.** Dnešní sběr je vedený
-územím: nakreslí se oblast a v ní se hledá. Když produkt není vázaný na místo,
-území přestane být přirozený filtr a jeho práci musí převzít profil (obory,
-velikost) — a to nad celým rejstříkem, ne nad obcí. To je potenciálně větší
-kus práce než samotná úprava kampaně a **není v odhadech výše**.
+Ráno 20. 8. jsem psal, že „prodává se kamkoli" mění i **sběr** — že území
+přestane filtrovat a jeho práci bude muset převzít profil nad celým
+rejstříkem. **Majitel to upřesnil a tím to padlo:** území se ohraničuje dál
+jako dnes, chybí v něm jen spádová jídelna.
 
-**Praktický obchvat:** i firma, která prodává celorepublikově, může začít
-v jednom kraji. Území pak zůstane jako filtr objemu, ne jako vlastnost
-produktu, a bod 1 stačí. Doporučuji začít takhle a celorepublikový sběr řešit,
-až se ukáže, že je ho potřeba.
+Zbývá jediné otevřené místo, a to vědomě odložené: až bude spádovým bodem
+někdo jiný než jídelna (obchodní konzultant), bude se `jidelny` muset
+zobecnit. Dnešní práce to nezavírá — příznak na profilu mluví o spádovém
+bodu, ne o jídelně.
 
 ## Co potřebuji od majitele
 

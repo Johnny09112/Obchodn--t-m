@@ -9,6 +9,7 @@
 - [[use-casy]] — Které use-casy dnes systém obsluhuje — stravování pro střední a větší firmy, docházkové systémy pro obce i firmy · active · 2026-08-10
 
 ## Decisions
+- [[dve-domeny-mapleed-a-cantinero]] — Mapleed je neviditelná infrastruktura pro běh aplikace, Cantinero je doména, ze které se odesílá — odesílací doména je to nejviditelnější na mailu · active · 2026-08-21
 - [[druha-firma-vlastni-instance]] — Druhý zákazník dostane vlastní instanci (databáze, nasazení, tajemství), ne přestavbu na víc firem v jedné databázi — a tím se otevírá fáze 3 · active · 2026-08-20
 - [[spadovy-bod-je-volitelny]] — Nabídka nemusí mít místo, ke kterému se počítá vzdálenost — profil nese příznak ma_spadovy_bod a bez něj se vzdálenost ani cena nevyžadují · active · 2026-08-20
 - [[zkusebni-odeslani-na-vlastni-adresu]] — Zkušební zprávy chodí na vlastní adresu majitele, mají vlastní přepínač oddělený od ostrého odesílání a nepočítají se do TP-5 · active · 2026-08-20

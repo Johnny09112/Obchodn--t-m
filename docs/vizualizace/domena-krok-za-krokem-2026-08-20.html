@@ -293,10 +293,10 @@
         <span class="cislo">1</span>
         <div class="telo">
           <p class="kde">resend.com</p>
-          <h3>Založte účet v Resendu</h3>
+          <h3>Založte účet v Resendu <span style="color: var(--zelena);">— máte hotovo</span></h3>
           <p>
-            Resend je služba, která maily technicky odesílá. Na
-            <code>resend.com</code> kliknete na <strong>Sign up</strong>.
+            Resend je služba, která maily technicky odesílá. Účet už máte
+            založený, takže tenhle krok můžete přeskočit.
           </p>
           <p>
             <strong>Nic to nestojí.</strong> Bezplatné pásmo je 100 zpráv
@@ -321,6 +321,16 @@
             Region volíme kvůli tomu, aby data zůstala v Evropě — hodí se to
             i k argumentaci o ochraně údajů, o které je řeč níž.
           </p>
+          <div class="pozor-ram">
+            <p class="nadpis">Napište přesně <code>cantinero.cz</code></p>
+            <p>
+              Ne <code>send.cantinero.cz</code>, i když se to slovo bude
+              v dalších krocích objevovat. Resend vyžaduje, aby doména
+              odesílatele <strong>přesně seděla</strong> s tou ověřenou —
+              kdyby se ověřila podsložka, posílání z <code>laub@cantinero.cz</code>
+              by skončilo chybou.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -424,9 +434,16 @@
           <h3>Vytvořte klíč a uložte ho k ostatním tajemstvím</h3>
           <p>
             Klíč je heslo, kterým se náš systém Resendu představí. Vytvořte ho
-            v <strong>API Keys → Create API Key</strong> a vložte do souboru
-            s tajemstvími, který leží <strong>mimo pracovní složku</strong>:
+            v <strong>API Keys → Create API Key</strong>.
           </p>
+          <p>
+            <strong>U oprávnění vyberte „Sending access"</strong>, ne plný
+            přístup — a když to Resend nabídne, omezte klíč na doménu
+            <code>cantinero.cz</code>. Náš systém nic jiného než odesílání
+            nedělá, takže kdyby klíč někdy unikl, nedá se s ním nic víc
+            provést.
+          </p>
+          <p>Klíč vložte do souboru s tajemstvími <strong>mimo pracovní složku</strong>:</p>
           <pre><code>~/.cantinero/.env
 
 RESEND_API_KEY=re_…</code></pre>

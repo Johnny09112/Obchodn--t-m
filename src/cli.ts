@@ -25,6 +25,8 @@ import { vygenerujKartoteku } from "./kartoteka.js";
 import { nactiSchvalenaTvrzeni, ulozSablonu, ulozTvrzeni, vyplnPriklady } from "./obsah.js";
 import { nactiHodnoty, nactiParametry, ulozHodnotu } from "./parametry.js";
 import { cenaKampane, firmyKOsloveni, nastavPole, slozZpravu } from "./zprava.js";
+import { odesliZkusebne } from "./odeslani.js";
+import { resendKlient, resendOdesilatel } from "./odesilatel-resend.js";
 import { SABLONA_HLAVNI, TVRZENI } from "./obsah-schvaleny.js";
 import { novePoznatky } from "./playbook.js";
 import { doplnKontakty } from "./kontakty.js";
@@ -2088,6 +2090,94 @@ async function cmdZprava(argv: string[]): Promise<void> {
 }
 
 /**
+ * Zkušební rozeslání kampaně na vlastní adresu.
+ *
+ * **Bez `--potvrdit` se nic neodesílá** — jen se vypíše, co by odešlo a komu.
+ * Stejná pojistka jako u `prenos`: krok, který sahá ven, chce vědomé
+ * potvrzení, ne šťastnou ruku při šipce nahoru.
+ */
+async function cmdZkusebniOdeslani(argv: string[]): Promise<void> {
+  const podprikaz = argv[0] === "adresa" ? "adresa" : "posli";
+  const { values } = parseArgs({
+    args: podprikaz === "adresa" ? argv.slice(1) : argv,
+    options: {
+      kampan: { type: "string" },
+      od: { type: "string" },
+      email: { type: "string" },
+      limit: { type: "string" },
+      potvrdit: { type: "boolean", default: false },
+    },
+    allowPositionals: true,
+  });
+
+  const db = await pripojDb();
+  try {
+    if (podprikaz === "adresa") {
+      if (!values.email) {
+        const [s] = await db.query<{ zkusebni_prijemce: string | null }>(
+          "select zkusebni_prijemce from system_state where id",
+        );
+        console.log(`Zkušební adresa: ${s?.zkusebni_prijemce ?? "— není nastavená"}`);
+        return;
+      }
+      await db.query("update system_state set zkusebni_prijemce = $1 where id", [values.email]);
+      console.log(`Zkušební zprávy povedou na ${values.email}.`);
+      return;
+    }
+
+    if (!values.kampan) {
+      console.log("Chybí --kampan <id>.");
+      return;
+    }
+    if (!values.od) {
+      console.log('Chybí --od "Jméno <adresa@cantinero.cz>" — kdo je pod zprávou podepsaný.');
+      return;
+    }
+
+    const [stav] = await db.query<{ zkusebni_prijemce: string | null; denni_limit: number }>(
+      "select zkusebni_prijemce, denni_limit from system_state where id",
+    );
+    const { pripravene, vyrazene } = await firmyKOsloveni(db, values.kampan);
+    const strop = Math.min(Number(values.limit ?? stav!.denni_limit), stav!.denni_limit);
+
+    console.log(`Připraveno k oslovení: ${pripravene.length}`);
+    console.log(`Vypadne z kampaně: ${vyrazene.length}`);
+    console.log(`Odešle se nejvýš: ${Math.min(pripravene.length, strop)} (denní limit ${stav!.denni_limit})`);
+    console.log(`Odesílatel: ${values.od}`);
+    console.log(`Vše půjde na: ${stav?.zkusebni_prijemce ?? "— NENÍ NASTAVENÁ ZKUŠEBNÍ ADRESA"}`);
+
+    if (!values.potvrdit) {
+      console.log("\nNic se neodeslalo. Když to tak má být, přidejte --potvrdit.");
+      return;
+    }
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.log(
+        "\nChybí RESEND_API_KEY. Patří do souboru s tajemstvími mimo pracovní složku (~/.cantinero/.env).",
+      );
+      return;
+    }
+
+    const vysledek = await odesliZkusebne(
+      { db, odesilatel: resendOdesilatel({ klient: resendKlient(apiKey), od: values.od }) },
+      { kampanId: values.kampan, limit: values.limit ? Number(values.limit) : undefined },
+    );
+
+    console.log(`\nOdesláno: ${vysledek.odeslano}`);
+    if (vysledek.selhalo.length > 0) {
+      console.log(`Selhalo: ${vysledek.selhalo.length}`);
+      for (const s of vysledek.selhalo) console.log(`  ${s.ico}: ${s.duvod}`);
+    }
+    if (vysledek.zbyva > 0) {
+      console.log(`Nad denní limit zbylo: ${vysledek.zbyva}`);
+    }
+  } finally {
+    await db.close();
+  }
+}
+
+/**
  * Parametry nabídky z příkazové řádky.
  *
  * Obrazovka je hlavní cesta; tohle je záchranná brzda pro případ, kdy je
@@ -2361,6 +2451,9 @@ switch (prikaz) {
   case "parametry":
     await cmdParametry(zbytek);
     break;
+  case "zkusebni-odeslani":
+    await cmdZkusebniOdeslani(zbytek);
+    break;
   default:
     console.log(`Cantinero — fáze 1 (Čmuchal). Příkazy:
   migrate                          založí/aktualizuje schéma (lokálně, nebo na DATABASE_URL)
@@ -2457,6 +2550,11 @@ switch (prikaz) {
   parametry [seznam] [--produkt cantinero]
                                    vypíše parametry nabídky a jejich hodnoty
   parametry nastav --jidelna <id> --kod <kod> --hodnota <text>
+  zkusebni-odeslani adresa [--email …]
+                                   ukáže/nastaví adresu, kam chodí zkoušky
+  zkusebni-odeslani --kampan <id> --od "Jméno <adresa>" [--limit N] [--potvrdit]
+                                   rozešle zprávy kampaně NA VLASTNÍ ADRESU;
+                                   bez --potvrdit jen ukáže, co by odešlo
   vzorek-kontroly [--pocet 30] [--vystup cesta.html]
                                    připraví vzorek k ruční kontrole kvality —
                                    různorodý výběr firem s hodnotami, citacemi

@@ -20,6 +20,14 @@ export interface OdeslanaZprava {
   komu: string;
   predmet: string;
   telo: string;
+  /**
+   * Klíč proti dvojímu odeslání při opakování.
+   *
+   * Když odesílání spadne na výpadku sítě a spustí se znovu, poskytovatel
+   * podle klíče pozná, že tuhle zprávu už zpracoval. U pravidla „jedna firma
+   * = jedno oslovení" (TP-5) je to druhá vrstva pojistky vedle databáze.
+   */
+  klic: string;
 }
 
 export interface Odesilatel {
@@ -101,6 +109,7 @@ export async function odesliZkusebne(
         komu: prijemce,
         predmet: predmetZkousky(nahled.predmet, firma.nazev),
         telo: nahled.telo,
+        klic: `zkouska/${vstup.kampanId}/${firma.ico}`,
       });
       providerId = odpoved.providerId;
     } catch (e) {

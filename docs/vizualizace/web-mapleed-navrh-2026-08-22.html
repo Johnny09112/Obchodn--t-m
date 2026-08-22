@@ -205,6 +205,15 @@
 
   footer { border-top: 1px solid var(--line); padding-top: 1.2rem; font-size: var(--step--1); color: var(--muted); max-width: 66ch; }
 
+  ul.vypis { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .7rem; max-width: 66ch; }
+  ul.vypis li { display: grid; grid-template-columns: 1.4rem 1fr; gap: .5rem; align-items: start; }
+  ul.vypis li::before { content: "—"; color: var(--leaf); font-weight: 600; }
+  ul.vypis li b { font-weight: 600; }
+
+  td .uroven { font-family: "IBM Plex Mono", monospace; color: var(--leaf); font-variant-numeric: tabular-nums; }
+  tbody th.stupen { font-family: "IBM Plex Mono", monospace; color: var(--leaf); font-weight: 500; }
+  .doporuceno { display: inline-block; font-size: var(--step--1); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; background: var(--leaf-soft); color: var(--leaf); padding: .1rem .45rem; border-radius: 999px; margin-left: .4rem; vertical-align: .1em; }
+
   a { color: var(--leaf); }
   a:focus-visible, li:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
 </style>
@@ -362,6 +371,65 @@
         <span>Vystupuje Cantinero na webu jménem, nebo se mluví jen o Mapleedu?</span>
         <span class="doporuceni">Doporučuji: Mapleed jako firma, Cantinero jako jeden z produktů.</span>
       </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Otázka první</p>
+    <h2>Postavím to 1:1?</h2>
+    <p>Ano — s jednou výhradou, a tou je mobil. Z plátna si vytáhnu <strong>přesné hodnoty</strong>: barvy po číslech, písma, velikosti, rozestupy, texty. Není to odhad z obrázku, takže rozdíl bude na úrovni jednotlivých pixelů, ne na úrovni „vypadá to jinak“. Až to postavím, vyfotím to a položím vedle tvého návrhu, ať to nemusíš hlídat ty.</p>
+    <p>Pět míst, kde se to bude lišit, a proč:</p>
+    <ul class="vypis">
+      <li><span><b>Mobil.</b> Návrh je jedna šířka — nejspíš počítač. Na telefonu se musí sekce přeskládat pod sebe a to v návrhu není nakreslené. Buď mi nakresli i telefon, nebo to rozhodnu já a ukážu ti to k odsouhlasení.</span></li>
+      <li><span><b>Písma.</b> Pokud návrh sáhne po placeném písmu, potřebuje web licenci. Řeknu ti to hned, jak návrh uvidím — buď licenci koupíš, nebo najdu volnou náhradu, která vypadá stejně.</span></li>
+      <li><span><b>Fotky a logo.</b> Co je v návrhu jen výplň, musí na webu nahradit skutečný soubor. Potřebuju od tebe logo a fotky v rozumné kvalitě.</span></li>
+      <li><span><b>Pohyb.</b> V návrhu není — plátno je nehybné. Co se má rozjet při rolování nebo najetí myší, navrhnu zvlášť a ukážu.</span></li>
+      <li><span><b>Delší text.</b> Skutečná věta bývá delší než ta v návrhu. Web stavím tak, aby se nerozsypal, i když text povyroste.</span></li>
+    </ul>
+    <p>Jedna praktická věc: pošli mi <strong>odkaz</strong>, ne obrázek. Kdybych se k němu nedostal (soukromé plátno), poprosím tě o export nebo o sdílení — ale odkaz je vždycky lepší.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Otázka druhá</p>
+    <h2>Jak si to budeš spravovat</h2>
+    <p>Tohle je rozhodnutí, ne technická nutnost — dá se změnit kdykoli i zpětně. Tři úrovně, od nejjednodušší:</p>
+    <div class="tabulka-obal">
+      <table>
+        <thead>
+          <tr><th scope="col">Úroveň</th><th scope="col">Jak měníš text</th><th scope="col">Co to stojí navíc</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="stupen">01</th>
+            <td>Řekneš mi to<span class="doporuceno">na start</span>
+              <span class="proc">„Změň v úvodu větu na tuhle.“ Upravím a do minuty je to venku. Stará verze zůstává v historii, návrat je jedno slovo.</span></td>
+            <td>Nic
+              <span class="proc">Ale jsi závislý na tom, že si sedneme.</span></td>
+          </tr>
+          <tr>
+            <th scope="row" class="stupen">02</th>
+            <td>Všechny texty v jednom souboru<span class="doporuceno">rovnou</span>
+              <span class="proc">Web postavím tak, že texty nejsou rozeseté v kódu, ale pohromadě v jednom přehledném souboru. Uvidíš je jako seznam a přepsat je zvládne i člověk, který o webu neví nic.</span></td>
+            <td>Půl hodiny práce
+              <span class="proc">Dělám to tak jako tak — jen to zmíním, ať víš, že to tak je.</span></td>
+          </tr>
+          <tr>
+            <th scope="row" class="stupen">03</th>
+            <td>Administrace v prohlížeči
+              <span class="proc">Přihlásíš se na <code>mapleed.cz/admin</code>, přepíšeš text nebo vyměníš fotku, klikneš uložit — web se sám znovu nasadí. Bez chatu, bez čekání na mě.</span></td>
+            <td>Zhruba půlden práce
+              <span class="proc">Plus napojení na tvůj GitHub účet a jeden systém navíc, který se občas aktualizuje.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Doporučuji začít na jedničce a dvojce a trojku přidat, až tě začne štvát čekání na mě.</strong> Prezentační web se mění pár krát do roka; administrace, do které se za tři měsíce přihlásíš podruhé, je většinou práce navíc, ne úspora. Rozhodovat se nemusíš teď — dvojka je připravená půda pro trojku, dodělá se to kdykoli později bez přepisování webu.</p>
+    <div class="pozor">
+      <p class="eyebrow">Dvě věci, ať nejsou překvapením</p>
+      <ul>
+        <li><strong>Ani administrace nemění vzhled.</strong> Text, fotky, ceny, nová položka v seznamu — ano. Přesunout sekci jinam nebo změnit barvy je vždycky práce v návrhu a v kódu, na tři kliknutí to nebude nikde.</li>
+        <li><strong>Nic si nepronajímáš.</strong> Web bude obyčejné HTML v gitu. To je proti Webflow nebo Squarespace zásadní rozdíl: převzít to po mně může kterýkoli vývojář a nic tím nepřestane fungovat. Neplatíš měsíčně za to, že tvůj web vůbec existuje.</li>
+      </ul>
     </div>
   </section>
 

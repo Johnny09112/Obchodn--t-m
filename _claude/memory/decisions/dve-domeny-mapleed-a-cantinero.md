@@ -4,7 +4,7 @@ description: Mapleed je neviditelná infrastruktura pro běh aplikace, Cantinero
 type: decision
 status: active
 created: 2026-08-21
-updated: 2026-08-21
+updated: 2026-08-22
 related: [odesilaci-domena-a-adresa, druha-firma-vlastni-instance, zkusebni-odeslani-na-vlastni-adresu]
 ---
 
@@ -50,3 +50,18 @@ jakýkoli projekt, ne jen pro tenhle.
 
 **Web pro Mapleed** se bude stavět, až přijde prodej ven; doporučeno na
 Vercelu, kde už běží aplikace, ne třetím systémem navíc.
+
+## Změna 22. 8. 2026 — neviditelnost končí
+
+**Majitel rozhodl 22. 8.,** že prezentační web na `mapleed.cz` vzniká teď
+a mluví **k zájemcům o koupi systému**. Tím padá dosavadní „closed věc, jen
+pro běh aplikace" — Mapleed jde ven jako dodavatel software.
+
+Vzhled si majitel dělá sám v Claude Designu a pošle ho sem; převod do
+skutečného webu (responzivita, formulář, SEO, doména) se dělá v kódu.
+Technický návrh a dělící čára návrh/kód:
+`docs/vizualizace/web-mapleed-navrh-2026-08-22.html`. **Nic se nestaví,
+dokud majitel návrh neodkývne.**
+
+Beze změny zůstává: odesílá se dál z `cantinero.cz`, aplikace běží na
+podoménách Mapleedu, MX Seznamu na doméně se nesmí rozbít.

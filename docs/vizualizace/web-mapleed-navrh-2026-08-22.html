@@ -1,0 +1,372 @@
+<title>Web Mapleed — dělící čára</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --ground: #eef1ea;
+    --surface: #f8faf5;
+    --surface-2: #e6ebe1;
+    --ink: #171c17;
+    --muted: #5c675c;
+    --line: #d3dacd;
+    --leaf: #2f6b4a;
+    --amber: #a9741c;
+    --maple: #9b3123;
+    --leaf-soft: #dfeae1;
+    --amber-soft: #f2e7cf;
+    --maple-soft: #f3ddd8;
+    --shadow: 0 1px 2px rgba(23, 28, 23, .06), 0 8px 24px -16px rgba(23, 28, 23, .35);
+
+    --step--1: clamp(.78rem, .76rem + .1vw, .84rem);
+    --step-0: clamp(1rem, .97rem + .16vw, 1.09rem);
+    --step-1: clamp(1.2rem, 1.13rem + .34vw, 1.42rem);
+    --step-2: clamp(1.5rem, 1.36rem + .68vw, 1.95rem);
+    --step-3: clamp(2rem, 1.7rem + 1.5vw, 3.1rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12160f;
+      --surface: #191e18;
+      --surface-2: #222820;
+      --ink: #e7ebe2;
+      --muted: #9aa697;
+      --line: #2c3429;
+      --leaf: #74c295;
+      --amber: #dda94f;
+      --maple: #e0796a;
+      --leaf-soft: #1d2c23;
+      --amber-soft: #2d2617;
+      --maple-soft: #301e1b;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px -18px rgba(0, 0, 0, .9);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #12160f;
+    --surface: #191e18;
+    --surface-2: #222820;
+    --ink: #e7ebe2;
+    --muted: #9aa697;
+    --line: #2c3429;
+    --leaf: #74c295;
+    --amber: #dda94f;
+    --maple: #e0796a;
+    --leaf-soft: #1d2c23;
+    --amber-soft: #2d2617;
+    --maple-soft: #301e1b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px -18px rgba(0, 0, 0, .9);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--step-0);
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 61rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 1rem + 4vw, 4.5rem) clamp(1.1rem, .6rem + 2.4vw, 2.5rem) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 2rem + 2vw, 4rem);
+  }
+
+  h1, h2, h3 { font-family: Fraunces, Georgia, "Times New Roman", serif; font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.14; }
+  h1 { font-size: var(--step-3); letter-spacing: -.015em; }
+  h2 { font-size: var(--step-2); letter-spacing: -.01em; }
+  h3 { font-size: var(--step-1); }
+  p { margin: 0; }
+  strong { font-weight: 600; }
+  code { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: .9em; background: var(--surface-2); padding: .1em .35em; border-radius: 3px; }
+
+  .eyebrow {
+    font-size: var(--step--1);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  header .lede { font-size: var(--step-1); color: var(--muted); max-width: 34ch; line-height: 1.45; }
+  header { display: flex; flex-direction: column; gap: 1.1rem; }
+  header .meta { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; font-size: var(--step--1); color: var(--muted); border-top: 1px solid var(--line); padding-top: 1rem; }
+  header .meta b { color: var(--ink); font-weight: 600; }
+
+  section { display: flex; flex-direction: column; gap: 1.15rem; }
+  section > p { max-width: 66ch; }
+
+  .stav {
+    background: var(--maple-soft);
+    border-left: 3px solid var(--maple);
+    padding: 1.1rem 1.3rem;
+    border-radius: 0 6px 6px 0;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    max-width: 66ch;
+  }
+  .stav .eyebrow { color: var(--maple); }
+
+  .lanes { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
+  .lane {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1.3rem 1.35rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    box-shadow: var(--shadow);
+  }
+  .lane .tag {
+    align-self: flex-start;
+    font-size: var(--step--1);
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .22rem .6rem;
+    border-radius: 999px;
+  }
+  .lane.navrh .tag { background: var(--amber-soft); color: var(--amber); }
+  .lane.kod .tag { background: var(--leaf-soft); color: var(--leaf); }
+  .lane h3 { font-size: var(--step-1); }
+  .lane ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .55rem; }
+  .lane li { display: grid; grid-template-columns: 1.1rem 1fr; gap: .5rem; align-items: start; font-size: .96rem; line-height: 1.5; }
+  .lane li::before { content: ""; width: .5rem; height: .5rem; margin-top: .52rem; border-radius: 2px; }
+  .lane.navrh li::before { background: var(--amber); }
+  .lane.kod li::before { background: var(--leaf); }
+  .lane .pozn { font-size: var(--step--1); color: var(--muted); border-top: 1px dashed var(--line); padding-top: .8rem; margin-top: .2rem; }
+
+  .tabulka-obal { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: .95rem; }
+  th, td { text-align: left; padding: .8rem 1rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th { font-size: var(--step--1); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+  tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+  tbody th { font-weight: 600; white-space: nowrap; }
+  td .proc { display: block; color: var(--muted); font-size: var(--step--1); margin-top: .2rem; }
+
+  ol.kroky { list-style: none; counter-reset: k; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .1rem; }
+  ol.kroky li {
+    counter-increment: k;
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--line);
+    align-items: start;
+  }
+  ol.kroky li::before {
+    content: counter(k, decimal-leading-zero);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: var(--step--1);
+    color: var(--leaf);
+    padding-top: .28rem;
+    font-variant-numeric: tabular-nums;
+  }
+  ol.kroky li b { display: block; font-weight: 600; }
+  ol.kroky li span { color: var(--muted); font-size: .95rem; }
+  ol.kroky li em { font-style: normal; color: var(--amber); font-weight: 600; }
+
+  .pozor {
+    background: var(--amber-soft);
+    border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
+    border-radius: 8px;
+    padding: 1.2rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: .7rem;
+  }
+  .pozor .eyebrow { color: var(--amber); }
+  .pozor ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .45rem; }
+
+  .otazky { display: grid; gap: .9rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  .otazka {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }
+  .otazka b { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 1.05rem; }
+  .otazka span { font-size: .93rem; color: var(--muted); }
+  .otazka .doporuceni { font-size: var(--step--1); color: var(--leaf); font-weight: 600; }
+
+  footer { border-top: 1px solid var(--line); padding-top: 1.2rem; font-size: var(--step--1); color: var(--muted); max-width: 66ch; }
+
+  a { color: var(--leaf); }
+  a:focus-visible, li:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Návrh k odsouhlasení · 22. 8. 2026</p>
+    <h1>Web Mapleed: kde končí návrh a začíná kód</h1>
+    <p class="lede">Claude Design ti udělá vzhled. Web z něj uděláme tady — a tohle je seznam, co to obnáší.</p>
+    <div class="meta">
+      <span>Doména <b>mapleed.cz</b></span>
+      <span>Publikum <b>zájemci o koupi systému</b></span>
+      <span>Stav <b>nic se nestaví, čeká se na tvoje ano</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="stav">
+      <p class="eyebrow">Změna oproti zápisu z 21. 8.</p>
+      <p>Do včera platilo, že <strong>Mapleed zůstává neviditelný</strong> a web vznikne až s prodejem systému ven. Tvojí dnešní odpovědí („zájemcům o systém“) tohle rozhodnutí padá — a je to v pořádku, jen jsem to musel říct nahlas. Zapsal jsem změnu do paměti projektu.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Dělící čára</p>
+    <h2>Co udělá Claude Design a co musí udělat kód</h2>
+    <p>Claude Design je nástroj na <strong>vzhled</strong>, ne na web. Vyleze z něj plátno s návrhem — obrázek stránky, který si můžeš doladit klikáním a vyexportovat. Není to soubor, který se dá pustit na doméně. Rozdíl je asi jako mezi výkresem domu a domem.</p>
+    <div class="lanes">
+      <div class="lane navrh">
+        <span class="tag">Claude Design — ty</span>
+        <h3>Vzhled a obsah</h3>
+        <ul>
+          <li>Rozvržení stránky: co je nahoře, co následuje, kde je výzva k akci</li>
+          <li>Barvy, písma, styl — vizuální identita Mapleedu</li>
+          <li>Texty tak, jak mají na webu stát</li>
+          <li>Varianty vedle sebe, když se nemůžeš rozhodnout</li>
+          <li>Doladění po jednotlivých prvcích, bez programování</li>
+          <li>Export do PNG / PDF pro ukázání ostatním</li>
+        </ul>
+        <p class="pozn">Výstup: plátno v prohlížeči + export. Pošli mi na něj odkaz, ne screenshot — potřebuju se dostat k rozměrům, barvám a textům.</p>
+      </div>
+      <div class="lane kod">
+        <span class="tag">Kód — my tady</span>
+        <h3>Skutečný web</h3>
+        <ul>
+          <li>Mobil a tablet — návrh je jedna šířka, web musí umět všechny</li>
+          <li>Fungující navigace, odkazy, kotvy, více stránek</li>
+          <li>Poptávkový formulář, který opravdu doručí mail</li>
+          <li>Vyhledávače: titulky, popisky, náhled při sdílení, sitemap</li>
+          <li>Rychlost: zmenšené obrázky, načtená písma, žádné zbytečnosti</li>
+          <li>Přístupnost: čtečky, klávesnice, kontrast</li>
+          <li>Běh na <code>mapleed.cz</code> přes HTTPS a nasazení při každé změně</li>
+          <li>Verzování v gitu — návrat zpátky, když se něco pokazí</li>
+        </ul>
+        <p class="pozn">Rozsah: podle počtu sekcí zhruba jedna až dvě sezení. Formulář a doména jsou půl dne.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Technické řešení</p>
+    <h2>Jak to postavíme</h2>
+    <p>Držím se toho, co už v projektu běží, ať nepřibývá systém navíc. Všechno níž je moje doporučení — vratné, dá se změnit.</p>
+    <div class="tabulka-obal">
+      <table>
+        <thead>
+          <tr><th scope="col">Věc</th><th scope="col">Doporučuji</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Kde web žije</th>
+            <td>Vlastní repozitář <code>mapleed-web</code>, ne uvnitř Cantinera
+              <span class="proc">Obchodní systém a marketingový web mají jiné publikum i tempo. Nechceš, aby oprava v kartotéce nasazovala web — a až se systém bude prodávat, jde web předat samostatně.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Hosting</th>
+            <td>Vercel, samostatný projekt vedle aplikace
+              <span class="proc">Už tam běží <code>cantinero-find</code>, umíme to, certifikát i nasazení z gitu jsou automatické. Žádná další faktura.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Technologie</th>
+            <td>Astro — statické stránky, žádná aplikace
+              <span class="proc">Prezentační web nepotřebuje nic živého. Astro pošle návštěvníkovi hotové HTML: rychlé, dobře čitelné pro vyhledávače, levné na provoz. Aplikace zůstává na Vite + React, tohle ji nijak nemíchá.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Adresa</th>
+            <td><code>mapleed.cz</code> i <code>www.mapleed.cz</code> na web; aplikace zůstává na <code>cantinero.mapleed.cz</code>
+              <span class="proc">Doména je na Cloudflare, přidávají se dva záznamy. Podomény aplikace se nikam nestěhují.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Poptávkový formulář</th>
+            <td>Odeslání přes Resend, který už máme napojený
+              <span class="proc">Poptávka chodí na tvůj mail. Žádná třetí služba, žádná databáze — jen ochrana proti robotům, ať do schránky nechodí spam.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Návštěvnost</th>
+            <td>Zatím nic, případně měření bez cookies
+              <span class="proc">Bez cookies odpadá cookie lišta i souhlasy. Google Analytics bych na start nedával.</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Právní minimum</th>
+            <td>Zásady zpracování osobních údajů + kontaktní údaje provozovatele
+              <span class="proc">Jakmile web sbírá poptávky, sbírá osobní údaje. Napojím to na to, co už máš od advokáta.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="pozor">
+      <p class="eyebrow">Na co si u domény dát pozor</p>
+      <ul>
+        <li><strong>Na <code>mapleed.cz</code> běží pošta Seznamu.</strong> Jsou tam dva MX záznamy — při přidávání webu se jich nesmí nikdo dotknout, jinak přestanou chodit maily.</li>
+        <li><strong>Doména nemá SPF ani DMARC.</strong> Netýká se webu, ale až přes tu schránku někdo pošle mail, bude to chtít doplnit.</li>
+        <li><strong>Odesílání zůstává na <code>cantinero.cz</code>.</strong> Web na Mapleedu na tom nic nemění; z Mapleedu se firmám dál nepíše.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Postup</p>
+    <h2>Kroky v pořadí, ve kterém dávají smysl</h2>
+    <ol class="kroky">
+      <li><b>Doděláš vzhled v Claude Designu</b><span>Sekce, texty, barvy. Klidně i rozpracovaný — čím dřív to uvidím, tím míň se předělává.</span></li>
+      <li><b>Pošleš mi odkaz na plátno</b><span>Ne obrázek. Potřebuju se dostat k barvám, písmům a textům, ať web vypadá stejně, ne podobně.</span></li>
+      <li><b>Sepíšu z toho zadání</b><span>Krátký dokument do <code>docs/</code>: které stránky, které sekce, co má formulář sbírat. Odkýveš ho a teprve pak se píše kód. <em>Tady je poslední místo, kde jsou změny zadarmo.</em></span></li>
+      <li><b>Postavím web</b><span>Nejdřív bez domény, na dočasné adrese od Vercelu. Proklikáš si ho na mobilu i na počítači.</span></li>
+      <li><b>Napojím doménu</b><span>Dva DNS záznamy na Cloudflare, pošty se to nedotkne. Od té chvíle je Mapleed venku a dohledatelný.</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <p class="eyebrow">Rozhodnutí, která jsou na tobě</p>
+    <h2>Čtyři otázky, ať je nemusím hádat</h2>
+    <div class="otazky">
+      <div class="otazka">
+        <b>Co se na webu prodává?</b>
+        <span>Hotová služba „sháníme vám firemní zákazníky“, nebo systém, který si kupec provozuje sám?</span>
+        <span class="doporuceni">Doporučuji: služba — je to snáz uchopitelné a máš to ověřené.</span>
+      </div>
+      <div class="otazka">
+        <b>Jazyk</b>
+        <span>Jen česky, nebo i anglicky?</span>
+        <span class="doporuceni">Doporučuji: česky. Angličtinu přidat, až se ozve někdo ze zahraničí.</span>
+      </div>
+      <div class="otazka">
+        <b>Ceník na webu</b>
+        <span>Konkrétní čísla, orientační rozpětí, nebo „ozvěte se“?</span>
+        <span class="doporuceni">Doporučuji: zatím bez cen, jen poptávka.</span>
+      </div>
+      <div class="otazka">
+        <b>Jméno produktu</b>
+        <span>Vystupuje Cantinero na webu jménem, nebo se mluví jen o Mapleedu?</span>
+        <span class="doporuceni">Doporučuji: Mapleed jako firma, Cantinero jako jeden z produktů.</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Tahle stránka je návrh, ne hlášení o hotové práci. Nic z toho zatím není postavené a nic stavět nezačnu, dokud neřekneš. Uložená v projektu jako <code>docs/vizualizace/web-mapleed-navrh-2026-08-22.html</code>.</p>
+  </footer>
+
+</div>
